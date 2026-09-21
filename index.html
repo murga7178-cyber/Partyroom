@@ -1428,7 +1428,6 @@ html,body{overscroll-behavior:none!important;}
     <button class="auth-btn-primary" id="pkLoginBtn" onclick="pkDoLogin()">Login</button>
     <p id="loginError" style="color:#d32f2f; font-size:13px; min-height:18px; margin-top:10px;"></p>
     <button class="auth-link" onclick="pkOpenSignup()">Naya Account? Sign Up Karein</button>
-    <button class="auth-link" onclick="pkMigrateLegacyAccount()" style="margin-top:6px;font-size:12px;">Purana Account Secure Karein</button>
   </div>
 </div>
 <div id="pkSignupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(74,20,140,0.55); z-index:150; align-items:center; justify-content:center;">
@@ -1745,7 +1744,7 @@ async function pkCreateOrResume(loginId,pwd){
 async function pkDoLogin(){
   const loginValue=document.getElementById('loginUserId').value.trim(),pwd=document.getElementById('loginPassword').value.trim(),err=document.getElementById('loginError'),btn=document.getElementById('pkLoginBtn');
   if(!loginValue||!pwd){err.textContent='User Number / User ID aur Password dono bharein';return;} err.innerHTML='<span class="loading-msg"><span class="spinner"></span> Secure login ho raha hai...</span>'; if(btn)btn.disabled=true;
-  try{ var loginId=loginValue; if(/^\d{4,5}$/.test(loginValue)){ loginId=await pkGetLoginIdFromPublic(loginValue); if(!loginId){err.textContent='User Number nahi mila. Purana account ho to pehle Secure Migration karein.';return;} }
+  try{ var loginId=loginValue; if(/^\d{4,5}$/.test(loginValue)){ loginId=await pkGetLoginIdFromPublic(loginValue); if(!loginId){err.textContent='User Number nahi mila. Pehle Sign Up karein.';return;} }
     await pkT(auth.signInWithEmailAndPassword(pkAuthEmail(loginId),pwd),25000,'Auth login'); var u=auth.currentUser; if(!u)throw new Error('auth/no-current-user'); currentUserKey=u.uid; if(!await pkT(pkLoadUser(u.uid),15000,'Profile load (Firestore read)')){err.textContent='Account profile nahi mila. Sign Up/Migration complete karein.';return;} try{localStorage.setItem('pk_userKey',u.uid);}catch(e){} err.textContent=''; pkOpenParty();
   }catch(e){ var c=String((e&&e.code)||''); if(c.indexOf('auth/invalid-credential')>=0||c.indexOf('auth/wrong-password')>=0||c.indexOf('auth/user-not-found')>=0)err.textContent='User ID / Password गलत है।'; else if(c==='timeout')err.textContent='Ruk gaya: "'+String(e.message)+'" pe response nahi aaya. Internet / Firebase setting check karein.'; else err.textContent='Login नहीं हो पाया ['+String(window.__pkStep||'')+'] '+pkErrInfo(e); }finally{if(btn)btn.disabled=false;}
 }
