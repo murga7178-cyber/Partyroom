@@ -1663,6 +1663,48 @@ function pkCloseMeProfile(){const p=document.getElementById('pkMeProfilePanel');
 function pkMeOpenStore(){pkCloseMeProfile();if(typeof openPartyFrameStore==='function')openPartyFrameStore();}
 function pkMeOpenVip(){pkCloseMeProfile();if(typeof pkOpenVipPanel==='function')pkOpenVipPanel();}
 </script>
+<div id="pkWalletPanel" style="display:none;position:fixed;inset:0;z-index:100020;background:rgba(15,23,42,.55);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;">
+  <div style="width:min(480px,100%);max-height:80vh;overflow:auto;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -16px 50px rgba(0,0,0,.25);padding:20px 18px 22px;box-sizing:border-box;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;"><div style="font-size:20px;font-weight:950;">💰 My Wallet</div><button type="button" onclick="pkCloseWallet()" style="width:38px;height:38px;border:0;border-radius:12px;background:#f1f5f9;font-size:22px;">×</button></div>
+    <div style="display:flex;gap:12px;">
+      <div style="flex:1;background:linear-gradient(145deg,#fff7d6,#ffe9a8);border-radius:18px;padding:16px;text-align:center;">
+        <div style="font-size:34px;">🪙</div>
+        <div id="pkWalletCoins" style="font-size:24px;font-weight:950;margin-top:6px;">0</div>
+        <div style="font-size:12px;color:#8a6d1f;margin-top:4px;font-weight:800;">Coins</div>
+        <div style="font-size:10px;color:#a3862f;margin-top:6px;">गेम खेलकर कमाए</div>
+      </div>
+      <div style="flex:1;background:linear-gradient(145deg,#e0f2ff,#bfe4ff);border-radius:18px;padding:16px;text-align:center;">
+        <div style="font-size:34px;">💎</div>
+        <div id="pkWalletDiamonds" style="font-size:24px;font-weight:950;margin-top:6px;">0</div>
+        <div style="font-size:12px;color:#1e5f8a;margin-top:4px;font-weight:800;">Diamonds</div>
+        <div style="font-size:10px;color:#2b6f9c;margin-top:6px;">गिफ्ट में मिले</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script id="pkWalletScript">
+async function pkOpenWallet(){
+  if(typeof pkCloseMeProfile==='function')pkCloseMeProfile();
+  if(typeof pkClosePublicProfile==='function')pkClosePublicProfile();
+  var p=document.getElementById('pkWalletPanel');if(!p)return;
+  p.style.display='flex';
+  var cEl=document.getElementById('pkWalletCoins'),dEl=document.getElementById('pkWalletDiamonds');
+  if(cEl)cEl.textContent=Math.floor(Number(gamePoints)||0);
+  if(dEl)dEl.textContent=Math.floor(Number(myDiamonds)||0);
+  if(!db||!currentUserKey)return;
+  try{
+    var doc=await db.collection('users').doc(String(currentUserKey)).get();
+    if(!doc.exists)return;
+    var d=doc.data()||{};
+    gamePoints=Math.max(0,Number(d.gamePoints)||0);
+    myDiamonds=Math.max(0,Number(d.diamonds)||0);
+    if(cEl)cEl.textContent=gamePoints;
+    if(dEl)dEl.textContent=myDiamonds;
+    try{prSyncCoinDisplays()}catch(e){}
+  }catch(e){}
+}
+function pkCloseWallet(){var p=document.getElementById('pkWalletPanel');if(p)p.style.display='none';}
+</script>
 <script id="pkStandaloneCore">
 const firebaseConfig = {
     apiKey: "AIzaSyCXquYLIUzddTKCfzJe3XC2lIVRlbS9vbo",
@@ -1682,6 +1724,7 @@ let COIN_TO_RUPEE_RATE = 0.10;   // 1 Game Coin = itne rupees (main app ke Owner
 let currentUserKey = null;
 let currentUserPhotoURL = '';
 let gamePoints = 0;
+let myDiamonds = 0;
 let stateLoaded = false;
 
 try{
@@ -1714,6 +1757,7 @@ async function pkLoadUser(key){
     try{ for(let tries=0;tries<30;tries++){ const n=String(Math.floor(1000+Math.random()*90000)); const qs=await db.collection('publicIds').doc(n).get(); if(!qs.exists){ await doc.ref.set({publicUserId:n},{merge:true}); await db.collection('publicIds').doc(n).set({uid:key,createdAt:Date.now()},{merge:true}); d.publicUserId=n; break; } } }catch(e){}
   }
   gamePoints = Math.max(0, Number(d.gamePoints) || 0);
+  myDiamonds = Math.max(0, Number(d.diamonds) || 0);
   currentUserPhotoURL = pkResolvePhoto(d.photoURL || '');
   const n = String(d.name || '').trim();
   if(n){ try{ localStorage.setItem('pk_displayName', n); }catch(e){} }
@@ -1744,7 +1788,7 @@ async function pkDoLogin(){
   const loginValue=document.getElementById('loginUserId').value.trim(),pwd=document.getElementById('loginPassword').value.trim(),err=document.getElementById('loginError'),btn=document.getElementById('pkLoginBtn');
   if(!loginValue||!pwd){err.textContent='User Number / User ID aur Password dono bharein';return;} err.innerHTML='<span class="loading-msg"><span class="spinner"></span> Secure login ho raha hai...</span>'; if(btn)btn.disabled=true;
   try{ var loginId=loginValue; if(/^\d{4,5}$/.test(loginValue)){ loginId=await pkGetLoginIdFromPublic(loginValue); if(!loginId){err.textContent='User Number nahi mila. Pehle Sign Up karein.';return;} }
-    await pkT(auth.signInWithEmailAndPassword(pkAuthEmail(loginId),pwd),25000,'Auth login'); var u=auth.currentUser; if(!u)throw new Error('auth/no-current-user'); currentUserKey=u.uid; if(!await pkT(pkLoadUser(u.uid),15000,'Profile load (Firestore read)')){err.textContent='Account profile nahi mila. Sign Up/Migration complete karein.';return;} try{localStorage.setItem('pk_userKey',u.uid);}catch(e){} err.textContent=''; pkOpenParty();
+    await pkT(auth.signInWithEmailAndPassword(pkAuthEmail(loginId),pwd),25000,'Auth login'); var u=auth.currentUser; if(!u)throw new Error('auth/no-current-user'); currentUserKey=u.uid; if(!await pkT(pkLoadUser(u.uid),15000,'Profile load (Firestore read)')){err.textContent='Account profile nahi mila. Sign Up/Migration complete karein.';return;} try{localStorage.setItem('pk_userKey',u.uid);}catch(e){} err.textContent=''; pkShowHome();
   }catch(e){ var c=String((e&&e.code)||''); if(c.indexOf('auth/invalid-credential')>=0||c.indexOf('auth/wrong-password')>=0||c.indexOf('auth/user-not-found')>=0)err.textContent='User ID / Password गलत है।'; else if(c==='timeout')err.textContent='Ruk gaya: "'+String(e.message)+'" pe response nahi aaya. Internet / Firebase setting check karein.'; else err.textContent='Login नहीं हो पाया ['+String(window.__pkStep||'')+'] '+pkErrInfo(e); }finally{if(btn)btn.disabled=false;}
 }
 function pkOpenSignup(){ ['signupUserId','signupPassword','signupName','signupPhone'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';}); document.getElementById('signupError').textContent=''; document.getElementById('pkSignupModal').style.display='flex'; }
@@ -1754,12 +1798,12 @@ async function pkDoSignup(){
   if(!loginId||!pwd||!name){err.textContent='Sabhi detail bharein';return;} if(loginId.length<3){err.textContent='User ID kam se kam 3 character ki rakhein';return;} if(pwd.length<6){err.textContent='Password kam se kam 6 character ka rakhein';return;}
   err.innerHTML='<span class="loading-msg"><span class="spinner"></span> Secure account ban raha hai...</span>';if(btn)btn.disabled=true;
   try{ const cred=await pkT(pkCreateOrResume(loginId,pwd),25000,'Auth account banana'),u=cred.user;if(!u)throw new Error('auth/no-user'); let publicUserId=''; for(let i=0;i<40;i++){const n=String(Math.floor(1000+Math.random()*90000));const q=await pkT(db.collection('publicIds').doc(n).get(),15000,'Public ID check (Firestore read)');if(!q.exists){publicUserId=n;break;}} if(!publicUserId)throw new Error('public-id/unavailable');
-    await pkT(db.collection('users').doc(u.uid).set({uid:loginId,name:name,gender:gender,phoneNumber:phoneNumber,publicUserId:publicUserId,clicked:[],money:0,history:[],gamePoints:0,authVersion:2,createdAt:Date.now(),updatedAt:Date.now()},{merge:true}),15000,'Profile save (Firestore write)'); await pkT(db.collection('publicIds').doc(publicUserId).set({uid:u.uid,loginId:loginId,createdAt:Date.now()},{merge:true}),15000,'Public ID save (Firestore write)'); currentUserKey=u.uid;await pkT(pkLoadUser(u.uid),15000,'Profile load (Firestore read)');try{localStorage.setItem('pk_userKey',u.uid);}catch(e){} pkCloseSignup();pkOpenParty();
+    await pkT(db.collection('users').doc(u.uid).set({uid:loginId,name:name,gender:gender,phoneNumber:phoneNumber,publicUserId:publicUserId,clicked:[],money:0,history:[],gamePoints:0,diamonds:0,authVersion:2,createdAt:Date.now(),updatedAt:Date.now()},{merge:true}),15000,'Profile save (Firestore write)'); await pkT(db.collection('publicIds').doc(publicUserId).set({uid:u.uid,loginId:loginId,createdAt:Date.now()},{merge:true}),15000,'Public ID save (Firestore write)'); currentUserKey=u.uid;await pkT(pkLoadUser(u.uid),15000,'Profile load (Firestore read)');try{localStorage.setItem('pk_userKey',u.uid);}catch(e){} pkCloseSignup();pkShowHome();
   }catch(e){var c=String((e&&e.code)||'');if(c.indexOf('auth/email-already-in-use')>=0)err.textContent='Yeh User ID already bana hua hai.';else if(c.indexOf('auth/weak-password')>=0)err.textContent='Password kam se kam 6 character ka rakhein.';else if(c==='timeout')err.textContent='Ruk gaya: "'+String(e.message)+'" pe response nahi aaya. Internet / Firebase setting check karein.';else err.textContent='Account nahi ban paya ['+String(window.__pkStep||'')+'] '+pkErrInfo(e);}finally{if(btn)btn.disabled=false;}
 }
 async function pkMigrateLegacyAccount(){
   const loginId=prompt('Purana User ID daalein');if(!loginId)return;const pwd=prompt('Purana Password daalein');if(!pwd)return;
-  try{const oldKey=makeUserDocId(loginId,pwd),old=await db.collection('users').doc(oldKey).get();if(!old.exists){alert('Purana account nahi mila.');return;}const d=old.data()||{};let cred;try{cred=await auth.createUserWithEmailAndPassword(pkAuthEmail(loginId),pwd);}catch(e){if(String(e.code||'').indexOf('auth/email-already-in-use')>=0)cred=await auth.signInWithEmailAndPassword(pkAuthEmail(loginId),pwd);else throw e;}const u=cred.user;let publicUserId=String(d.publicUserId||'');if(!publicUserId||!(await db.collection('publicIds').doc(publicUserId).get()).exists){for(let i=0;i<40;i++){const n=String(Math.floor(1000+Math.random()*90000));if(!(await db.collection('publicIds').doc(n).get()).exists){publicUserId=n;break;}}}const copy=Object.assign({},d,{uid:loginId,publicUserId:publicUserId,authVersion:2,legacyKey:oldKey,migratedAt:Date.now(),updatedAt:Date.now()});delete copy.pwd;await db.collection('users').doc(u.uid).set(copy,{merge:true});await old.ref.set({authVersion:2,migratedTo:u.uid,migratedAt:Date.now(),pwd:firebase.firestore.FieldValue.delete()},{merge:true});try{const rs=await db.collection('cinemaRooms').where('ownerKey','==',oldKey).get();const batch=db.batch();rs.forEach(function(rd){const x=rd.data()||{},up={ownerKey:u.uid,hostKey:String(x.hostKey||'')===oldKey?u.uid:x.hostKey,updatedAt:Date.now()};batch.set(rd.ref,up,{merge:true});});if(!rs.empty)await batch.commit();}catch(e){}await db.collection('publicIds').doc(publicUserId).set({uid:u.uid,loginId:loginId,createdAt:Date.now()},{merge:true});currentUserKey=u.uid;await pkLoadUser(u.uid);try{localStorage.setItem('pk_userKey',u.uid);}catch(e){}alert('Account secure login par migrate ho gaya. Ab secure Rules use kar sakte hain.');pkOpenParty();}catch(e){alert('Migration nahi ho paya '+pkErrInfo(e));}
+  try{const oldKey=makeUserDocId(loginId,pwd),old=await db.collection('users').doc(oldKey).get();if(!old.exists){alert('Purana account nahi mila.');return;}const d=old.data()||{};let cred;try{cred=await auth.createUserWithEmailAndPassword(pkAuthEmail(loginId),pwd);}catch(e){if(String(e.code||'').indexOf('auth/email-already-in-use')>=0)cred=await auth.signInWithEmailAndPassword(pkAuthEmail(loginId),pwd);else throw e;}const u=cred.user;let publicUserId=String(d.publicUserId||'');if(!publicUserId||!(await db.collection('publicIds').doc(publicUserId).get()).exists){for(let i=0;i<40;i++){const n=String(Math.floor(1000+Math.random()*90000));if(!(await db.collection('publicIds').doc(n).get()).exists){publicUserId=n;break;}}}const copy=Object.assign({},d,{uid:loginId,publicUserId:publicUserId,authVersion:2,legacyKey:oldKey,migratedAt:Date.now(),updatedAt:Date.now()});delete copy.pwd;await db.collection('users').doc(u.uid).set(copy,{merge:true});await old.ref.set({authVersion:2,migratedTo:u.uid,migratedAt:Date.now(),pwd:firebase.firestore.FieldValue.delete()},{merge:true});try{const rs=await db.collection('cinemaRooms').where('ownerKey','==',oldKey).get();const batch=db.batch();rs.forEach(function(rd){const x=rd.data()||{},up={ownerKey:u.uid,hostKey:String(x.hostKey||'')===oldKey?u.uid:x.hostKey,updatedAt:Date.now()};batch.set(rd.ref,up,{merge:true});});if(!rs.empty)await batch.commit();}catch(e){}await db.collection('publicIds').doc(publicUserId).set({uid:u.uid,loginId:loginId,createdAt:Date.now()},{merge:true});currentUserKey=u.uid;await pkLoadUser(u.uid);try{localStorage.setItem('pk_userKey',u.uid);}catch(e){}alert('Account secure login par migrate ho gaya. Ab secure Rules use kar sakte hain.');pkShowHome();}catch(e){alert('Migration nahi ho paya '+pkErrInfo(e));}
 }
 async function pkLogout(){
   try{ if(typeof cinemaLeaveRoom==='function' && cinemaRoomId) cinemaLeaveRoom(); }catch(e){}
@@ -1769,7 +1813,7 @@ async function pkLogout(){
   try{ if(window.pkCloseJumpGame) window.pkCloseJumpGame(); }catch(e){}
   try{ if(window.pkCloseGamingRanking) window.pkCloseGamingRanking(); }catch(e){}
   // Profile / inbox / DM jaise saare upar khule screens turant band karo, taaki Login screen dikhe
-  ['pkPublicProfileOverlay','pkInboxOverlay','pkMeProfilePanel','pkVipIdPanel','pkVisitorsOverlay','pkDirectMessageOverlay','pkDirectCallOverlay','pkIncomingCallOverlay','pkEditProfile','pkGlobalSearch','pkGamingRanking','cinemaGharModal'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
+  ['pkPublicProfileOverlay','pkInboxOverlay','pkMeProfilePanel','pkVipIdPanel','pkVisitorsOverlay','pkDirectMessageOverlay','pkDirectCallOverlay','pkIncomingCallOverlay','pkEditProfile','pkGlobalSearch','pkGamingRanking','cinemaGharModal','pkWalletPanel'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   try{ document.body.style.overflow=''; }catch(e){}
   try{ if(typeof auth!=='undefined' && auth) await Promise.race([auth.signOut(), new Promise(function(r){setTimeout(r,3000);})]); }catch(e){}
   try{ localStorage.removeItem('pk_userKey'); }catch(e){}
@@ -3589,8 +3633,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         if(!selfGift) tx.set(myRef,{gamePoints:after},{merge:true});
         for(var j=0;j<targets.length;j++){
           var rd=recipientSnaps[j].snap.data()||{};
-          var rb=Math.max(0,Math.floor(Number(rd.gamePoints)||0));
-          if(String(targets[j].key)!==me) tx.set(recipientSnaps[j].ref,{gamePoints:rb+(Number(g.v)||0)},{merge:true});
+          var rb=Math.max(0,Math.floor(Number(rd.diamonds)||0));
+          if(String(targets[j].key)!==me) tx.set(recipientSnaps[j].ref,{diamonds:rb+(Number(g.v)||0)},{merge:true});
           tx.set(giftRefs[j],{gid:g.id,emoji:g.e,value:g.v,count:1,name:myName,userKey:me,toKey:String(targets[j].key),toName:targets[j].name||'User',createdAt:now},{merge:true});
         }
         return selfGift?balance:after;
@@ -4562,6 +4606,7 @@ setInterval(function(){try{
       <div class="pp-space" id="pkPPspace"><div class="pp-space-title" id="pkPPspaceTitle"></div></div>
       <div class="pp-own-tools" id="pkPPOwnTools">
         <button type="button" class="pp-row" onclick="pkMeOpenStore()"><span class="ic i-store">🛍️</span><span class="tx"><b>Frame Store</b><small>अपने फ्रेम खरीदें और लगाएँ</small></span><span class="ch">›</span></button>
+        <button type="button" class="pp-row" onclick="pkOpenWallet()"><span class="ic i-wallet">💰</span><span class="tx"><b>Wallet</b><small>Coins और Diamonds देखें</small></span><span class="ch">›</span></button>
         <button type="button" class="pp-row" onclick="pkMeOpenVip()"><span class="ic i-vip">👑</span><span class="tx"><b>VIP</b><small>User ID / Room ID</small></span><span class="ch">›</span></button>
         <button type="button" class="pp-row" onclick="pkOpenVisitors()"><span class="ic i-vis">👀</span><span class="tx"><b>Visitors</b><small>आपकी प्रोफ़ाइल देखने वाले</small></span><em class="cnt" id="pkPPOwnVisitors">0</em><span class="ch">›</span></button>
         <button type="button" class="pp-row" onclick="pkOwnProfileEdit()"><span class="ic i-edit">✎</span><span class="tx"><b>Edit Profile</b><small>नाम, बायो और फोटो बदलें</small></span><span class="ch">›</span></button>
