@@ -2,7 +2,7 @@
 <html lang="hi">
 <head>
 <meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <meta content="no-cache, no-store, must-revalidate" http-equiv="Cache-Control"/>
 <meta content="no-cache" http-equiv="Pragma"/>
 <meta content="0" http-equiv="Expires"/>
@@ -1806,6 +1806,7 @@ const db = firebase.firestore();
 let auth = null; try{ auth = firebase.auth(); }catch(e){ window.__pkAuthInitError = e; try{console.error('firebase.auth() failed',e);}catch(_){} }
 try{ db.settings({ experimentalAutoDetectLongPolling:true, merge:true }); }catch(e){}
 
+(function(){var L=[],el=null;window.pkVLog=function(m){try{L.push(new Date().toTimeString().slice(3,8)+' '+m);L=L.slice(-7);if(!el){el=document.createElement('div');el.id='pkVLog';el.style.cssText='position:fixed;left:6px;bottom:78px;max-width:92vw;z-index:100050;background:rgba(0,0,0,.78);color:#9dffc0;font:11px/1.35 monospace;padding:6px 8px;border-radius:8px;text-align:left;white-space:pre-wrap';el.onclick=function(){el.style.display='none';};document.body.appendChild(el);}el.style.display='block';el.textContent='🔊 '+L.join('\n');console.log('[voice]',m);}catch(e){}};})();
 // ---- Session globals the Party Room scripts expect (same names as the main app) ----
 let COIN_TO_RUPEE_RATE = 0.10;   // 1 Game Coin = itne rupees (main app ke Owner Panel se sync hota hai)
 let currentUserKey = null;
@@ -3063,7 +3064,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     }
     const media=document.getElementById('cinemaCallMedia_'+id); const lab=document.getElementById('cinemaCallLabel_'+id);
     if(lab)lab.textContent=(isLocal?'आप: ':'')+(name||'User');
-    if(media && stream && media.srcObject!==stream){ media.srcObject=stream; media.play().catch(()=>{}); }
+    if(media && stream && media.srcObject!==stream){ media.srcObject=stream; media.play().catch(e=>pkVLog('PLAY BLOCKED '+(e.name||''))); }
     if(cinemaCallMode==='audio' && media) media.style.display='none';
   }
   function cinemaRemoveTile(id){ const e=document.getElementById('cinemaCallTile_'+id); if(e)e.remove(); }
@@ -3186,7 +3187,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   }
   function cinemaWatchState(k,pc,onFail){
     pc.onconnectionstatechange=()=>{
-      const s=pc.connectionState;
+      const s=pc.connectionState; pkVLog('कनेक्शन: '+s);
       if(s==='failed'||s==='closed') onFail();
       else if(s==='disconnected') setTimeout(()=>{ if(cinemaPeers[k]===pc && pc.connectionState==='disconnected') onFail(); },5000);
     };
@@ -3198,7 +3199,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     cinemaCandidateUnsubs[k]=base.collection('candidates').where('sess','==',pc.__sess).where('side','==',fromSide).onSnapshot(snap=>{
       snap.docChanges().forEach(ch=>{ if(ch.type==='added'){ const c=(ch.doc.data()||{}).candidate; if(c) pend.push(c); } });
       pc.__flush();
-    });
+    },e=>pkVLog('CANDIDATE ERROR '+(e.code||e.message)));
   }
 
   // SENDER: I am seated -> send my mic to one person.
@@ -3222,7 +3223,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     try{
       const offer=await pc.createOffer(); await pc.setLocalDescription(offer);
       await base.set({from:me,to:otherId,offer:{type:'offer',sdp:offer.sdp,sess},answer:firebase.firestore.FieldValue.delete(),mode:'audio',updatedAt:Date.now()},{merge:true});
-    }catch(e){ if(cinemaPeers[k]===pc) cinemaClosePeer(k); }
+    }catch(e){ pkVLog('OFFER WRITE ERROR '+(e.code||e.message)); if(cinemaPeers[k]===pc) cinemaClosePeer(k); }
   }
 
   // RECEIVER: everyone in the room (seated or not) listens for offers addressed to them.
@@ -3235,7 +3236,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     const pc=new RTCPeerConnection(PK_ICE); pc.__sess=sess; cinemaPeers[k]=pc;
     pc.ontrack=e=>{
       const st=(e.streams&&e.streams[0])||new MediaStream([e.track]);
-      cinemaAddTile(from,'User',st,false); partyVoiceStartMeter(from,st);
+      pkVLog('आवाज़ पहुँची ✓'); cinemaAddTile(from,'User',st,false); partyVoiceStartMeter(from,st);
     };
     pc.onicecandidate=e=>{ if(e.candidate) base.collection('candidates').add({side:'r',sess,candidate:e.candidate.toJSON(),createdAt:Date.now()}).catch(()=>{}); };
     cinemaWatchState(k,pc,()=>cinemaClosePeer(k));
@@ -3245,7 +3246,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       pc.__flush();
       const ans=await pc.createAnswer(); await pc.setLocalDescription(ans);
       await base.set({answer:{type:'answer',sdp:ans.sdp,sess},updatedAt:Date.now()},{merge:true});
-    }catch(e){ if(cinemaPeers[k]===pc) cinemaClosePeer(k); }
+    }catch(e){ pkVLog('ANSWER ERROR '+(e.code||e.message)); if(cinemaPeers[k]===pc) cinemaClosePeer(k); }
   }
   function cinemaStartListening(){
     if(!cinemaRoomId||!currentUserKey||typeof db==='undefined'||!db) return;
@@ -3255,9 +3256,9 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     cinemaInUnsub=db.collection('cinemaRooms').doc(cinemaRoomId).collection('liveTalk').where('to','==',String(currentUserKey)).onSnapshot(snap=>{
       snap.docChanges().forEach(ch=>{
         if(ch.type==='removed'){ const f=String((ch.doc.data()||{}).from||''); if(f) cinemaClosePeer('in:'+f); }
-        else cinemaHandleIncoming(ch.doc).catch(()=>{});
+        else { pkVLog('आवाज़ का offer मिला'); cinemaHandleIncoming(ch.doc).catch(e=>pkVLog('incoming error '+(e.code||e.message))); }
       });
-    },()=>{});
+    },e=>pkVLog('LISTEN ERROR '+(e.code||e.message)));
   }
   function cinemaStopListening(){
     try{ cinemaInUnsub&&cinemaInUnsub(); }catch(e){} cinemaInUnsub=null; cinemaListenRoom='';
@@ -3282,9 +3283,9 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       snap.docChanges().forEach(ch=>{
         const id=String(ch.doc.id); if(id===me) return;
         if(ch.type==='removed'){ cinemaViewerKeys.delete(id); cinemaClosePeer('out:'+id); }
-        else { cinemaViewerKeys.add(id); cinemaSendTo(id).catch(()=>{}); }
+        else { cinemaViewerKeys.add(id); pkVLog('सुनने वाला मिला, आवाज़ भेज रहा हूँ'); cinemaSendTo(id).catch(e=>pkVLog('send error '+(e.code||e.message))); }
       });
-    },()=>{});
+    },e=>pkVLog('VIEWERS ERROR '+(e.code||e.message)));
   }
 
   async function cinemaStartGroupCall(mode){
@@ -3312,7 +3313,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         cinemaCallSetStatus('🎙️ Mic के लिए HTTPS page जरूरी है।');
       }else{
         const en=String(e&&e.name||'');
-        alert(en==='NotAllowedError' || en==='PermissionDeniedError' ? '🎙️ Chrome में Microphone permission Allow करें।' : '🎙️ Microphone शुरू नहीं हो पाया। Chrome permission और mic device जाँचें।');
+        alert(en==='NotAllowedError' || en==='PermissionDeniedError' ? '🎙️ Microphone की permission Allow करें (फ़ोन Settings → Apps → इस ऐप → Permissions में भी देखें)।' : '🎙️ Microphone शुरू नहीं हो पाया। ऐप की Microphone permission और mic जाँचें।');
         cinemaCallSetStatus('Live Talk शुरू नहीं हुआ।');
       }
     }
@@ -3855,16 +3856,14 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     try{
       var newBalance=await db.runTransaction(async function(tx){
         var mySnap=await tx.get(myRef);
-        if(!mySnap.exists) throw new Error('sender_missing');
-        var myData=mySnap.data()||{};
-        var balance=Math.max(0,Math.floor(Number(myData.gamePoints)||0));
+        var myData=mySnap.exists?(mySnap.data()||{}):{};
+        var balance=Math.max(0,Math.floor(Number(mySnap.exists?myData.gamePoints:gamePoints)||0));
         if(balance<totalCost) throw new Error('insufficient');
         var recipientSnaps=[];
         for(var i=0;i<targets.length;i++){
           var ref=db.collection('users').doc(String(targets[i].key));
           var snap=await tx.get(ref);
-          if(!snap.exists) throw new Error('recipient_missing');
-          recipientSnaps.push({ref:ref,snap:snap});
+                    recipientSnaps.push({ref:ref,snap:snap});
         }
         var after=balance-totalCost;
         var selfGift=targets.length===1 && String(targets[0].key)===me;
@@ -3890,7 +3889,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       try{ saveState(); }catch(e){}
     }catch(e){
       if(e && e.message==='insufficient') toast('आपके पास इतने Game Coins नहीं हैं');
-      else toast('गिफ्ट नहीं गया, दोबारा कोशिश करें');
+      else { console.warn('gift failed',e); toast('गिफ्ट नहीं गया, दोबारा कोशिश करें ('+String((e&&(e.code||e.message))||'error').slice(0,40)+')'); }
     }
   };
 
@@ -4755,7 +4754,7 @@ setInterval(function(){try{
       });
       try{window.pkDmMarkRead&&window.pkDmMarkRead(direct.otherKey);}catch(e){}
     },()=>{});}catch(e){box.innerHTML='<div style="text-align:center;color:#dc2626;padding:25px;">मैसेज लोड नहीं हुए।</div>';}}
-  window.pkSendDirectMessage=async function(){var i=document.getElementById('pkDirectInput'),text=String(i?.value||'').trim();if(!text||!db||!currentUserKey||!direct.otherKey)return;try{var box=document.getElementById('pkDirectMessages');if(box)box.dataset.dmForceScroll='1';await db.collection('directMessages').doc(pair(currentUserKey,direct.otherKey)).collection('items').add({from:String(currentUserKey),to:String(direct.otherKey),text:text,createdAt:Date.now()});try{window.pkDmInboxWrite&&window.pkDmInboxWrite(direct.otherKey,direct.otherName,text);}catch(e){}i.value='';document.getElementById('pkDirectCompose')?.classList.remove('typing');i.focus();}catch(e){alert('मैसेज भेजा नहीं जा सका।')}};
+  window.pkSendDirectMessage=async function(){var i=document.getElementById('pkDirectInput'),text=String(i?.value||'').trim();if(!text||!db||!currentUserKey||!direct.otherKey)return;try{var box=document.getElementById('pkDirectMessages');if(box)box.dataset.dmForceScroll='1';i.value='';document.getElementById('pkDirectCompose')?.classList.remove('typing');try{i.focus();}catch(e){}var __p=db.collection('directMessages').doc(pair(currentUserKey,direct.otherKey)).collection('items').add({from:String(currentUserKey),to:String(direct.otherKey),text:text,createdAt:Date.now()});try{window.pkDmInboxWrite&&window.pkDmInboxWrite(direct.otherKey,direct.otherName,text);}catch(e){}__p.catch(function(){i.value=text;alert('मैसेज भेजा नहीं जा सका। इंटरनेट देखकर फिर कोशिश करें।');});}catch(e){alert('मैसेज भेजा नहीं जा सका।')}};
   document.addEventListener('input',function(ev){if(ev.target&&ev.target.id==='pkDirectInput')document.getElementById('pkDirectCompose')?.classList.toggle('typing',!!String(ev.target.value||'').trim());});
   document.addEventListener('keydown',function(ev){if(ev.target&&ev.target.id==='pkDirectInput'&&ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();pkSendDirectMessage();}});
   window.pkDirectCallFromMessage=function(mode){if(direct.otherKey)pkStartDirectCall(direct.otherKey,direct.otherName,mode);};
@@ -6444,6 +6443,47 @@ button,[onclick],[role="button"],.pr-seat,.psf-seat,.hse-btn{touch-action:manipu
   },500);
 })();
 </script>
+
+<style id="pkFitFullCss">
+html,body{width:100%;max-width:100%;overflow-x:hidden!important;-webkit-text-size-adjust:100%;touch-action:manipulation}
+.auth-wrap{min-height:100vh;min-height:100dvh}
+img,video,canvas,iframe{max-width:100%}
+input,textarea,select{font-size:16px}
+#pkDirectCallOverlay .pk-call-card,#pkIncomingCallOverlay .pk-call-card{position:fixed!important;inset:0!important;width:100vw!important;max-width:none!important;height:100dvh!important;max-height:none!important;border-radius:0!important;margin:0!important;display:flex!important;flex-direction:column;background:#0b0b18!important;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+#pkDirectCallOverlay .pk-call-head{color:#fff;padding:12px;flex:0 0 auto}
+#pkCallGrid{flex:1 1 auto;min-height:0;display:grid!important;grid-template-columns:1fr;grid-auto-rows:1fr;gap:2px;width:100%}
+#pkCallGrid video{width:100%!important;height:100%!important;object-fit:cover;background:#000;border-radius:0!important}
+#pkDirectCallOverlay .pk-call-actions,#pkIncomingCallOverlay .pk-call-actions{flex:0 0 auto;padding:14px;display:flex;justify-content:center;gap:16px}
+#pkMsgBadge{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:10px;z-index:100020;min-width:28px;height:28px;padding:0 8px;border-radius:14px;background:#e11d2e;color:#fff;font:900 14px/28px system-ui,sans-serif;text-align:center;box-shadow:0 3px 10px rgba(225,29,46,.55);display:none;cursor:pointer}
+#pkMsgBadge:before{content:"✉ ";font-size:12px}
+#partyRoomViewersPage{position:fixed!important;inset:0!important;z-index:100010!important;background:rgba(3,7,18,.94)!important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+#partyRoomViewersPage>div{top:calc(env(safe-area-inset-top,0px) + 72px)!important}
+#pkPublicProfileOverlay .pp-hero{background:none!important}
+#pkPublicProfileOverlay .pp-cover,#pkPublicProfileOverlay .pp-hero-glow{display:none!important;background-image:none!important}
+#pkPublicProfileOverlay.own-view .pp-hero:before{display:none!important}
+#pkPublicProfileOverlay.own-view .pp-avatar-wrap:after{display:none!important;content:none!important}
+.party-global-avatar{aspect-ratio:1/1}
+.party-global-frame-art{width:140%!important;height:140%!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;max-width:none!important;object-fit:contain}
+#pkPublicProfileOverlay .pp-avatar-wrap{overflow:visible!important}
+#pkPublicProfileOverlay .pp-frame{position:absolute!important;inset:auto!important;left:50%!important;top:50%!important;width:140%!important;height:140%!important;max-width:none!important;transform:translate(-50%,-50%)!important;object-fit:contain}
+</style>
+<script id="pkMsgBadgeJs">
+(function(){
+  var b=document.createElement('div');b.id='pkMsgBadge';document.body.appendChild(b);
+  b.onclick=function(){try{if(window.pkOpenInbox)return window.pkOpenInbox();}catch(e){}var o=document.getElementById('pkInboxOverlay');if(o)o.classList.add('open');};
+  var un=null,key='';
+  function start(){
+    var k=String(typeof currentUserKey!=='undefined'?currentUserKey||'':'');
+    if(!k||k.indexOf('local_')===0||typeof db==='undefined'||!db||k===key)return;
+    key=k;try{un&&un();}catch(e){}
+    un=db.collection('users').doc(k).collection('dmInbox').onSnapshot(function(sn){
+      var t=0;sn.forEach(function(d){t+=Math.max(0,Number((d.data()||{}).unread)||0);});
+      b.textContent=t>99?'99+':String(t);b.style.display=t>0?'block':'none';
+    },function(){});
+  }
+  setInterval(start,2000);
+})();
+</script>
 </body>
 </html>
 
@@ -6617,7 +6657,7 @@ button,[onclick],[role="button"],.pr-seat,.psf-seat,.hse-btn{touch-action:manipu
     var o=ov();if(!o||!o.classList.contains('open')||!o.classList.contains('own-view'))return;
     var t=ev.target;if(!t||!t.closest||t.closest('.pp-topbar'))return;
     if(t.closest('.pp-avatar-wrap')){mode='avatar';inp.click();}
-    else if(t.closest('.pp-hero')){mode='cover';inp.click();}
+    
   },true);
 })();
 </script>
