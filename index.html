@@ -2967,7 +2967,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       const el=document.getElementById('cinemaChatMessages'); if(!el)return;
       if(snap.empty){el.__ready=false;el.innerHTML='<div style="text-align:center;color:#64748b;font-size:12px;padding:28px 10px;">अभी कोई मैसेज नहीं। पहला मैसेज भेजें 👋</div>';partyRoomChatReady=true;partyRoomSetUnread(0);return;}
       const incoming=[];
-      snap.docChanges().forEach(ch=>{ if(ch.type!=='added')return; const d=ch.doc.data()||{}; const mine=String(d.userKey||'')===String(currentUserKey||''); if(partyRoomChatReady && !partyRoomChatSeenIds.has(ch.doc.id) && !mine) incoming.push(ch.doc.id); partyRoomChatSeenIds.add(ch.doc.id); });
+      snap.docChanges().forEach(ch=>{ if(ch.type!=='added')return; const d=ch.doc.data()||{}; const mine=String(d.userKey||'')===String(currentUserKey||''); const _mt=(d.ts&&d.ts.toMillis)?d.ts.toMillis():(d.ts||d.createdAt||0); if(_mt&&window._roomEnterTime&&_mt<window._roomEnterTime){partyRoomChatSeenIds.add(ch.doc.id);return;} if(partyRoomChatReady && !partyRoomChatSeenIds.has(ch.doc.id) && !mine) incoming.push(ch.doc.id); partyRoomChatSeenIds.add(ch.doc.id); });
       if(partyRoomChatReady && incoming.length) partyRoomSetUnread(partyRoomUnreadCount+incoming.length);
       if(!el.__ready){
         // पहली बार: पूरी लिस्ट एक साथ बनाएँ
@@ -3004,7 +3004,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         }
       }
       const cc=document.getElementById('cinemaChatCount'); if(cc)cc.textContent=Math.max(0,el.children.length-1)+' संदेश';
-      partyRoomChatReady = true; partyRoomChatSeenIds.clear(); var _cb=document.getElementById('cinemaChatMessages'); if(_cb)_cb.innerHTML='';
+partyRoomChatReady=true;
     },()=>{const el=document.getElementById('cinemaChatMessages');if(el){el.__ready=false;el.innerHTML='<div style="text-align:center;color:#fca5a5;font-size:12px;padding:28px 10px;">Chat permission/connection की जाँच करें।</div>';}});
   }
   async function cinemaSendChat(){
