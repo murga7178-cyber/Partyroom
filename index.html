@@ -3004,7 +3004,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         }
       }
       const cc=document.getElementById('cinemaChatCount'); if(cc)cc.textContent=Math.max(0,el.children.length-1)+' संदेश';
-      partyRoomChatReady=true;
+      partyRoomChatReady = true; partyRoomChatSeenIds.clear(); var _cb=document.getElementById('cinemaChatMessages'); if(_cb)_cb.innerHTML='';
     },()=>{const el=document.getElementById('cinemaChatMessages');if(el){el.__ready=false;el.innerHTML='<div style="text-align:center;color:#fca5a5;font-size:12px;padding:28px 10px;">Chat permission/connection की जाँच करें।</div>';}});
   }
   async function cinemaSendChat(){
