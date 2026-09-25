@@ -612,7 +612,7 @@ html, body { overscroll-behavior-y: none; }
 #prSendBtn{flex:none;border:0;border-radius:999px;padding:11px 30px;background:linear-gradient(135deg,#ffb347,#ff5fa2);color:#fff;font-size:15px;font-weight:900;cursor:pointer;touch-action:manipulation;box-shadow:0 6px 16px rgba(255,95,162,.35);}
 #prSendBtn:active{transform:scale(.95);}
 #prUserCard{align-items:center;text-align:center;gap:8px;}
-#prUserCard .uc-av{width:76px;height:76px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#3b1a7a;font-size:30px;font-weight:900;box-shadow:0 0 0 3px rgba(255,179,71,.7);margin-top:-46px;}
+#prUserCard .uc-av{width:76px;height:76px;border-radius:50%;overflow:visible;display:grid;place-items:center;background:#3b1a7a;font-size:30px;font-weight:900;box-shadow:0 0 0 3px rgba(255,179,71,.7);margin-top:18px;}
 #prUserCard .uc-av img{width:100%;height:100%;object-fit:cover;display:block;}
 #prUserCard .uc-nm{font-size:17px;font-weight:900;}
 #prUserCard .uc-tg{font-size:12px;color:rgba(255,255,255,.72);}
@@ -1037,6 +1037,7 @@ html, body { overscroll-behavior-y: none; }
 #prUserCard{max-height:min(82vh,680px)!important;overflow-y:auto!important;padding:18px 16px 20px!important;box-sizing:border-box!important}
 #prUserCard .uc-you{display:inline-flex;align-items:center;padding:2px 7px;border-radius:999px;background:#ede9fe;color:#6d28d9;font-size:10px;vertical-align:middle}
 #prUserCard .uc-idline{font-size:11px;color:rgba(255,255,255,.72);margin-top:1px}
+#prUserCard .uc-copy-id{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;margin-left:2px;border:0;border-radius:6px;background:rgba(255,255,255,.14);color:#fff;font-size:11px;line-height:1;cursor:pointer;vertical-align:-4px;-webkit-user-select:none;user-select:none;}
 #prUserCard .uc-stats{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:8px 0 3px}
 #prUserCard .uc-stats>div{background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.08);border-radius:13px;padding:8px 4px;display:flex;flex-direction:column;gap:2px}
 #prUserCard .uc-stats b{font-size:15px;color:#fff}
@@ -1422,7 +1423,23 @@ html,body{overscroll-behavior:none!important;}
   transform:none!important;
 }
 </style>
+<style id="appWideCopyRestriction">
+/* पूरे ऐप में लॉन्ग-प्रेस पर टेक्स्ट-सिलेक्ट/कॉपी पॉपअप बंद — सिर्फ चैट के मैसेज टेक्स्ट में ही सिलेक्ट/कॉपी काम करेगा */
+*,*::before,*::after{
+  -webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;
+  -webkit-touch-callout:none;
+}
+input,textarea,select,[contenteditable="true"],[contenteditable=""]{
+  -webkit-user-select:text!important;-moz-user-select:text!important;-ms-user-select:text!important;user-select:text!important;
+  -webkit-touch-callout:default!important;
+}
+.pr-msg.pr-chat-line .pr-t,.pr-msg.pr-chat-line .pr-bubble{
+  -webkit-user-select:text!important;-moz-user-select:text!important;-ms-user-select:text!important;user-select:text!important;
+  -webkit-touch-callout:default!important;
+}
+</style>
 </head>
+
 <body>
 
 <div class="auth-wrap" id="pkLoginScreen" style="display:none">
@@ -1977,7 +1994,7 @@ async function pkMigrateLegacyAccount(){
 }
 async function pkLogout(){
   if(window.__pkGuest && !confirm('Aap Guest hain. Logout karne par yeh account, coins aur data hamesha ke liye chale jayenge. Pehle ID bana lein. Phir bhi logout karein?')) return;
-  try{ if(typeof cinemaLeaveRoom==='function' && cinemaRoomId) cinemaLeaveRoom(); }catch(e){}
+  try{ if(cinemaRoomId && typeof window.closeCinemaGhar==='function') window.closeCinemaGhar(); }catch(e){}
   try{ if(typeof pkCloseMeProfile==='function') pkCloseMeProfile(); }catch(e){}
   try{ if(typeof closePartyFrameStore==='function') closePartyFrameStore(); }catch(e){}
   try{ if(typeof pkCloseVipPanel==='function') pkCloseVipPanel(); }catch(e){}
@@ -2521,7 +2538,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(cinemaPresenceUnsub) cinemaPresenceUnsub();
     cinemaPresenceUnsub=ref.parent.onSnapshot(snap=>{
       const now=Date.now(), people=[]; let mineDoc=null;
-      snap.forEach(doc=>{const d=doc.data()||{}; if(doc.id===String(currentUserKey||'')) mineDoc=d; if(d.lastActive && now-d.lastActive<15000){ const nm=String(d.name||'').trim(); if(nm){ (window.__prUserNameCache||(window.__prUserNameCache={}))[String(doc.id)]=nm; } people.push({key:doc.id,name:nm||'User',seat:Number.isInteger(d.seat)?d.seat:null,muted:d.muted===true,hostSeated:d.hostSeated===true}); }});
+      snap.forEach(doc=>{const d=doc.data()||{}; if(doc.id===String(currentUserKey||'')) mineDoc=d; if(d.lastActive && now-d.lastActive<15000){ const nm=String(d.name||'').trim(); if(nm){ (window.__prUserNameCache||(window.__prUserNameCache={}))[String(doc.id)]=nm; } people.push({key:doc.id,name:nm||'User',seat:Number.isInteger(d.seat)?d.seat:null,seatSince:Number.isInteger(d.seat)?(Number(d.seatSince)||0):0,muted:d.muted===true,hostSeated:d.hostSeated===true}); }});
       try{ if(window.pkRoomPresenceGuard && window.pkRoomPresenceGuard(mineDoc,ref)) return; }catch(e){}
       window.__cinemaPeople=people;
       const count=document.getElementById('cinemaViewerCount');
@@ -2619,13 +2636,22 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     box.classList.toggle('pr-eight-seat-mode', N===8);
     box.classList.toggle('pr-twelve-seat-mode', N===12);
     const lockedSet=new Set((window.__prLockedSeats||[]).map(Number));
-    const totals=window.__prGiftTotals||{};
+    const giftDocsRaw=window.__prGiftDocsRaw||null;
     if(box.children.length!==N){ box.innerHTML=''; box.__sigs=[]; }
     if(!box.__sigs) box.__sigs=[];
     for(let i=0;i<N;i++){
       const p=bySeat[i]; const occupied=!!p; const mineSeat=occupied && p.key===String(currentUserKey||'');
       const isMuted=occupied && p.muted===true;
-      const gv=occupied?(Number(totals[p.key])||0):0;
+      // सीट पर गिफ्ट का आँकड़ा सिर्फ़ इस "बैठक" (seatSince के बाद) के गिफ्ट का दिखे; उतरकर दोबारा बैठने पर 0 से शुरू हो।
+      let gv=0;
+      if(occupied){
+        if(giftDocsRaw){
+          const since=Number(p.seatSince)||0;
+          for(let gi=0;gi<giftDocsRaw.length;gi++){ const g=giftDocsRaw[gi]; if(g.toKey===p.key && g.createdAt>=since) gv+=g.value; }
+        } else {
+          gv=Number((window.__prGiftTotals||{})[p.key])||0;
+        }
+      }
       // सिर्फ बदली हुई सीट दोबारा बनती है, ताकि घूमता हुआ frame हर 5 सेकंड में रीस्टार्ट न हो।
       const photo=occupied?cinemaPhotoFor(p.key):'';
       const frame=occupied?partyFrameFor(p.key):'none';
@@ -2725,7 +2751,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       if(!cinemaIsHost && (window.__prLockedSeats||[]).map(Number).includes(seat)){ (window.pkRoomToast||alert)('🔒 यह सीट होस्ट ने लॉक की है।'); return; }
       const people=window.__cinemaPeople||[]; const taken=people.find(p=>p.key!==String(currentUserKey) && p.seat===seat);
       if(taken){ alert('यह सीट पहले से भरी हुई है।'); return; }
-      await ref.set({name:cinemaUserName(),seat:seat,hostSeated:false,muted:false,lastActive:Date.now()},{merge:true});
+      await ref.set({name:cinemaUserName(),seat:seat,hostSeated:false,muted:false,seatSince:Date.now(),lastActive:Date.now()},{merge:true});
       // सीट लेते ही उसी tap के user-gesture में microphone/audio शुरू करें।
       setTimeout(()=>{ try{ cinemaStartGroupCall('audio'); }catch(e){} },60);
     }catch(e){ alert('सीट बदल नहीं पाई।'); }
@@ -2967,7 +2993,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       const el=document.getElementById('cinemaChatMessages'); if(!el)return;
       if(snap.empty){el.__ready=false;el.innerHTML='<div style="text-align:center;color:#64748b;font-size:12px;padding:28px 10px;">अभी कोई मैसेज नहीं। पहला मैसेज भेजें 👋</div>';partyRoomChatReady=true;partyRoomSetUnread(0);return;}
       const incoming=[];
-      snap.docChanges().forEach(ch=>{ if(ch.type!=='added')return; const d=ch.doc.data()||{}; const mine=String(d.userKey||'')===String(currentUserKey||''); const _mt=(d.ts&&d.ts.toMillis)?d.ts.toMillis():(d.ts||d.createdAt||0); if(_mt&&window._roomEnterTime&&_mt<window._roomEnterTime){partyRoomChatSeenIds.add(ch.doc.id);return;} if(partyRoomChatReady && !partyRoomChatSeenIds.has(ch.doc.id) && !mine) incoming.push(ch.doc.id); partyRoomChatSeenIds.add(ch.doc.id); });
+      snap.docChanges().forEach(ch=>{ if(ch.type!=='added')return; const d=ch.doc.data()||{}; const mine=String(d.userKey||'')===String(currentUserKey||''); if(partyRoomChatReady && !partyRoomChatSeenIds.has(ch.doc.id) && !mine) incoming.push(ch.doc.id); partyRoomChatSeenIds.add(ch.doc.id); });
       if(partyRoomChatReady && incoming.length) partyRoomSetUnread(partyRoomUnreadCount+incoming.length);
       if(!el.__ready){
         // पहली बार: पूरी लिस्ट एक साथ बनाएँ
@@ -3004,7 +3030,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         }
       }
       const cc=document.getElementById('cinemaChatCount'); if(cc)cc.textContent=Math.max(0,el.children.length-1)+' संदेश';
-partyRoomChatReady=true;
+      partyRoomChatReady=true;
     },()=>{const el=document.getElementById('cinemaChatMessages');if(el){el.__ready=false;el.innerHTML='<div style="text-align:center;color:#fca5a5;font-size:12px;padding:28px 10px;">Chat permission/connection की जाँच करें।</div>';}});
   }
   async function cinemaSendChat(){
@@ -3060,7 +3086,18 @@ partyRoomChatReady=true;
     if(cinemaPresenceUnsub){cinemaPresenceUnsub();cinemaPresenceUnsub=null;}
     if(cinemaChatUnsub){cinemaChatUnsub();cinemaChatUnsub=null;}
     if(cinemaReactionUnsub){cinemaReactionUnsub();cinemaReactionUnsub=null;}
-    if(cinemaRoomId && currentUserKey && db){ db.collection('cinemaRooms').doc(cinemaRoomId).collection('viewers').doc(currentUserKey).delete().catch(()=>{}); }
+    if(cinemaRoomId && currentUserKey && db){
+      db.collection('cinemaRooms').doc(cinemaRoomId).collection('viewers').doc(currentUserKey).delete().catch(()=>{});
+      // कमेंट क्लियर करें: यूज़र के रूम छोड़ते ही उसके कमेंट (सिस्टम/गिफ्ट मैसेज नहीं) रूम की चैट से हट जाएँ
+      try{
+        var __clrRoomId=cinemaRoomId, __clrMe=String(currentUserKey);
+        db.collection('cinemaRooms').doc(__clrRoomId).collection('chat').where('userKey','==',__clrMe).get().then(function(qs){
+          var batch=db.batch(), any=false;
+          qs.forEach(function(doc){ var t=(doc.data()||{}).type; if(!t || t==='text'){ batch.delete(doc.ref); any=true; } });
+          if(any) batch.commit().catch(function(){});
+        }).catch(function(){});
+      }catch(e){}
+    }
     clearInterval(cinemaRoomTicker); cinemaRoomTicker=null;
     const m=document.getElementById('cinemaGharModal'); if(m){cinemaApplyPartyBackground(m,'midnight',''); m.style.display='none';}
     const lobby=document.getElementById('cinemaLobby'), stage=document.getElementById('cinemaRoomStage');
@@ -3675,6 +3712,27 @@ partyRoomChatReady=true;
     if(composer.style.display!=='flex' && typeof window.partyRoomFocusChat==='function') window.partyRoomFocusChat();
     setTimeout(function(){ try{ if(prefill){ input.value=prefill; } input.focus(); }catch(e){} },90);
   };
+  window.prTagUserToComment=function(key,name){
+    var nm=String(name||nameOf(String(key||''))||'User');
+    window.prOpenComposer('@'+nm+' ');
+  };
+  window.prCopyText=function(val){
+    val=String(val||''); if(!val) return;
+    function ok(){ try{ toast('✔ कॉपी हो गया'); }catch(e){} }
+    function fail(){
+      try{
+        var ta=document.createElement('textarea'); ta.value=val;
+        ta.style.position='fixed'; ta.style.opacity='0'; ta.style.top='0'; ta.style.left='0';
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        var done=document.execCommand('copy'); document.body.removeChild(ta);
+        if(done) ok(); else try{ toast('कॉपी नहीं हो पाई'); }catch(e){}
+      }catch(e){ try{ toast('कॉपी नहीं हो पाई'); }catch(_){} }
+    }
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(val).then(ok).catch(fail);
+      else fail();
+    }catch(e){ fail(); }
+  };
   window.prWelcome=async function(name){
     if(!db||!cinemaRoomId) return;
     try{
@@ -3734,12 +3792,15 @@ partyRoomChatReady=true;
     var seen=new Set();
     window.__prGiftUnsub=db.collection('cinemaRooms').doc(cinemaRoomId).collection('gifts')
       .orderBy('createdAt','desc').limit(300).onSnapshot(function(snap){
-        var totals={};
+        var totals={}; var raw=[];
         snap.forEach(function(doc){
           var d=doc.data()||{}; var k=String(d.toKey||''); if(!k) return;
-          totals[k]=(totals[k]||0)+(Number(d.value)||0)*(Number(d.count)||1);
+          var v=(Number(d.value)||0)*(Number(d.count)||1);
+          totals[k]=(totals[k]||0)+v;
+          raw.push({toKey:k,value:v,createdAt:Number(d.createdAt)||0});
         });
         window.__prGiftTotals=totals;
+        window.__prGiftDocsRaw=raw;
         var now=Date.now();
         snap.docChanges().forEach(function(ch){
           if(ch.type!=='added' || seen.has(ch.doc.id)) return;
@@ -4122,8 +4183,6 @@ partyRoomChatReady=true;
       }
     }catch(e){}
     var bio=String(profile.bio||profile.about||profile.description||'').trim();
-    var joined=profile.createdAt||profile.joinedAt||profile.created_at||'', joinedText='';
-    try{if(joined){var jd=joined.toDate?joined.toDate():new Date(joined);if(!isNaN(jd.getTime()))joinedText=jd.toLocaleDateString('hi-IN',{day:'numeric',month:'long',year:'numeric'});}}catch(e){}
     try{if(!me&&db&&currentUserKey){await db.collection('users').doc(key).collection('profileVisitors').doc(String(currentUserKey)).set({visitorKey:String(currentUserKey),visitorName:String(cinemaUserName()||'User'),visitedAt:Date.now()},{merge:true});}}catch(e){}
     var label=(typeof window.pkGamingLabelInfo==='function')?window.pkGamingLabelInfo(coins):null;
     var seatAction=(me&&seatNo!==null)
@@ -4134,19 +4193,19 @@ partyRoomChatReady=true;
       '<div class="uc-nm">'+esc(name)+(vip?' <span class="pk-vip-badge">👑 VIP</span>':'')+(me?' <span class="uc-you">आप</span>':'')+'</div>'+
       '<div class="uc-tg">'+tag+' · 🎁 '+window.prFmt(total)+' मिले</div>'+
       (genderTxt?'<div class="uc-idline">'+genderTxt+'</div>':'')+
-      '<div class="uc-idline">User ID: <b>'+esc(publicId||key)+'</b></div>'+
+      '<div class="uc-idline">User ID: <b>'+esc(publicId||key)+'</b> <button type="button" class="uc-copy-id" data-pr-act="copyid" data-copy="'+esc(publicId||key)+'" aria-label="ID कॉपी करें" title="ID कॉपी करें">📋</button></div>'+
       '<div class="uc-stats"><div><b>'+followers.toLocaleString('en-IN')+'</b><span>Followers</span></div><div><b>'+following.toLocaleString('en-IN')+'</b><span>Following</span></div><div><b>'+likes.toLocaleString('en-IN')+'</b><span>Likes</span></div></div>'+
       '<div class="uc-details">'+
         (bio?'<div class="uc-detail"><strong>📝 Bio</strong><span>'+esc(bio)+'</span></div>':'')+
         '<div class="uc-detail"><strong>🎙 Room Status</strong><span>'+esc(tag)+(seatNo!==null?' · Seat '+seatNo:'')+'</span></div>'+
         '<div class="uc-detail"><strong>🪙 Gaming</strong><span>'+coins.toLocaleString('en-IN')+' Game Coins'+(label&&label.level?' · '+esc(label.name)+' Lv.'+label.level:'')+'</span></div>'+
-        (joinedText?'<div class="uc-detail"><strong>📅 Joined</strong><span>'+esc(joinedText)+'</span></div>':'')+
         '<div class="uc-detail"><strong>🎁 Room Gifts</strong><span>'+window.prFmt(total)+' received</span></div>'+
       '</div>'+
       ((cinemaIsHost && !isHost && seatNo!==null)?'<button type="button" class="uc-host-remove" data-pr-act="removeSeat" data-key="'+esc(key)+'">🪑 सीट से Remove करें</button>':'')+
       '<div class="uc-row">'+
         (me?'':'<button type="button" data-pr-act="follow" data-key="'+esc(key)+'" style="background:'+(isFollowing?'rgba(34,197,94,.22)':'linear-gradient(135deg,#7c3aed,#db2777)')+';">'+(isFollowing?'✓ Following':'＋ Follow')+'</button>')+
         (me?'':'<button type="button" data-pr-act="msgto" data-key="'+esc(key)+'" data-name="'+esc(name)+'">💬 मैसेज</button>')+
+        (me?'':'<button type="button" data-pr-act="tagcomment" data-key="'+esc(key)+'" data-name="'+esc(name)+'">🏷️ टैग करें</button>')+
         (me?'':'<button type="button" data-pr-act="callto" data-key="'+esc(key)+'" data-name="'+esc(name)+'" data-mode="audio">📞 ऑडियो कॉल</button>')+
         (me?'':'<button type="button" data-pr-act="callto" data-key="'+esc(key)+'" data-name="'+esc(name)+'" data-mode="video">📹 वीडियो कॉल</button>')+
         '<button type="button" class="pri" data-pr-act="giftto" data-key="'+esc(key)+'">🎁 '+(me?'खुद को गिफ्ट':'गिफ्ट भेजें')+'</button>'+
@@ -4161,6 +4220,8 @@ partyRoomChatReady=true;
     var t=e.target&&e.target.closest?e.target.closest('[data-pr-act]'):null; if(!t) return;
     var a=t.getAttribute('data-pr-act'), name=t.getAttribute('data-name')||'', key=t.getAttribute('data-key')||'';
     if(a==='mention'){ window.prOpenComposer('@'+name+' '); }
+    else if(a==='tagcomment'){ window.prTagUserToComment(key,name); try{ window.prCloseSheets(); }catch(e){} }
+    else if(a==='copyid'){ window.prCopyText(t.getAttribute('data-copy')||''); }
     else if(a==='profile'){ if(key) window.prOpenRoomCard(key); }
     else if(a==='welcome'){ window.prWelcome(name); t.remove(); }
     else if(a==='pick'){ window.__prTo=key; renderRecipients(); renderSendInfo(); }
@@ -6499,12 +6560,6 @@ setInterval(function(){try{
   }
   var _open=window.openPartyRoomSettings;
   window.openPartyRoomSettings=function(){ var r=_open?_open.apply(this,arguments):undefined; try{ ensureHostCards(); }catch(e){} return r; };
-
-  /* ---------- tap on a chat avatar opens the profile ---------- */
-  document.addEventListener('click',function(e){
-    var a=e.target.closest&&e.target.closest('.pr-chat-avatar[data-chat-avatar-key]'); if(!a) return;
-    var k=a.getAttribute('data-chat-avatar-key'); if(k && typeof window.prOpenUserCard==='function') window.prOpenUserCard(k);
-  });
 })();
 
 </script>
@@ -8072,5 +8127,31 @@ input,textarea,select{font-size:16px}
 
   setInterval(function(){ watchMsgs(); watchCalls(); },2000);
   watchMsgs(); watchCalls();
+})();
+</script>
+<script id="partyRoomTagLongPress">
+(function(){
+  /* सीट पर बैठे व्यक्ति या कमेंट के अवतार को press-hold करने पर भी उसका प्रोफाइल (जिसमें 🏷️ टैग करें बटन है) खुल जाए */
+  var LP_MS=500, TOL=10, timer=null, sx=0, sy=0, tEl=null;
+  function findTarget(t){
+    if(!t||!t.closest) return null;
+    return t.closest('.psf-seat.psf-occ[data-user-key]')||t.closest('[data-pr-act="profile"]');
+  }
+  function clearLP(){ if(timer){ clearTimeout(timer); timer=null; } tEl=null; }
+  document.addEventListener('pointerdown',function(e){
+    var t=findTarget(e.target); clearLP(); if(!t) return;
+    tEl=t; sx=e.clientX; sy=e.clientY;
+    timer=setTimeout(function(){
+      var key=tEl?(tEl.getAttribute('data-user-key')||tEl.getAttribute('data-key')||''):'';
+      timer=null;
+      if(key && typeof window.prOpenRoomCard==='function') window.prOpenRoomCard(key);
+    },LP_MS);
+  },{passive:true});
+  document.addEventListener('pointermove',function(e){
+    if(!timer) return;
+    if(Math.abs(e.clientX-sx)>TOL||Math.abs(e.clientY-sy)>TOL) clearLP();
+  },{passive:true});
+  document.addEventListener('pointerup',clearLP,{passive:true});
+  document.addEventListener('pointercancel',clearLP,{passive:true});
 })();
 </script>
