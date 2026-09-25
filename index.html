@@ -4032,6 +4032,66 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     }
   };
 
+  window.prGetDirectGiftCatalog=function(){
+    return GIFTS_ALL.map(function(g){return {id:g.id,emoji:g.e,name:g.n,value:Number(g.v)||0};});
+  };
+  window.prGetDirectGiftBalance=function(){return Math.max(0,Math.floor(Number(gamePoints)||0));};
+  window.prRefreshDirectGiftBalance=async function(){
+    if(!db||!currentUserKey)return window.prGetDirectGiftBalance();
+    try{
+      var snap=await db.collection('users').doc(myKey()).get();
+      if(snap.exists){var d=snap.data()||{};gamePoints=Math.max(0,Math.floor(Number(d.gamePoints)||0));}
+      prSyncCoinDisplays();
+    }catch(e){}
+    return window.prGetDirectGiftBalance();
+  };
+  window.prSendDirectGift=async function(toKey,toName,giftId){
+    if(!db||!currentUserKey)return {ok:false,reason:'unavailable'};
+    var me=myKey(),recipient=String(toKey||'');
+    if(!recipient)return {ok:false,reason:'missing-recipient'};
+    if(recipient===me)return {ok:false,reason:'self-gift'};
+    var g=findGiftById(String(giftId||''));
+    if(!g)return {ok:false,reason:'missing-gift'};
+    var myRef=db.collection('users').doc(me);
+    var recipientRef=db.collection('users').doc(recipient);
+    var threadId=[me,recipient].sort().join('_');
+    var messageRef=db.collection('directMessages').doc(threadId).collection('items').doc();
+    var createdAt=Date.now();
+    var fromName=typeof cinemaUserName==='function'?cinemaUserName():'User';
+    var recipientName=String(toName||'User');
+    var value=Math.max(0,Math.floor(Number(g.v)||0));
+    var text='🎁 '+g.e+' '+g.n+' · 🪙 '+value+' Coins';
+    try{
+      var balanceAfter=await db.runTransaction(async function(tx){
+        var mySnap=await tx.get(myRef);
+        var recipientSnap=await tx.get(recipientRef);
+        var myData=mySnap.exists?(mySnap.data()||{}):{};
+        var recipientData=recipientSnap.exists?(recipientSnap.data()||{}):{};
+        var balance=Math.max(0,Math.floor(Number(myData.gamePoints)||0));
+        if(balance<value)throw new Error('insufficient');
+        var diamonds=Math.max(0,Math.floor(Number(recipientData.diamonds)||0));
+        var after=balance-value;
+        tx.set(myRef,{gamePoints:after},{merge:true});
+        tx.set(recipientRef,{diamonds:diamonds+value},{merge:true});
+        tx.set(messageRef,{
+          from:me,to:recipient,fromName:fromName,toName:recipientName,
+          type:'gift',giftId:g.id,emoji:g.e,giftName:g.n,value:value,
+          text:text,createdAt:createdAt
+        });
+        return after;
+      });
+      gamePoints=balanceAfter;
+      stateLoaded=true;
+      prSyncCoinDisplays();
+      try{window.pkDmInboxWrite&&window.pkDmInboxWrite(recipient,recipientName,text);}catch(e){}
+      return {ok:true,text:text,balance:balanceAfter};
+    }catch(e){
+      if(e&&e.message==='insufficient')return {ok:false,reason:'insufficient'};
+      console.warn('Direct gift failed',e);
+      return {ok:false,reason:'send-failed'};
+    }
+  };
+
   window.prOpenUserCard=async function(key){
     key=String(key||''); var card=$('prUserCard'); if(!card) return;
     var p=findPerson(key), name=nameOf(key)||'User';
@@ -4765,6 +4825,26 @@ setInterval(function(){try{
   var direct={peer:null,stream:null,callId:'',otherKey:'',otherName:'',otherPhoto:'',myPhoto:'',mode:'audio',unsub:null,candUnsub:null,mute:false,watchUnsub:null,pending:null};
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
   function pair(a,b){return [String(a),String(b)].sort().join('_');}
+  async function saveDirectCallHistory(call){
+    if(!call||!call.id||!call.connectedAt||!db||!currentUserKey||!call.otherKey)return;
+    var endedAt=Number(call.endedAt)||Date.now();
+    var startedAt=Number(call.connectedAt);
+    var durationSeconds=Math.max(0,Math.floor((endedAt-startedAt)/1000));
+    var minutes=Math.floor(durationSeconds/60);
+    var seconds=durationSeconds%60;
+    var durationText=minutes?minutes+' मिनट '+String(seconds).padStart(2,'0')+' सेकंड':durationSeconds+' सेकंड';
+    var callTime=new Date(startedAt).toLocaleTimeString('hi-IN',{hour:'2-digit',minute:'2-digit'});
+    var text=(call.mode==='video'?'📹 Video call':'📞 Audio call')+' · '+durationText+' · '+callTime+' बजे';
+    var me=String(currentUserKey),other=String(call.otherKey);
+    var ref=db.collection('directMessages').doc(pair(me,other)).collection('items').doc('call_'+String(call.id));
+    var inserted=await db.runTransaction(async function(tx){
+      var existing=await tx.get(ref);
+      if(existing.exists)return false;
+      tx.set(ref,{from:me,to:other,text:text,createdAt:endedAt,type:'call',callType:call.mode,durationSeconds:durationSeconds,callStartedAt:startedAt,callEndedAt:endedAt,callId:String(call.id)});
+      return true;
+    });
+    if(inserted)try{window.pkDmInboxWrite&&window.pkDmInboxWrite(other,call.otherName,text);}catch(e){}
+  }
   function show(id,display){var e=document.getElementById(id);if(e)e.style.display=display;}
   function profileVip(d){return !!(d&&(d.vip===true||d.isVip===true||d.vipActive===true||String(d.vipStatus||'').toLowerCase()==='active'||String(d.membership||'').toLowerCase()==='vip'));}
   async function visitorCount(){try{if(!db||!currentUserKey)return 0;var s=await db.collection('users').doc(String(currentUserKey)).collection('profileVisitors').get();var e=document.getElementById('pkVisitorsCount');if(e)e.textContent=s.size;return s.size;}catch(e){return 0;}}
@@ -4827,6 +4907,9 @@ setInterval(function(){try{
     if(x.image) h+='<img class="pk-dm-img" alt="Photo" src="'+esc(x.image)+'" onload="var b=document.getElementById(\'pkDirectMessages\');if(b)b.scrollTop=b.scrollHeight" onclick="pkDirectViewImage(this.src)">';
     if(x.audio) h+='<audio class="pk-dm-audio" controls preload="metadata" src="'+esc(x.audio)+'"></audio>';
     return h;
+  }
+  function dmGiftCard(x){
+    return '<div class="pk-dm-gift-card"><span class="pk-dm-gift-emoji">'+esc(x.emoji||'🎁')+'</span><span class="pk-dm-gift-copy"><b>'+esc(x.giftName||'Gift')+'</b><small>🪙 '+esc(x.value||0)+' Coins</small></span></div>';
   }
   window.pkDirectViewImage=function(src){
     var v=document.createElement('div'); v.className='pk-dm-viewer';
@@ -4950,8 +5033,129 @@ setInterval(function(){try{
       if(st.sec>=60) dmStopRec(true);
     },1000);
   };
+  var dmGiftSelected='rose',dmGiftSending=false;
+  function dmEnsureGiftStyle(){
+    if(document.getElementById('pkDmGiftStyle'))return;
+    var style=document.createElement('style');style.id='pkDmGiftStyle';
+    style.textContent='#pkDirectMessageOverlay .pk-compose-icon.pk-compose-gift{width:34px;height:36px;border-radius:50%;background:linear-gradient(145deg,#fff0b8,#ffd1e2)!important;color:#b42368!important;font-size:19px!important;box-shadow:0 2px 8px rgba(190,55,120,.18)}'
+      +'#pkDirectGiftSheet{position:absolute;inset:0;z-index:100010;display:none;align-items:flex-end;justify-content:center;box-sizing:border-box;background:rgba(26,18,38,.42);padding:8px 8px 0}'
+      +'#pkDirectGiftSheet.open{display:flex}'
+      +'#pkDirectGiftSheet .pk-dm-gift-panel{width:min(100%,560px);max-height:86dvh;display:flex;flex-direction:column;gap:12px;box-sizing:border-box;overflow:hidden;padding:18px 16px calc(env(safe-area-inset-bottom,0px) + 14px);border-radius:24px 24px 0 0;background:#fff;color:#211a2d;box-shadow:0 -12px 42px rgba(18,10,34,.22)}'
+      +'#pkDirectGiftSheet .pk-dm-gift-header{display:flex;align-items:center;justify-content:space-between;gap:12px}'
+      +'#pkDirectGiftSheet .pk-dm-gift-heading{font-size:19px;font-weight:850;color:#32164b}'
+      +'#pkDirectGiftSheet .pk-dm-gift-to{font-size:12px;color:#786b87;margin-top:3px}'
+      +'#pkDirectGiftSheet .pk-dm-gift-close{width:36px;height:36px;border:0;border-radius:50%;background:#f2eef7;color:#49365c;font-size:22px;cursor:pointer}'
+      +'#pkDirectGiftSheet .pk-dm-gift-balance{padding:10px 12px;border-radius:12px;background:#f7f1ff;color:#5b3b7d;font-size:13px;font-weight:750}'
+      +'#pkDirectGiftSheet .pk-dm-gift-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;overflow:auto;overscroll-behavior:contain;padding:2px;min-height:0;flex:1 1 auto}'
+      +'#pkDirectGiftSheet .pk-dm-gift-item{min-width:0;min-height:84px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:7px 4px;border:1px solid #ece6f3;border-radius:14px;background:#fbf9fd;color:#30253b;cursor:pointer}'
+      +'#pkDirectGiftSheet .pk-dm-gift-item.selected{border-color:#b13fe0;background:linear-gradient(145deg,#fbf0ff,#fff1f5);box-shadow:0 0 0 2px rgba(177,63,224,.12)}'
+      +'#pkDirectGiftSheet .pk-dm-gift-item .emoji{font-size:24px;line-height:1.1}'
+      +'#pkDirectGiftSheet .pk-dm-gift-item .name{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:800}'
+      +'#pkDirectGiftSheet .pk-dm-gift-item .price{font-size:9px;color:#806b92;white-space:nowrap}'
+      +'#pkDirectGiftSheet .pk-dm-gift-info{min-height:18px;font-size:12px;color:#6c587b;text-align:center}'
+      +'#pkDirectGiftSheet .pk-dm-gift-actions{display:flex;gap:10px}'
+      +'#pkDirectGiftSheet .pk-dm-gift-actions button{height:44px;flex:1;border:0;border-radius:14px;font-size:14px;font-weight:850;cursor:pointer}'
+      +'#pkDirectGiftSheet .pk-dm-gift-cancel{background:#f2eef7;color:#554466}'
+      +'#pkDirectGiftSheet .pk-dm-gift-send{background:linear-gradient(110deg,#8537d8,#db3c96);color:#fff;box-shadow:0 5px 14px rgba(150,50,190,.22)}'
+      +'#pkDirectGiftSheet .pk-dm-gift-send:disabled{opacity:.42;box-shadow:none;cursor:not-allowed}'
+      +'#pkDirectMessages .pk-dm-gift-card{min-width:148px;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:linear-gradient(135deg,#fff3d5,#ffe4ef);color:#44243b}'
+      +'#pkDirectMessages .pk-dm-gift-emoji{font-size:34px;line-height:1}'
+      +'#pkDirectMessages .pk-dm-gift-copy{display:flex;flex-direction:column;gap:3px}'
+      +'#pkDirectMessages .pk-dm-gift-copy b{font-size:14px}'
+      +'#pkDirectMessages .pk-dm-gift-copy small{font-size:11px;opacity:.75}'
+      +'@media(max-width:360px){#pkDirectGiftSheet .pk-dm-gift-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}';
+    document.head.appendChild(style);
+  }
+  function dmGiftBalance(){
+    try{return Math.max(0,Math.floor(Number(window.prGetDirectGiftBalance())||0));}catch(e){return 0;}
+  }
+  function dmUpdateGiftInfo(){
+    var balance=dmGiftBalance(),balanceEl=document.getElementById('pkDmGiftBalance'),toEl=document.getElementById('pkDmGiftTo');
+    var info=document.getElementById('pkDmGiftInfo'),send=document.getElementById('pkDmGiftSend');
+    var catalog=typeof window.prGetDirectGiftCatalog==='function'?window.prGetDirectGiftCatalog():[];
+    var gift=catalog.filter(function(g){return String(g.id)===String(dmGiftSelected);})[0];
+    if(balanceEl)balanceEl.textContent='आपके पास: 🪙 '+balance.toLocaleString('en-IN')+' Game Coins';
+    if(toEl)toEl.textContent='किसे: '+String(direct.otherName||'User');
+    var self=String(direct.otherKey||'')===String(currentUserKey||'');
+    if(info)info.textContent=!gift?'गिफ्ट उपलब्ध नहीं है':self?'खुद को गिफ्ट नहीं भेज सकते':balance<Number(gift.value)?'इस गिफ्ट के लिए और Game Coins चाहिए':'🎁 '+gift.emoji+' '+gift.name+' · 🪙 '+Number(gift.value).toLocaleString('en-IN')+' Coins';
+    if(send)send.disabled=dmGiftSending||!gift||self||balance<Number(gift.value);
+    var grid=document.getElementById('pkDmGiftGrid');
+    if(grid)Array.prototype.forEach.call(grid.querySelectorAll('[data-dm-gift-id]'),function(btn){btn.classList.toggle('selected',btn.getAttribute('data-dm-gift-id')===String(dmGiftSelected));});
+  }
+  function dmRenderGiftGrid(){
+    var grid=document.getElementById('pkDmGiftGrid');
+    if(!grid)return;
+    var catalog=typeof window.prGetDirectGiftCatalog==='function'?window.prGetDirectGiftCatalog():[];
+    grid.innerHTML=catalog.map(function(g){
+      return '<button type="button" class="pk-dm-gift-item'+(String(g.id)===String(dmGiftSelected)?' selected':'')+'" data-dm-gift-id="'+esc(g.id)+'"><span class="emoji">'+esc(g.emoji)+'</span><span class="name">'+esc(g.name)+'</span><span class="price">🪙 '+Number(g.value).toLocaleString('en-IN')+'</span></button>';
+    }).join('');
+    grid.onclick=function(ev){
+      var btn=ev.target.closest&&ev.target.closest('[data-dm-gift-id]');
+      if(!btn)return;
+      dmGiftSelected=btn.getAttribute('data-dm-gift-id')||'rose';
+      dmUpdateGiftInfo();
+    };
+    if(!catalog.length)grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:#766780">Gift list अभी उपलब्ध नहीं है।</div>';
+    dmUpdateGiftInfo();
+  }
+  function dmCloseGift(){
+    var sheet=document.getElementById('pkDirectGiftSheet');
+    if(sheet){sheet.classList.remove('open');sheet.setAttribute('aria-hidden','true');}
+  }
+  function dmOpenGift(){
+    if(!direct.otherKey||!currentUserKey){dmNote('पहले किसी चैट को खोलें');return;}
+    dmEnsureGiftUI();
+    var sheet=document.getElementById('pkDirectGiftSheet');
+    if(!sheet)return;
+    dmRenderGiftGrid();
+    sheet.classList.add('open');sheet.setAttribute('aria-hidden','false');
+    if(typeof window.prRefreshDirectGiftBalance==='function')window.prRefreshDirectGiftBalance().then(dmUpdateGiftInfo).catch(function(){});
+  }
+  function dmEnsureGiftUI(){
+    dmEnsureGiftStyle();
+    var compose=document.querySelector('#pkDirectCompose .pk-compose-box');
+    if(compose&&!document.getElementById('pkDirectGiftBtn')){
+      var button=document.createElement('button');
+      button.type='button';button.id='pkDirectGiftBtn';button.className='pk-compose-icon pk-compose-gift';
+      button.setAttribute('aria-label','Send a gift');button.title='गिफ्ट भेजें';button.textContent='🎁';button.onclick=dmOpenGift;
+      var send=document.getElementById('pkDirectSendBtn');
+      compose.insertBefore(button,send||null);
+    }
+    var overlay=document.getElementById('pkDirectMessageOverlay');
+    if(overlay&&!document.getElementById('pkDirectGiftSheet')){
+      var sheet=document.createElement('div');
+      sheet.id='pkDirectGiftSheet';sheet.setAttribute('aria-hidden','true');
+      sheet.innerHTML='<section class="pk-dm-gift-panel" role="dialog" aria-modal="true" aria-labelledby="pkDmGiftTitle"><header class="pk-dm-gift-header"><div><div id="pkDmGiftTitle" class="pk-dm-gift-heading">🎁 गिफ्ट भेजें</div><div id="pkDmGiftTo" class="pk-dm-gift-to"></div></div><button type="button" class="pk-dm-gift-close" data-dm-gift-close aria-label="Close">×</button></header><div id="pkDmGiftBalance" class="pk-dm-gift-balance"></div><div id="pkDmGiftGrid" class="pk-dm-gift-grid"></div><div id="pkDmGiftInfo" class="pk-dm-gift-info"></div><div class="pk-dm-gift-actions"><button type="button" class="pk-dm-gift-cancel" data-dm-gift-close>रद्द करें</button><button type="button" id="pkDmGiftSend" class="pk-dm-gift-send">गिफ्ट भेजें</button></div></section>';
+      sheet.addEventListener('click',function(ev){if(ev.target===sheet||(ev.target.closest&&ev.target.closest('[data-dm-gift-close]')))dmCloseGift();});
+      sheet.querySelector('#pkDmGiftSend').onclick=window.pkDirectSendGift;
+      overlay.appendChild(sheet);
+    }
+  }
+  window.pkDirectOpenGift=dmOpenGift;
+  window.pkDirectCloseGift=dmCloseGift;
+  window.pkDirectSendGift=async function(){
+    if(dmGiftSending)return;
+    var send=document.getElementById('pkDmGiftSend');
+    dmGiftSending=true;dmUpdateGiftInfo();
+    try{
+      var result=await window.prSendDirectGift(direct.otherKey,direct.otherName,dmGiftSelected);
+      if(!result||!result.ok){
+        var messages={unavailable:'अभी गिफ्ट नहीं भेजा जा सका', 'missing-recipient':'पहले किसी चैट को खोलें','self-gift':'खुद को गिफ्ट नहीं भेज सकते',insufficient:'आपके पास इतने Game Coins नहीं हैं','send-failed':'गिफ्ट नहीं गया, दोबारा कोशिश करें'};
+        dmNote(messages[result&&result.reason]||'गिफ्ट अभी उपलब्ध नहीं है');
+        return;
+      }
+      var box=document.getElementById('pkDirectMessages');if(box)box.dataset.dmForceScroll='1';
+      dmCloseGift();
+      dmNote('गिफ्ट भेज दिया गया');
+    }finally{
+      dmGiftSending=false;
+      if(send)send.textContent='गिफ्ट भेजें';
+      dmUpdateGiftInfo();
+    }
+  };
+  dmEnsureGiftUI();
   var dmOldClose=window.pkCloseDirectMessage;
-  window.pkCloseDirectMessage=function(){ try{ dmStopRec(false); }catch(e){} try{ dmClosePreview(); }catch(e){} return dmOldClose.apply(this,arguments); };
+  window.pkCloseDirectMessage=function(){ try{ dmStopRec(false); }catch(e){} try{ dmClosePreview(); }catch(e){} try{dmCloseGift();}catch(e){} return dmOldClose.apply(this,arguments); };
   async function loadDM(){var box=document.getElementById('pkDirectMessages');if(!box||!db||!currentUserKey||!direct.otherKey)return;box.innerHTML='<div style="text-align:center;color:#9a9a9d;padding:25px;">लोड हो रहा है…</div>';try{var ref=db.collection('directMessages').doc(pair(currentUserKey,direct.otherKey)).collection('items');if(direct.dmUnsub)direct.dmUnsub();direct.dmUnsub=ref.orderBy('createdAt','asc').limitToLast(100).onSnapshot(s=>{
       var oldHeight=box.scrollHeight,oldTop=box.scrollTop;
       var nearBottom=(oldHeight-box.clientHeight-oldTop)<80 || !box.dataset.dmRendered;
@@ -4959,7 +5163,8 @@ setInterval(function(){try{
       s.forEach(d=>{var x=d.data()||{},mine=String(x.from||'')===String(currentUserKey),dt=x.createdAt?new Date(x.createdAt):new Date(),day=dt.toLocaleDateString('hi-IN',{day:'numeric',month:'short'});
         if(day!==lastDay){h+='<div class="pk-dm-day">'+(dt.toDateString()===new Date().toDateString()?'Today':esc(day))+(x.createdAt?' '+dt.toLocaleTimeString('hi-IN',{hour:'2-digit',minute:'2-digit'}):'')+'</div>';lastDay=day;}
         var photo=mine?direct.myPhoto:direct.otherPhoto,av=photo?'<img src="'+esc(photo)+'" alt="">':esc(((mine?'You':direct.otherName).trim()[0]||'U').toUpperCase());
-        h+='<div class="pk-dm-row '+(mine?'mine':'theirs')+'">'+(mine?'':'<div class="pk-dm-avatar">'+av+'</div>')+'<div class="pk-dm '+(mine?'mine':'theirs')+'">'+dmMedia(x)+esc(x.text||'')+'<div class="pk-dm-time">'+(x.createdAt?dt.toLocaleTimeString('hi-IN',{hour:'2-digit',minute:'2-digit'}):'')+'</div></div>'+(mine?'<div class="pk-dm-avatar">'+av+'</div>':'')+'</div>';
+         var body=x.type==='gift'?dmGiftCard(x):dmMedia(x)+esc(x.text||'');
+         h+='<div class="pk-dm-row '+(mine?'mine':'theirs')+'">'+(mine?'':'<div class="pk-dm-avatar">'+av+'</div>')+'<div class="pk-dm '+(mine?'mine':'theirs')+'">'+body+'<div class="pk-dm-time">'+(x.createdAt?dt.toLocaleTimeString('hi-IN',{hour:'2-digit',minute:'2-digit'}):'')+'</div></div>'+(mine?'<div class="pk-dm-avatar">'+av+'</div>':'')+'</div>';
       });
       box.innerHTML=h||'<div style="text-align:center;color:#9a9a9d;padding:35px 15px;">अभी कोई मैसेज नहीं है। पहला मैसेज भेजें 👋</div>';
       requestAnimationFrame(function(){
@@ -4977,11 +5182,73 @@ setInterval(function(){try{
   window.pkDirectCallFromMessage=function(mode){if(direct.otherKey)pkStartDirectCall(direct.otherKey,direct.otherName,mode);};
   async function makeStream(mode){if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera/Mic unavailable');return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1},video:mode==='video'});}
   function addVideo(id,stream,muted){var g=document.getElementById('pkCallGrid');if(!g)return;var v=document.getElementById(id);if(!v){v=document.createElement('video');v.id=id;v.autoplay=true;v.playsInline=true;v.muted=!!muted;g.appendChild(v);}v.srcObject=stream;}
-  async function startPeer(initiator,callId,otherKey,otherName,mode,offer){var me=String(currentUserKey||'');direct.callId=callId;direct.otherKey=String(otherKey);direct.otherName=String(otherName||'User');direct.mode=mode;direct.stream=await makeStream(mode);show('pkDirectCallOverlay','flex');(function(){var g=document.getElementById('pkCallGrid');if(g)g.classList.toggle('pk-audio',mode!=='video');photoFor(otherKey).then(function(u){if(g)g.style.background=(mode==='video'||!u)?'':'url("'+u.replace(/"/g,'')+'") center 35%/170px 170px no-repeat #0b0b18';});})();document.getElementById('pkCallTitle').textContent=(initiator?'Calling ':'Call with ')+direct.otherName;document.getElementById('pkCallIcon').textContent=mode==='video'?'📹':'📞';addVideo('pkLocalVideo',direct.stream,true);var pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});direct.peer=pc;direct.stream.getTracks().forEach(t=>pc.addTrack(t,direct.stream));pc.ontrack=e=>{if(e.streams?.[0])addVideo('pkRemoteVideo',e.streams[0],false)};var base=db.collection('directCalls').doc(callId),side=initiator?'a':'b',otherSide=initiator?'b':'a';direct.candUnsub=base.collection('candidates').where('side','==',otherSide).onSnapshot(s=>s.docChanges().forEach(ch=>{if(ch.type==='added'){var c=ch.doc.data();if(c?.candidate){var __try=0,__add=function(){pc.addIceCandidate(new RTCIceCandidate(c.candidate)).catch(function(){if(++__try<12)setTimeout(__add,600);});};__add();}}}));pc.onicecandidate=e=>{if(e.candidate)base.collection('candidates').add({side:side,candidate:e.candidate.toJSON(),createdAt:Date.now()}).catch(()=>{});};pc.onconnectionstatechange=()=>{if(['failed','closed'].includes(pc.connectionState))pkEndDirectCall();};if(initiator){var off=await pc.createOffer();await pc.setLocalDescription(off);await base.set({caller:me,callee:String(otherKey),callerName:cinemaUserName(),mode:mode,status:'ringing',offer:{type:off.type,sdp:off.sdp},updatedAt:Date.now()},{merge:true});}else if(offer){await pc.setRemoteDescription(new RTCSessionDescription(offer));var ans=await pc.createAnswer();await pc.setLocalDescription(ans);await base.set({answer:{type:ans.type,sdp:ans.sdp},status:'accepted',updatedAt:Date.now()},{merge:true});}direct.unsub=base.onSnapshot(async snap=>{var d=snap.data()||{};if(initiator&&d.answer&&!pc.currentRemoteDescription){try{await pc.setRemoteDescription(new RTCSessionDescription(d.answer));}catch(e){}}if(d.status==='rejected'||d.status==='ended')pkEndDirectCall(false);});}
+  async function startPeer(initiator,callId,otherKey,otherName,mode,offer){
+    var me=String(currentUserKey||'');
+    direct.callId=callId;
+    direct.otherKey=String(otherKey);
+    direct.otherName=String(otherName||'User');
+    direct.mode=mode;
+    direct.connectedAt=0;
+    direct.stream=await makeStream(mode);
+    show('pkDirectCallOverlay','flex');
+    (function(){
+      var g=document.getElementById('pkCallGrid');
+      if(g)g.classList.toggle('pk-audio',mode!=='video');
+      photoFor(otherKey).then(function(u){if(g)g.style.background=(mode==='video'||!u)?'':'url("'+u.replace(/"/g,'')+'") center 35%/170px 170px no-repeat #0b0b18';});
+    })();
+    document.getElementById('pkCallTitle').textContent=(initiator?'Calling ':'Call with ')+direct.otherName;
+    document.getElementById('pkCallIcon').textContent=mode==='video'?'📹':'📞';
+    addVideo('pkLocalVideo',direct.stream,true);
+    var pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+    direct.peer=pc;
+    direct.stream.getTracks().forEach(t=>pc.addTrack(t,direct.stream));
+    pc.ontrack=e=>{if(e.streams?.[0])addVideo('pkRemoteVideo',e.streams[0],false)};
+    var base=db.collection('directCalls').doc(callId),side=initiator?'a':'b',otherSide=initiator?'b':'a';
+    direct.candUnsub=base.collection('candidates').where('side','==',otherSide).onSnapshot(s=>s.docChanges().forEach(ch=>{if(ch.type==='added'){var c=ch.doc.data();if(c?.candidate){var __try=0,__add=function(){pc.addIceCandidate(new RTCIceCandidate(c.candidate)).catch(function(){if(++__try<12)setTimeout(__add,600);});};__add();}}}));
+    pc.onicecandidate=e=>{if(e.candidate)base.collection('candidates').add({side:side,candidate:e.candidate.toJSON(),createdAt:Date.now()}).catch(()=>{});};
+    pc.onconnectionstatechange=()=>{
+      if(pc.connectionState==='connected'&&!direct.connectedAt){
+        direct.connectedAt=Date.now();
+        base.set({connectedAt:direct.connectedAt},{merge:true}).catch(()=>{});
+      }
+      if(['failed','closed'].includes(pc.connectionState))pkEndDirectCall();
+    };
+    if(initiator){
+      var off=await pc.createOffer();
+      await pc.setLocalDescription(off);
+      await base.set({caller:me,callee:String(otherKey),callerName:cinemaUserName(),mode:mode,status:'ringing',offer:{type:off.type,sdp:off.sdp},updatedAt:Date.now()},{merge:true});
+    }else if(offer){
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      var ans=await pc.createAnswer();
+      await pc.setLocalDescription(ans);
+      await base.set({answer:{type:ans.type,sdp:ans.sdp},status:'accepted',updatedAt:Date.now()},{merge:true});
+    }
+    direct.unsub=base.onSnapshot(async snap=>{
+      var d=snap.data()||{};
+      if(!direct.connectedAt&&Number(d.connectedAt))direct.connectedAt=Number(d.connectedAt);
+      if(initiator&&d.answer&&!pc.currentRemoteDescription){try{await pc.setRemoteDescription(new RTCSessionDescription(d.answer));}catch(e){}}
+      if(d.status==='rejected'||d.status==='ended')pkEndDirectCall(false);
+    });
+  }
   window.pkStartDirectCall=async function(key,name,mode){if(String(key)===String(currentUserKey||''))return;try{await pkEndDirectCall(false);var id=pair(currentUserKey,key)+'_'+Date.now();await startPeer(true,id,key,name,mode);document.getElementById('pkCallStatus').textContent='Calling…';}catch(e){alert('कॉल शुरू नहीं हो पाई ('+String((e&&(e.name||e.code||e.message))||'')+')। Microphone/Camera permission दें।');pkEndDirectCall(false);}};
   window.pkAcceptIncomingCall=async function(){var p=direct.pending;if(!p)return;ringStop();show('pkIncomingCallOverlay','none');direct.pending=null;try{var __r=document.getElementById('prRoom');if(__r&&__r.offsetParent!==null&&window.closeCinemaGhar){window.closeCinemaGhar();await new Promise(function(r){setTimeout(r,500);});}}catch(e){}try{await startPeer(false,p.id,p.caller,p.callerName,p.mode,p.offer);}catch(e){alert('कॉल accept नहीं हो पाई।');}};
   window.pkRejectIncomingCall=async function(){var p=direct.pending;ringStop();show('pkIncomingCallOverlay','none');direct.pending=null;if(p&&db)try{await db.collection('directCalls').doc(p.id).set({status:'rejected',updatedAt:Date.now()},{merge:true});}catch(e){}};
-  window.pkEndDirectCall=async function(update){if(update!==false&&direct.callId&&db)try{await db.collection('directCalls').doc(direct.callId).set({status:'ended',updatedAt:Date.now()},{merge:true});}catch(e){}try{direct.unsub&&direct.unsub();}catch(e){}try{direct.candUnsub&&direct.candUnsub();}catch(e){}try{direct.peer&&direct.peer.close();}catch(e){}try{direct.stream&&direct.stream.getTracks().forEach(t=>t.stop());}catch(e){}direct.peer=null;direct.stream=null;direct.callId='';document.getElementById('pkCallGrid')?.replaceChildren();show('pkDirectCallOverlay','none');};
+  window.pkEndDirectCall=async function(update){
+    var callId=String(direct.callId||''),endedAt=Date.now();
+    var call=callId?{id:callId,otherKey:String(direct.otherKey||''),otherName:String(direct.otherName||'User'),mode:direct.mode,connectedAt:Number(direct.connectedAt)||0,endedAt:endedAt}:null;
+    if(update!==false&&callId&&db)try{await db.collection('directCalls').doc(callId).set({status:'ended',endedAt:endedAt,updatedAt:endedAt},{merge:true});}catch(e){}
+    if(call&&call.connectedAt)try{await saveDirectCallHistory(call);}catch(e){console.warn('Call history could not be saved',e);}
+    try{direct.unsub&&direct.unsub();}catch(e){}
+    try{direct.candUnsub&&direct.candUnsub();}catch(e){}
+    try{direct.peer&&direct.peer.close();}catch(e){}
+    try{direct.stream&&direct.stream.getTracks().forEach(t=>t.stop());}catch(e){}
+    direct.peer=null;
+    direct.stream=null;
+    direct.callId='';
+    direct.connectedAt=0;
+    document.getElementById('pkCallGrid')?.replaceChildren();
+    show('pkDirectCallOverlay','none');
+  };
   window.pkToggleDirectMute=function(){if(!direct.stream)return;direct.mute=!direct.mute;direct.stream.getAudioTracks().forEach(t=>t.enabled=!direct.mute);var b=document.getElementById('pkCallMute');if(b)b.textContent=direct.mute?'🔊 Unmute':'🔇 Mute';};
   var __ring=null;
   function photoFor(k){return db.collection('users').doc(String(k)).get().then(function(sn){var d=sn.data()||{};return String(d.photoURL||'');}).catch(function(){return '';});}
@@ -6772,6 +7039,16 @@ input,textarea,select{font-size:16px}
 #pkCallGrid{position:relative}
 #pkCallGrid.pk-audio{border-radius:0}
 #pkIncomingCallOverlay .pk-call-card{background:#0b0b18!important}
+ /* Direct video calls: remote participant fills the screen; local camera stays in a floating preview. */
+ #pkDirectCallOverlay .pk-call-card{position:fixed!important;overflow:hidden!important;isolation:isolate}
+ #pkDirectCallOverlay #pkCallGrid{position:absolute!important;inset:0!important;z-index:0;display:block!important;width:100%!important;height:100%!important;min-height:0!important;flex:none!important;overflow:hidden!important;background:#0b0b18}
+ #pkDirectCallOverlay #pkRemoteVideo{position:absolute!important;inset:0!important;z-index:0;width:100%!important;height:100%!important;max-width:none!important;object-fit:cover!important;object-position:center center!important;border:0!important;border-radius:0!important}
+ #pkDirectCallOverlay #pkLocalVideo{position:absolute!important;z-index:2;top:calc(env(safe-area-inset-top,0px) + 68px);right:14px;width:clamp(92px,29vw,148px)!important;height:clamp(132px,23dvh,190px)!important;max-width:none!important;object-fit:cover!important;object-position:center center!important;transform:scaleX(-1);border:2px solid rgba(255,255,255,.9)!important;border-radius:18px!important;box-shadow:0 8px 28px rgba(0,0,0,.42)}
+ #pkDirectCallOverlay #pkRemoteVideo,#pkDirectCallOverlay #pkLocalVideo{filter:brightness(1.055) contrast(1.015) saturate(1.08) blur(.3px)}
+ #pkDirectCallOverlay .pk-call-head{position:absolute!important;z-index:3;top:0;left:0;right:0;box-sizing:border-box;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 48px!important;background:linear-gradient(180deg,rgba(0,0,0,.55),transparent)!important;color:#fff!important}
+ #pkDirectCallOverlay .pk-call-actions{position:absolute!important;z-index:4;left:0;right:0;bottom:0;box-sizing:border-box;padding:44px 16px calc(env(safe-area-inset-bottom,0px) + 18px)!important;background:linear-gradient(0deg,rgba(0,0,0,.62),transparent)!important}
+ #pkCallGrid.pk-audio{background-size:cover!important;background-position:center!important}
+ @media(max-width:360px){#pkDirectCallOverlay #pkLocalVideo{right:10px;width:96px!important;height:132px!important}}
 </style>
 <script id="pkMsgBadgeJs">
 (function(){
