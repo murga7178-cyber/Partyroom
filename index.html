@@ -2326,16 +2326,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
               <button type="button" onclick="setPartyRoomBackground('neon')" style="padding:14px;border-radius:14px;border:1px solid #0e7490;background:linear-gradient(135deg,#042f2e,#164e63);color:#fff;font-weight:900;">🌃 Neon Night</button><button type="button" onclick="setPartyRoomBackground('bloom')" style="padding:14px;border-radius:14px;border:1px solid #d946ef;background:linear-gradient(135deg,#6d28d9,#db2777);color:#fff;font-weight:900;">🌹 Bloom</button><button type="button" onclick="document.getElementById('partyRoomBgGalleryInput').click()" style="padding:14px;border-radius:14px;border:1px solid #64748b;background:rgba(255,255,255,.08);color:#fff;font-weight:900;">🖼️ गैलरी फोटो</button><input id="partyRoomBgGalleryInput" type="file" accept="image/*" style="display:none" onchange="setPartyRoomGalleryBackground(this.files&&this.files[0])">
             </div>
           </div>
-          <div style="background:#111827;border:1px solid #26354d;border-radius:18px;padding:14px;margin-bottom:12px;">
-            <div style="font-size:15px;font-weight:950;margin-bottom:6px;">🪑 Seat Design</div>
-            <div style="font-size:11px;color:#94a3b8;margin-bottom:10px;">Host यहाँ से सभी खाली/नए सीटों का रंग और डिजाइन बदल सकता है।</div>
-            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">
-              <button type="button" onclick="setPartySeatStyle('ocean')" style="padding:12px 8px;border-radius:16px;border:1px solid #3b82f6;background:linear-gradient(145deg,#0f2b4d,#0b1b31);color:#fff;font-weight:900;cursor:pointer;">🌊 Ocean<br><span style="font-size:10px;opacity:.75;">Blue • Soft</span></button>
-              <button type="button" onclick="setPartySeatStyle('royal')" style="padding:12px 8px;border-radius:20px;border:1px solid #a855f7;background:linear-gradient(145deg,#581c87,#241044);color:#fff;font-weight:900;cursor:pointer;">👑 Royal<br><span style="font-size:10px;opacity:.75;">Purple • Glow</span></button>
-              <button type="button" onclick="setPartySeatStyle('gold')" style="padding:12px 8px;border-radius:14px;border:1px solid #f59e0b;background:linear-gradient(145deg,#713f12,#2b1804);color:#fff;font-weight:900;cursor:pointer;">✨ Gold<br><span style="font-size:10px;opacity:.75;">Gold • Premium</span></button>
-              <button type="button" onclick="setPartySeatStyle('glass')" style="padding:12px 8px;border-radius:24px;border:1px solid #22d3ee;background:linear-gradient(145deg,rgba(8,47,73,.92),rgba(15,23,42,.88));color:#fff;font-weight:900;cursor:pointer;">💎 Glass<br><span style="font-size:10px;opacity:.75;">Cyan • Glass</span></button>
-            </div>
-          </div>
           <div style="background:linear-gradient(145deg,#17112d,#0b1220);border:1px solid rgba(124,58,237,.45);border-radius:18px;padding:14px;margin-bottom:12px;">
             <div style="font-size:15px;font-weight:950;margin-bottom:5px;">🎮 Room Mode</div>
             <div style="font-size:11px;color:#94a3b8;margin-bottom:10px;">रूम को Chatting या Gaming Mode में बदलें। केवल Host Mode बदल सकता है।</div>
@@ -2511,7 +2501,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     window.__partyRoomControls=Object.assign({chat:true,audio:true,seats:true,hostArea:true},d?.controls||{});
     cinemaApplyRoomMode(d?.roomMode||'chat');
     window.__chatSeatCount=[2,8,12].includes(Number(d?.seatCount))?Number(d.seatCount):12; window.PR_SEATS=(window.__partyRoomMode==='gaming')?4:window.__chatSeatCount;
-    window.__partySeatStyle=['ocean','royal','gold','glass'].includes(d?.seatStyle)?d.seatStyle:'ocean';
+    window.__partySeatStyle='ocean';
     const modal=document.getElementById('cinemaGharModal');
     if(modal){ cinemaApplyPartyBackground(modal,d?.backgroundKey,d?.backgroundImage||''); }
     const title=document.getElementById('cinemaHeaderTitle'); if(title && cinemaRoomName)title.textContent='🎉 '+cinemaRoomName;
@@ -2550,12 +2540,24 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       const seated=Number.isInteger(p.seat)?('सीट '+(p.seat+1)):(p.hostSeated?'Host सीट':'Room में');
       const me=String(p.key||'')===String(currentUserKey||'');
       const dot=p.muted?'🔇':'🟢';
-      return '<div style="display:flex;align-items:center;gap:9px;padding:9px 8px;border-radius:12px;background:rgba(255,255,255,.04);margin-bottom:5px;">'+
-        '<div style="width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#312e81,#1e3a8a);font-size:13px;font-weight:900;">'+cinemaEsc((Array.from(String(p.name||'U').trim())[0]||'U').toUpperCase())+'</div>'+
+      const key=String(p.key||'');
+      const photo=key?cinemaPhotoFor(key):'';
+      const letter=(Array.from(String(p.name||'U').trim())[0]||'U').toUpperCase();
+      const avatar=(photo && cinemaOkPhoto(photo))
+        ? '<img src="'+cinemaEsc(photo)+'" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex:none;background:linear-gradient(145deg,#312e81,#1e3a8a);">'
+        : '<div style="width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#312e81,#1e3a8a);font-size:13px;font-weight:900;flex:none;">'+cinemaEsc(letter)+'</div>';
+      return '<div class="cinema-viewer-row" data-viewer-key="'+cinemaEsc(key)+'" style="display:flex;align-items:center;gap:9px;padding:9px 8px;border-radius:12px;background:rgba(255,255,255,.04);margin-bottom:5px;cursor:pointer;">'+
+        avatar+
         '<div style="min-width:0;flex:1;"><div style="font-size:11px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+cinemaEsc(p.name||'User')+'</div><div style="font-size:9px;color:#94a3b8;">'+cinemaEsc(seated)+'</div></div>'+
         '<span style="font-size:11px;">'+dot+'</span></div>';
     }).join('');
   }
+  document.addEventListener('click',function(e){
+    const row=e.target.closest&&e.target.closest('.cinema-viewer-row[data-viewer-key]'); if(!row) return;
+    const k=row.getAttribute('data-viewer-key'); if(!k) return;
+    if(typeof window.prOpenRoomCard==='function') window.prOpenRoomCard(k);
+    else if(typeof window.prOpenUserCard==='function') window.prOpenUserCard(k);
+  });
   function openPartyRoomViewers(){
     const page=document.getElementById('partyRoomViewersPage');
     if(!page)return;
@@ -2580,7 +2582,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       db.collection('users').doc(key).get()
         .then(d=>{ const data=(d&&d.exists&&d.data())||{}; const v=data.photoURL||''; c[key]=cinemaOkPhoto(v)?v:''; window.__partyFrameCache=window.__partyFrameCache||{}; window.__partyFrameCache[key]=String(data.partyEquippedFrame||'none'); })
         .catch(()=>{ c[key]=''; })
-        .then(()=>{ delete pend[key]; try{ cinemaRenderSeats(window.__cinemaPeople||[]); }catch(e){} });
+        .then(()=>{ delete pend[key]; try{ cinemaRenderSeats(window.__cinemaPeople||[]); }catch(e){} try{ const vp=document.getElementById('partyRoomViewersPage'); if(vp && vp.style.display!=='none') cinemaRenderViewerList(window.__cinemaPeople||[]); }catch(e){} });
     }
     return '';
   }
@@ -2634,7 +2636,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       // खाली सीट/अपनी सीट: बैठें या उतरें। दूसरे की सीट: उसका कार्ड (गिफ्ट / @मैसेज)।
       b.onclick=()=>{
         if(occupied){
-          if(typeof prOpenUserCard==='function') prOpenUserCard(p.key);
+          if(typeof window.prOpenRoomCard==='function') window.prOpenRoomCard(p.key);
+          else if(typeof prOpenUserCard==='function') prOpenUserCard(p.key);
           return;
         }
         if(typeof window.pkSeatTapEmpty==='function') window.pkSeatTapEmpty(i); else cinemaTakeSeat(i);
@@ -2732,7 +2735,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       // होस्ट नहीं हैं: होस्ट सीट पर बैठा हो तो उसका कार्ड खोलें (गिफ्ट / @मैसेज)।
       const hk=String(window.__cinemaHostKey||'');
       const hp=(window.__cinemaPeople||[]).find(x=>x.key===hk && x.hostSeated===true);
-      if(hp && typeof prOpenUserCard==='function') prOpenUserCard(hk);
+      if(hp && typeof window.prOpenRoomCard==='function') window.prOpenRoomCard(hk);
+      else if(hp && typeof prOpenUserCard==='function') prOpenUserCard(hk);
       return;
     }
     if(!cinemaRoomId || !currentUserKey || !db)return;
@@ -2900,10 +2904,10 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(!db||!cinemaRoomId)return;
     const me=String(currentUserKey||'guest');
     const people=Array.isArray(window.__cinemaPeople)?window.__cinemaPeople:[];
-    const mine=people.find(p=>String(p.key)===me && Number.isInteger(p.seat));
+    const mine=people.find(p=>String(p.key)===me && (Number.isInteger(p.seat)||p.hostSeated===true));
     if(!mine)return;
     try{
-      await db.collection('cinemaRooms').doc(cinemaRoomId).collection('reactions').add({emoji:String(emoji||'smile'),userKey:me,seat:Number(mine.seat),name:cinemaUserName(),createdAt:Date.now()});
+      await db.collection('cinemaRooms').doc(cinemaRoomId).collection('reactions').add({emoji:String(emoji||'smile'),userKey:me,seat:Number.isInteger(mine.seat)?Number(mine.seat):null,name:cinemaUserName(),createdAt:Date.now()});
     }catch(e){}
   }
   function cinemaShowReaction(d){
@@ -2911,11 +2915,17 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     const rid=String(d&&d.emoji||'');
     if(!key)return;
     const people=Array.isArray(window.__cinemaPeople)?window.__cinemaPeople:[];
-    const person=people.find(p=>String(p.key)===key && Number.isInteger(p.seat));
+    const person=people.find(p=>String(p.key)===key && (Number.isInteger(p.seat)||p.hostSeated===true));
     if(!person)return;
-    const box=document.getElementById('cinemaSeats'); if(!box)return;
-    const seat=box.children[Number(person.seat)]; if(!seat)return;
-    const target=seat.querySelector('.psf-avatar')||seat;
+    let target=null;
+    if(Number.isInteger(person.seat)){
+      const box=document.getElementById('cinemaSeats'); if(!box)return;
+      const seat=box.children[Number(person.seat)]; if(!seat)return;
+      target=seat.querySelector('.psf-avatar')||seat;
+    } else if(person.hostSeated===true){
+      target=document.getElementById('cinemaHostSeatBtn');
+    }
+    if(!target)return;
     const old=target.querySelector('.prr-reaction'); if(old)old.remove();
     try{ const modalEl=document.getElementById('cinemaGharModal'); if(modalEl && modalEl.style.display==='none') return; }catch(e){}
     window.__prrFloats=window.__prrFloats||{};
@@ -2926,7 +2936,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(!r){ r=document.createElement('span'); r.className='prr-reaction prr-legacy'; r.textContent=rid||'❤️'; }
     // shown OUTSIDE the seat frame: big, on top of everything, centred on the sender's DP (same for every viewer)
     const rc=target.getBoundingClientRect();
-    const sz=Math.max(rc.width*1.5,84);
+    const sz=Math.max(rc.width*0.85,40);
     const fl=document.createElement('div'); fl.className='prr-float';
     fl.style.cssText='position:fixed;pointer-events:none;z-index:2147482000;width:'+sz+'px;height:'+sz+'px;left:'+(rc.left+rc.width/2-sz/2)+'px;top:'+(rc.top+rc.height/2-sz/2)+'px;';
     const rm=document.getElementById('prRoom'); if(rm && rm.classList.contains('party-gaming-layout')) r.style.setProperty('--u','.8');
@@ -3639,7 +3649,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     var chatPhoto=String(d.photoURL||'');
     if(!chatPhoto){ try{ chatPhoto=cinemaPhotoFor(d.userKey)||''; }catch(e){} }
     var initial=esc(letterOf(resolvedName || d.name || 'User'));
-    var avatar='<span class="pr-chat-avatar" data-chat-avatar-key="'+esc(d.userKey||'')+'">'+(chatPhoto&&cinemaOkPhoto(chatPhoto)?'<img alt="" src="'+esc(chatPhoto)+'">':initial)+'</span>';
+    var avatar='<span class="pr-chat-avatar" data-pr-act="profile" data-key="'+esc(d.userKey||'')+'" data-chat-avatar-key="'+esc(d.userKey||'')+'" style="cursor:pointer;">'+(chatPhoto&&cinemaOkPhoto(chatPhoto)?'<img alt="" src="'+esc(chatPhoto)+'">':initial)+'</span>';
     if(d.type==='join'){
       row.classList.add('pr-sys');
       row.innerHTML='<span class="pr-ic">🎉</span><span><b>'+nm+'</b> रूम में आए हैं। स्वागत करें!</span>'
@@ -4033,6 +4043,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     try{ if(db){var ps=await db.collection('users').doc(key).get(); if(ps.exists) profile=ps.data()||{};}}catch(e){}
     var vip=!!(profile.vip===true||profile.isVip===true||profile.vipActive===true||String(profile.vipStatus||'').toLowerCase()==='active'||String(profile.membership||'').toLowerCase()==='vip');
     var publicId=String(profile.publicUserId||profile.userId||profile.uid||'').trim();
+    var genderRaw2=String(profile.gender||'').trim().toLowerCase();
+    var genderTxt=genderRaw2==='male'?'👨 Male':genderRaw2==='female'?'👩 Female':'';
     function nval(){
       for(var i=0;i<arguments.length;i++){var v=profile[arguments[i]];if(v!==undefined&&v!==null&&v!=='')return Number(v)||0;}
       return 0;
@@ -4061,7 +4073,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       '<div class="uc-av">'+avatarHTML(key,name)+'</div>'+
       '<div class="uc-nm">'+esc(name)+(vip?' <span class="pk-vip-badge">👑 VIP</span>':'')+(me?' <span class="uc-you">आप</span>':'')+'</div>'+
       '<div class="uc-tg">'+tag+' · 🎁 '+window.prFmt(total)+' मिले</div>'+
-      (publicId?'<div class="uc-idline">User ID: <b>'+esc(publicId)+'</b></div>':'')+
+      (genderTxt?'<div class="uc-idline">'+genderTxt+'</div>':'')+
+      '<div class="uc-idline">User ID: <b>'+esc(publicId||key)+'</b></div>'+
       '<div class="uc-stats"><div><b>'+followers.toLocaleString('en-IN')+'</b><span>Followers</span></div><div><b>'+following.toLocaleString('en-IN')+'</b><span>Following</span></div><div><b>'+likes.toLocaleString('en-IN')+'</b><span>Likes</span></div></div>'+
       '<div class="uc-details">'+
         (bio?'<div class="uc-detail"><strong>📝 Bio</strong><span>'+esc(bio)+'</span></div>':'')+
@@ -4081,12 +4094,14 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       seatAction;
     openSheet('prUserCard');
   };
+  window.prOpenRoomCard=window.prOpenUserCard;
 
   // ---------- one delegated click handler ----------
   document.addEventListener('click',function(e){
     var t=e.target&&e.target.closest?e.target.closest('[data-pr-act]'):null; if(!t) return;
     var a=t.getAttribute('data-pr-act'), name=t.getAttribute('data-name')||'', key=t.getAttribute('data-key')||'';
     if(a==='mention'){ window.prOpenComposer('@'+name+' '); }
+    else if(a==='profile'){ if(key) window.prOpenRoomCard(key); }
     else if(a==='welcome'){ window.prWelcome(name); t.remove(); }
     else if(a==='pick'){ window.__prTo=key; renderRecipients(); renderSendInfo(); }
     else if(a==='giftpick'){ window.__prGiftId=t.getAttribute('data-gid'); renderGiftGrid(); renderSendInfo(); }
@@ -5115,7 +5130,9 @@ setInterval(function(){try{
     document.getElementById('pkPPsub').textContent=String(d.bio||d.signature||'');
     document.getElementById('pkPPid').innerHTML='ID: '+e(pub)+' <span class="copy">▣</span>';
     var gp=Math.max(0,Math.floor(Number(d.gamePoints)||0)),gli=(typeof window.pkGamingLabelInfo==='function'?window.pkGamingLabelInfo(gp):null);
-    document.getElementById('pkPPinfo').innerHTML=(vip?'<span class="pp-chip vip">👑 VIP '+e(d.vipLevel||'')+'</span>':'')+(city?'<span class="pp-chip">📍 '+e(city)+'</span>':'')+(ver?'<span class="pp-chip">⭐ '+ver+' verification'+(ver===1?'':'s')+'</span>':'')+(gli&&gli.level?'<span class="pp-chip pk-gaming-label-chip" style="background:'+gli.color+';color:#fff;border-color:transparent;box-shadow:0 0 12px '+gli.color+'66">🏷️ '+e(gli.name)+' · Lv.'+gli.level+' · 🪙 '+fmt(gp)+'</span>':'');
+    var genderRaw=String(d.gender||'').trim().toLowerCase();
+    var genderChip=genderRaw==='male'?'<span class="pp-chip">👨 Male</span>':genderRaw==='female'?'<span class="pp-chip">👩 Female</span>':'';
+    document.getElementById('pkPPinfo').innerHTML=(vip?'<span class="pp-chip vip">👑 VIP '+e(d.vipLevel||'')+'</span>':'')+genderChip+(city?'<span class="pp-chip">📍 '+e(city)+'</span>':'')+(ver?'<span class="pp-chip">⭐ '+ver+' verification'+(ver===1?'':'s')+'</span>':'')+(gli&&gli.level?'<span class="pp-chip pk-gaming-label-chip" style="background:'+gli.color+';color:#fff;border-color:transparent;box-shadow:0 0 12px '+gli.color+'66">🏷️ '+e(gli.name)+' · Lv.'+gli.level+' · 🪙 '+fmt(gp)+'</span>':'');
     var badges=Array.isArray(d.badges)?d.badges.slice(0,5):[];var bh=badges.map(function(b){return '<span class="pp-badge-icon">'+e(typeof b==='string'?b:(b.emoji||b.icon||'🏅'))+'</span>';}).join('');if(!bh)bh='<span class="pp-badge-icon">🏅</span><span class="pp-badge-icon">✨</span><span class="pp-badge-icon">💎</span>';document.getElementById('pkPPbadges').innerHTML=bh+'<span class="pp-items">'+items+' items ›</span>';
     document.getElementById('pkPPcalls').innerHTML=String(currentUserKey)!==currentKey?'<button type="button" onclick="pkStartDirectCall(currentKeyForProfile(),\''+e(name).replace(/'/g,"\\'")+'\',\'audio\')">📞 Audio Call</button><button type="button" onclick="pkStartDirectCall(currentKeyForProfile(),\''+e(name).replace(/'/g,"\\'")+'\',\'video\')">📹 Video Call</button>':'';
     document.getElementById('pkPPstats').innerHTML='<div class="pp-stat"><b>'+fmt(likes)+'</b><span>Likes</span></div><div class="pp-stat"><b>'+fmt(following)+'</b><span>Following</span></div><div class="pp-stat"><b>'+fmt(followers)+'</b><span>Followers</span></div><div class="pp-stat"><b>'+fmt(rank)+'</b><span>Ranked</span></div>';
