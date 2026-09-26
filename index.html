@@ -4877,7 +4877,7 @@ setInterval(function(){try{
 <style id="pkVipVisitorCallStyle">
 .pk-vip-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:999px;background:linear-gradient(135deg,#fff7b2,#f5b942,#fff0a6);color:#7c4a03;border:1px solid #e7b84b;box-shadow:0 2px 8px rgba(180,120,0,.2);font-size:10px;font-weight:950;vertical-align:middle;white-space:nowrap}.uc-idline{font-size:11px;color:#64748b;margin:6px 0 10px;text-align:center}.pk-direct-overlay{display:none;position:fixed;inset:0;z-index:100001;background:#f4f4f6;align-items:stretch;justify-content:center}.pk-direct-card{width:min(560px,100%);height:100dvh;background:#f5f5f7;display:flex;flex-direction:column;overflow:hidden;box-shadow:none}.pk-direct-head{height:68px;box-sizing:border-box;padding:9px 12px;border-bottom:1px solid #e5e5e7;background:#fff;display:flex;align-items:center;gap:8px;flex:none}.pk-direct-head .title{flex:1;font-weight:500;font-size:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:9px}.pk-direct-head .back{width:38px;height:42px;border:0;background:transparent;font-size:35px;line-height:1;color:#202124;padding:0}.pk-direct-avatar{width:42px;height:42px;border-radius:50%;overflow:hidden;background:#d9dde3;display:grid;place-items:center;font-size:15px;font-weight:800;flex:none}.pk-direct-avatar img{width:100%;height:100%;object-fit:cover}.pk-direct-head-actions{display:flex;align-items:center;gap:3px}.pk-direct-head-actions button{width:40px;height:42px;border:0;background:transparent;border-radius:12px;font-size:25px;display:grid;place-items:center;color:#111}.pk-direct-callbar{display:none}.pk-direct-msgs{flex:1;overflow:auto;padding:14px 12px 10px;background:#f4f4f6;scroll-behavior:smooth}.pk-dm-row{display:flex;align-items:flex-end;gap:7px;margin:0 0 12px}.pk-dm-row.mine{justify-content:flex-end}.pk-dm-row.theirs{justify-content:flex-start}.pk-dm-avatar{width:38px;height:38px;border-radius:50%;overflow:hidden;background:#d9dde3;display:grid;place-items:center;font-size:13px;font-weight:800;flex:none}.pk-dm-avatar img{width:100%;height:100%;object-fit:cover}.pk-dm{max-width:72%;padding:11px 15px;border-radius:17px;font-size:17px;line-height:1.42;word-break:break-word;box-shadow:0 1px 2px rgba(0,0,0,.04)}.pk-dm.mine{margin-left:0;background:#9be94f;color:#111;border-bottom-right-radius:5px}.pk-dm.theirs{margin-right:0;background:#fff;color:#111;border:1px solid #e8e8ea;border-bottom-left-radius:5px}.pk-dm-time{font-size:9px;opacity:.48;margin-top:4px}.pk-dm-day{padding:18px 0 13px;text-align:center;color:#9a9a9d;font-size:18px}.pk-direct-compose{display:flex;align-items:center;gap:8px;padding:9px 12px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid #e5e5e7;background:#fff;flex:none}.pk-direct-compose .pk-compose-box{flex:1;min-width:0;min-height:52px;border-radius:28px;background:#f1f1f3;display:flex;align-items:center;padding:0 8px 0 13px;gap:2px}.pk-direct-compose input{flex:1;min-width:0;border:0;background:transparent;padding:12px 3px;outline:0;font-size:18px;color:#111}.pk-direct-compose input::placeholder{color:#a3a3a8}.pk-compose-icon{width:38px;height:40px;border:0;background:transparent;border-radius:50%;display:grid;place-items:center;font-size:23px;color:#222;flex:none}.pk-compose-icon.plus{font-size:31px}.pk-compose-send{display:none;width:40px;height:40px;border:0;border-radius:50%;background:#9be94f;color:#111;font-size:21px;font-weight:900;flex:none}.pk-direct-compose.typing .pk-compose-send{display:grid;place-items:center}.pk-call-overlay{display:none;position:fixed;inset:0;z-index:100002;background:rgba(2,6,23,.88);align-items:center;justify-content:center;padding:16px}.pk-call-card{width:min(700px,100%);background:#111827;border-radius:22px;padding:14px;color:#fff}.pk-call-head{display:flex;align-items:center;gap:8px}.pk-call-head b{flex:1}.pk-call-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}.pk-call-grid video{width:100%;aspect-ratio:16/10;object-fit:cover;background:#000;border-radius:15px}.pk-call-actions{display:flex;gap:8px;margin-top:10px}.pk-call-actions button{flex:1;border:0;border-radius:12px;padding:11px;font-weight:900}.pk-visitors-overlay{display:none;position:fixed;inset:0;z-index:100000;background:rgba(15,23,42,.52);align-items:flex-end;justify-content:center}.pk-visitors-card{width:min(520px,100%);max-height:78vh;background:#fff;border-radius:24px 24px 0 0;padding:16px;overflow:auto}.pk-visitor-row{display:flex;align-items:center;gap:10px;padding:10px;border-radius:14px;background:#f8fafc;margin-bottom:7px}.pk-visitor-av{width:42px;height:42px;border-radius:50%;overflow:hidden;background:#e2e8f0;display:grid;place-items:center;font-weight:900}.pk-visitor-av img{width:100%;height:100%;object-fit:cover}
 </style>
-<div id="pkDirectMessageOverlay" class="pk-direct-overlay"><div class="pk-direct-card"><div class="pk-direct-head"><button type="button" class="back" onclick="pkCloseDirectMessage()" aria-label="Back">‹</button><div class="pk-direct-avatar" id="pkDirectHeaderAvatar">U</div><div class="title" id="pkDirectTitle">User</div><div class="pk-direct-head-actions"><button type="button" onclick="pkDirectCallFromMessage('video')" aria-label="Video Call"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="3"/><path d="M15.5 10.5l5-3v9l-5-3"/></svg></button><button type="button" onclick="pkDirectCallFromMessage('audio')" aria-label="Audio Call"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/></svg></button><button type="button" onclick="pkDirectMessageMore()" aria-label="More"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></div></div><div id="pkDirectMessages" class="pk-direct-msgs"></div><div class="pk-direct-compose" id="pkDirectCompose"><div class="pk-compose-box"><input id="pkDirectInput" placeholder="मैसेज लिखें…" autocomplete="off"><button type="button" class="pk-compose-icon" id="pkDirectMicBtn" onclick="pkDirectVoice()" aria-label="Voice message"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button><button type="button" class="pk-compose-icon plus" onclick="pkDirectAttach()" aria-label="Add">＋</button><button type="button" class="pk-compose-send" id="pkDirectSendBtn" onclick="pkSendDirectMessage()" aria-label="Send">➤</button></div></div></div></div>
+<div id="pkDirectMessageOverlay" class="pk-direct-overlay"><div class="pk-direct-card"><div class="pk-direct-head"><button type="button" class="back" onclick="pkCloseDirectMessage()" aria-label="Back">‹</button><div class="pk-direct-avatar" id="pkDirectHeaderAvatar">U</div><div class="title" id="pkDirectTitle">User</div><div class="pk-direct-head-actions"><button type="button" onclick="pkDirectCallFromMessage('video')" aria-label="Video Call"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="3"/><path d="M15.5 10.5l5-3v9l-5-3"/></svg></button><button type="button" onclick="pkDirectCallFromMessage('audio')" aria-label="Audio Call"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/></svg></button><button type="button" onclick="pkDirectMessageMore()" aria-label="More"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></div></div><div id="pkDirectMessages" class="pk-direct-msgs"></div><div class="pk-direct-compose" id="pkDirectCompose"><div class="pk-compose-box"><input id="pkDirectInput" placeholder="मैसेज लिखें…" autocomplete="off"><button type="button" class="pk-compose-icon" id="pkDirectMicBtn" onclick="pkDirectVoice()" aria-label="Voice message"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button><button type="button" class="pk-compose-icon plus" onclick="pkDirectAttach()" aria-label="Add">＋</button><button type="button" class="pk-compose-send" id="pkDirectSendBtn" onclick="pkSendDirectMessage()" aria-label="Send">➤</button></div></div><div class="pk-direct-compose-trigger" id="pkDirectComposeTrigger" onclick="pkDirectOpenComposeBar()"><span class="pk-dct-pill">✎&nbsp; मैसेज लिखें…</span></div></div></div>
 <div id="pkDirectCallOverlay" class="pk-call-overlay"><div class="pk-call-card"><div class="pk-call-head"><span id="pkCallIcon">📞</span><b id="pkCallTitle">Calling…</b><span id="pkCallStatus"></span></div><div id="pkCallGrid" class="pk-call-grid"></div><div class="pk-call-actions"><button type="button" onclick="pkEndDirectCall()">❌ End</button><button type="button" id="pkCallMute" onclick="pkToggleDirectMute()">🔇 Mute</button></div></div></div>
 <div id="pkIncomingCallOverlay" class="pk-call-overlay"><div class="pk-call-card"><div style="text-align:center;font-size:18px;font-weight:950;" id="pkIncomingCallText">Incoming Call</div><div class="pk-call-actions"><button type="button" onclick="pkRejectIncomingCall()">❌ Reject</button><button type="button" onclick="pkAcceptIncomingCall()">✅ Accept</button></div></div></div>
 <div id="pkVisitorsOverlay" class="pk-visitors-overlay"><div class="pk-visitors-card"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><b style="font-size:18px;flex:1;">👀 Profile Visitors</b><button type="button" onclick="pkCloseVisitors()" style="width:38px;height:38px;border:0;border-radius:12px;background:#f1f5f9;font-size:22px;">×</button></div><div id="pkVisitorsList"><div style="text-align:center;color:#64748b;padding:25px;">लोड हो रहा है…</div></div></div></div>
@@ -4956,7 +4956,7 @@ setInterval(function(){try{
     _wrappedProfileRender.__pkNavWrapped=true;
     window.prOpenUserCard=_wrappedProfileRender;
   }
-  window.pkOpenDirectMessage=async function(key,name){var inbox=document.getElementById('pkInboxOverlay');if(inbox)inbox.classList.remove('open');var dmBox=document.getElementById('pkDirectMessages');if(dmBox){dmBox.dataset.dmRendered='';dmBox.dataset.dmForceScroll='0';}direct.otherKey=String(key||'');window.__pkDmOpenKey=direct.otherKey;try{window.pkDmMarkRead&&window.pkDmMarkRead(direct.otherKey);}catch(e){}direct.otherName=String(name||'User');direct.otherPhoto='';direct.myPhoto='';var title=document.getElementById('pkDirectTitle'),av=document.getElementById('pkDirectHeaderAvatar');if(title)title.textContent=direct.otherName;if(av)av.textContent=(direct.otherName.trim()[0]||'U').toUpperCase();show('pkDirectMessageOverlay','flex');try{if(db&&direct.otherKey){var os=await db.collection('users').doc(direct.otherKey).get(),od=os.exists?(os.data()||{}):{};direct.otherPhoto=String(od.photoURL||od.photo||od.avatar||'');if(av)av.innerHTML=direct.otherPhoto?'<img src="'+esc(direct.otherPhoto)+'" alt="">':esc((direct.otherName.trim()[0]||'U').toUpperCase());}if(db&&currentUserKey){var ms=await db.collection('users').doc(String(currentUserKey)).get(),md=ms.exists?(ms.data()||{}):{};direct.myPhoto=String(md.photoURL||md.photo||md.avatar||'');}}catch(e){}await loadDM();setTimeout(()=>document.getElementById('pkDirectInput')?.focus(),120);};
+  window.pkOpenDirectMessage=async function(key,name){var inbox=document.getElementById('pkInboxOverlay');if(inbox)inbox.classList.remove('open');var dmBox=document.getElementById('pkDirectMessages');if(dmBox){dmBox.dataset.dmRendered='';dmBox.dataset.dmForceScroll='0';}direct.otherKey=String(key||'');window.__pkDmOpenKey=direct.otherKey;try{window.pkDmMarkRead&&window.pkDmMarkRead(direct.otherKey);}catch(e){}direct.otherName=String(name||'User');direct.otherPhoto='';direct.myPhoto='';var title=document.getElementById('pkDirectTitle'),av=document.getElementById('pkDirectHeaderAvatar');if(title)title.textContent=direct.otherName;if(av)av.textContent=(direct.otherName.trim()[0]||'U').toUpperCase();show('pkDirectMessageOverlay','flex');try{if(db&&direct.otherKey){var os=await db.collection('users').doc(direct.otherKey).get(),od=os.exists?(os.data()||{}):{};direct.otherPhoto=String(od.photoURL||od.photo||od.avatar||'');if(av)av.innerHTML=direct.otherPhoto?'<img src="'+esc(direct.otherPhoto)+'" alt="">':esc((direct.otherName.trim()[0]||'U').toUpperCase());}if(db&&currentUserKey){var ms=await db.collection('users').doc(String(currentUserKey)).get(),md=ms.exists?(ms.data()||{}):{};direct.myPhoto=String(md.photoURL||md.photo||md.avatar||'');}}catch(e){}await loadDM();try{pkDirectCloseComposeBar();}catch(e){}};
   window.pkCloseDirectMessage=function(){window.__pkDmOpenKey='';show('pkDirectMessageOverlay','none');try{direct.dmUnsub&&direct.dmUnsub();}catch(e){}var inbox=ensureInbox();inbox.classList.add('open');renderInbox();};
   window.pkDirectMessageMore=function(){if(typeof toast==='function')toast('Chat options जल्द उपलब्ध होंगे');};
   window.pkDirectFormat=function(){document.getElementById('pkDirectInput')?.focus();};
@@ -5393,7 +5393,7 @@ setInterval(function(){try{
   <div class="pp-scroll">
     <div class="pp-hero">
       <div class="pp-cover" id="pkPPcover"></div><div class="pp-hero-glow"></div>
-      <div class="pp-topbar"><button type="button" onclick="pkClosePublicProfile()">‹</button><div class="pp-top-actions"><button type="button" id="pkPPEditTop" onclick="pkOwnProfileEdit()">✎</button><button type="button" id="pkPPShareTop" onclick="pkPublicProfileShare()">↗</button><button type="button" id="pkPPMoreTop" onclick="pkPublicProfileMore()">•••</button></div></div>
+      <div class="pp-topbar"><button type="button" onclick="pkClosePublicProfile()">‹</button><div class="pp-top-actions"><button type="button" id="pkPPEditTop" onclick="pkOwnProfileEdit()">✎</button></div></div>
     </div>
     <div class="pp-main">
       <div class="pp-avatar-wrap"><div class="pp-avatar" id="pkPPavatar"></div><span class="pp-level" id="pkPPlevel"></span></div>
@@ -5467,9 +5467,8 @@ setInterval(function(){try{
     var sp=String(d.apartmentName||d.apartment||d.spaceName||'');var space=document.getElementById('pkPPspace');document.getElementById('pkPPspaceTitle').textContent=sp||'✨ Profile Space';space.style.display='block';
     var fb=document.getElementById('pkPPfollowBtn'),dbtn=document.getElementById('pkPPdmBtn'),own=String(currentUserKey)===currentKey,o=document.getElementById('pkPublicProfileOverlay');
     o.classList.toggle('own-view',own);
-    var editTop=document.getElementById('pkPPEditTop'),shareTop=document.getElementById('pkPPShareTop');
+    var editTop=document.getElementById('pkPPEditTop');
     if(editTop)editTop.style.display=own?'grid':'none';
-    if(shareTop)shareTop.style.display='grid';
     if(own){
       fb.style.display='none';dbtn.style.flex='1';dbtn.textContent='Edit Profile';dbtn.onclick=function(){pkOwnProfileEdit();};
       var leaveBtn=document.getElementById('pkPPLeaveSeatBtn');
@@ -5929,6 +5928,8 @@ setInterval(function(){try{
 .pk-compose-icon.plus{font-size:26px}
 .pk-compose-send{background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;box-shadow:0 5px 12px rgba(124,58,237,.35);font-size:17px}
 .pk-direct-callbar ~ .pk-direct-compose,.pk-direct-callbar ~ .pk-direct-msgs{display:none!important}
+#pkDirectComposeTrigger{display:none;align-items:center;padding:9px 12px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid #e5e5e7;background:#fff;flex:none;cursor:pointer}
+#pkDirectComposeTrigger .pk-dct-pill{flex:1;min-height:46px;border-radius:24px;background:#f2effa;display:flex;align-items:center;padding:0 16px;color:#8b859c;font-size:15px}
 </style>
 <style id="pkProfilePremiumStyle">
 /* ================= PROFILE (premium) ================= */
@@ -6882,6 +6883,42 @@ body.pk-game-open #pkUniversalNav{display:none!important}
     if(open!==dmWasOpen){ dmWasOpen=open; fitDm(); if(open) schedDmLong(); }
   },250);
 
+  /* ===== FIX 1b: DM composer hides with the keyboard (opens only on tap, like Party Room) ===== */
+  window.pkDirectOpenComposeBar=function(){
+    var c=document.getElementById('pkDirectCompose'), trg=document.getElementById('pkDirectComposeTrigger'), i=document.getElementById('pkDirectInput');
+    if(!c||!trg) return;
+    trg.style.display='none';
+    c.style.display='flex';
+    setTimeout(function(){ try{ i.focus({preventScroll:true}); }catch(e){ try{ i.focus(); }catch(_){} } },60);
+  };
+  window.pkDirectCloseComposeBar=function(){
+    var c=document.getElementById('pkDirectCompose'), trg=document.getElementById('pkDirectComposeTrigger'), i=document.getElementById('pkDirectInput');
+    if(!c||!trg) return;
+    c.style.display='none';
+    trg.style.display='flex';
+    try{ i.blur(); }catch(e){}
+  };
+  (function(){
+    var wasKbDM=0;
+    function dmOpen(){ var o=document.getElementById('pkDirectMessageOverlay'); return !!o && getComputedStyle(o).display!=='none'; }
+    function composeOpenDM(){ var c=document.getElementById('pkDirectCompose'); return !!c && getComputedStyle(c).display!=='none'; }
+    function tickDM(){
+      if(!dmOpen()){ wasKbDM=0; return; }
+      var vv=window.visualViewport;
+      var kb=vv?Math.max(0,Math.round(window.innerHeight-(vv.height+vv.offsetTop))):0;
+      if(composeOpenDM() && wasKbDM>120 && kb<60){ setTimeout(function(){ if(typeof window.pkDirectCloseComposeBar==='function') window.pkDirectCloseComposeBar(); },150); }
+      wasKbDM=kb;
+    }
+    setInterval(tickDM,200);
+    var vv=window.visualViewport; if(vv){ vv.addEventListener('resize',tickDM); vv.addEventListener('scroll',tickDM); }
+    window.addEventListener('resize',tickDM);
+    document.addEventListener('focusout',function(e){
+      if(e.target && e.target.id==='pkDirectInput'){
+        setTimeout(function(){ if(document.activeElement!==document.getElementById('pkDirectInput')) window.pkDirectCloseComposeBar&&window.pkDirectCloseComposeBar(); },200);
+      }
+    });
+  })();
+
   /* ===== FIX 2: Party Room chat always shows the newest message ===== */
   function pinPartyChat(){
     var e=document.getElementById('cinemaChatMessages');
@@ -7070,6 +7107,7 @@ input,textarea,select{font-size:16px}
 #partyRoomViewersPage>div{top:calc(env(safe-area-inset-top,0px) + 72px)!important}
 #pkPublicProfileOverlay .pp-hero{background:none!important}
 #pkPublicProfileOverlay .pp-cover,#pkPublicProfileOverlay .pp-hero-glow{display:none!important;background-image:none!important}
+#pkPublicProfileOverlay .pp-topbar button{background:#f1ecfd!important;color:#4c1d95!important;box-shadow:0 2px 10px rgba(60,30,120,.14)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 #pkPublicProfileOverlay.own-view .pp-hero:before{display:none!important}
 #pkPublicProfileOverlay.own-view .pp-avatar-wrap:after{display:none!important;content:none!important}
 .party-global-avatar{aspect-ratio:1/1}
@@ -7345,133 +7383,6 @@ input,textarea,select{font-size:16px}
   setInterval(addBtn,1500);
 })();
 </script>
-
-   <script>
-/* ============================================================
-   GIFT NOTICE REMOVER + ANIMATED GIFT FIX
-   - "आपका गिफ्ट चला गया" जैसा कोई भी notice नहीं दिखेगा
-   - गिफ्ट भेजते ही flying animation चलेगा
-   - Recipient की DP पर hit + coin pop दिखेगा
-   ============================================================ */
-(function () {
-
-  /* 1) Notice / toast हटाने वाला filter */
-  const BLOCK_WORDS = [
-    "चला गया", "gift sent", "gift भेज", "gift bhej",
-    "भेज दिया", "sent successfully", "successfully sent",
-    "gift successfully", "आपका गिफ्ट", "गिफ्ट चला"
-  ];
-
-  function isGiftNotice(text) {
-    if (!text) return false;
-    const t = String(text).toLowerCase();
-    return BLOCK_WORDS.some(w => t.includes(w.toLowerCase()));
-  }
-
-  /* DOM में जो भी toast / notice add हो, उसे तुरंत हटा दो */
-  const observer = new MutationObserver(muts => {
-    muts.forEach(m => {
-      m.addedNodes.forEach(n => {
-        if (n.nodeType !== 1) return;
-        const txt = (n.textContent || "").trim();
-        if (!txt) return;
-        // toast / notice जैसे element की पहचान
-        const cls = (n.className || "") + " " + ((n.parentElement && n.parentElement.className) || "");
-        if (
-          /toast|notice|pr-toast|pr-notice|snackbar/i.test(cls) ||
-          isGiftNotice(txt)
-        ) {
-          n.remove();
-        }
-        // अगर अंदर भी कोई notice हो
-        n.querySelectorAll?.(".pr-toast, .pr-notice, .toast, .notice, .snackbar")
-          .forEach(el => el.remove());
-      });
-    });
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
-
-  /* 2) Chat में gift-notice type message को छुपाने वाला filter */
-  // अगर आपके chat renderer में "gift" type के message notice की तरह आते हैं,
-  // तो उन पर यह class + hide लगा देंगे (सिर्फ text-only वाले)
-  const chatObserver = new MutationObserver(muts => {
-    muts.forEach(m => {
-      m.addedNodes.forEach(n => {
-        if (n.nodeType !== 1) return;
-        if (n.classList && n.classList.contains("pr-msg")) {
-          const t = (n.textContent || "").toLowerCase();
-          const isGiftNotice =
-            t.includes("चला गया") ||
-            t.includes("gift sent") ||
-            (n.classList.contains("pr-notice") && t.includes("gift"));
-          if (isGiftNotice) {
-            n.remove();
-          }
-        }
-      });
-    });
-  });
-
-  function attachChatObserver() {
-    const box = document.getElementById("cinemaChatMessages");
-    if (box) {
-      chatObserver.observe(box, { childList: true, subtree: true });
-    } else {
-      // chat panel बाद में load हो, तो फिर try करो
-      setTimeout(attachChatObserver, 800);
-    }
-  }
-  attachChatObserver();
-
-  /* 3) Flying gift animation helper */
-  window.playFlyGiftAnimation = function (fromEl, toEl, emoji) {
-    if (!fromEl || !toEl) return;
-    const from = fromEl.getBoundingClientRect();
-    const to   = toEl.getBoundingClientRect();
-    const fx   = document.getElementById("prFx") || document.body;
-
-    const g = document.createElement("div");
-    g.className = "pr-fly pr-fly-to";
-    g.textContent = emoji || "🎁";
-    g.style.left = (from.left + from.width  / 2) + "px";
-    g.style.top  = (from.top  + from.height / 2) + "px";
-    g.style.setProperty("--gx", (to.left + to.width  / 2 - (from.left + from.width  / 2)) + "px");
-    g.style.setProperty("--gy", (to.top  + to.height / 2 - (from.top  + from.height / 2)) + "px");
-    fx.appendChild(g);
-    setTimeout(() => g.remove(), 1300);
-  };
-
-  /* 4) Recipient पर hit + coin pop */
-  window.playGiftHitAnimation = function (targetEl, giftName, coins) {
-    if (!targetEl) return;
-    targetEl.classList.add("pr-gift-hit");
-    const pop = document.createElement("div");
-    pop.className = "pr-coin-pop";
-    pop.textContent = `+${coins || 0} 🪙 ${giftName || ""}`.trim();
-    const r = targetEl.getBoundingClientRect();
-    pop.style.left = (r.left + r.width  / 2) + "px";
-    pop.style.top  = (r.top  + r.height / 2) + "px";
-    document.body.appendChild(pop);
-    setTimeout(() => {
-      targetEl.classList.remove("pr-gift-hit");
-      pop.remove();
-    }, 1100);
-  };
-
-  /* 5) Notice दिखाने वाले common function को override कर दो */
-  ["showToast", "showNotice", "toast", "notify"].forEach(fn => {
-    if (typeof window[fn] === "function") {
-      const orig = window[fn];
-      window[fn] = function (msg, ...rest) {
-        if (isGiftNotice(msg)) return; // gift notice skip
-        return orig.call(this, msg, ...rest);
-      };
-    }
-  });
-
-})();
-</script></body
-</html>
 
 
 <script id="gamingModeSeatClassHook">
@@ -8280,3 +8191,25 @@ input,textarea,select{font-size:16px}
   document.addEventListener('pointercancel',clearLP,{passive:true});
 })();
 </script>
+
+<script>
+(function(){
+  var _t = window.ToastAndroid && window.ToastAndroid.show;
+  if (window.ToastAndroid) {
+    window.ToastAndroid.show = function(msg){
+      if(/चला गया|gift sent|भेज दिया|successfully/i.test(String(msg))) return;
+      return _t && _t.apply(this, arguments);
+    };
+  }
+  if (window.Android && window.Android.showToast) {
+    var _a = window.Android.showToast;
+    window.Android.showToast = function(msg){
+      if(/चला गया|gift sent|भेज दिया|successfully/i.test(String(msg))) return;
+      return _a.apply(this, arguments);
+    };
+  }
+})();
+</script>
+
+</body>
+</html>
