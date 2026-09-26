@@ -3901,9 +3901,11 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     var page=document.getElementById('partyRoomTopGiftersPage'); if(!page) return;
     renderTopGiftersList();
     page.style.display='block';
+    var dock=document.getElementById('partyRoomBottomDock'); if(dock) dock.style.display='none';
   };
   window.closePartyRoomTopGifters=function(){
     var page=document.getElementById('partyRoomTopGiftersPage'); if(page) page.style.display='none';
+    var dock=document.getElementById('partyRoomBottomDock'); if(dock) dock.style.display='';
   };
   document.addEventListener('click',function(e){
     var row=e.target.closest&&e.target.closest('.pr-topgifter-row[data-topgifter-key]'); if(!row) return;
