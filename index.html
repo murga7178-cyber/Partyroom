@@ -1613,6 +1613,16 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{
 }
 /* ===== End Watch Together ===== */
 </style>
+
+<style id="partyRoomYouTubeSoundOnlyFinal">
+#prRoom.yt-sound-only #partyYoutubeStage .yt-room-card,
+#prRoom.yt-sound-only #ytRoomFrame,
+#prRoom.yt-sound-only #ytRoomPlayerDiv,
+#prRoom.yt-sound-only #ytRoomEmpty{display:none!important;}
+#prRoom.yt-sound-only #partyYoutubeStage{background:transparent!important;}
+#prRoom.yt-sound-only #ytRoomUrlBar{display:none!important;}
+.yt-bottom-sheet-buttons #ytBottomSoundBtn{font-size:11px!important;padding:7px 10px!important;min-width:58px!important;}
+</style>
 </head>
 
 <body>
@@ -2427,7 +2437,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
           <div id="ytRoomUrlBar" class="yt-room-url-bar">
             <div class="yt-room-input-label">YouTube URL यहाँ डालें</div>
             <div class="yt-room-url-row">
-              <input id="ytRoomInput" type="text" autocomplete="off" placeholder="YouTube link / Shorts link...">
+              <input id="ytRoomInput" type="text" autocomplete="off" readonly onfocus="this.blur()" placeholder="YouTube link / Shorts link...">
               <button type="button" id="ytRoomLoadBtn" onclick="window.ytRoomBottomSubmit&&window.ytRoomBottomSubmit()">Load</button>
             </div>
             <div class="yt-room-input-hint">Host: Load • Viewer: Queue में जोड़ेगा</div>
@@ -2497,7 +2507,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
           </div>
           <div class="prd-group">
             <button type="button" class="prd-gift" onclick="togglePartyRoomGiftTray()" aria-label="Gifts">🎁</button>
-            <button type="button" id="movieBtn" title="Watch Together">🎬</button>
             <button type="button" class="prd-youtube" id="partyRoomYouTubeBtn" onclick="if(window.openPartyRoomYouTube)window.openPartyRoomYouTube();return false;" aria-label="YouTube" title="YouTube">▶️<span class="yt-mini-label">YT</span><span id="partyRoomYoutubeBadge" class="prd-badge">0</span></button>
             <button type="button" class="prd-mic" id="partyRoomMuteDockBtn" onclick="cinemaToggleMute()" aria-label="Mute audio">🎙️</button>
             <button type="button" onclick="openPartyRoomSettings()" aria-label="More">⋮⋮</button>
@@ -2624,12 +2633,12 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       if(youtube){
         if(window.partyRoomYoutubeEnter) window.partyRoomYoutubeEnter();
       }else{
-        if(window.partyRoomYoutubeExit) window.partyRoomYoutubeExit();
+        if(window.partyRoomYoutubeExit) window.partyRoomYoutubeExit(mode==='chat');
       }
     }else{
       window.PR_SEATS=[2,6,8,12].includes(Number(window.__chatSeatCount))?Number(window.__chatSeatCount):12;
       try{window.pkCloseJumpGame&&window.pkCloseJumpGame()}catch(e){}
-      if(window.partyRoomYoutubeExit) window.partyRoomYoutubeExit();
+      if(window.partyRoomYoutubeExit) window.partyRoomYoutubeExit(mode==='chat');
       const box=document.getElementById('cinemaSeats'); if(box){box.innerHTML='';box.__sigs=[];}
     }
     try{cinemaRenderSeats(window.__cinemaPeople||[])}catch(e){}
@@ -9317,17 +9326,29 @@ function partyRoomYoutubeEnter(){
   var st=ytRoomStage(); if(!st)return; st.style.display='flex'; ytRoomUpdateUI(); ytRoomStartSync();
   try{refreshHostState();}catch(e){}
 }
-function partyRoomYoutubeExit(){
-  /* Leaving YouTube Mode must completely detach its player/state so Cinema
-     Mode cannot inherit the YouTube video, History, Q or URL interface. */
+function partyRoomYoutubeExit(keepSound){
+  /* Chatting Mode can keep Sound Mode playing in the background.
+     Gaming/Cinema (and a normal YouTube exit) must stop YouTube completely. */
+  keepSound=!!keepSound && !!soundMode && !!current;
+  if(keepSound){
+    try{
+      var room=document.getElementById('prRoom');
+      if(room) room.classList.add('yt-sound-only');
+      var stage=ytRoomStage(); if(stage) stage.style.display='none';
+      /* Keep the same player alive so its audio continues in the background. */
+      ytRoomStopSync();
+      return;
+    }catch(e){ keepSound=false; }
+  }
   try{
-    if(ytRoomIsActive() && ytRoomHost() && current){
+    if(ytRoomHost() && current){
       ytRoomWriteState({videoId:'',listId:'',title:'',playing:false,currentTime:0,stopped:true,closedBy:'mode-change',closedAt:Date.now()});
     }
   }catch(e){}
   try{destroyPlayer();}catch(e){}
   current=null;
-  var st=ytRoomStage(); if(st)st.style.display='none';
+  var room2=document.getElementById('prRoom'); if(room2) room2.classList.remove('yt-sound-only');
+  var st2=ytRoomStage(); if(st2)st2.style.display='none';
   ytRoomStopSync();
 }
 window.partyRoomYoutubeEnter=partyRoomYoutubeEnter;window.partyRoomYoutubeExit=partyRoomYoutubeExit;
@@ -10673,3 +10694,128 @@ listenRoomShare();
   #prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #partyYoutubeStage.yt-shorts-mode .yt-room-card{height:min(calc(100dvh - 306px),747px)!important;}
 }
 </style>
+
+<style id="partyChatYoutubeMusicMode">
+/* Chatting Mode: compact music control + inline paste panel */
+#prChatYoutubeMusicBtn{display:none!important;width:42px!important;height:42px!important;border-radius:14px!important;background:linear-gradient(145deg,#7c3aed,#db2777)!important;color:#fff!important;border:1px solid rgba(255,255,255,.2)!important;font-size:19px!important;position:relative!important;}
+#prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #prChatYoutubeMusicBtn{display:grid!important;place-items:center!important;}
+#prChatYoutubeMusicPanel{display:none;position:absolute;left:10px;right:10px;bottom:72px;z-index:2147483642;padding:9px;border-radius:14px;background:rgba(10,8,28,.97);border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 30px rgba(0,0,0,.4);}
+#prChatYoutubeMusicPanel.open{display:block;}
+.pr-cym-row{display:flex;gap:6px;align-items:center;}
+#prChatYoutubeMusicInput{flex:1;min-width:0;height:38px;border-radius:10px;border:1px solid #475569;background:#070d18;color:#fff;padding:0 9px;font-size:12px;outline:none;}
+.pr-cym-btn{height:38px;border:0;border-radius:10px;padding:0 10px;background:#334155;color:#fff;font-weight:900;white-space:nowrap;}
+.pr-cym-play{background:linear-gradient(135deg,#7c3aed,#db2777)!important;}
+#prChatYoutubeMusicStatus{font-size:10.5px;color:#cbd5e1;margin-top:6px;text-align:center;min-height:14px;}
+/* Music badge sits on the user's seat even when their microphone is muted. */
+#cinemaSeats .psf-seat.pr-music-active .psf-avatar::before{content:"🎵";position:absolute;right:-5px;top:-6px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#7c3aed;color:#fff;font-size:12px;z-index:30;box-shadow:0 0 0 2px rgba(255,255,255,.85),0 3px 12px rgba(124,58,237,.65);animation:prMusicPulse 1.25s ease-in-out infinite;}
+#cinemaHostSeatBtn.pr-music-active::after{content:"🎵";position:absolute;right:-4px;top:-4px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#7c3aed;color:#fff;font-size:12px;z-index:50;box-shadow:0 0 0 2px rgba(255,255,255,.85),0 3px 12px rgba(124,58,237,.65);animation:prMusicPulse 1.25s ease-in-out infinite;}
+@keyframes prMusicPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+#prChatYoutubeMusicMini{position:absolute;left:50%;transform:translateX(-50%);bottom:118px;z-index:2147483641;display:none;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;background:rgba(18,8,40,.92);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:10px;font-weight:800;pointer-events:none;}
+#prChatYoutubeMusicMini.show{display:flex;}
+#prChatYoutubeMusicFrame{position:absolute!important;width:1px!important;height:1px!important;left:-9999px!important;top:-9999px!important;opacity:.01!important;pointer-events:none!important;}
+</style>
+<script id="partyChatYoutubeMusicModeScript">
+(function(){
+  var musicState=null, musicUnsub=null, musicRoomKey='', musicPlayer=null, musicPlayerReady=false, musicCurrentId='';
+  function el(id){return document.getElementById(id);}
+  function activeChat(){return String(window.__partyRoomMode||'chat')==='chat';}
+  function myKey(){try{return String(currentUserKey||'');}catch(e){return '';}}
+  function roomRef(){try{if(typeof db!=='undefined'&&db&&cinemaRoomId)return db.collection('cinemaRooms').doc(String(cinemaRoomId));}catch(e){}return null;}
+  function ensureUI(){
+    var room=el('prRoom'); if(!room||el('prChatYoutubeMusicBtn'))return;
+    var dock=el('partyRoomBottomDock'); if(!dock)return;
+    var groups=dock.querySelectorAll('.prd-group'); var g=groups[1]||groups[0]; if(!g)return;
+    var b=document.createElement('button'); b.type='button'; b.id='prChatYoutubeMusicBtn'; b.innerHTML='🎵'; b.title='Chat में YouTube Music'; b.setAttribute('aria-label','YouTube Music');
+    b.onclick=function(e){e.preventDefault();e.stopPropagation();togglePanel();};
+    g.insertBefore(b,g.firstChild);
+    var panel=document.createElement('div'); panel.id='prChatYoutubeMusicPanel';
+    panel.innerHTML='<div class="pr-cym-row"><input id="prChatYoutubeMusicInput" type="text" inputmode="none" readonly autocomplete="off" placeholder="YouTube URL paste करें"><button type="button" class="pr-cym-btn" id="prChatYoutubePaste">📋 Paste</button><button type="button" class="pr-cym-btn pr-cym-play" id="prChatYoutubePlay">▶</button><button type="button" class="pr-cym-btn" id="prChatYoutubeStop">■</button></div><div id="prChatYoutubeMusicStatus">🎵 लिंक paste करके Play दबाएँ</div>';
+    room.appendChild(panel);
+    var mini=document.createElement('div'); mini.id='prChatYoutubeMusicMini'; mini.innerHTML='🎵 <span id="prChatYoutubeMusicMiniText">Music चल रहा है</span>'; room.appendChild(mini);
+    var f=document.createElement('div'); f.id='prChatYoutubeMusicFrame'; room.appendChild(f);
+    el('prChatYoutubePaste').onclick=async function(){try{var x=await navigator.clipboard.readText();if(x){el('prChatYoutubeMusicInput').value=x;setStatus('📋 URL paste हो गया');}}catch(e){setStatus('📋 Clipboard permission नहीं मिली');}};
+    el('prChatYoutubePlay').onclick=function(){startMusicFromInput();};
+    el('prChatYoutubeStop').onclick=function(){stopMusic();};
+  }
+  function setStatus(t){var x=el('prChatYoutubeMusicStatus');if(x)x.textContent=t||'';}
+  function togglePanel(){ensureUI();var p=el('prChatYoutubeMusicPanel');if(p)p.classList.toggle('open');}
+  function parse(raw){try{if(typeof getYouTubeInfo==='function')return getYouTubeInfo(raw);}catch(e){} var m=String(raw||'').match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);return m?{type:'video',id:m[1]}:null;}
+  function stateRef(){var r=roomRef();return r?r.collection('youtubeAudio').doc('state'):null;}
+  function startMusicFromInput(){
+    if(!activeChat()){setStatus('पहले Chatting Mode में आएँ');return;}
+    var inp=el('prChatYoutubeMusicInput'), info=parse(inp&&inp.value);
+    if(!info||info.type!=='video'||!info.id){setStatus('❌ सही YouTube Video URL paste करें');return;}
+    var ref=stateRef(); if(!ref){setStatus('रूम connection नहीं मिला');return;}
+    var me=myKey(); if(!me){setStatus('User connection नहीं मिला');return;}
+    var data={videoId:String(info.id),userKey:me,userName:(typeof cinemaUserName==='function'?cinemaUserName():'User'),playing:true,startedAt:Date.now()};
+    ref.set(data,{merge:true}).then(function(){setStatus('🎵 Music चल रहा है');}).catch(function(){setStatus('Music start नहीं हो पाया');});
+  }
+  function stopMusic(){var ref=stateRef();if(!ref)return;var me=myKey();if(!musicState||String(musicState.userKey)!==me)return;ref.set({playing:false,videoId:'',userKey:me,stoppedAt:Date.now()},{merge:true}).catch(function(){});destroyMusicPlayer();setStatus('Music बंद है');}
+  function destroyMusicPlayer(){try{if(musicPlayer&&musicPlayer.destroy)musicPlayer.destroy();}catch(e){}musicPlayer=null;musicPlayerReady=false;musicCurrentId='';}
+  function createMusicPlayer(id){
+    if(!id)return; if(musicCurrentId===id&&musicPlayer)return;
+    destroyMusicPlayer(); musicCurrentId=id;
+    var host=el('prChatYoutubeMusicFrame'); if(!host)return;
+    try{loadYTApi(function(){
+      if(!window.YT||!window.YT.Player)return;
+      var d=document.createElement('div');d.id='prChatYoutubeMusicYT';d.style.cssText='width:1px;height:1px;';host.innerHTML='';host.appendChild(d);
+      musicPlayer=new YT.Player(d,{width:'1',height:'1',videoId:id,playerVars:{autoplay:1,controls:0,playsinline:1,rel:0},events:{onReady:function(e){musicPlayerReady=true;try{e.target.playVideo();}catch(x){}},onStateChange:function(e){if(window.YT&&e.data===YT.PlayerState.ENDED){if(String(musicState&&musicState.userKey||'')===myKey())stopMusic();}}}});
+    });}catch(e){}
+  }
+  function paintMusicSeats(){
+    var people=Array.isArray(window.__cinemaPeople)?window.__cinemaPeople:[], key=musicState&&musicState.playing?String(musicState.userKey||''):'';
+    var box=el('cinemaSeats'); if(box){Array.prototype.forEach.call(box.querySelectorAll('.psf-seat.pr-music-active'),function(x){x.classList.remove('pr-music-active');});if(key){var seat=people.find(function(p){return String(p.key)===key&&Number.isInteger(p.seat);});if(seat&&box.children[Number(seat.seat)])box.children[Number(seat.seat)].classList.add('pr-music-active');}}
+    var hb=el('cinemaHostSeatBtn');if(hb)hb.classList.toggle('pr-music-active',!!(key&&people.some(function(p){return String(p.key)===key&&p.hostSeated===true;})));
+    var mini=el('prChatYoutubeMusicMini');if(mini)mini.classList.toggle('show',!!(key&&activeChat()));
+    var mt=el('prChatYoutubeMusicMiniText');if(mt&&key)mt.textContent='🎵 '+String(musicState.userName||'User')+' Music';
+  }
+  function applyState(d){
+    musicState=d||null; ensureUI(); paintMusicSeats();
+    if(activeChat()&&musicState&&musicState.playing&&musicState.videoId){createMusicPlayer(String(musicState.videoId));setStatus('🎵 Music चल रहा है');}
+    else if(!activeChat()||!musicState||!musicState.playing){destroyMusicPlayer();}
+  }
+  function startSync(){
+    var r=roomRef(),rk=r?String(cinemaRoomId):''; if(!r)return;
+    if(musicRoomKey===rk&&musicUnsub)return; if(musicUnsub)try{musicUnsub();}catch(e){};
+    musicRoomKey=rk; musicUnsub=r.collection('youtubeAudio').doc('state').onSnapshot(function(s){applyState(s.exists?s.data():null);},function(){});
+  }
+  function stopSync(){if(musicUnsub)try{musicUnsub();}catch(e){}musicUnsub=null;musicRoomKey='';destroyMusicPlayer();}
+  function onMode(){ensureUI();paintMusicSeats();if(activeChat())startSync();else destroyMusicPlayer();}
+  var timer=setInterval(function(){ensureUI();if(roomRef()){startSync();}paintMusicSeats();},1200);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden){ensureUI();onMode();}});
+  window.partyChatMusicRefresh=onMode;
+})();
+</script>
+
+<script id="partyModeMusicVideoStopFinal">
+(function(){
+  /* Mode changes: YouTube video must stop when leaving Video Mode; Chat music is stopped when entering another mode. */
+  function roomMusicRef(){try{if(typeof db!=='undefined'&&db&&cinemaRoomId)return db.collection('cinemaRooms').doc(String(cinemaRoomId)).collection('youtubeAudio').doc('state');}catch(e){}return null;}
+  var oldSet=window.setPartyRoomMode;
+  if(typeof oldSet==='function'&&!window.__partyModeMusicWrapped){
+    window.__partyModeMusicWrapped=true;
+    window.setPartyRoomMode=async function(mode){
+      var oldMode=String(window.__partyRoomMode||'chat');
+      if(oldMode==='youtube'&&mode!=='youtube'){
+        try{if(typeof ytRoomWriteState==='function'&&typeof ytRoomHost==='function'&&ytRoomHost()) ytRoomWriteState({videoId:'',listId:'',title:'',playing:false,currentTime:0,stopped:true,closedBy:'mode',closedAt:Date.now()});}catch(e){}
+        try{if(typeof destroyPlayer==='function')destroyPlayer();}catch(e){}
+      }
+      if(oldMode==='chat'&&mode!=='chat'){
+        try{var r=roomMusicRef();if(r)await r.set({videoId:'',playing:false,userKey:'',stoppedAt:Date.now(),stoppedBy:'mode'},{merge:true});}catch(e){}
+      }
+      var out=await oldSet(mode);
+      try{window.partyChatMusicRefresh&&window.partyChatMusicRefresh();}catch(e){}
+      return out;
+    };
+  }
+  var oldApply=window.cinemaApplyRoomMode;
+  if(typeof oldApply==='function'&&!window.__partyApplyMusicWrapped){
+    window.__partyApplyMusicWrapped=true;
+    window.cinemaApplyRoomMode=function(mode){
+      var oldMode=String(window.__partyRoomMode||'chat');
+      if(oldMode==='youtube'&&mode!=='youtube'){try{if(typeof destroyPlayer==='function')destroyPlayer();}catch(e){}}
+      var out=oldApply(mode);try{window.partyChatMusicRefresh&&window.partyChatMusicRefresh();}catch(e){}return out;
+    };
+  }
+})();
+</script>
