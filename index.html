@@ -1308,28 +1308,30 @@ html, body { overscroll-behavior-y: none; }
   transform:translateY(-58px)!important;
   transition:transform .16s ease!important;
 }
-/* 1. मैसेज वाली जगह को हमेशा के लिए विजिबल रखें */
-.party-chat-stream, 
+/* 1. चैट के मैसेज हमेशा स्क्रीन पर दिखते रहें */
 #cinemaChatStream,
-.party-chat-messages {
-  display: block !important;
+.party-chat-stream, 
+.party-chat-messages,
+#prRoom #cinemaChatStream {
+  display: flex !important;
+  flex-direction: column !important;
   opacity: 1 !important;
   visibility: visible !important;
   pointer-events: auto !important;
+  transform: none !important;
 }
 
-/* 2. जब कीबोर्ड बंद हो तो सिर्फ टाइपिंग पैनल छिपे */
+/* 2. सामान्य स्थिति (कीबोर्ड बंद) में टाइपिंग पैनल पूरी तरह नीचे छिप जाए */
 #cinemaChatPanel {
   transform: translateY(100%) !important;
   opacity: 0 !important;
   pointer-events: none !important;
-  transition: transform .16s ease, opacity .16s ease !important;
+  transition: transform .2s ease-out, opacity .2s ease-out !important;
 }
 
-/* 3. जब टाइप कर रहे हों तो टाइपिंग पैनल दिखे */
-#prRoom.party-keyboard-open #cinemaChatPanel,
-#cinemaChatPanel:focus-within {
-  transform: translateY(-20px) !important;
+/* 3. जब कीबोर्ड खुला हो, तभी टाइपिंग पैनल ऊपर आकर दिखे */
+#prRoom.party-keyboard-open #cinemaChatPanel {
+  transform: translateY(0%) !important;
   opacity: 1 !important;
   pointer-events: auto !important;
 }
@@ -3512,7 +3514,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     const text=cinemaMuted?'🔊':'🔇';
     const a=document.getElementById('cinemaMuteBtn'); if(a){a.textContent=text; a.style.display='none';}
     const b=document.getElementById('partyRoomMuteSideBtn'); if(b){b.textContent=icon; b.title='Audio';}
-    const d=document.getElementById('partyRoomMuteDockBtn'); if(d){d.textContent=cinemaMuted?'🔇':'🎙️'; d.classList.toggle('prd-off',!!cinemaMuted); d.title=cinemaMuted?'Unmute':'Mute';}
+    const d=document.getElementById('partyRoomMuteDockBtn'); if(d){d.textContent=cinemaMuted?'??':'🎙️'; d.classList.toggle('prd-off',!!cinemaMuted); d.title=cinemaMuted?'Unmute':'Mute';}
   }
   async function cinemaToggleMute(){
     cinemaMuted=!cinemaMuted;
@@ -8232,12 +8234,11 @@ input,textarea,select{font-size:16px}
 </script>
 <script>
 document.addEventListener('click', function (e) {
+  // सेंड बटन पर क्लिक करते ही इनपुट से फोकस हटाएँ ताकि टाइपिंग पैनल बंद हो जाए
   if (e.target && e.target.closest('#cinemaChatPanel button')) {
     const chatInput = document.querySelector('#cinemaChatPanel input, #cinemaChatPanel textarea');
     if (chatInput) {
-      setTimeout(function() {
-        chatInput.focus();
-      }, 50);
+      chatInput.blur(); // blur करने से कीबोर्ड और टाइपिंग पैनल नीचे छिप जाएगा
     }
   }
 });
