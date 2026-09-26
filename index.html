@@ -10729,6 +10729,78 @@ listenRoomShare();
 #prRoom.party-youtube-layout #partyYoutubeStage iframe,#prRoom.party-youtube-layout #partyYoutubeStage #ytRoomPlayerDiv{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;border:0!important;}
 @media(max-width:430px){#prRoom.party-youtube-layout #partyYoutubeStage{top:184px!important;bottom:116px!important;padding:5px 6px!important;gap:5px!important;}#prRoom.party-youtube-layout #partyYoutubeStage > .yt-room-card{width:100%!important;}}
 </style>
+
+<style id="partyRoomYoutubeTrueCleanHideFinal">
+/* YouTube clean view: keep ONLY room header, seats, video, viewers/top-gifter and chat. */
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden #prModeMenuWrap,
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden #prSeatQuickBtn,
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden #partyRoomBottomDock,
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden #prChatYoutubeMusicBtn,
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomUrlBar,
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomInputTools,
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomInlinePanel,
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden .yt-room-hostbar,
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden .yt-room-queue,
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden #movieModeBar{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+/* Keep the video clean and leave the chat below it. */
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden #partyYoutubeStage{
+  top:184px!important;
+  bottom:116px!important;
+  overflow:visible!important;
+  padding:0 8px!important;
+  gap:0!important;
+  z-index:30!important;
+}
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden #partyYoutubeStage > .yt-room-card{
+  width:100%!important;
+  max-width:900px!important;
+  margin:0 auto!important;
+  aspect-ratio:16/9!important;
+}
+/* The hide/show control stays as the small eye so it can be tapped again. */
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomUiHideBtn{
+  display:flex!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+  position:absolute!important;
+  top:190px!important;
+  right:10px!important;
+  z-index:80!important;
+  min-width:34px!important;
+  width:34px!important;
+  height:30px!important;
+  padding:0!important;
+  font-size:15px!important;
+  opacity:.78!important;
+}
+/* Chat starts immediately after the video and uses all remaining space. */
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden #cinemaChatPanel{
+  z-index:46!important;
+  overflow-y:auto!important;
+}
+@media(max-width:430px){
+  #prRoom.party-youtube-layout.pr-youtube-extras-hidden #partyYoutubeStage{
+    top:184px!important;
+    bottom:116px!important;
+    padding:0 6px!important;
+  }
+  #prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomUiHideBtn{
+    top:190px!important;
+    right:7px!important;
+  }
+}
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden:has(#cinemaSeats.pr-twelve-seat-mode) #partyYoutubeStage{
+  top:234px!important;
+}
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomUiHideBtn{
+  top:240px!important;
+}
+</style>
+
 </html>
 
 <script id="partyRoomYoutubeHideExtrasScript">
@@ -10865,8 +10937,12 @@ listenRoomShare();
     if(!room||!btn||!seats)return;
     var cs=getComputedStyle(room), sr=seats.getBoundingClientRect(), rr=room.getBoundingClientRect();
     var count=Number(window.__chatSeatCount||window.PR_SEATS||12);
-    var left=sr.left-rr.left + (sr.width-42)/2, top=sr.bottom-rr.top+7;
-    if(count===2){ left=sr.right-rr.left+8; top=sr.top-rr.top + Math.max(0,(sr.height-42)/2); }
+    /* Music button stays at the edge of the seat area, beside the last seat.
+       It must never sit in the middle/below the whole seat row. */
+    var left=sr.right-rr.left+7, top=sr.top-rr.top + Math.max(0,(sr.height-42)/2);
+    if(count===2){ left=sr.right-rr.left+7; top=sr.top-rr.top + Math.max(0,(sr.height-42)/2); }
+    /* If the edge is too close to the room boundary, tuck it just inside the edge. */
+    if(left>rr.width-48) left=Math.max(6,sr.right-rr.left-48);
     left=Math.max(6,Math.min(left,rr.width-48));
     top=Math.max(60,Math.min(top,rr.height-150));
     btn.style.left=left+'px'; btn.style.top=top+'px'; btn.classList.add('pr-seat-music-position');
@@ -10881,20 +10957,32 @@ listenRoomShare();
     if(!info||info.type!=='video'||!info.id){setStatus('❌ सही YouTube Video URL paste करें');return;}
     var ref=stateRef(); if(!ref){setStatus('रूम connection नहीं मिला');return;}
     var me=myKey(); if(!me){setStatus('User connection नहीं मिला');return;}
-    var data={videoId:String(info.id),userKey:me,userName:(typeof cinemaUserName==='function'?cinemaUserName():'User'),playing:true,startedAt:Date.now()};
+    var id=String(info.id);
+    /* Start the player from the same Play-button gesture. Waiting for the
+       Firestore snapshot first can lose Android/WebView's autoplay permission. */
+    setStatus('⏳ Music शुरू हो रहा है...');
+    createMusicPlayer(id,true);
+    var data={videoId:id,userKey:me,userName:(typeof cinemaUserName==='function'?cinemaUserName():'User'),playing:true,startedAt:Date.now()};
     ref.set(data,{merge:true}).then(function(){setStatus('🎵 Music चल रहा है');}).catch(function(){setStatus('Music start नहीं हो पाया');});
   }
   function stopMusic(){var ref=stateRef();if(!ref)return;var me=myKey();if(!musicState||String(musicState.userKey)!==me)return;ref.set({playing:false,videoId:'',userKey:me,stoppedAt:Date.now()},{merge:true}).catch(function(){});destroyMusicPlayer();setStatus('Music बंद है');}
   function destroyMusicPlayer(){try{if(musicPlayer&&musicPlayer.destroy)musicPlayer.destroy();}catch(e){}musicPlayer=null;musicPlayerReady=false;musicCurrentId='';}
-  function createMusicPlayer(id){
+  function createMusicPlayer(id,userGesture){
     if(!id)return; if(musicCurrentId===id&&musicPlayer)return;
     destroyMusicPlayer(); musicCurrentId=id;
     var host=el('prChatYoutubeMusicFrame'); if(!host)return;
     try{loadYTApi(function(){
       if(!window.YT||!window.YT.Player)return;
-      var d=document.createElement('div');d.id='prChatYoutubeMusicYT';d.style.cssText='width:1px;height:1px;';host.innerHTML='';host.appendChild(d);
-      musicPlayer=new YT.Player(d,{width:'1',height:'1',videoId:id,playerVars:{autoplay:1,controls:0,playsinline:1,rel:0},events:{onReady:function(e){musicPlayerReady=true;try{e.target.playVideo();}catch(x){}},onStateChange:function(e){if(window.YT&&e.data===YT.PlayerState.ENDED){if(String(musicState&&musicState.userKey||'')===myKey())stopMusic();}}}});
-    });}catch(e){}
+      var d=document.createElement('div');d.id='prChatYoutubeMusicYT';d.style.cssText='width:2px;height:2px;';host.innerHTML='';host.appendChild(d);
+      musicPlayer=new YT.Player(d,{width:'2',height:'2',videoId:id,playerVars:{autoplay:1,controls:0,playsinline:1,rel:0,origin:location.origin},events:{onReady:function(e){
+        musicPlayerReady=true;
+        try{e.target.setVolume(100);e.target.unMute();e.target.playVideo();}catch(x){}
+        setTimeout(function(){try{if(musicPlayer&&musicPlayer.getPlayerState&&musicPlayer.getPlayerState()!==1){setStatus('▶️ Music के लिए Play फिर दबाएँ');}}catch(x){}},900);
+      },onStateChange:function(e){
+        if(window.YT&&e.data===YT.PlayerState.PLAYING)setStatus('🎵 Music चल रहा है');
+        if(window.YT&&e.data===YT.PlayerState.ENDED){if(String(musicState&&musicState.userKey||'')===myKey())stopMusic();}
+      },onError:function(){setStatus('❌ यह YouTube वीडियो Music के लिए नहीं चल पाया');}}});
+    });}catch(e){setStatus('❌ Music player शुरू नहीं हुआ');}
   }
   function paintMusicSeats(){
     var people=Array.isArray(window.__cinemaPeople)?window.__cinemaPeople:[], key=musicState&&musicState.playing?String(musicState.userKey||''):'';
@@ -10905,7 +10993,7 @@ listenRoomShare();
   }
   function applyState(d){
     musicState=d||null; ensureUI(); paintMusicSeats();
-    if(activeChat()&&musicState&&musicState.playing&&musicState.videoId){createMusicPlayer(String(musicState.videoId));setStatus('🎵 Music चल रहा है');}
+    if(activeChat()&&musicState&&musicState.playing&&musicState.videoId){createMusicPlayer(String(musicState.videoId),false);if(!musicPlayerReady)setStatus('🎵 Music चल रहा है');}
     else if(!activeChat()||!musicState||!musicState.playing){destroyMusicPlayer();}
   }
   function startSync(){
@@ -11043,3 +11131,12 @@ listenRoomShare();
   hookMovie();setTimeout(hookMovie,500);setTimeout(hookMovie,1500);
 })();
 </script>
+
+<style id="partyRoomBottomGiftMicMusicRemoveFinal">
+/* Clean bottom dock: keep chat/reaction/inbox only. */
+/* Gift, Mic and Music buttons must stay visible. */
+/* Remove the old room-settings / more button from the bottom dock. */
+#prRoom #partyRoomBottomDock button[onclick*="openPartyRoomSettings"]{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+/* Seat Settings was empty/unused; remove it from the top-right controls too. */
+#prRoom #prSeatQuickBtn{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+</style>
