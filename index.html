@@ -8320,6 +8320,729 @@ input,textarea,select{font-size:16px}
 #partyRoomBottomDock .prd-group:first-child .prr-dock-ico{width:18px!important;height:18px!important;transform:none!important;}
 #partyRoomBottomDock .prd-badge-inbox{right:-4px!important;top:-4px!important;}
 </style>
+<!-- ===== YOUTUBE SYSTEM V2 — FULL CONTROL ===== -->
+<style id="ytV2Style">
+#ytFab{
+  position:fixed;right:14px;bottom:200px;z-index:9998;
+  width:54px;height:54px;border-radius:50%;
+  background:linear-gradient(145deg,#ff0000,#c4302b);
+  color:#fff;border:2px solid rgba(255,255,255,.4);
+  font-size:26px;cursor:pointer;
+  box-shadow:0 8px 24px rgba(255,0,0,.6);
+  display:none;align-items:center;justify-content:center;
+  transition:transform .18s;
+}
+#ytFab:active{transform:scale(.9);}
+#ytFab .yt-badge{
+  position:absolute;top:-4px;right:-4px;
+  min-width:20px;height:20px;padding:0 5px;
+  border-radius:999px;background:#fbbf24;color:#000;
+  font-size:11px;font-weight:900;
+  display:none;align-items:center;justify-content:center;
+  border:2px solid #111;box-sizing:border-box;
+}
+#ytFab.has-queue .yt-badge{display:flex;}
 
+#ytModal{
+  display:none;position:fixed;inset:0;z-index:99999;
+  background:rgba(0,0,0,.94);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  padding:12px;box-sizing:border-box;overflow-y:auto;
+}
+#ytModal.open{display:block;}
+#ytCard{
+  max-width:600px;margin:0 auto;
+  background:linear-gradient(145deg,#1a0f2e,#0a0518);
+  border:1px solid rgba(255,255,255,.14);border-radius:22px;
+  padding:16px;box-shadow:0 24px 70px rgba(0,0,0,.8);
+  color:#fff;
+}
+.yt-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.yt-head h3{margin:0;font-size:17px;font-weight:900;display:flex;align-items:center;gap:8px;}
+.yt-head .ic{font-size:22px;}
+.yt-close{
+  width:38px;height:38px;border-radius:50%;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  color:#fff;font-size:18px;cursor:pointer;
+}
+.yt-tabs{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap;}
+.yt-tab{
+  flex:1;min-width:calc(25% - 4px);padding:9px 4px;border-radius:11px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  color:#c4b5fd;font-size:11.5px;font-weight:800;cursor:pointer;
+  transition:.2s;
+}
+.yt-tab.active{
+  background:linear-gradient(135deg,#a855f7,#ec4899);
+  color:#fff;border-color:transparent;
+  box-shadow:0 4px 14px rgba(168,85,247,.4);
+}
+.yt-pane{display:none;}
+.yt-pane.active{display:block;}
+
+.yt-input-row{display:flex;gap:8px;margin-bottom:10px;}
+.yt-input{
+  flex:1;padding:12px 14px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.05);color:#fff;
+  font-size:13px;outline:none;box-sizing:border-box;
+  min-width:0;
+}
+.yt-input:focus{border-color:#a855f7;box-shadow:0 0 0 3px rgba(168,85,247,.2);}
+.yt-btn-load{
+  padding:12px 18px;border-radius:12px;
+  background:linear-gradient(135deg,#ff0000,#c4302b);
+  color:#fff;border:0;font-weight:900;font-size:13px;
+  cursor:pointer;white-space:nowrap;
+}
+.yt-btn-load:disabled{opacity:.5;cursor:not-allowed;}
+
+.yt-quick{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.yt-quick button{
+  padding:6px 11px;border-radius:8px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.12);
+  color:#c4b5fd;font-size:11px;font-weight:700;cursor:pointer;
+}
+.yt-quick button.danger{color:#f87171;}
+.yt-quick button.gold{color:#fbbf24;}
+
+.yt-frame-wrap{
+  position:relative;width:100%;padding-top:56.25%;
+  border-radius:14px;overflow:hidden;background:#000;
+  box-shadow:0 8px 24px rgba(0,0,0,.6);
+}
+#ytFrame{
+  position:absolute;inset:0;width:100%;height:100%;border:0;
+}
+
+/* Player controls */
+.yt-controls{
+  display:flex;align-items:center;gap:8px;
+  margin-top:12px;padding:10px 12px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;
+}
+.yt-ctrl-btn{
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
+  color:#fff;font-size:16px;cursor:pointer;flex:none;
+  display:flex;align-items:center;justify-content:center;
+  transition:.2s;
+}
+.yt-ctrl-btn:active{transform:scale(.9);}
+.yt-ctrl-btn.play{
+  background:linear-gradient(135deg,#22c55e,#15803d);
+  border-color:transparent;width:46px;height:46px;font-size:18px;
+  box-shadow:0 6px 16px rgba(34,197,94,.4);
+}
+.yt-ctrl-btn.play.paused{
+  background:linear-gradient(135deg,#f59e0b,#d97706);
+  box-shadow:0 6px 16px rgba(245,158,11,.4);
+}
+
+.yt-seek-wrap{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
+.yt-seek-bar{
+  width:100%;height:6px;border-radius:999px;
+  background:rgba(255,255,255,.12);
+  cursor:pointer;position:relative;overflow:hidden;
+}
+.yt-seek-fill{
+  position:absolute;left:0;top:0;bottom:0;
+  width:0%;border-radius:999px;
+  background:linear-gradient(90deg,#a855f7,#ec4899);
+  pointer-events:none;
+}
+.yt-times{
+  display:flex;justify-content:space-between;
+  font-size:10px;color:#94a3b8;font-weight:700;
+  font-variant-numeric:tabular-nums;
+}
+
+/* Volume slider */
+.yt-vol-wrap{
+  display:flex;align-items:center;gap:8px;
+  margin-top:8px;padding:10px 12px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;
+}
+.yt-vol-icon{
+  width:32px;height:32px;border-radius:50%;
+  background:rgba(168,85,247,.2);border:1px solid rgba(168,85,247,.4);
+  color:#c4b5fd;font-size:15px;flex:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+}
+.yt-vol-icon.muted{background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.4);color:#f87171;}
+.yt-vol-slider{
+  flex:1;-webkit-appearance:none;appearance:none;
+  height:6px;border-radius:999px;
+  background:linear-gradient(90deg,#a855f7 0%,#ec4899 50%,rgba(255,255,255,.12) 50%,rgba(255,255,255,.12) 100%);
+  outline:none;cursor:pointer;
+}
+.yt-vol-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:18px;height:18px;border-radius:50%;
+  background:#fff;border:2px solid #a855f7;
+  box-shadow:0 2px 8px rgba(168,85,247,.6);
+  cursor:pointer;
+}
+.yt-vol-slider::-moz-range-thumb{
+  width:18px;height:18px;border-radius:50%;
+  background:#fff;border:2px solid #a855f7;
+  box-shadow:0 2px 8px rgba(168,85,247,.6);
+  cursor:pointer;
+}
+.yt-vol-val{
+  font-size:11px;font-weight:900;color:#c4b5fd;
+  min-width:32px;text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+
+.yt-info{
+  margin-top:10px;font-size:11px;color:#94a3b8;
+  text-align:center;line-height:1.6;
+}
+.yt-info b{color:#c4b5fd;}
+
+/* Queue / History list */
+.yt-list{max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px;}
+.yt-item{
+  display:flex;align-items:center;gap:10px;
+  padding:8px;border-radius:12px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  cursor:pointer;transition:.2s;
+}
+.yt-item:active{transform:scale(.98);}
+.yt-item.active-item{
+  border-color:#a855f7;
+  background:rgba(168,85,247,.15);
+}
+.yt-item img{
+  width:72px;height:44px;border-radius:8px;
+  object-fit:cover;flex:none;background:#000;
+}
+.yt-item .meta{flex:1;min-width:0;}
+.yt-item .meta .t{
+  font-size:12px;font-weight:800;color:#fff;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.yt-item .meta .s{font-size:10px;color:#94a3b8;margin-top:2px;}
+.yt-item .del{
+  width:30px;height:30px;border-radius:50%;
+  background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.3);
+  color:#f87171;font-size:14px;cursor:pointer;flex:none;
+}
+.yt-empty{
+  padding:32px 20px;text-align:center;color:#64748b;
+  font-size:13px;line-height:1.7;
+}
+.yt-empty .em{font-size:42px;display:block;margin-bottom:10px;}
+
+.yt-lock{
+  padding:10px 12px;border-radius:10px;
+  background:rgba(250,204,21,.12);
+  border:1px solid rgba(250,204,21,.3);
+  color:#fde68a;font-size:11.5px;font-weight:700;
+  margin-bottom:12px;display:flex;align-items:center;gap:8px;
+}
+.yt-lock .ic{font-size:16px;flex:none;}
+
+/* Mini floating player */
+#ytMini{
+  position:fixed;right:14px;bottom:260px;z-index:9997;
+  width:60px;height:60px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#a855f7,#1e1b4b);
+  border:2px solid rgba(255,255,255,.35);
+  box-shadow:0 8px 22px rgba(168,85,247,.55);
+  display:none;align-items:center;justify-content:center;
+  cursor:pointer;color:#fff;font-size:24px;
+  animation:ytMiniPulse 2s ease-in-out infinite;
+}
+#ytMini.open{display:flex;}
+#ytMini:active{transform:scale(.9);}
+@keyframes ytMiniPulse{
+  0%,100%{box-shadow:0 8px 22px rgba(168,85,247,.55);}
+  50%{box-shadow:0 8px 30px rgba(236,72,153,.85);}
+}
+.yt-mini-ring{
+  position:absolute;inset:-4px;border-radius:50%;
+  border:2px solid rgba(168,85,247,.6);
+  animation:ytMiniRing 1.6s ease-out infinite;
+  pointer-events:none;
+}
+@keyframes ytMiniRing{
+  0%{transform:scale(.9);opacity:1;}
+  100%{transform:scale(1.4);opacity:0;}
+}
+
+.yt-toast{
+  position:fixed;left:50%;bottom:20px;transform:translateX(-50%);
+  background:rgba(0,0,0,.9);color:#fff;
+  padding:9px 18px;border-radius:999px;
+  font-size:12.5px;font-weight:700;z-index:999999;
+  pointer-events:none;animation:ytToastIn .3s ease;
+  border:1px solid rgba(255,255,255,.15);
+  max-width:88vw;text-align:center;
+}
+@keyframes ytToastIn{
+  from{opacity:0;transform:translate(-50%,10px);}
+  to{opacity:1;transform:translate(-50%,0);}
+}
+
+/* Chat YouTube preview */
+.yt-chat-preview{
+  display:inline-flex;align-items:center;gap:8px;
+  margin-top:6px;padding:6px 10px 6px 6px;
+  border-radius:10px;
+  background:rgba(255,0,0,.15);
+  border:1px solid rgba(255,0,0,.35);
+  cursor:pointer;text-decoration:none;color:#fff;
+  font-size:11.5px;font-weight:700;
+  max-width:100%;
+}
+.yt-chat-preview img{
+  width:56px;height:32px;border-radius:6px;
+  object-fit:cover;flex:none;background:#000;
+}
+.yt-chat-preview .txt{
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.yt-chat-preview:active{transform:scale(.96);}
+
+@media(max-width:430px){
+  #ytCard{padding:13px;border-radius:18px;}
+  .yt-head h3{font-size:15px;}
+  .yt-item img{width:60px;height:36px;}
+  .yt-tab{font-size:10.5px;padding:8px 3px;}
+  .yt-ctrl-btn{width:36px;height:36px;font-size:14px;}
+  .yt-ctrl-btn.play{width:42px;height:42px;font-size:16px;}
+}
+</style>
+
+<!-- Floating YouTube button -->
+<button id="ytFab" title="YouTube Player">
+  ▶
+  <span class="yt-badge">0</span>
+</button>
+
+<!-- Mini floating player -->
+<div id="ytMini" title="Music चल रहा है — tap करके बंद करें">
+  🎵
+  <span class="yt-mini-ring"></span>
+</div>
+
+<!-- Main modal -->
+<div id="ytModal">
+  <div id="ytCard">
+    <div class="yt-head">
+      <h3><span class="ic">🎬</span> YouTube Player</h3>
+      <button class="yt-close" id="ytCloseBtn">✕</button>
+    </div>
+
+    <div class="yt-tabs">
+      <button class="yt-tab active" data-tab="play">▶ Play</button>
+      <button class="yt-tab" data-tab="queue">📺 Queue <span id="ytQueueCount">(0)</span></button>
+      <button class="yt-tab" data-tab="history">💾 History</button>
+      <button class="yt-tab" data-tab="sound">🎵 Sound</button>
+    </div>
+
+    <div class="yt-lock" id="ytHostLock" style="display:none;">
+      <span class="ic">👑</span>
+      <span>सिर्फ Host video बदल सकता है। आप queue में add कर सकते हैं।</span>
+    </div>
+
+    <!-- ===== TAB: PLAY ===== -->
+    <div class="yt-pane active" data-pane="play">
+      <div class="yt-input-row">
+        <input id="ytInput" class="yt-input" type="text"
+          placeholder="YouTube URL / Playlist URL / Video ID paste करें...">
+        <button id="ytLoadBtn" class="yt-btn-load">Load</button>
+      </div>
+
+      <div class="yt-quick">
+        <button id="ytPasteBtn">📋 Paste</button>
+        <button id="ytAddQueueBtn">➕ Queue</button>
+        <button id="ytShareBtn">🔗 Share</button>
+        <button id="ytClearBtn" class="danger">🗑️ Clear</button>
+      </div>
+
+      <div class="yt-frame-wrap">
+        <iframe id="ytFrame"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen>
+        </iframe>
+      </div>
+
+      <!-- Player controls -->
+      <div class="yt-controls">
+        <button class="yt-ctrl-btn play" id="ytPlayPause" title="Play/Pause">⏸</button>
+        <button class="yt-ctrl-btn" id="ytSeekBack" title="10s पीछे">⏪</button>
+        <button class="yt-ctrl-btn" id="ytSeekFwd" title="10s आगे">⏩</button>
+        <div class="yt-seek-wrap">
+          <div class="yt-seek-bar" id="ytSeekBar">
+            <div class="yt-seek-fill" id="ytSeekFill"></div>
+          </div>
+          <div class="yt-times">
+            <span id="ytTimeCur">0:00</span>
+            <span id="ytTimeDur">0:00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Volume control -->
+      <div class="yt-vol-wrap">
+        <div class="yt-vol-icon" id="ytMuteBtn" title="Mute">🔊</div>
+        <input type="range" class="yt-vol-slider" id="ytVolSlider" min="0" max="100" value="80">
+        <span class="yt-vol-val" id="ytVolVal">80%</span>
+      </div>
+
+      <div class="yt-info">
+        ✅ <b>Supported:</b> watch, youtu.be, /shorts, /embed, /live, Playlist, या सिर्फ ID
+      </div>
+    </div>
+
+    <!-- ===== TAB: QUEUE ===== -->
+    <div class="yt-pane" data-pane="queue">
+      <div class="yt-quick">
+        <button id="ytShuffleBtn" class="gold">🔀 Shuffle</button>
+        <button id="ytClearQueue" class="danger">🗑️ Queue मिटाएँ</button>
+      </div>
+      <div class="yt-list" id="ytQueueList">
+        <div class="yt-empty">
+          <span class="em">📺</span>
+          Queue खाली है<br>
+          <span style="font-size:11px;">Play tab में जाकर "Queue" दबाएँ</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TAB: HISTORY ===== -->
+    <div class="yt-pane" data-pane="history">
+      <div class="yt-quick">
+        <button id="ytClearHistory" class="danger">🗑️ History मिटाएँ</button>
+      </div>
+      <div class="yt-list" id="ytHistoryList">
+        <div class="yt-empty">
+          <span class="em">💾</span>
+          अभी कोई video नहीं चला
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TAB: SOUND ===== -->
+    <div class="yt-pane" data-pane="sound">
+      <div style="padding:14px;text-align:center;color:#c4b5fd;font-size:13px;line-height:1.8;">
+        🎵 <b style="color:#fff;">Sound Mode</b><br>
+        Music चलाते समय video छोटा होकर<br>floating 🎵 button बन जाएगा<br><br>
+        <button id="ytEnableSound" style="
+          padding:11px 22px;border-radius:12px;
+          background:linear-gradient(135deg,#a855f7,#ec4899);
+          color:#fff;border:0;font-weight:900;font-size:13px;
+          cursor:pointer;box-shadow:0 6px 18px rgba(168,85,247,.4);
+        ">🎵 Sound Mode चालू करें</button>
+        <div style="font-size:10.5px;color:#64748b;margin-top:12px;">
+          Music चलाते समय mini 🎵 icon पर tap करके बंद करें
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ---------- CONFIG ---------- */
+  var HISTORY_KEY  = 'yt_history_v2';
+  var QUEUE_KEY    = 'yt_queue_v2';
+  var VOLUME_KEY   = 'yt_volume_v2';
+  var SOUND_KEY    = 'yt_soundmode_v2';
+  var MAX_HISTORY  = 20;
+  var MAX_QUEUE    = 30;
+  var SHARE_DOC    = 'partyRoomYouTube';
+
+  /* ---------- STATE ---------- */
+  var queue   = [];
+  var history = [];
+  var current = null;
+  var isHost  = true;
+  var soundMode = false;
+  var volume  = 80;       // 0–100
+  var muted   = false;
+  var roomShareEnabled = true;
+
+  // YouTube IFrame API
+  var ytPlayer = null;
+  var ytReady  = false;
+  var ytApiLoaded = false;
+  var ytProgressTimer = null;
+
+  /* ---------- DOM ---------- */
+  var fab        = document.getElementById('ytFab');
+  var fabBadge   = fab.querySelector('.yt-badge');
+  var mini       = document.getElementById('ytMini');
+  var modal      = document.getElementById('ytModal');
+  var closeBtn   = document.getElementById('ytCloseBtn');
+  var input      = document.getElementById('ytInput');
+  var loadBtn    = document.getElementById('ytLoadBtn');
+  var pasteBtn   = document.getElementById('ytPasteBtn');
+  var addQueue   = document.getElementById('ytAddQueueBtn');
+  var shareBtn   = document.getElementById('ytShareBtn');
+  var clearBtn   = document.getElementById('ytClearBtn');
+  var frameHost  = document.getElementById('ytFrame');
+  var queueList  = document.getElementById('ytQueueList');
+  var historyList= document.getElementById('ytHistoryList');
+  var queueCount = document.getElementById('ytQueueCount');
+  var hostLock   = document.getElementById('ytHostLock');
+  var enableSound= document.getElementById('ytEnableSound');
+  var clearHist  = document.getElementById('ytClearHistory');
+  var playPause  = document.getElementById('ytPlayPause');
+  var seekBack   = document.getElementById('ytSeekBack');
+  var seekFwd    = document.getElementById('ytSeekFwd');
+  var seekBar    = document.getElementById('ytSeekBar');
+  var seekFill   = document.getElementById('ytSeekFill');
+  var timeCur    = document.getElementById('ytTimeCur');
+  var timeDur    = document.getElementById('ytTimeDur');
+  var volSlider  = document.getElementById('ytVolSlider');
+  var volVal     = document.getElementById('ytVolVal');
+  var muteBtn    = document.getElementById('ytMuteBtn');
+  var shuffleBtn = document.getElementById('ytShuffleBtn');
+  var clearQueue = document.getElementById('ytClearQueue');
+
+  /* ---------- STORAGE ---------- */
+  function loadStorage(){
+    try{ queue   = JSON.parse(localStorage.getItem(QUEUE_KEY)   || '[]'); }catch(e){ queue = []; }
+    try{ history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }catch(e){ history = []; }
+    try{ volume  = parseInt(localStorage.getItem(VOLUME_KEY) || '80', 10); }catch(e){ volume = 80; }
+    try{ soundMode = localStorage.getItem(SOUND_KEY) === '1'; }catch(e){ soundMode = false; }
+    if (!Array.isArray(queue))   queue = [];
+    if (!Array.isArray(history)) history = [];
+    if (isNaN(volume) || volume < 0 || volume > 100) volume = 80;
+  }
+  function saveQueue(){ try{ localStorage.setItem(QUEUE_KEY, JSON.stringify(queue)); }catch(e){} }
+  function saveHistory(){ try{ localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); }catch(e){} }
+  function saveVolume(){ try{ localStorage.setItem(VOLUME_KEY, String(volume)); }catch(e){} }
+  function saveSoundMode(){ try{ localStorage.setItem(SOUND_KEY, soundMode?'1':'0'); }catch(e){} }
+
+  /* ---------- YOUTUBE URL PARSER (supports playlists) ---------- */
+  function getYouTubeInfo(url){
+    if (!url) return null;
+    url = String(url).trim();
+
+    // Playlist
+    var plMatch = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+    var vMatch  = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/) ||
+                  url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/) ||
+                  url.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/) ||
+                  url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/) ||
+                  url.match(/youtube\.com\/live\/([a-zA-Z0-9_-]{11})/);
+
+    if (plMatch && !vMatch) return { type:'playlist', id:plMatch[1] };
+    if (vMatch && plMatch)  return { type:'video',    id:vMatch[1],  list:plMatch[1] };
+    if (vMatch)             return { type:'video',    id:vMatch[1] };
+    if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return { type:'video', id:url };
+
+    return null;
+  }
+
+  /* ---------- TOAST ---------- */
+  function toast(msg, ms){
+    var t = document.createElement('div');
+    t.className = 'yt-toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function(){ t.remove(); }, ms || 1800);
+  }
+
+  /* ---------- HOST DETECTION ---------- */
+  function detectHost(){
+    try{
+      if (window.currentUserEmail && window.hostEmail){
+        isHost = (window.currentUserEmail === window.hostEmail);
+        return;
+      }
+      var hostEl = document.querySelector('[data-host="me"]') || document.querySelector('.hse-mine');
+      if (hostEl){ isHost = true; return; }
+      isHost = true;
+    }catch(e){ isHost = true; }
+  }
+  function updateHostUI(){
+    if (isHost){
+      hostLock.style.display = 'none';
+      loadBtn.disabled = false;
+    } else {
+      hostLock.style.display = 'flex';
+    }
+  }
+
+  /* ---------- LOAD YOUTUBE IFRAME API ---------- */
+  function loadYTApi(cb){
+    if (ytApiLoaded){ cb(); return; }
+    window.onYouTubeIframeAPIReady = function(){
+      ytApiLoaded = true;
+      cb();
+    };
+    var s = document.createElement('script');
+    s.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(s);
+  }
+
+  /* ---------- CREATE PLAYER ---------- */
+  function createPlayer(videoId, listId, startSeconds){
+    // Replace iframe with a div for the API
+    var parent = frameHost.parentNode;
+    var div = document.createElement('div');
+    div.id = 'ytPlayerDiv';
+    div.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+    frameHost.style.display = 'none';
+    if (document.getElementById('ytPlayerDiv')) {
+      document.getElementById('ytPlayerDiv').remove();
+    }
+    parent.insertBefore(div, frameHost);
+
+    var playerVars = {
+      autoplay: 1,
+      rel: 0,
+      modestbranding: 1,
+      playsinline: 1,
+      controls: 1,
+      start: startSeconds || 0
+    };
+    if (listId) playerVars.list = listId;
+
+    ytPlayer = new YT.Player('ytPlayerDiv', {
+      height: '100%',
+      width: '100%',
+      videoId: videoId,
+      playerVars: playerVars,
+      events: {
+        onReady: function(e){
+          ytReady = true;
+          e.target.setVolume(muted ? 0 : volume);
+          startProgressTicker();
+          updatePlayPauseIcon();
+        },
+        onStateChange: function(e){
+          updatePlayPauseIcon();
+          if (e.data === YT.PlayerState.ENDED){
+            // ❌ Auto-next हटा दिया — जो चला वही रुकेगा
+            toast('⏹️ Video खत्म', 1600);
+          }
+        }
+      }
+    });
+  }
+
+  /* ---------- PLAY ---------- */
+  function playVideo(videoId, title, opts){
+    opts = opts || {};
+    if (!videoId) return;
+
+    current = {
+      id: videoId,
+      title: title || ('YouTube • ' + videoId),
+      addedBy: opts.addedBy || 'You',
+      ts: Date.now()
+    };
+
+    // Save to history
+    history = history.filter(function(x){ return x.id !== videoId; });
+    history.unshift(current);
+    if (history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
+    saveHistory();
+    renderHistory();
+
+    // Create / replace player
+    loadYTApi(function(){
+      createPlayer(videoId, opts.list || null, opts.start || 0);
+    });
+
+    if (soundMode){
+      mini.classList.add('open');
+      toast('🎵 Music चल रहा है', 1800);
+    } else {
+      mini.classList.remove('open');
+    }
+
+    if (opts.share !== false && roomShareEnabled){
+      shareToRoom(current);
+    }
+
+    toast('🎬 Playing: ' + (title || videoId), 1800);
+    updateFabBadge();
+  }
+
+  /* ---------- PLAYER CONTROLS ---------- */
+  function updatePlayPauseIcon(){
+    if (!ytPlayer || !ytReady) return;
+    try{
+      var st = ytPlayer.getPlayerState();
+      if (st === YT.PlayerState.PLAYING){
+        playPause.textContent = '⏸';
+        playPause.classList.remove('paused');
+      } else {
+        playPause.textContent = '▶';
+        playPause.classList.add('paused');
+      }
+    }catch(e){}
+  }
+
+  playPause.addEventListener('click', function(){
+    if (!ytPlayer || !ytReady) return;
+    try{
+      var st = ytPlayer.getPlayerState();
+      if (st === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
+      else ytPlayer.playVideo();
+    }catch(e){}
+  });
+
+  seekBack.addEventListener('click', function(){
+    if (!ytPlayer || !ytReady) return;
+    try{
+      var t = ytPlayer.getCurrentTime() || 0;
+      ytPlayer.seekTo(Math.max(0, t - 10), true);
+    }catch(e){}
+  });
+
+  seekFwd.addEventListener('click', function(){
+    if (!ytPlayer || !ytReady) return;
+    try{
+      var t = ytPlayer.getCurrentTime() || 0;
+      ytPlayer.seekTo(t + 10, true);
+    }catch(e){}
+  });
+
+  // Progress ticker
+  function fmt(t){
+    t = Math.max(0, Math.floor(t||0));
+    var m = Math.floor(t/60), s = t%60;
+    return m + ':' + (s<10?'0':'') + s;
+  }
+  function startProgressTicker(){
+    if (ytProgressTimer) clearInterval(ytProgressTimer);
+    ytProgressTimer = setInterval(function(){
+      if (!ytPlayer || !ytReady) return;
+      try{
+        var cur = ytPlayer.getCurrentTime() || 0;
+        var dur = ytPlayer.getDuration() || 0;
+        if (dur > 0){
+          seekFill.style.width = ((cur/dur)*100).toFixed(2) + '%';
+        }
+        timeCur.textContent = fmt(cur);
+        timeDur.textContent = fmt(dur);
+      }catch(e){}
+    }, 500);
+  }
+
+  // Seek by clicking bar
+  seekBar.addEventListener('click', function(e){
+    if (!ytPlayer || !ytReady) return;
+    try{
+      var rect = seekBar.getBoundingClientRect();
+      var pct 
 </body>
 </html>
