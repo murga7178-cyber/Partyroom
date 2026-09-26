@@ -425,7 +425,8 @@ html, body { overscroll-behavior-y: none; }
 #prCloseBtn{flex:none;width:38px;height:38px;border:0;border-radius:50%;background:rgba(25,10,60,.48);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:19px;line-height:1;cursor:pointer;touch-action:manipulation;display:grid;place-items:center;}
 #prCloseBtn:active{transform:scale(.92);}
 #prTopRight{display:flex;align-items:center;gap:8px;flex:none;}
-#prModeMenuWrap{position:relative;flex:0 0 auto;z-index:220;}
+#prModeMenuWrap{position:relative;flex:0 0 auto;z-index:220;display:none;}
+#prModeMenuWrap[data-host="1"]{display:block;}
 #prModeMenuBtn{height:40px;min-width:88px;padding:0 12px;border-radius:20px;border:1px solid rgba(167,139,250,.9);background:linear-gradient(135deg,rgba(49,27,105,.94),rgba(30,18,75,.94));color:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font:900 13px/1 Segoe UI,Arial,sans-serif;box-shadow:0 5px 18px rgba(88,28,135,.24),0 0 0 1px rgba(255,255,255,.05) inset;cursor:pointer;touch-action:manipulation;}
 #prModeMenuBtn:active{transform:scale(.96);}
 .pr-mode-chevron{font-size:17px;line-height:1;transform:translateY(-1px);opacity:.9;}
@@ -7278,6 +7279,7 @@ body.pk-game-open #pkUniversalNav{display:none!important}
     var c=$('prChatModeBtnG'); if(c) c.remove();
     var mode=String(window.__partyRoomMode||'chat');
     var iv=$('prInlineViewerCount'), vc=$('cinemaViewerCount'); if(iv&&vc) iv.textContent=vc.textContent||'0';
+    var mw=$('prModeMenuWrap'); if(mw){ if(host()) mw.setAttribute('data-host','1'); else { mw.removeAttribute('data-host'); closePartyRoomModeMenu(); } }
     paintModeMenu();
   }
   var wasKb=0;
@@ -9879,4 +9881,36 @@ listenRoomShare();
 #prRoom #partyRoomBottomDock .prd-gift,
 #prRoom #partyRoomBottomDock .prd-mic,
 #prRoom #partyRoomBottomDock .prd-music{transform:scale(.90);transform-origin:center;}
+</style>
+
+<style id="partyRoomYoutubeNoOverlapFix">
+/* YouTube Mode: keep the top-right controls (✕ / Top Gifter / Seat Settings), the seat row,
+   and the video player stacked cleanly one below another — nothing overlapping anything else. */
+#prRoom.party-youtube-layout #cinemaSeats{top:128px!important;}
+#prRoom.party-youtube-layout #cinemaSeats.pr-two-seat-mode{top:128px!important;}
+#prRoom.party-youtube-layout #cinemaSeats.pr-six-seat-mode{top:128px!important;}
+#prRoom.party-youtube-layout #cinemaSeats.pr-eight-seat-mode{top:128px!important;}
+#prRoom.party-youtube-layout #cinemaSeats.pr-twelve-seat-mode{
+  top:128px!important;
+  bottom:auto!important;
+  height:auto!important;
+  min-height:0!important;
+  align-content:flex-start!important;
+  row-gap:6px!important;
+  padding-bottom:6px!important;
+}
+#prRoom.party-youtube-layout #partyYoutubeStage{top:184px!important;bottom:118px!important;}
+#prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #partyYoutubeStage{top:234px!important;bottom:118px!important;}
+#prRoom.party-youtube-layout #partyYoutubeStage.yt-shorts-mode{top:184px!important;bottom:86px!important;}
+#prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #partyYoutubeStage.yt-shorts-mode{top:234px!important;bottom:86px!important;}
+#prRoom.party-youtube-layout #partyYoutubeStage.yt-shorts-mode .yt-room-card{height:min(calc(100dvh - 270px),747px)!important;}
+#prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #partyYoutubeStage.yt-shorts-mode .yt-room-card{height:min(calc(100dvh - 320px),747px)!important;}
+@media(max-width:430px){
+  #prRoom.party-youtube-layout #partyYoutubeStage{top:184px!important;bottom:116px!important;}
+  #prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #partyYoutubeStage{top:234px!important;bottom:116px!important;}
+  #prRoom.party-youtube-layout #partyYoutubeStage.yt-shorts-mode{top:184px!important;bottom:72px!important;}
+  #prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #partyYoutubeStage.yt-shorts-mode{top:234px!important;bottom:72px!important;}
+  #prRoom.party-youtube-layout #partyYoutubeStage.yt-shorts-mode .yt-room-card{height:min(calc(100dvh - 256px),747px)!important;}
+  #prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #partyYoutubeStage.yt-shorts-mode .yt-room-card{height:min(calc(100dvh - 306px),747px)!important;}
+}
 </style>
