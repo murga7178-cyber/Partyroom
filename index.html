@@ -2618,8 +2618,14 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       window.__gamingSeatCount=[2,4].includes(Number(window.__gamingSeatCount))?Number(window.__gamingSeatCount):4;
       window.PR_SEATS=gaming?window.__gamingSeatCount:(cinema?window.__cinemaSeatCount:window.__youtubeSeatCount);
       const box=document.getElementById('cinemaSeats'); if(box){box.innerHTML='';box.__sigs=[];}
-      if(youtube && window.partyRoomYoutubeEnter) window.partyRoomYoutubeEnter();
-      if(gaming && window.partyRoomYoutubeExit) window.partyRoomYoutubeExit();
+      /* YouTube UI/listeners must exist ONLY in YouTube Mode.
+         Cinema Mode has its own local-video player and must never inherit
+         YouTube's History/Q/URL UI. */
+      if(youtube){
+        if(window.partyRoomYoutubeEnter) window.partyRoomYoutubeEnter();
+      }else{
+        if(window.partyRoomYoutubeExit) window.partyRoomYoutubeExit();
+      }
     }else{
       window.PR_SEATS=[2,6,8,12].includes(Number(window.__chatSeatCount))?Number(window.__chatSeatCount):12;
       try{window.pkCloseJumpGame&&window.pkCloseJumpGame()}catch(e){}
@@ -7398,6 +7404,11 @@ body.pk-game-open #pkUniversalNav{display:none!important}
 #prRoom.party-gaming-layout #prChatModeBtnG[data-host="1"],#prRoom.party-youtube-layout #prChatModeBtnG[data-host="1"]{left:150px;background:linear-gradient(135deg,#0ea5e9,#2563eb);}
 #prSubRow #prTicker{min-width:0;flex:1 1 0;overflow:hidden;}
 </style>
+<style id="partyRoomCinemaIsolationFinal">
+/* Cinema Mode is a separate local-video mode; never show YouTube controls there. */
+#prRoom.party-cinema-layout #partyYoutubeStage{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+#prRoom.party-cinema-layout #ytModal{display:none!important;}
+</style>
 <script id="pkRoomFinalPolishJs">
 (function(){
   'use strict';
@@ -8772,6 +8783,10 @@ input,textarea,select{font-size:16px}
 .yt-bottom-sheet-buttons{display:flex;gap:8px;margin-bottom:10px;}
 .yt-bottom-sheet-buttons button{flex:1;min-height:42px;border-radius:11px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:#fff;font-size:12px;font-weight:900;cursor:pointer;}
 .yt-bottom-sheet-buttons button.active{background:linear-gradient(135deg,#a855f7,#ec4899);border-color:transparent;box-shadow:0 5px 16px rgba(168,85,247,.28);}
+.yt-bottom-sound-panel{display:none;align-items:center;justify-content:space-between;gap:8px;margin:-2px 0 9px;padding:7px 9px;border-radius:10px;background:rgba(168,85,247,.10);border:1px solid rgba(168,85,247,.28);color:#ddd6fe;font-size:10.5px;font-weight:800;}
+.yt-bottom-sound-panel.open{display:flex;}
+.yt-bottom-sound-panel button{padding:6px 10px;border:0;border-radius:8px;background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;font-size:10px;font-weight:900;}
+#prRoom.party-youtube-layout.yt-sound-only #partyYoutubeStage #ytRoomPlayerDiv,#prRoom.party-youtube-layout.yt-sound-only #partyYoutubeStage iframe{width:1px!important;height:1px!important;min-width:1px!important;min-height:1px!important;position:fixed!important;left:-10px!important;top:-10px!important;opacity:.01!important;pointer-events:none!important;}
 .yt-bottom-url-row{display:flex;gap:8px;align-items:stretch;}
 .yt-bottom-url-row .yt-input{min-height:46px;font-size:13px;}
 .yt-bottom-url-row .yt-btn-load{min-width:76px;min-height:46px;}
@@ -9197,6 +9212,11 @@ input,textarea,select{font-size:16px}
       <div class="yt-bottom-sheet-buttons">
         <button type="button" id="ytBottomHistoryBtn">💾 History</button>
         <button type="button" id="ytBottomQueueBtn">Q</button>
+        <button type="button" id="ytBottomSoundBtn">🎵 Sound</button>
+      </div>
+      <div id="ytBottomSoundPanel" class="yt-bottom-sound-panel" aria-hidden="true">
+        <span>🎵 सिर्फ Audio</span>
+        <button type="button" id="ytBottomSoundToggle">चालू करें</button>
       </div>
       <div class="yt-bottom-sheet-label">YouTube URL डालें और Host के रूप में Load करें</div>
       <div class="yt-bottom-url-row">
@@ -9215,7 +9235,7 @@ var queue=[],history=[],current=null,isHost=false,soundMode=false,volume=80,mute
 var ytPlayer=null,ytReady=false,ytApiLoaded=!!window.YT,ytProgressTimer=null,roomUnsub=null,lastRoomTs=0,listeningRoom='';
 var ytRoomStateUnsub=null,ytRoomQueueUnsub=null,ytRoomSyncTimer=null,ytRemoteApplying=false,ytRoomLastAction=0,ytRoomSuppressNextSync=false;
 var $=function(id){return document.getElementById(id);};
-var fab=$('ytFab'),fabBadge=fab&&fab.querySelector('.yt-badge'),mini=$('ytMini'),modal=$('ytModal'),closeBtn=$('ytCloseBtn'),input=$('ytInput'),loadBtn=$('ytLoadBtn'),pasteBtn=$('ytPasteBtn'),addQueue=$('ytAddQueueBtn'),historyBtn=$('ytHistoryBtn'),queueInput=$('ytQueueInput'),queueAddBtn=$('ytQueueAddBtn'),shareBtn=$('ytShareBtn'),clearBtn=$('ytClearBtn'),bottomHistoryBtn=$('ytBottomHistoryBtn'),bottomQueueBtn=$('ytBottomQueueBtn'),bottomInput=$('ytBottomInput'),bottomLoadBtn=$('ytBottomLoadBtn'),frameHost=$('ytFrame'),queueList=$('ytQueueList'),historyList=$('ytHistoryList'),queueCount=$('ytQueueCount'),hostLock=$('ytHostLock'),enableSound=$('ytEnableSound'),clearHist=$('ytClearHistory'),playPause=$('ytPlayPause'),seekBack=$('ytSeekBack'),seekFwd=$('ytSeekFwd'),seekBar=$('ytSeekBar'),seekFill=$('ytSeekFill'),timeCur=$('ytTimeCur'),timeDur=$('ytTimeDur'),volSlider=$('ytVolSlider'),volVal=$('ytVolVal'),muteBtn=$('ytMuteBtn'),dockBtn=$('partyRoomYouTubeBtn'),dockBadge=$('partyRoomYoutubeBadge');
+var fab=$('ytFab'),fabBadge=fab&&fab.querySelector('.yt-badge'),mini=$('ytMini'),modal=$('ytModal'),closeBtn=$('ytCloseBtn'),input=$('ytInput'),loadBtn=$('ytLoadBtn'),pasteBtn=$('ytPasteBtn'),addQueue=$('ytAddQueueBtn'),historyBtn=$('ytHistoryBtn'),queueInput=$('ytQueueInput'),queueAddBtn=$('ytQueueAddBtn'),shareBtn=$('ytShareBtn'),clearBtn=$('ytClearBtn'),bottomHistoryBtn=$('ytBottomHistoryBtn'),bottomQueueBtn=$('ytBottomQueueBtn'),bottomInput=$('ytBottomInput'),bottomLoadBtn=$('ytBottomLoadBtn'),bottomSoundBtn=$('ytBottomSoundBtn'),bottomSoundPanel=$('ytBottomSoundPanel'),bottomSoundToggle=$('ytBottomSoundToggle'),frameHost=$('ytFrame'),queueList=$('ytQueueList'),historyList=$('ytHistoryList'),queueCount=$('ytQueueCount'),hostLock=$('ytHostLock'),enableSound=$('ytEnableSound'),clearHist=$('ytClearHistory'),playPause=$('ytPlayPause'),seekBack=$('ytSeekBack'),seekFwd=$('ytSeekFwd'),seekBar=$('ytSeekBar'),seekFill=$('ytSeekFill'),timeCur=$('ytTimeCur'),timeDur=$('ytTimeDur'),volSlider=$('ytVolSlider'),volVal=$('ytVolVal'),muteBtn=$('ytMuteBtn'),dockBtn=$('partyRoomYouTubeBtn'),dockBadge=$('partyRoomYoutubeBadge');
 if(!modal||!input||!loadBtn)return;
 
 function toast(msg,ms){var t=document.createElement('div');t.className='yt-toast';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},ms||1800);}
@@ -9298,7 +9318,17 @@ function partyRoomYoutubeEnter(){
   try{refreshHostState();}catch(e){}
 }
 function partyRoomYoutubeExit(){
-  var st=ytRoomStage(); if(st)st.style.display='none'; ytRoomStopSync();
+  /* Leaving YouTube Mode must completely detach its player/state so Cinema
+     Mode cannot inherit the YouTube video, History, Q or URL interface. */
+  try{
+    if(ytRoomIsActive() && ytRoomHost() && current){
+      ytRoomWriteState({videoId:'',listId:'',title:'',playing:false,currentTime:0,stopped:true,closedBy:'mode-change',closedAt:Date.now()});
+    }
+  }catch(e){}
+  try{destroyPlayer();}catch(e){}
+  current=null;
+  var st=ytRoomStage(); if(st)st.style.display='none';
+  ytRoomStopSync();
 }
 window.partyRoomYoutubeEnter=partyRoomYoutubeEnter;window.partyRoomYoutubeExit=partyRoomYoutubeExit;
 
@@ -9563,7 +9593,20 @@ function updateBadges(){
   if(dockBadge){dockBadge.textContent=n;dockBadge.style.display=n?'flex':'none';}
 }
 
-function openModal(){modal.classList.add('open'); if(ytRoomIsActive()&&!ytRoomHost()){var qt=document.querySelector('.yt-tab[data-tab="queue"]');if(qt)qt.click();}}
+function openModal(){
+  /* In Party Room, YouTube controls must stay inside the same room screen.
+     Never open the old full-screen YouTube modal from Q/History/room actions. */
+  if(ytRoomIsActive()){
+    try{
+      modal.classList.remove('open');
+      var room=document.getElementById('prRoom');
+      if(room)room.classList.add('party-youtube-layout');
+      if(window.ytRoomUpdateUI)window.ytRoomUpdateUI();
+    }catch(e){}
+    return;
+  }
+  modal.classList.add('open');
+}
 function closeModal(){modal.classList.remove('open');}
 function fmt(t){t=Math.max(0,Math.floor(Number(t)||0));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');}
 function startProgress(){
@@ -9611,10 +9654,17 @@ window.ytRoomCloseShared=ytRoomCloseShared;
 
 function setSoundMode(on){
   soundMode=!!on;storageSet(SOUND_KEY,soundMode?'1':'0');
-  if(soundMode&&current){if(mini)mini.classList.add('open');closeModal();toast('🎵 Sound Mode चालू');}
+  var room=document.getElementById('prRoom');
+  if(room) room.classList.toggle('yt-sound-only',soundMode);
+  if(bottomSoundPanel) bottomSoundPanel.classList.add('open');
+  if(bottomSoundToggle) bottomSoundToggle.textContent=soundMode?'बंद करें':'चालू करें';
+  if(bottomSoundBtn) bottomSoundBtn.classList.toggle('active',soundMode);
+  if(soundMode&&current){if(mini)mini.classList.remove('open');closeModal();toast('🎵 सिर्फ Audio चालू');}
   else if(!soundMode&&mini)mini.classList.remove('open');
 }
 
+if(bottomSoundBtn){bottomSoundBtn.addEventListener('click',function(){if(bottomSoundPanel)bottomSoundPanel.classList.toggle('open');});}
+if(bottomSoundToggle){bottomSoundToggle.addEventListener('click',function(){setSoundMode(!soundMode);});}
 document.querySelectorAll('.yt-tab').forEach(function(t){
   t.addEventListener('click',function(){
     document.querySelectorAll('.yt-tab').forEach(function(x){x.classList.remove('active');});
@@ -9704,6 +9754,19 @@ function ytRoomTogglePanel(name){
   if(next==='queue'&&inp)setTimeout(function(){inp.focus();},30);
 }
 window.ytRoomTogglePanel=ytRoomTogglePanel;
+// Room Q/History must never open the legacy YouTube modal.
+(function(){
+  function bindRoomTools(){
+    var q=document.getElementById('ytRoomQueueBtn'),h=document.getElementById('ytRoomHistoryBtn');
+    [q,h].forEach(function(b){if(!b||b.__sameScreenBound)return;b.__sameScreenBound=true;b.addEventListener('click',function(e){
+      e.preventDefault();e.stopPropagation();
+      try{modal.classList.remove('open');}catch(x){}
+      ytRoomTogglePanel(b===q?'queue':'history');
+    },true);});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindRoomTools);else bindRoomTools();
+  setTimeout(bindRoomTools,300);setTimeout(bindRoomTools,1000);
+})();
 window.ytRoomOpenPanel=ytRoomTogglePanel;
 var inlineQueueLoad=document.getElementById('ytRoomInlineQueueLoad'),inlineQueueInput=document.getElementById('ytRoomInlineQueueInput');
 if(inlineQueueLoad)inlineQueueLoad.addEventListener('click',function(){var v=inlineQueueInput&&inlineQueueInput.value?inlineQueueInput.value.trim():'';if(!v){toast('🔗 पहले YouTube URL paste करें');return;}if(addVideoToQueue(v,inlineQueueInput))ytRoomTogglePanel('queue');});
@@ -9776,7 +9839,7 @@ window.YTPlayer={
   clearQueue:function(){queue=[];storageSet(QUEUE_KEY,'[]');renderQueue();}
 };
 
-loadStorage();detectHost();updateHostUI();renderQueue();renderHistory();updateBadges();ytRoomUpdateUI();
+loadStorage();try{if(bottomSoundToggle)bottomSoundToggle.textContent=soundMode?'बंद करें':'चालू करें';if(bottomSoundBtn)bottomSoundBtn.classList.toggle('active',soundMode);}catch(e){} detectHost();updateHostUI();renderQueue();renderHistory();updateBadges();ytRoomUpdateUI();
 setInterval(function(){
   var room=$('prRoom');
   if(!room||room.offsetParent===null)modal.classList.remove('open');
@@ -10512,6 +10575,17 @@ listenRoomShare();
 #prRoom.party-youtube-layout .yt-room-inline-empty{font-size:10px;color:#94a3b8;text-align:center;padding:8px;}
 #prRoom.party-youtube-layout .yt-room-hostbar button[onclick*="ytRoomOpenPanel"]{display:none!important;}
 </style>
+<style id="partyRoomYoutubeSameScreenFinal">
+/* Q + History are strictly inline in the Party Room. Never show the legacy full-screen sheet. */
+#prRoom.party-youtube-layout ~ #ytModal,
+#ytModal.open.party-room-youtube-legacy{display:none!important;}
+#prRoom.party-youtube-layout #ytRoomInlinePanel{position:relative!important;display:none!important;width:100%!important;max-width:900px!important;margin-top:6px!important;z-index:60!important;}
+#prRoom.party-youtube-layout #ytRoomInlinePanel.open{display:block!important;}
+#prRoom.party-youtube-layout #ytRoomInlineQueue,
+#prRoom.party-youtube-layout #ytRoomInlineHistory{display:none!important;}
+#prRoom.party-youtube-layout #ytRoomInlinePanel[data-open="queue"] #ytRoomInlineQueue{display:block!important;}
+#prRoom.party-youtube-layout #ytRoomInlinePanel[data-open="history"] #ytRoomInlineHistory{display:block!important;}
+</style>
 <style id="partyRoomYoutubeExactLayoutFix">
 /* Exact YouTube Mode order: VIDEO -> URL -> History/Q */
 #prRoom.party-youtube-layout #partyYoutubeStage{
@@ -10534,6 +10608,9 @@ listenRoomShare();
 #prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomInputTools .yt-room-tools-top{display:flex!important; gap:8px!important; width:100%!important;}
 #prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomInputTools .yt-room-tools-top button{flex:1 1 0!important; min-height:42px!important;}
 #prRoom.party-youtube-layout #partyYoutubeStage .yt-room-queue{display:none!important;}
+#prRoom.party-youtube-layout ~ #ytModal .yt-bottom-sheet-tools{display:none!important;}
+#prRoom.party-youtube-layout #ytRoomInputTools{overflow:visible!important;}
+
 #prRoom.party-youtube-layout #partyYoutubeStage iframe,
 #prRoom.party-youtube-layout #partyYoutubeStage #ytRoomPlayerDiv{position:absolute!important; inset:0!important; width:100%!important; height:100%!important; display:block!important;}
 @media(max-width:430px){
