@@ -2415,27 +2415,27 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         </div>
 
         <div id="cinemaSeats"></div>
-        <div id="ytRoomUrlBar" class="yt-room-url-bar">
-          <div class="yt-room-input-label">YouTube URL यहाँ डालें</div>
-          <div class="yt-room-url-row">
-            <input id="ytRoomInput" type="text" autocomplete="off" placeholder="YouTube link / Shorts link...">
-            <button type="button" id="ytRoomLoadBtn" onclick="window.ytRoomBottomSubmit&&window.ytRoomBottomSubmit()">Load</button>
-          </div>
-          <div class="yt-room-input-hint">Host: Load • Viewer: Queue में जोड़ेगा</div>
-        </div>
         <div id="partyYoutubeStage" aria-label="YouTube Mode" style="display:none;">
+          <!-- Fixed order: VIDEO first, URL second, History + Q third. -->
           <div class="yt-room-card">
             <div id="ytRoomEmpty" class="yt-room-empty"><div style="font-size:46px;">▶️</div><div>YouTube Queue से video चुनें</div><div style="font-size:12px;opacity:.7;">Queue में link कोई भी डाल सकता है • Play सिर्फ Host करेगा</div></div>
             <iframe id="ytRoomFrame" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
             <div id="ytRoomPlayerDiv"></div>
             <div id="ytRoomBlock" class="yt-room-block"></div>
             <div class="yt-room-hostbar"><button type="button" onclick="window.ytRoomOpenPanel&&window.ytRoomOpenPanel('queue')">📺 Queue</button><label style="display:flex;align-items:center;gap:5px;background:rgba(15,23,42,.82);border-radius:10px;padding:5px 8px;color:#fff;font-size:11px;">🔊<input id="ytRoomVolume" type="range" min="0" max="100" value="80" style="width:82px;"></label><button type="button" id="ytRoomCloseVideoBtn" class="yt-room-close-video" onclick="window.ytRoomCloseShared&&window.ytRoomCloseShared()" title="सभी के लिए YouTube बंद करें">✕ बंद करें</button></div>
-            <div class="yt-room-queue"><button type="button" onclick="window.ytRoomOpenPanel&&window.ytRoomOpenPanel('queue')">📺 Queue <span id="ytRoomQueueCount">0</span></button></div>
-            <div class="yt-room-input-tools" id="ytRoomInputTools">
-              <div class="yt-room-tools-top">
-                <button type="button" id="ytRoomHistoryBtn" onclick="window.ytRoomOpenPanel&&window.ytRoomOpenPanel('history')">💾 History</button>
-                <button type="button" id="ytRoomQueueBtn" onclick="window.ytRoomOpenPanel&&window.ytRoomOpenPanel('queue')">Q <span id="ytRoomQueueBadge">0</span></button>
-              </div>
+          </div>
+          <div id="ytRoomUrlBar" class="yt-room-url-bar">
+            <div class="yt-room-input-label">YouTube URL यहाँ डालें</div>
+            <div class="yt-room-url-row">
+              <input id="ytRoomInput" type="text" autocomplete="off" placeholder="YouTube link / Shorts link...">
+              <button type="button" id="ytRoomLoadBtn" onclick="window.ytRoomBottomSubmit&&window.ytRoomBottomSubmit()">Load</button>
+            </div>
+            <div class="yt-room-input-hint">Host: Load • Viewer: Queue में जोड़ेगा</div>
+          </div>
+          <div class="yt-room-input-tools" id="ytRoomInputTools">
+            <div class="yt-room-tools-top">
+              <button type="button" id="ytRoomHistoryBtn" onclick="window.ytRoomOpenPanel&&window.ytRoomOpenPanel('history')">💾 History</button>
+              <button type="button" id="ytRoomQueueBtn" onclick="window.ytRoomOpenPanel&&window.ytRoomOpenPanel('queue')">Q <span id="ytRoomQueueBadge">0</span></button>
             </div>
           </div>
         </div>
@@ -10482,6 +10482,19 @@ listenRoomShare();
   #prRoom.party-youtube-layout #partyYoutubeStage{top:184px!important; bottom:116px!important;}
   #prRoom.party-youtube-layout #partyYoutubeStage .yt-room-card{width:100%!important;}
 }
+</style>
+
+<style id="partyRoomYoutubeExactOrderFinal">
+/* FINAL YouTube layout: VIDEO -> URL/LOAD -> HISTORY + Q. */
+#prRoom.party-youtube-layout #partyYoutubeStage{position:absolute!important;top:184px!important;left:0!important;right:0!important;bottom:116px!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:6px!important;padding:6px 8px!important;box-sizing:border-box!important;overflow-y:auto!important;overflow-x:hidden!important;z-index:30!important;}
+#prRoom.party-youtube-layout #partyYoutubeStage > .yt-room-card{order:1!important;position:relative!important;width:100%!important;max-width:900px!important;height:auto!important;aspect-ratio:16/9!important;min-height:0!important;flex:0 0 auto!important;align-self:center!important;margin:0!important;}
+#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomUrlBar{order:2!important;position:relative!important;inset:auto!important;display:block!important;width:100%!important;max-width:900px!important;height:auto!important;flex:0 0 auto!important;align-self:center!important;margin:0!important;padding:6px 8px!important;box-sizing:border-box!important;z-index:40!important;}
+#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomInputTools{order:3!important;position:relative!important;inset:auto!important;display:block!important;width:100%!important;max-width:900px!important;height:auto!important;flex:0 0 auto!important;align-self:center!important;margin:0!important;padding:0!important;box-sizing:border-box!important;z-index:40!important;}
+#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomInputTools .yt-room-tools-top{display:flex!important;width:100%!important;gap:8px!important;margin:0!important;}
+#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomInputTools .yt-room-tools-top button{flex:1 1 0!important;min-width:0!important;min-height:42px!important;}
+#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-queue{display:none!important;}
+#prRoom.party-youtube-layout #partyYoutubeStage iframe,#prRoom.party-youtube-layout #partyYoutubeStage #ytRoomPlayerDiv{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;border:0!important;}
+@media(max-width:430px){#prRoom.party-youtube-layout #partyYoutubeStage{top:184px!important;bottom:116px!important;padding:5px 6px!important;gap:5px!important;}#prRoom.party-youtube-layout #partyYoutubeStage > .yt-room-card{width:100%!important;}}
 </style>
 </html>
 
