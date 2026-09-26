@@ -2434,10 +2434,12 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <div id="ytRoomBlock" class="yt-room-block"></div>
             <div class="yt-room-hostbar"><label style="display:flex;align-items:center;gap:5px;background:rgba(15,23,42,.82);border-radius:10px;padding:5px 8px;color:#fff;font-size:11px;">🔊<input id="ytRoomVolume" type="range" min="0" max="100" value="80" style="width:82px;"></label><button type="button" id="ytRoomCloseVideoBtn" class="yt-room-close-video" onclick="window.ytRoomCloseShared&&window.ytRoomCloseShared()" title="सभी के लिए YouTube बंद करें">✕ बंद करें</button></div>
           </div>
+          <button type="button" id="ytRoomUiHideBtn" class="yt-room-ui-hide-btn" aria-label="URL और YouTube controls छुपाएँ" title="URL और Q/History छुपाएँ">👁️ छुपाएँ</button>
           <div id="ytRoomUrlBar" class="yt-room-url-bar">
             <div class="yt-room-input-label">YouTube URL यहाँ डालें</div>
             <div class="yt-room-url-row">
-              <input id="ytRoomInput" type="text" autocomplete="off" readonly onfocus="this.blur()" placeholder="YouTube link / Shorts link...">
+              <input id="ytRoomInput" type="text" autocomplete="off" inputmode="none" placeholder="YouTube link / Shorts link...">
+              <button type="button" id="ytRoomPasteBtn" title="Clipboard से YouTube लिंक Paste करें">📋</button>
               <button type="button" id="ytRoomLoadBtn" onclick="window.ytRoomBottomSubmit&&window.ytRoomBottomSubmit()">Load</button>
             </div>
             <div class="yt-room-input-hint">Host: Load • Viewer: Queue में जोड़ेगा</div>
@@ -9792,6 +9794,27 @@ window.ytRoomOpenPanel=ytRoomTogglePanel;
 var inlineQueueLoad=document.getElementById('ytRoomInlineQueueLoad'),inlineQueueInput=document.getElementById('ytRoomInlineQueueInput');
 if(inlineQueueLoad)inlineQueueLoad.addEventListener('click',function(){var v=inlineQueueInput&&inlineQueueInput.value?inlineQueueInput.value.trim():'';if(!v){toast('🔗 पहले YouTube URL paste करें');return;}if(addVideoToQueue(v,inlineQueueInput))ytRoomTogglePanel('queue');});
 if(inlineQueueInput)inlineQueueInput.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();if(inlineQueueLoad)inlineQueueLoad.click();}});
+// Host/Viewer YouTube URL: keyboard stays closed, but Paste is always available.
+(function(){
+  var pb=document.getElementById('ytRoomPasteBtn'), inp=document.getElementById('ytRoomInput');
+  if(pb && !pb.__pasteBound){
+    pb.__pasteBound=true;
+    pb.addEventListener('click',async function(e){
+      e.preventDefault();e.stopPropagation();
+      try{
+        if(navigator.clipboard && navigator.clipboard.readText){
+          var txt=await navigator.clipboard.readText();
+          if(txt){inp.value=txt.trim();inp.dispatchEvent(new Event('input',{bubbles:true}));toast('📋 YouTube लिंक Paste हो गया');}
+          else toast('📋 Clipboard खाली है');
+        }else{toast('📋 Paste की सुविधा इस डिवाइस में उपलब्ध नहीं है');}
+      }catch(err){
+        toast('📋 Paste की अनुमति नहीं मिली — URL बॉक्स को दबाकर Paste करें',2200);
+        try{inp.focus();}catch(x){}
+      }
+    },true);
+  }
+  if(inp){inp.setAttribute('inputmode','none');}
+})();
 window.ytRoomToast=toast;
 if(bottomLoadBtn)bottomLoadBtn.addEventListener('click',ytBottomLoad);
 if(bottomInput)bottomInput.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();ytBottomLoad();}});
@@ -10134,6 +10157,9 @@ listenRoomShare();
 .yt-room-url-row input{flex:1;min-width:0;height:37px;box-sizing:border-box;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:#111827;color:#fff;padding:0 11px;font-size:12px;outline:none;}
 .yt-room-url-row input:focus{border-color:#a855f7;box-shadow:0 0 0 2px rgba(168,85,247,.18);}
 .yt-room-url-row button{width:66px;height:37px;border:0;border-radius:10px;background:linear-gradient(135deg,#ff0000,#c4302b);color:#fff;font-size:12px;font-weight:950;cursor:pointer;}
+.yt-room-url-row #ytRoomPasteBtn{width:44px!important;background:rgba(255,255,255,.10)!important;border:1px solid rgba(255,255,255,.16)!important;color:#fff!important;font-size:17px!important;}
+.yt-room-url-row #ytRoomPasteBtn:active{transform:scale(.96);}
+
 .yt-room-input-hint{font-size:8.5px;color:#64748b;margin-top:3px;text-align:center;}
 #ytRoomQueueBadge{font-size:9px;color:#c4b5fd;}
 @media(max-width:430px){
@@ -10640,6 +10666,57 @@ listenRoomShare();
 }
 </style>
 
+<style id="partyRoomYoutubeHideExtrasFinal">
+/* YouTube Mode: video हमेशा दिखेगा; URL + History/Q को हर user/host अपनी screen पर छुपा/दिखा सकता है. */
+#prRoom.party-youtube-layout #ytRoomUiHideBtn{
+  position:absolute!important;
+  z-index:55!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:4px!important;
+  min-width:72px!important;
+  height:30px!important;
+  padding:0 9px!important;
+  border:1px solid rgba(255,255,255,.18)!important;
+  border-radius:10px!important;
+  background:rgba(7,12,27,.86)!important;
+  color:#fff!important;
+  font-size:10px!important;
+  font-weight:900!important;
+  box-shadow:0 5px 16px rgba(0,0,0,.28)!important;
+  cursor:pointer!important;
+}
+#prRoom.party-youtube-layout #ytRoomUiHideBtn{
+  top:193px!important;
+  right:9px!important;
+}
+#prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomUiHideBtn{
+  top:243px!important;
+}
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomUrlBar,
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomInputTools{
+  display:none!important;
+}
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomUiHideBtn{
+  min-width:36px!important; width:36px!important; padding:0!important;
+}
+#prRoom.party-youtube-layout.pr-youtube-extras-hidden #partyYoutubeStage{
+  overflow:hidden!important;
+}
+#prRoom.party-youtube-layout #ytRoomUrlBar,
+#prRoom.party-youtube-layout #ytRoomInputTools{
+  transition:opacity .18s ease,transform .18s ease!important;
+}
+@media(max-width:430px){
+  #prRoom.party-youtube-layout #ytRoomUiHideBtn{
+    top:191px!important; right:7px!important;
+  }
+  #prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomUiHideBtn{
+    top:241px!important;
+  }
+}
+</style>
 <style id="partyRoomYoutubeExactOrderFinal">
 /* FINAL YouTube layout: VIDEO -> URL/LOAD -> HISTORY + Q. */
 #prRoom.party-youtube-layout #partyYoutubeStage{position:absolute!important;top:184px!important;left:0!important;right:0!important;bottom:116px!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:6px!important;padding:6px 8px!important;box-sizing:border-box!important;overflow-y:auto!important;overflow-x:hidden!important;z-index:30!important;}
@@ -10654,6 +10731,51 @@ listenRoomShare();
 </style>
 </html>
 
+<script id="partyRoomYoutubeHideExtrasScript">
+(function(){
+  function $(id){return document.getElementById(id);}
+  function isYT(){var r=$('prRoom');return !!(r&&r.classList.contains('party-youtube-layout'));}
+  function setHidden(hidden){
+    var r=$('prRoom'), b=$('ytRoomUiHideBtn'); if(!r||!b)return;
+    r.classList.toggle('pr-youtube-extras-hidden',!!hidden);
+    b.innerHTML=hidden?'👁️ दिखाएँ':'👁️ छुपाएँ';
+    b.title=hidden?'URL और Q/History दिखाएँ':'URL और Q/History छुपाएँ';
+    b.setAttribute('aria-label',b.title);
+    setTimeout(positionChat,30);
+  }
+  function toggle(){if(!isYT())return;var r=$('prRoom');setHidden(!r.classList.contains('pr-youtube-extras-hidden'));}
+  function positionChat(){
+    var r=$('prRoom'), p=$('cinemaChatPanel'), card=r&&r.querySelector('#partyYoutubeStage .yt-room-card');
+    if(!r||!p||!isYT()||!r.classList.contains('pr-youtube-extras-hidden')||!card)return;
+    var rr=r.getBoundingClientRect(), cr=card.getBoundingClientRect();
+    var top=Math.max(184,cr.bottom-rr.top+8);
+    if(r.querySelector('#cinemaSeats.pr-twelve-seat-mode')) top=Math.max(234,cr.bottom-rr.top+8);
+    p.style.setProperty('top',top+'px','important');
+    p.style.setProperty('bottom','calc(env(safe-area-inset-bottom,0px) + 68px)','important');
+  }
+  function resetChat(){
+    var p=$('cinemaChatPanel');if(p){p.style.removeProperty('top');p.style.removeProperty('bottom');}
+    positionChat();
+  }
+  function ensure(){
+    var r=$('prRoom'), b=$('ytRoomUiHideBtn'); if(!r||!b)return;
+    if(!b.__wired){
+      b.__wired=true; b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();toggle();});
+      var bar=$('ytRoomUrlBar'); if(bar)bar.addEventListener('dblclick',function(e){e.preventDefault();toggle();});
+    }
+    if(!isYT()){r.classList.remove('pr-youtube-extras-hidden');resetChat();return;}
+    if(!r.dataset.ytHideReady){r.dataset.ytHideReady='1';setHidden(false);}
+    if(r.classList.contains('pr-youtube-extras-hidden'))positionChat();
+  }
+  setInterval(ensure,700);
+  window.addEventListener('resize',function(){if(isYT())setTimeout(positionChat,40);});
+  window.addEventListener('orientationchange',function(){setTimeout(positionChat,100);});
+  document.addEventListener('dblclick',function(e){
+    var r=$('prRoom'); if(!r||!isYT())return;
+    if(e.target&&e.target.closest&&e.target.closest('#ytRoomUrlBar')){toggle();}
+  },true);
+})();
+</script>
 <style id="partyRoomYoutubeBottomHideFinal">
 /* YouTube is opened from Mode in the room header, not from the bottom dock. */
 #prRoom #partyRoomBottomDock #partyRoomYouTubeBtn,
@@ -10698,7 +10820,8 @@ listenRoomShare();
 <style id="partyChatYoutubeMusicMode">
 /* Chatting Mode: compact music control + inline paste panel */
 #prChatYoutubeMusicBtn{display:none!important;width:42px!important;height:42px!important;border-radius:14px!important;background:linear-gradient(145deg,#7c3aed,#db2777)!important;color:#fff!important;border:1px solid rgba(255,255,255,.2)!important;font-size:19px!important;position:relative!important;}
-#prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #prChatYoutubeMusicBtn{display:grid!important;place-items:center!important;}
+#prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #prChatYoutubeMusicBtn{display:grid!important;place-items:center!important;position:absolute!important;z-index:90!important;}
+#prRoom #prChatYoutubeMusicBtn.pr-seat-music-position{margin:0!important;}
 #prChatYoutubeMusicPanel{display:none;position:absolute;left:10px;right:10px;bottom:72px;z-index:2147483642;padding:9px;border-radius:14px;background:rgba(10,8,28,.97);border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 30px rgba(0,0,0,.4);}
 #prChatYoutubeMusicPanel.open{display:block;}
 .pr-cym-row{display:flex;gap:6px;align-items:center;}
@@ -10723,19 +10846,30 @@ listenRoomShare();
   function roomRef(){try{if(typeof db!=='undefined'&&db&&cinemaRoomId)return db.collection('cinemaRooms').doc(String(cinemaRoomId));}catch(e){}return null;}
   function ensureUI(){
     var room=el('prRoom'); if(!room||el('prChatYoutubeMusicBtn'))return;
-    var dock=el('partyRoomBottomDock'); if(!dock)return;
-    var groups=dock.querySelectorAll('.prd-group'); var g=groups[1]||groups[0]; if(!g)return;
+    var dock=el('partyRoomBottomDock');
     var b=document.createElement('button'); b.type='button'; b.id='prChatYoutubeMusicBtn'; b.innerHTML='🎵'; b.title='Chat में YouTube Music'; b.setAttribute('aria-label','YouTube Music');
     b.onclick=function(e){e.preventDefault();e.stopPropagation();togglePanel();};
-    g.insertBefore(b,g.firstChild);
+    room.appendChild(b);
+    positionMusicButton();
     var panel=document.createElement('div'); panel.id='prChatYoutubeMusicPanel';
-    panel.innerHTML='<div class="pr-cym-row"><input id="prChatYoutubeMusicInput" type="text" inputmode="none" readonly autocomplete="off" placeholder="YouTube URL paste करें"><button type="button" class="pr-cym-btn" id="prChatYoutubePaste">📋 Paste</button><button type="button" class="pr-cym-btn pr-cym-play" id="prChatYoutubePlay">▶</button><button type="button" class="pr-cym-btn" id="prChatYoutubeStop">■</button></div><div id="prChatYoutubeMusicStatus">🎵 लिंक paste करके Play दबाएँ</div>';
+    panel.innerHTML='<div class="pr-cym-row"><input id="prChatYoutubeMusicInput" type="text" inputmode="none" autocomplete="off" placeholder="YouTube URL paste करें"><button type="button" class="pr-cym-btn" id="prChatYoutubePaste">📋 Paste</button><button type="button" class="pr-cym-btn pr-cym-play" id="prChatYoutubePlay">▶</button><button type="button" class="pr-cym-btn" id="prChatYoutubeStop">■</button></div><div id="prChatYoutubeMusicStatus">🎵 लिंक paste करके Play दबाएँ</div>';
     room.appendChild(panel);
     var mini=document.createElement('div'); mini.id='prChatYoutubeMusicMini'; mini.innerHTML='🎵 <span id="prChatYoutubeMusicMiniText">Music चल रहा है</span>'; room.appendChild(mini);
     var f=document.createElement('div'); f.id='prChatYoutubeMusicFrame'; room.appendChild(f);
-    el('prChatYoutubePaste').onclick=async function(){try{var x=await navigator.clipboard.readText();if(x){el('prChatYoutubeMusicInput').value=x;setStatus('📋 URL paste हो गया');}}catch(e){setStatus('📋 Clipboard permission नहीं मिली');}};
+    el('prChatYoutubePaste').onclick=async function(){try{var x=await navigator.clipboard.readText();if(x){el('prChatYoutubeMusicInput').value=x;setStatus('📋 URL paste हो गया');}}catch(e){var inp=el('prChatYoutubeMusicInput');if(inp){inp.focus();setStatus('📋 अब URL box पर दबाकर Paste करें');}}};
     el('prChatYoutubePlay').onclick=function(){startMusicFromInput();};
     el('prChatYoutubeStop').onclick=function(){stopMusic();};
+  }
+  function positionMusicButton(){
+    var room=el('prRoom'), btn=el('prChatYoutubeMusicBtn'), seats=el('cinemaSeats');
+    if(!room||!btn||!seats)return;
+    var cs=getComputedStyle(room), sr=seats.getBoundingClientRect(), rr=room.getBoundingClientRect();
+    var count=Number(window.__chatSeatCount||window.PR_SEATS||12);
+    var left=sr.left-rr.left + (sr.width-42)/2, top=sr.bottom-rr.top+7;
+    if(count===2){ left=sr.right-rr.left+8; top=sr.top-rr.top + Math.max(0,(sr.height-42)/2); }
+    left=Math.max(6,Math.min(left,rr.width-48));
+    top=Math.max(60,Math.min(top,rr.height-150));
+    btn.style.left=left+'px'; btn.style.top=top+'px'; btn.classList.add('pr-seat-music-position');
   }
   function setStatus(t){var x=el('prChatYoutubeMusicStatus');if(x)x.textContent=t||'';}
   function togglePanel(){ensureUI();var p=el('prChatYoutubeMusicPanel');if(p)p.classList.toggle('open');}
@@ -10781,7 +10915,9 @@ listenRoomShare();
   }
   function stopSync(){if(musicUnsub)try{musicUnsub();}catch(e){}musicUnsub=null;musicRoomKey='';destroyMusicPlayer();}
   function onMode(){ensureUI();paintMusicSeats();if(activeChat())startSync();else destroyMusicPlayer();}
-  var timer=setInterval(function(){ensureUI();if(roomRef()){startSync();}paintMusicSeats();},1200);
+  var timer=setInterval(function(){ensureUI();positionMusicButton();if(roomRef()){startSync();}paintMusicSeats();},1200);
+  window.addEventListener('resize',positionMusicButton);
+  window.addEventListener('orientationchange',function(){setTimeout(positionMusicButton,80);});
   document.addEventListener('visibilitychange',function(){if(!document.hidden){ensureUI();onMode();}});
   window.partyChatMusicRefresh=onMode;
 })();
@@ -10817,5 +10953,93 @@ listenRoomShare();
       var out=oldApply(mode);try{window.partyChatMusicRefresh&&window.partyChatMusicRefresh();}catch(e){}return out;
     };
   }
+})();
+</script>
+
+<style id="partyCinemaHallFinal">
+#prRoom.party-cinema-layout #partyCinemaHall{display:flex!important;}
+#partyCinemaHall{display:none;position:absolute;left:8px;right:8px;top:72px;bottom:112px;z-index:28;border-radius:18px;overflow:hidden;background:radial-gradient(circle at 50% 20%,rgba(124,58,237,.28),transparent 42%),linear-gradient(160deg,#120d25,#050712 72%);border:1px solid rgba(167,139,250,.35);box-shadow:inset 0 0 50px rgba(0,0,0,.55),0 12px 30px rgba(0,0,0,.3);align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:18px;box-sizing:border-box;color:#fff;text-align:center;}
+#partyCinemaHall .pch-screen{width:min(92%,560px);aspect-ratio:16/8.8;border-radius:16px;background:#000;border:2px solid rgba(255,255,255,.12);box-shadow:0 0 0 5px rgba(124,58,237,.10),0 18px 45px rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
+#partyCinemaHall .pch-screen::before{content:"🎬";font-size:46px;opacity:.55;}
+#partyCinemaHall .pch-title{font-size:20px;font-weight:1000;letter-spacing:.2px;}
+#partyCinemaHall .pch-sub{font-size:12px;color:#cbd5e1;max-width:300px;line-height:1.5;}
+#partyCinemaHall .pch-btn{border:0;border-radius:999px;padding:11px 20px;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;font-weight:900;font-size:13px;box-shadow:0 8px 20px rgba(79,70,229,.35);}
+#partyCinemaHall .pch-btn:active{transform:scale(.97);}
+#partyCinemaHall .pch-host{font-size:10px;color:#a78bfa;}
+#prRoom.party-cinema-layout #cinemaSeats{z-index:40;top:auto!important;bottom:116px!important;}
+#prRoom.party-cinema-layout #cinemaChatPanel{z-index:45;}
+#prRoom.party-cinema-layout #partyCinemaHall .pch-screen video{width:100%;height:100%;object-fit:contain;background:#000;}
+</style>
+<script id="partyCinemaHallFinalScript">
+(function(){
+  function $(id){return document.getElementById(id);}
+  function ensureHall(){
+    var room=$('prRoom');if(!room)return null;
+    var h=$('partyCinemaHall');
+    if(!h){
+      h=document.createElement('div');h.id='partyCinemaHall';
+      h.innerHTML='<div class="pch-screen" id="partyCinemaScreen"></div><div class="pch-title">🎬 Cinema Hall</div><div class="pch-sub">Host यहाँ movie file चुनकर सबके साथ Cinema Hall में चला सकता है।</div><button type="button" class="pch-btn" id="partyCinemaChooseBtn">🎞️ Movie चुनें</button><div class="pch-host">👑 सिर्फ Host movie चला सकता है</div>';
+      room.appendChild(h);
+      $('partyCinemaChooseBtn').addEventListener('click',function(){
+        var inp=$('movieFileInput');if(inp)inp.click();
+      });
+    }
+    return h;
+  }
+  function showCinema(){
+    var room=$('prRoom');if(!room)return;
+    ensureHall();
+    room.classList.add('party-cinema-layout');
+    room.classList.remove('party-youtube-layout','party-gaming-layout');
+    var gc=$('partyGamingCenter');if(gc)gc.style.display='none';
+    var stage=$('partyYoutubeStage');if(stage)stage.style.display='none';
+    var seats=$('cinemaSeats');if(seats){window.PR_SEATS=6;seats.innerHTML='';seats.__sigs=[];try{cinemaRenderSeats(window.__cinemaPeople||[]);}catch(e){}}
+  }
+  function hideCinema(){
+    var room=$('prRoom');if(room)room.classList.remove('party-cinema-layout');
+    var h=$('partyCinemaHall');if(h)h.style.display='none';
+  }
+  var oldSet=window.setPartyRoomMode;
+  window.setPartyRoomMode=async function(mode){
+    if(mode!=='cinema') return oldSet?oldSet(mode):undefined;
+    try{
+      if(!cinemaRoomId||!cinemaIsHost)return;
+      window.__partyRoomMode='cinema';
+      showCinema();
+      try{await db.collection('cinemaRooms').doc(cinemaRoomId).set({roomMode:'cinema',updatedAt:Date.now()},{merge:true});}catch(e){}
+      try{window.paintPartyRoomModeMenu&&window.paintPartyRoomModeMenu();}catch(e){}
+      try{renderPartySeatQuickSettings();}catch(e){}
+    }catch(e){console.error('Cinema mode error',e);}
+  };
+  var oldApply=window.cinemaApplyRoomMode;
+  window.cinemaApplyRoomMode=function(mode){
+    if(mode==='cinema'){showCinema();return;}
+    hideCinema();
+    return oldApply?oldApply(mode):undefined;
+  };
+  var oldSelect=window.selectPartyRoomMode;
+  window.selectPartyRoomMode=function(mode){
+    if(mode==='cinema'){
+      try{var m=$('prModeMenu');if(m)m.classList.remove('open');}catch(e){}
+      if(window.setPartyRoomMode)return window.setPartyRoomMode('cinema');
+    }
+    return oldSelect?oldSelect(mode):undefined;
+  };
+  function hookMovie(){
+    var inp=$('movieFileInput');if(!inp||inp.__cinemaHook)return;
+    inp.__cinemaHook=true;
+    inp.addEventListener('change',function(){
+      setTimeout(function(){
+        var p=$('hostMoviePlayer'),screen=$('partyCinemaScreen');
+        if(p&&screen&&p.src){
+          screen.innerHTML='';
+          p.style.position='absolute';p.style.inset='0';p.style.width='100%';p.style.height='100%';p.style.zIndex='1';p.style.display='block';p.style.objectFit='contain';
+          screen.appendChild(p);
+          var h=$('partyCinemaHall');if(h)h.style.display='flex';
+        }
+      },250);
+    });
+  }
+  hookMovie();setTimeout(hookMovie,500);setTimeout(hookMovie,1500);
 })();
 </script>
