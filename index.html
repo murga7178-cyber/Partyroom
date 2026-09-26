@@ -8814,16 +8814,38 @@ function getRoomId(){
 }
 
 function detectHost(){
+  /*
+   * IMPORTANT: cinemaIsHost can be initialized to false before the room
+   * document is applied. Do not treat that early false value as final.
+   * The authoritative room host is __cinemaHostKey (hostKey/ownerKey),
+   * and it must be compared with the currently logged-in user key.
+   */
   try{
-    if(typeof cinemaIsHost!=='undefined'){isHost=!!cinemaIsHost;return;}
+    var meKey=String(typeof currentUserKey!=='undefined'&&currentUserKey?currentUserKey:'');
+    var roomHost=String(window.__cinemaHostKey||'');
+    if(meKey&&roomHost){
+      isHost=(meKey===roomHost);
+      if(isHost) return;
+    }
+    if(typeof cinemaIsHost!=='undefined' && cinemaIsHost===true){isHost=true;return;}
     if(window.currentUserEmail&&window.hostEmail){isHost=window.currentUserEmail===window.hostEmail;return;}
     if(document.querySelector('[data-host="me"],.hse-mine')){isHost=true;return;}
+    if(roomHost&&meKey){isHost=false;return;}
   }catch(e){}
+  /* Keep the previous fallback for standalone/non-room use. */
   isHost=true;
+}
+function refreshHostState(){
+  var before=isHost;
+  detectHost();
+  if(before!==isHost) updateHostUI();
+  return isHost;
 }
 function updateHostUI(){
   if(hostLock)hostLock.style.display=isHost?'none':'flex';
-  if(loadBtn)loadBtn.disabled=!isHost;
+  /* Do not disable Load: Host status can arrive a moment after the room UI.
+     handleLoad() performs the authoritative permission check at click time. */
+  if(loadBtn){loadBtn.disabled=false;loadBtn.title=isHost?'Video चलाएँ':'सिर्फ Host video चला सकता है';}
 }
 
 function getYouTubeInfo(raw){
@@ -8846,17 +8868,27 @@ function getYouTubeInfo(raw){
 }
 
 function loadYTApi(cb){
+  if(typeof cb!=='function')return;
   if(window.YT&&window.YT.Player){ytApiLoaded=true;cb();return;}
-  if(ytApiLoaded){
-    var timer=setInterval(function(){
-      if(window.YT&&window.YT.Player){clearInterval(timer);cb();}
-    },100);
-    return;
-  }
-  ytApiLoaded=true;
-  window.onYouTubeIframeAPIReady=function(){cb();};
+  /* Keep a small callback queue: other code can also load the YouTube API. */
+  window.__ytApiCallbacks=window.__ytApiCallbacks||[];
+  window.__ytApiCallbacks.push(cb);
+  if(window.__ytApiLoading)return;
+  window.__ytApiLoading=true;
+  var oldReady=window.onYouTubeIframeAPIReady;
+  window.onYouTubeIframeAPIReady=function(){
+    try{if(typeof oldReady==='function')oldReady();}catch(e){}
+    ytApiLoaded=true;window.__ytApiLoading=false;
+    var q=window.__ytApiCallbacks||[];window.__ytApiCallbacks=[];
+    q.forEach(function(fn){try{fn();}catch(e){}});
+  };
   var s=document.createElement('script');
   s.src='https://www.youtube.com/iframe_api';
+  s.async=true;
+  s.onerror=function(){
+    window.__ytApiLoading=false;
+    /* Direct iframe fallback remains usable even when the API is blocked. */
+  };
   document.head.appendChild(s);
 }
 
@@ -8870,28 +8902,49 @@ function destroyPlayer(){
 
 function createPlayer(info,startSeconds){
   destroyPlayer();
-  if(!frameHost)return;
-  var parent=frameHost.parentNode;
-  var div=document.createElement('div');
-  div.id='ytPlayerDiv';
-  div.style.cssText='position:absolute;inset:0;width:100%;height:100%;';
-  parent.insertBefore(div,frameHost);
-  frameHost.style.display='none';
-  var vars={autoplay:1,rel:0,modestbranding:1,playsinline:1,controls:1,start:Math.max(0,Number(startSeconds)||0)};
-  if(info.list)vars.list=info.list;
-  ytPlayer=new YT.Player('ytPlayerDiv',{
-    height:'100%',width:'100%',videoId:info.id||undefined,playerVars:vars,
-    events:{
-      onReady:function(e){
-        ytReady=true;
-        e.target.setVolume(muted?0:volume);
-        startProgress();
-        updatePlayPause();
-      },
-      onStateChange:function(e){
-        updatePlayPause();
-        if(e.data===YT.PlayerState.ENDED)toast('⏹️ Video खत्म',1500);
-      }
+  if(!frameHost||!info||!info.id)return;
+  var start=Math.max(0,Number(startSeconds)||0);
+  /* Always put a real YouTube embed on screen first. This makes Load/Play work
+     even if the IFrame API is delayed, blocked, or its global callback is lost. */
+  var params='autoplay=1&rel=0&modestbranding=1&playsinline=1&controls=1&enablejsapi=1&origin='+encodeURIComponent(location.origin);
+  if(start)params+='&start='+start;
+  if(info.list)params+='&list='+encodeURIComponent(info.list);
+  frameHost.src='https://www.youtube.com/embed/'+encodeURIComponent(info.id)+'?'+params;
+  frameHost.style.display='block';
+
+  /* Upgrade the same visible player to the API-backed player when available. */
+  loadYTApi(function(){
+    if(!window.YT||!window.YT.Player||!frameHost)return;
+    try{
+      var parent=frameHost.parentNode;
+      var div=document.createElement('div');
+      div.id='ytPlayerDiv';
+      div.style.cssText='position:absolute;inset:0;width:100%;height:100%;';
+      parent.insertBefore(div,frameHost);
+      frameHost.style.display='none';
+      var vars={autoplay:1,rel:0,modestbranding:1,playsinline:1,controls:1,start:start,enablejsapi:1};
+      if(info.list)vars.list=info.list;
+      ytPlayer=new YT.Player('ytPlayerDiv',{
+        height:'100%',width:'100%',videoId:info.id,playerVars:vars,
+        events:{
+          onReady:function(e){
+            ytReady=true;
+            e.target.setVolume(muted?0:volume);
+            startProgress();
+            updatePlayPause();
+          },
+          onStateChange:function(e){
+            updatePlayPause();
+            if(e.data===YT.PlayerState.ENDED)toast('⏹️ Video खत्म',1500);
+          },
+          onError:function(){
+            /* Restore the direct iframe if API playback fails. */
+            try{destroyPlayer();frameHost.src='https://www.youtube.com/embed/'+encodeURIComponent(info.id)+'?'+params;frameHost.style.display='block';}catch(e){}
+          }
+        }
+      });
+    }catch(e){
+      try{frameHost.style.display='block';}catch(x){}
     }
   });
 }
@@ -8917,6 +8970,7 @@ function playInfo(info,title,opts){
 }
 
 function handleLoad(){
+  refreshHostState();
   var info=getYouTubeInfo(input.value);
   if(!info){toast('❌ सही YouTube URL डालें');return;}
   if(!isHost){toast('👑 सिर्फ Host video चला सकता है',1800);return;}
@@ -8975,6 +9029,7 @@ function renderQueue(){
       if(e.target.closest('.del'))return;
       var idx=Number(el.dataset.qidx),v=queue[idx];
       if(!v)return;
+      refreshHostState();
       if(!isHost){toast('👑 सिर्फ Host video चला सकता है',1800);return;}
       playInfo({type:'video',id:v.id,list:v.list||''},v.title,{addedBy:v.addedBy||'You'});
       queue.splice(idx,1);storageSet(QUEUE_KEY,JSON.stringify(queue));renderQueue();
@@ -9002,6 +9057,7 @@ function renderHistory(){
     el.addEventListener('click',function(){
       var v=history[Number(el.dataset.hidx)];
       if(!v)return;
+      refreshHostState();
       if(!isHost){toast('👑 सिर्फ Host video चला सकता है',1800);return;}
       playInfo({type:'video',id:v.id,list:v.list||''},v.title,{addedBy:v.addedBy||'You'});
     });
@@ -9127,7 +9183,7 @@ setInterval(function(){
   var room=$('prRoom');
   if(!room||room.offsetParent===null)modal.classList.remove('open');
 },800);
-setInterval(function(){try{listenRoomShare();}catch(e){}},1500);
+setInterval(function(){try{refreshHostState();listenRoomShare();}catch(e){}},1500);
 listenRoomShare();
 })();
 </script>
