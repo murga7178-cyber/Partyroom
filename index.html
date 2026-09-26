@@ -10257,13 +10257,17 @@ listenRoomShare();
         ? player.captureStream()
         : (player.mozCaptureStream ? player.mozCaptureStream() : null);
 
-      if (!movieStream) { wtToast('❌ ब्राउज़र streaming support नहीं करता'); return; }
+      /* Some Android WebView builds do not expose captureStream().
+         The selected movie must still play locally in Cinema Mode; only the
+         WebRTC sharing path is skipped when captureStream is unavailable. */
+      let videoTracks = [];
+      let audioTracks = [];
+      if (movieStream) {
+        videoTracks = movieStream.getVideoTracks();
+        audioTracks = movieStream.getAudioTracks();
+      }
 
-      const videoTracks = movieStream.getVideoTracks();
-      const audioTracks = movieStream.getAudioTracks();
-      if (!videoTracks.length) { wtToast('❌ video track नहीं मिली'); return; }
-
-      WT.movieVideoTrack = videoTracks[0];
+      WT.movieVideoTrack = videoTracks[0] || null;
       WT.movieAudioTrack = audioTracks[0] || null;
 
       const localStream = WT_CONFIG.getLocalStream();
@@ -10273,7 +10277,9 @@ listenRoomShare();
       }
 
       const pcs = WT_CONFIG.getPeerConnections();
-      for (const pc of pcs) await attachMovieToPeer(pc);
+      if (WT.movieVideoTrack || WT.movieAudioTrack) {
+        for (const pc of pcs) await attachMovieToPeer(pc);
+      }
 
       WT_CONFIG.sendSignal({
         type: 'movie-started',
@@ -10285,7 +10291,7 @@ listenRoomShare();
       WT.hostMovieEl = player;
       if (els.modeBar) { els.modeBar.style.display = 'flex'; els.movieTitle.textContent = file.name; }
       player.addEventListener('ended', stopMovieAsHost, { once: true });
-      wtToast('✅ मूवी चालू — सभी देख सकेंगे');
+      wtToast(WT.movieVideoTrack ? '✅ मूवी चालू — सभी देख सकेंगे' : '✅ मूवी चालू');
     } catch (err) {
       console.error('[WT] startMovieAsHost error:', err);
       wtToast('❌ मूवी शुरू नहीं हो सकी');
@@ -10447,6 +10453,36 @@ listenRoomShare();
   <button id="closeMovieViewer" type="button">✕</button>
 </div>
 </body>
+
+<style id="partyRoomYoutubeExactLayoutFix">
+/* Exact YouTube Mode order: VIDEO -> URL -> History/Q */
+#prRoom.party-youtube-layout #partyYoutubeStage{
+  position:absolute!important; top:184px!important; left:0!important; right:0!important; bottom:118px!important;
+  display:flex!important; flex-direction:column!important; align-items:center!important; justify-content:flex-start!important;
+  gap:7px!important; padding:7px 8px!important; box-sizing:border-box!important; overflow-y:auto!important; overflow-x:hidden!important;
+}
+#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-card{
+  order:1!important; position:relative!important; width:min(100%,900px)!important; height:auto!important; aspect-ratio:16/9!important;
+  flex:0 0 auto!important; align-self:center!important; margin:0!important;
+}
+#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomUrlBar{
+  order:2!important; position:relative!important; inset:auto!important; display:block!important; width:min(100%,900px)!important;
+  flex:0 0 auto!important; margin:0!important; padding:6px 7px!important; box-sizing:border-box!important;
+}
+#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomInputTools{
+  order:3!important; position:relative!important; inset:auto!important; display:block!important; width:min(100%,900px)!important;
+  flex:0 0 auto!important; margin:0!important; padding:0!important; box-sizing:border-box!important;
+}
+#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomInputTools .yt-room-tools-top{display:flex!important; gap:8px!important; width:100%!important;}
+#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomInputTools .yt-room-tools-top button{flex:1 1 0!important; min-height:42px!important;}
+#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-queue{display:none!important;}
+#prRoom.party-youtube-layout #partyYoutubeStage iframe,
+#prRoom.party-youtube-layout #partyYoutubeStage #ytRoomPlayerDiv{position:absolute!important; inset:0!important; width:100%!important; height:100%!important; display:block!important;}
+@media(max-width:430px){
+  #prRoom.party-youtube-layout #partyYoutubeStage{top:184px!important; bottom:116px!important;}
+  #prRoom.party-youtube-layout #partyYoutubeStage .yt-room-card{width:100%!important;}
+}
+</style>
 </html>
 
 <style id="partyRoomYoutubeBottomHideFinal">
