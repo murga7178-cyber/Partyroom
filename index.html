@@ -1308,15 +1308,17 @@ html, body { overscroll-behavior-y: none; }
   transform:translateY(-58px)!important;
   transition:transform .16s ease!important;
 }
-/* 1. मैसेज लिस्ट हमेशा दिखती रहे */
+/* 1. मैसेज वाली जगह को हमेशा के लिए विजिबल रखें */
 .party-chat-stream, 
-#cinemaChatStream {
+#cinemaChatStream,
+.party-chat-messages {
   display: block !important;
   opacity: 1 !important;
   visibility: visible !important;
+  pointer-events: auto !important;
 }
 
-/* 2. जब कीबोर्ड बंद हो तो टाइपिंग वाला बॉक्स छिप जाए */
+/* 2. जब कीबोर्ड बंद हो तो सिर्फ टाइपिंग पैनल छिपे */
 #cinemaChatPanel {
   transform: translateY(100%) !important;
   opacity: 0 !important;
@@ -1324,7 +1326,7 @@ html, body { overscroll-behavior-y: none; }
   transition: transform .16s ease, opacity .16s ease !important;
 }
 
-/* 3. जब कीबोर्ड खुला हो तो टाइपिंग वाला बॉक्स सामने आ जाए */
+/* 3. जब टाइप कर रहे हों तो टाइपिंग पैनल दिखे */
 #prRoom.party-keyboard-open #cinemaChatPanel,
 #cinemaChatPanel:focus-within {
   transform: translateY(-20px) !important;
@@ -8228,17 +8230,18 @@ input,textarea,select{font-size:16px}
   }
 })();
 </script>
-
-</body>
-</html>
-// सेंड बटन क्लिक होने पर इनपुट पर फोकस बनाए रखने के लिए
+<script>
 document.addEventListener('click', function (e) {
   if (e.target && e.target.closest('#cinemaChatPanel button')) {
     const chatInput = document.querySelector('#cinemaChatPanel input, #cinemaChatPanel textarea');
     if (chatInput) {
-      setTimeout(() => {
+      setTimeout(function() {
         chatInput.focus();
       }, 50);
     }
   }
 });
+</script>
+
+</body>
+</html>
