@@ -1308,10 +1308,20 @@ html, body { overscroll-behavior-y: none; }
   transform:translateY(-58px)!important;
   transition:transform .16s ease!important;
 }
-#cinemaChatPanel:not(.party-composer-open) {
+/* 1. जब टाइपिंग न हो रही हो तो पैनल नीचे छिपा रहे */
+#cinemaChatPanel {
   transform: translateY(100%) !important;
   opacity: 0 !important;
   pointer-events: none !important;
+  transition: transform .16s ease, opacity .16s ease !important;
+}
+
+/* 2. जब कीबोर्ड खुला हो या इनपुट पर क्लिक/फोकस हो (टाइप और सेंड करते समय) */
+#prRoom.party-keyboard-open #cinemaChatPanel,
+#cinemaChatPanel:focus-within {
+  transform: translateY(-20px) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
 #prRoom.party-keyboard-open #cinemaChatPanel{
   transform:translateY(-20px)!important;
