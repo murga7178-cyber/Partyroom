@@ -7345,7 +7345,132 @@ input,textarea,select{font-size:16px}
   setInterval(addBtn,1500);
 })();
 </script>
-</body>
+
+   <script>
+/* ============================================================
+   GIFT NOTICE REMOVER + ANIMATED GIFT FIX
+   - "आपका गिफ्ट चला गया" जैसा कोई भी notice नहीं दिखेगा
+   - गिफ्ट भेजते ही flying animation चलेगा
+   - Recipient की DP पर hit + coin pop दिखेगा
+   ============================================================ */
+(function () {
+
+  /* 1) Notice / toast हटाने वाला filter */
+  const BLOCK_WORDS = [
+    "चला गया", "gift sent", "gift भेज", "gift bhej",
+    "भेज दिया", "sent successfully", "successfully sent",
+    "gift successfully", "आपका गिफ्ट", "गिफ्ट चला"
+  ];
+
+  function isGiftNotice(text) {
+    if (!text) return false;
+    const t = String(text).toLowerCase();
+    return BLOCK_WORDS.some(w => t.includes(w.toLowerCase()));
+  }
+
+  /* DOM में जो भी toast / notice add हो, उसे तुरंत हटा दो */
+  const observer = new MutationObserver(muts => {
+    muts.forEach(m => {
+      m.addedNodes.forEach(n => {
+        if (n.nodeType !== 1) return;
+        const txt = (n.textContent || "").trim();
+        if (!txt) return;
+        // toast / notice जैसे element की पहचान
+        const cls = (n.className || "") + " " + ((n.parentElement && n.parentElement.className) || "");
+        if (
+          /toast|notice|pr-toast|pr-notice|snackbar/i.test(cls) ||
+          isGiftNotice(txt)
+        ) {
+          n.remove();
+        }
+        // अगर अंदर भी कोई notice हो
+        n.querySelectorAll?.(".pr-toast, .pr-notice, .toast, .notice, .snackbar")
+          .forEach(el => el.remove());
+      });
+    });
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  /* 2) Chat में gift-notice type message को छुपाने वाला filter */
+  // अगर आपके chat renderer में "gift" type के message notice की तरह आते हैं,
+  // तो उन पर यह class + hide लगा देंगे (सिर्फ text-only वाले)
+  const chatObserver = new MutationObserver(muts => {
+    muts.forEach(m => {
+      m.addedNodes.forEach(n => {
+        if (n.nodeType !== 1) return;
+        if (n.classList && n.classList.contains("pr-msg")) {
+          const t = (n.textContent || "").toLowerCase();
+          const isGiftNotice =
+            t.includes("चला गया") ||
+            t.includes("gift sent") ||
+            (n.classList.contains("pr-notice") && t.includes("gift"));
+          if (isGiftNotice) {
+            n.remove();
+          }
+        }
+      });
+    });
+  });
+
+  function attachChatObserver() {
+    const box = document.getElementById("cinemaChatMessages");
+    if (box) {
+      chatObserver.observe(box, { childList: true, subtree: true });
+    } else {
+      // chat panel बाद में load हो, तो फिर try करो
+      setTimeout(attachChatObserver, 800);
+    }
+  }
+  attachChatObserver();
+
+  /* 3) Flying gift animation helper */
+  window.playFlyGiftAnimation = function (fromEl, toEl, emoji) {
+    if (!fromEl || !toEl) return;
+    const from = fromEl.getBoundingClientRect();
+    const to   = toEl.getBoundingClientRect();
+    const fx   = document.getElementById("prFx") || document.body;
+
+    const g = document.createElement("div");
+    g.className = "pr-fly pr-fly-to";
+    g.textContent = emoji || "🎁";
+    g.style.left = (from.left + from.width  / 2) + "px";
+    g.style.top  = (from.top  + from.height / 2) + "px";
+    g.style.setProperty("--gx", (to.left + to.width  / 2 - (from.left + from.width  / 2)) + "px");
+    g.style.setProperty("--gy", (to.top  + to.height / 2 - (from.top  + from.height / 2)) + "px");
+    fx.appendChild(g);
+    setTimeout(() => g.remove(), 1300);
+  };
+
+  /* 4) Recipient पर hit + coin pop */
+  window.playGiftHitAnimation = function (targetEl, giftName, coins) {
+    if (!targetEl) return;
+    targetEl.classList.add("pr-gift-hit");
+    const pop = document.createElement("div");
+    pop.className = "pr-coin-pop";
+    pop.textContent = `+${coins || 0} 🪙 ${giftName || ""}`.trim();
+    const r = targetEl.getBoundingClientRect();
+    pop.style.left = (r.left + r.width  / 2) + "px";
+    pop.style.top  = (r.top  + r.height / 2) + "px";
+    document.body.appendChild(pop);
+    setTimeout(() => {
+      targetEl.classList.remove("pr-gift-hit");
+      pop.remove();
+    }, 1100);
+  };
+
+  /* 5) Notice दिखाने वाले common function को override कर दो */
+  ["showToast", "showNotice", "toast", "notify"].forEach(fn => {
+    if (typeof window[fn] === "function") {
+      const orig = window[fn];
+      window[fn] = function (msg, ...rest) {
+        if (isGiftNotice(msg)) return; // gift notice skip
+        return orig.call(this, msg, ...rest);
+      };
+    }
+  });
+
+})();
+</script></body
 </html>
 
 
