@@ -2281,7 +2281,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
           </div>
           <div class="prd-group">
             <button type="button" class="prd-gift" onclick="togglePartyRoomGiftTray()" aria-label="Gifts">🎁</button>
-            <button type="button" class="prd-youtube" id="partyRoomYouTubeBtn" aria-label="YouTube">▶️<span id="partyRoomYoutubeBadge" class="prd-badge">0</span></button>
+            <button type="button" class="prd-youtube" id="partyRoomYouTubeBtn" onclick="if(window.openPartyRoomYouTube)window.openPartyRoomYouTube();return false;" aria-label="YouTube" title="YouTube">▶️<span class="yt-mini-label">YT</span><span id="partyRoomYoutubeBadge" class="prd-badge">0</span></button>
             <button type="button" class="prd-mic" id="partyRoomMuteDockBtn" onclick="cinemaToggleMute()" aria-label="Mute audio">🎙️</button>
             <button type="button" onclick="openPartyRoomSettings()" aria-label="More">⋮⋮</button>
           </div>
@@ -9131,5 +9131,65 @@ setInterval(function(){try{listenRoomShare();}catch(e){}},1500);
 listenRoomShare();
 })();
 </script>
+
+<style id="partyRoomYouTubeFinalVisibilityFix">
+/* YouTube is a permanent Party Room bottom-dock control. */
+#prRoom #partyRoomBottomDock #partyRoomYouTubeBtn,
+#partyRoomBottomDock #partyRoomYouTubeBtn{
+  display:flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+  position:relative!important;
+  z-index:2147483647!important;
+  flex:0 0 auto!important;
+  width:46px!important;
+  min-width:46px!important;
+  height:46px!important;
+  min-height:46px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  overflow:visible!important;
+  cursor:pointer!important;
+  background:linear-gradient(145deg,#ff3030,#c40000)!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.45)!important;
+  box-shadow:0 5px 16px rgba(255,0,0,.38)!important;
+  font-size:21px!important;
+}
+#partyRoomBottomDock #partyRoomYouTubeBtn .yt-mini-label{
+  position:absolute!important;
+  right:3px!important;
+  bottom:2px!important;
+  font:900 8px/9px system-ui,sans-serif!important;
+  letter-spacing:.2px!important;
+  color:#fff!important;
+  background:rgba(0,0,0,.38)!important;
+  border-radius:4px!important;
+  padding:1px 2px!important;
+  pointer-events:none!important;
+}
+#partyRoomBottomDock #partyRoomYouTubeBtn .prd-badge{
+  position:absolute!important;
+  top:-6px!important;
+  right:-5px!important;
+  width:auto!important;
+  min-width:17px!important;
+  height:17px!important;
+  padding:0 4px!important;
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border-radius:999px!important;
+  background:#ffd21f!important;
+  color:#17100a!important;
+  border:2px solid #241044!important;
+  font:900 9px/13px system-ui,sans-serif!important;
+}
+#partyRoomBottomDock #partyRoomYouTubeBtn:active{
+  transform:scale(.92)!important;
+}
+</style>
+
 </body>
 </html>
