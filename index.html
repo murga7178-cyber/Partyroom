@@ -416,7 +416,7 @@ html, body { overscroll-behavior-y: none; }
 :where(#prRoom)>*{z-index:1;}
 
 /* top bar */
-#prTop{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:0 0 auto;}
+#prTop{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:0 0 auto;position:relative;z-index:100;}
 #prRoomPill{display:flex;align-items:center;gap:9px;min-width:0;max-width:calc(100% - 52px);padding:5px 14px 5px 5px;border-radius:999px;background:rgba(25,10,60,.48);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
 #prRoomAvatar{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:18px;font-weight:900;color:#fff;background:conic-gradient(from 210deg,#ffb347,#ff5fa2,#8a5bff,#2fd4e6,#ffb347);box-shadow:0 0 0 2px rgba(255,255,255,.35) inset;text-shadow:0 1px 3px rgba(0,0,0,.4);}
 .pr-pill-txt{min-width:0;}
@@ -425,8 +425,40 @@ html, body { overscroll-behavior-y: none; }
 #prCloseBtn{flex:none;width:38px;height:38px;border:0;border-radius:50%;background:rgba(25,10,60,.48);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:19px;line-height:1;cursor:pointer;touch-action:manipulation;display:grid;place-items:center;}
 #prCloseBtn:active{transform:scale(.92);}
 #prTopRight{display:flex;align-items:center;gap:8px;flex:none;}
-#prTopGiftersBtn{flex:none;width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#ffd76a,#f59e0b 55%,#c2740a);border:1px solid rgba(255,255,255,.35);color:#3a2200;font-size:18px;line-height:1;cursor:pointer;touch-action:manipulation;display:grid;place-items:center;box-shadow:0 4px 14px rgba(217,119,6,.5),0 0 0 1px rgba(255,255,255,.08) inset;}
-#prTopGiftersBtn:active{transform:scale(.92);}
+#prModeMenuWrap{position:relative;flex:0 0 auto;z-index:220;}
+#prModeMenuBtn{height:40px;min-width:88px;padding:0 12px;border-radius:20px;border:1px solid rgba(167,139,250,.9);background:linear-gradient(135deg,rgba(49,27,105,.94),rgba(30,18,75,.94));color:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font:900 13px/1 Segoe UI,Arial,sans-serif;box-shadow:0 5px 18px rgba(88,28,135,.24),0 0 0 1px rgba(255,255,255,.05) inset;cursor:pointer;touch-action:manipulation;}
+#prModeMenuBtn:active{transform:scale(.96);}
+.pr-mode-chevron{font-size:17px;line-height:1;transform:translateY(-1px);opacity:.9;}
+#prModeMenu{position:absolute;top:calc(100% + 8px);left:0;width:196px;padding:7px;border-radius:18px;background:linear-gradient(145deg,rgba(17,14,48,.98),rgba(8,14,35,.98));border:1px solid rgba(139,92,246,.8);box-shadow:0 18px 44px rgba(0,0,0,.48),0 0 24px rgba(124,58,237,.2);display:none;}
+#prModeMenu.open{display:block;}
+.pr-mode-option{width:100%;min-height:48px;border:0;border-radius:13px;background:transparent;color:#fff;display:flex;align-items:center;gap:10px;padding:7px 9px;text-align:left;font:850 13px/1.1 Segoe UI,Arial,sans-serif;cursor:pointer;touch-action:manipulation;}
+.pr-mode-option:hover,.pr-mode-option:active{background:rgba(124,58,237,.22);}
+.pr-mode-option.active{background:linear-gradient(135deg,rgba(109,40,217,.55),rgba(37,99,235,.3));box-shadow:inset 0 0 0 1px rgba(167,139,250,.45);}
+.pr-mode-option-icon{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;flex:none;font-size:17px;background:rgba(255,255,255,.12);}
+.pr-mode-option-icon.chat{background:linear-gradient(145deg,#2563eb,#38bdf8);}
+.pr-mode-option-icon.gaming{background:linear-gradient(145deg,#7c3aed,#a855f7);}
+.pr-mode-option-icon.youtube{background:linear-gradient(145deg,#ef4444,#be123c);}
+.pr-mode-check{margin-left:auto;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:#fff;background:#22c55e;font-size:14px;font-weight:1000;visibility:hidden;}
+.pr-mode-option.active .pr-mode-check{visibility:visible;}
+.pr-inline-viewers{display:inline-flex;align-items:center;gap:2px;margin-left:7px;opacity:.9;}
+@media(max-width:430px){#prModeMenuBtn{min-width:76px;padding:0 9px;font-size:12px;}#prModeMenu{left:-12px;width:190px;}#prTopGiftersBtn{min-width:108px;}#prRoomPill{max-width:calc(100% - 76px - 112px - 16px);}}
+#prTopGiftersBtn{
+  flex:none;min-width:132px;height:42px;padding:0 14px 0 8px;box-sizing:border-box;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  border:1.5px solid rgba(196,181,253,.95);border-radius:22px;
+  background:linear-gradient(100deg,rgba(38,20,91,.72),rgba(72,28,125,.52),rgba(20,18,65,.68));
+  color:#fff;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  box-shadow:0 5px 18px rgba(88,28,135,.28),0 0 0 1px rgba(255,255,255,.05) inset,0 0 12px rgba(168,85,247,.16);
+  font:900 13px/1 Segoe UI,Arial,sans-serif;letter-spacing:.15px;white-space:nowrap;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+#prTopGiftersBtn::before{
+  content:'🏆';flex:none;width:31px;height:31px;display:grid;place-items:center;
+  border-radius:50%;background:radial-gradient(circle at 35% 25%,rgba(255,244,176,.28),rgba(255,190,50,.08) 48%,rgba(255,255,255,.02) 70%);
+  font-size:21px;line-height:1;filter:drop-shadow(0 1px 3px rgba(255,190,60,.65));
+}
+#prTopGiftersBtn:active{transform:scale(.96);}
+@media (max-width:390px){#prTopGiftersBtn{min-width:116px;height:39px;padding-right:11px;gap:6px;font-size:12px;}#prTopGiftersBtn::before{width:28px;height:28px;font-size:19px;}}
 
 /* second row: online count + more */
 #prSubRow{display:flex;align-items:center;justify-content:space-between;margin-top:8px;flex:0 0 auto;}
@@ -1088,7 +1120,8 @@ html, body { overscroll-behavior-y: none; }
 /* Gaming mode: the game is the full room stage; score stays visible and 4 small seats sit directly below it. */
 #prRoom.party-gaming-layout{position:relative!important;overflow:hidden!important;}
 #prRoom.party-gaming-layout #partyGamingCenter{position:absolute!important;inset:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;z-index:10!important;display:flex!important;}
-#prRoom.party-gaming-layout #prTop,#prRoom.party-gaming-layout #prSubRow,#prRoom.party-gaming-layout #prTicker,#prRoom.party-gaming-layout #prHostRow{display:none!important;}
+#prRoom.party-gaming-layout #prSubRow,#prRoom.party-gaming-layout #prTicker,#prRoom.party-gaming-layout #prHostRow{display:none!important;}
+#prRoom.party-gaming-layout #prTop{display:flex!important;position:relative!important;z-index:100!important;}
 #prRoom.party-gaming-layout #partyGamingCenter .pgc-head{display:none!important;}
 #prRoom.party-gaming-layout #partyGamingCenter.pgc-playing .pgc-stage{position:absolute!important;inset:0!important;margin:0!important;border-radius:0!important;z-index:1!important;display:block!important;}
 #prRoom.party-gaming-layout #partyGamingCenter.pgc-playing .pgc-stage iframe{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;}
@@ -2173,11 +2206,19 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <div id="prRoomAvatar">🎉</div>
             <div class="pr-pill-txt">
               <div id="cinemaRoomLabelTop">—</div>
-              <div class="pr-room-sub"><span id="cinemaHostName"></span></div>
+              <div class="pr-room-sub"><span id="cinemaHostName"></span><span class="pr-inline-viewers">👥 <span id="prInlineViewerCount">0</span></span></div>
+            </div>
+          </div>
+          <div id="prModeMenuWrap">
+            <button type="button" id="prModeMenuBtn" aria-haspopup="menu" aria-expanded="false" onclick="window.togglePartyRoomModeMenu&&window.togglePartyRoomModeMenu()">⚙️ <span>Mode</span><span class="pr-mode-chevron">⌄</span></button>
+            <div id="prModeMenu" role="menu" aria-hidden="true">
+              <button type="button" class="pr-mode-option" data-mode="chat" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('chat')"><span class="pr-mode-option-icon chat">💬</span><span>Chatting Mode</span><span class="pr-mode-check" aria-hidden="true">✓</span></button>
+              <button type="button" class="pr-mode-option" data-mode="gaming" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('gaming')"><span class="pr-mode-option-icon gaming">🎮</span><span>Gaming Mode</span><span class="pr-mode-check" aria-hidden="true">✓</span></button>
+              <button type="button" class="pr-mode-option" data-mode="youtube" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('youtube')"><span class="pr-mode-option-icon youtube">▶️</span><span>YouTube Mode</span><span class="pr-mode-check" aria-hidden="true">✓</span></button>
             </div>
           </div>
           <div id="prTopRight">
-            <button type="button" id="prTopGiftersBtn" onclick="openPartyRoomTopGifters()" aria-label="Top Gifters">🏆</button>
+            <button type="button" id="prTopGiftersBtn" onclick="openPartyRoomTopGifters()" aria-label="Top Gifter"><span aria-hidden="true" style="display:none">🏆</span><span>Top Gifter</span></button>
             <button type="button" id="prCloseBtn" onclick="cinemaLobbyBack()" aria-label="रूम से बाहर निकलें">✕</button>
           </div>
         </div>
@@ -2240,7 +2281,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <iframe id="ytRoomFrame" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
             <div id="ytRoomPlayerDiv"></div>
             <div id="ytRoomBlock" class="yt-room-block"></div>
-            <div class="yt-room-hostbar"><button type="button" onclick="window.openPartyRoomYouTube&&window.openPartyRoomYouTube()">📺 Queue</button><button type="button" onclick="window.YTPlayer&&window.YTPlayer.stop()">⏹ Stop</button><label style="display:flex;align-items:center;gap:5px;background:rgba(15,23,42,.82);border-radius:10px;padding:5px 8px;color:#fff;font-size:11px;">🔊<input id="ytRoomVolume" type="range" min="0" max="100" value="80" style="width:82px;"></label></div>
+            <div class="yt-room-hostbar"><button type="button" onclick="window.openPartyRoomYouTube&&window.openPartyRoomYouTube()">📺 Queue</button><label style="display:flex;align-items:center;gap:5px;background:rgba(15,23,42,.82);border-radius:10px;padding:5px 8px;color:#fff;font-size:11px;">🔊<input id="ytRoomVolume" type="range" min="0" max="100" value="80" style="width:82px;"></label></div>
             <div class="yt-room-queue"><button type="button" onclick="window.openPartyRoomYouTube&&window.openPartyRoomYouTube()">📺 Queue <span id="ytRoomQueueCount">0</span></button></div>
           </div>
         </div>
@@ -2344,37 +2385,17 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <div style="font-size:11px;color:#c4b5fd;margin-bottom:10px;">Game Coins से अपना फ्रेम खरीदें, लगाएँ या कभी भी हटा दें।</div>
             <button type="button" onclick="openPartyFrameStore()" style="width:100%;padding:13px;border:1px solid #d946ef;border-radius:14px;background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;font-weight:950;font-size:14px;cursor:pointer;">🖼️ Frame Store खोलें</button>
           </div>
-          <div id="partyRoomIdentityCard" style="display:none;background:#111827;border:1px solid #26354d;border-radius:18px;padding:14px;margin-bottom:12px;">
-            <div style="font-size:15px;font-weight:950;margin-bottom:4px;">📸 रूम की डीपी और टाइटल</div>
-            <div style="font-size:11px;color:#94a3b8;margin-bottom:10px;">यही डीपी और टाइटल रूम लिस्ट में सबको दिखता है। सिर्फ़ Host बदल सकता है।</div>
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-              <div id="pmEditPhotoPrev" style="flex:none;width:68px;height:68px;border-radius:18px;background:#070d18 center/cover no-repeat;border:1.5px dashed #3a4658;display:grid;place-items:center;font-size:24px;">📷</div>
-              <button type="button" onclick="document.getElementById('pmEditPhotoFile').click()" style="flex:1;border:1px solid #3a4658;border-radius:13px;padding:12px;background:#0b1220;color:#fff;font-weight:800;font-size:13px;cursor:pointer;">🖼 फ़ोटो बदलें</button>
-              <input id="pmEditPhotoFile" type="file" accept="image/*" style="display:none" onchange="partyRoomPickNewPhoto(this)">
-            </div>
-            <input id="pmEditTitle" maxlength="60" placeholder="रूम का टाइटल" style="width:100%;box-sizing:border-box;padding:13px;border-radius:13px;border:1px solid #3a4658;background:#070d18;color:#fff;font-size:14px;margin-bottom:10px;outline:none;">
-            <button type="button" onclick="partyRoomSaveIdentity()" style="width:100%;border:0;border-radius:14px;padding:13px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;font-weight:900;font-size:15px;cursor:pointer;">💾 सेव करें</button>
-            <div id="pmEditMsg" style="font-size:12px;margin-top:8px;min-height:14px;"></div>
-          </div>
-          <div style="background:#111827;border:1px solid #26354d;border-radius:18px;padding:14px;margin-bottom:12px;">
+<div style="background:#111827;border:1px solid #26354d;border-radius:18px;padding:14px;margin-bottom:12px;">
             <div style="font-size:15px;font-weight:950;margin-bottom:6px;">🪑 सीटों की संख्या</div>
             <div style="font-size:11px;color:#94a3b8;margin-bottom:10px;">Host यहाँ से Party Room में 2, 8 या 12 माइक सीट चुन सकता है। 2 सीट मोड में Host सीट की जगह दो बड़ी सीटें रहेंगी।</div>
             <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;">
               <button id="partySeatCount2Btn" type="button" onclick="setPartySeatCount(2)" style="padding:13px 8px;border-radius:14px;border:1px solid #475569;background:#172033;color:#fff;font-weight:950;cursor:pointer;">2 सीट</button>
+              <button id="partySeatCount6Btn" type="button" onclick="setPartySeatCount(6)" style="padding:13px 8px;border-radius:14px;border:1px solid #475569;background:#172033;color:#fff;font-weight:950;cursor:pointer;">6 सीट</button>
               <button id="partySeatCount8Btn" type="button" onclick="setPartySeatCount(8)" style="padding:13px 8px;border-radius:14px;border:1px solid #475569;background:#172033;color:#fff;font-weight:950;cursor:pointer;">8 सीट</button>
               <button id="partySeatCount12Btn" type="button" onclick="setPartySeatCount(12)" style="padding:13px 8px;border-radius:14px;border:1px solid #7c3aed;background:#241044;color:#fff;font-weight:950;cursor:pointer;">12 सीट</button>
             </div>
           </div>
-          <div style="background:#111827;border:1px solid #26354d;border-radius:18px;padding:14px;margin-bottom:12px;">
-            <div style="font-size:15px;font-weight:950;margin-bottom:10px;">🎨 Room Background</div>
-            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">
-              <button type="button" onclick="setPartyRoomBackground('midnight')" style="padding:14px;border-radius:14px;border:1px solid #334155;background:linear-gradient(135deg,#07101d,#1e293b);color:#fff;font-weight:900;">🌌 Midnight</button>
-              <button type="button" onclick="setPartyRoomBackground('purple')" style="padding:14px;border-radius:14px;border:1px solid #5b21b6;background:linear-gradient(135deg,#1e1b4b,#7c3aed);color:#fff;font-weight:900;">💜 Purple Party</button>
-              <button type="button" onclick="setPartyRoomBackground('sunset')" style="padding:14px;border-radius:14px;border:1px solid #9a3412;background:linear-gradient(135deg,#7c2d12,#ea580c);color:#fff;font-weight:900;">🌅 Sunset</button>
-              <button type="button" onclick="setPartyRoomBackground('neon')" style="padding:14px;border-radius:14px;border:1px solid #0e7490;background:linear-gradient(135deg,#042f2e,#164e63);color:#fff;font-weight:900;">🌃 Neon Night</button><button type="button" onclick="setPartyRoomBackground('bloom')" style="padding:14px;border-radius:14px;border:1px solid #d946ef;background:linear-gradient(135deg,#6d28d9,#db2777);color:#fff;font-weight:900;">🌹 Bloom</button><button type="button" onclick="document.getElementById('partyRoomBgGalleryInput').click()" style="padding:14px;border-radius:14px;border:1px solid #64748b;background:rgba(255,255,255,.08);color:#fff;font-weight:900;">🖼️ गैलरी फोटो</button><input id="partyRoomBgGalleryInput" type="file" accept="image/*" style="display:none" onchange="setPartyRoomGalleryBackground(this.files&&this.files[0])">
-            </div>
-          </div>
-          <div style="background:linear-gradient(145deg,#17112d,#0b1220);border:1px solid rgba(124,58,237,.45);border-radius:18px;padding:14px;margin-bottom:12px;">
+<div id="partyRoomModeSettingsCard" style="background:linear-gradient(145deg,#17112d,#0b1220);border:1px solid rgba(124,58,237,.45);border-radius:18px;padding:14px;margin-bottom:12px;">
             <div style="font-size:15px;font-weight:950;margin-bottom:5px;">🎮 Room Mode</div>
             <div style="font-size:11px;color:#94a3b8;margin-bottom:10px;">रूम को Chatting, Gaming या YouTube में बदलें। केवल Host Mode बदल सकता है।</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
@@ -2399,9 +2420,10 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(mbg){ mbg.style.borderColor=mode==='gaming'?'#22c55e':'#7c3aed'; mbg.style.background=mode==='gaming'?'linear-gradient(145deg,#14532d,#166534)':'#241044'; }
     if(mby){ mby.style.borderColor=mode==='youtube'?'#22c55e':'#ef4444'; mby.style.background=mode==='youtube'?'linear-gradient(145deg,#14532d,#166534)':'#3b1010'; }
     const chat=document.getElementById('partySetChat'), audio=document.getElementById('partySetAudio'), seats=document.getElementById('partySetSeats'), host=document.getElementById('partySetHost');
-    const c8=document.getElementById('partySeatCount8Btn'), c12=document.getElementById('partySeatCount12Btn');
-    if(c8 && c12){
-      const n=[2,8,12].includes(Number(window.PR_SEATS))?Number(window.PR_SEATS):12;
+    const c6=document.getElementById('partySeatCount6Btn'), c8=document.getElementById('partySeatCount8Btn'), c12=document.getElementById('partySeatCount12Btn');
+    if(c6 && c8 && c12){
+      const n=[2,6,8,12].includes(Number(window.PR_SEATS))?Number(window.PR_SEATS):12;
+      c6.style.borderColor=n===6?'#22c55e':'#475569'; c6.style.background=n===6?'linear-gradient(145deg,#14532d,#166534)':'#172033';
       c8.style.borderColor=n===8?'#22c55e':'#475569'; c8.style.background=n===8?'linear-gradient(145deg,#14532d,#166534)':'#172033';
       c12.style.borderColor=n===12?'#22c55e':'#7c3aed'; c12.style.background=n===12?'linear-gradient(145deg,#14532d,#166534)':'#241044';
     }
@@ -2416,6 +2438,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   }
   window.__partyRoomMode='chat';
   window.__chatSeatCount=12;
+  window.__youtubeSeatCount=6;
   function cinemaSetGamingLayout(mode){
     const page=document.getElementById('prRoom'), center=document.getElementById('partyGamingCenter');
     const gaming=mode==='gaming', youtube=mode==='youtube';
@@ -2423,7 +2446,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(center) center.style.display=gaming?'flex':'none';
     if(gaming || youtube){
       window.__chatSeatCount=Number(window.__chatSeatCount||window.PR_SEATS||12);
-      window.PR_SEATS=4;
+      window.__youtubeSeatCount=Number(window.__youtubeSeatCount)||6;
+      window.PR_SEATS=gaming?4:window.__youtubeSeatCount;
       const box=document.getElementById('cinemaSeats'); if(box){box.innerHTML='';box.__sigs=[];}
       if(youtube && window.partyRoomYoutubeEnter) window.partyRoomYoutubeEnter();
       if(gaming && window.partyRoomYoutubeExit) window.partyRoomYoutubeExit();
@@ -2449,6 +2473,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(mbg){ mbg.style.borderColor=mode==='gaming'?'#22c55e':'#7c3aed'; mbg.style.background=mode==='gaming'?'linear-gradient(145deg,#14532d,#166534)':'#241044'; }
     if(mby){ mby.style.borderColor=mode==='youtube'?'#22c55e':'#ef4444'; mby.style.background=mode==='youtube'?'linear-gradient(145deg,#14532d,#166534)':'#3b1010'; }
     try{ await db.collection('cinemaRooms').doc(cinemaRoomId).set({roomMode:mode,updatedAt:Date.now()},{merge:true}); }catch(e){}
+    try{ if(window.paintPartyRoomModeMenu) window.paintPartyRoomModeMenu(); }catch(e){}
   }
   window.setPartyRoomMode=setPartyRoomMode;
   function cinemaApplyRoomMode(mode){
@@ -2462,13 +2487,13 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   async function setPartySeatCount(n){
     if(!cinemaRoomId || !cinemaIsHost) return;
     n=Number(n);
-    if(n!==2 && n!==8 && n!==12) return;
-    window.__chatSeatCount=n; window.PR_SEATS=(window.__partyRoomMode==='gaming')?4:n;
+    if(n!==2 && n!==6 && n!==8 && n!==12) return;
+    window.__chatSeatCount=n; window.__youtubeSeatCount=n; window.PR_SEATS=(window.__partyRoomMode==='gaming')?4:(window.__partyRoomMode==='youtube'?n:n);
     const box=document.getElementById('cinemaSeats');
     if(box){ box.innerHTML=''; box.__sigs=[]; }
     cinemaRenderSeats(window.__cinemaPeople||[]);
-    const c2=document.getElementById('partySeatCount2Btn'), c8=document.getElementById('partySeatCount8Btn'), c12=document.getElementById('partySeatCount12Btn');
-    [[c2,2],[c8,8],[c12,12]].forEach(function(pair){var b=pair[0],v=pair[1];if(b){b.style.borderColor=n===v?'#22c55e':(v===12?'#7c3aed':'#475569');b.style.background=n===v?'linear-gradient(145deg,#14532d,#166534)':(v===12?'#241044':'#172033');}});
+    const c2=document.getElementById('partySeatCount2Btn'), c6=document.getElementById('partySeatCount6Btn'), c8=document.getElementById('partySeatCount8Btn'), c12=document.getElementById('partySeatCount12Btn');
+    [[c2,2],[c6,6],[c8,8],[c12,12]].forEach(function(pair){var b=pair[0],v=pair[1];if(b){b.style.borderColor=n===v?'#22c55e':(v===12?'#7c3aed':'#475569');b.style.background=n===v?'linear-gradient(145deg,#14532d,#166534)':(v===12?'#241044':'#172033');}});
     try{ await db.collection('cinemaRooms').doc(cinemaRoomId).set({seatCount:n,updatedAt:Date.now()},{merge:true}); }catch(e){}
   }
   window.setPartySeatCount=setPartySeatCount;
@@ -2553,7 +2578,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(settingsBtn) settingsBtn.style.display='inline-flex';
     window.__partyRoomControls=Object.assign({chat:true,audio:true,seats:true,hostArea:true},d?.controls||{});
     cinemaApplyRoomMode(d?.roomMode||'chat');
-    window.__chatSeatCount=[2,8,12].includes(Number(d?.seatCount))?Number(d.seatCount):12; window.PR_SEATS=(window.__partyRoomMode==='gaming'||window.__partyRoomMode==='youtube')?4:window.__chatSeatCount;
+    window.__chatSeatCount=[2,6,8,12].includes(Number(d?.seatCount))?Number(d.seatCount):12; window.__youtubeSeatCount=6; window.PR_SEATS=(window.__partyRoomMode==='gaming')?4:(window.__partyRoomMode==='youtube'?6:window.__chatSeatCount);
     window.__partySeatStyle='ocean';
     const modal=document.getElementById('cinemaGharModal');
     if(modal){ cinemaApplyPartyBackground(modal,d?.backgroundKey,d?.backgroundImage||''); }
@@ -2669,6 +2694,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     const style=window.__partySeatStyle||'ocean';
     const N=window.PR_SEATS||12;
     box.classList.toggle('pr-two-seat-mode', N===2);
+    box.classList.toggle('pr-six-seat-mode', N===6);
     box.classList.toggle('pr-eight-seat-mode', N===8);
     box.classList.toggle('pr-twelve-seat-mode', N===12);
     const lockedSet=new Set((window.__prLockedSeats||[]).map(Number));
@@ -7096,13 +7122,16 @@ body.pk-game-open #pkUniversalNav{display:none!important}
 #cinemaGharModal:has(#partyRoomSettingsPage[style*="display: block"]) #cinemaChatComposer,
 #cinemaGharModal:has(#partyRoomSettingsPage[style*="display: block"]) #cinemaChatPanel,
 #cinemaGharModal:has(#partyRoomSettingsPage[style*="display: block"]) #partyRoomBottomDock{visibility:hidden!important;pointer-events:none!important;}
+#partyRoomModeSettingsCard{display:none!important;}
 /* 5) Mode toggle button (host) next to viewers, big like the Skip button */
 #prModeBtn,#prModeBtnG,#prYoutubeBtn{display:none;border:0;cursor:pointer;touch-action:manipulation;white-space:nowrap;font-weight:900;color:#fff;
   background:linear-gradient(135deg,#7c3aed,#db2777);box-shadow:0 4px 14px rgba(124,58,237,.35);}
 #prModeBtn[data-host="1"]{display:inline-flex;align-items:center;flex:0 0 auto;margin:0 8px;padding:8px 14px;border-radius:999px;font-size:13px;}
 #prYoutubeBtn[data-host="1"]{display:inline-flex;align-items:center;flex:0 0 auto;margin:0 4px;padding:8px 14px;border-radius:999px;font-size:13px;background:linear-gradient(135deg,#ff3030,#c40000);}
-#prRoom.party-gaming-layout #prModeBtnG[data-host="1"],#prRoom.party-youtube-layout #prModeBtnG[data-host="1"]{display:flex;align-items:center;position:absolute;z-index:60;
-  top:calc(env(safe-area-inset-top,0px) + 10px);left:10px;padding:10px 16px;border-radius:14px;font-size:15px;}
+#prRoom.party-gaming-layout #prModeBtnG[data-host="1"],#prRoom.party-youtube-layout #prModeBtnG[data-host="1"],#prRoom.party-gaming-layout #prChatModeBtnG[data-host="1"],#prRoom.party-youtube-layout #prChatModeBtnG[data-host="1"]{display:flex;align-items:center;position:absolute;z-index:60;
+  top:calc(env(safe-area-inset-top,0px) + 10px);padding:10px 16px;border-radius:14px;font-size:15px;}
+#prRoom.party-gaming-layout #prModeBtnG[data-host="1"],#prRoom.party-youtube-layout #prModeBtnG[data-host="1"]{left:10px;background:linear-gradient(135deg,#7c3aed,#db2777);}
+#prRoom.party-gaming-layout #prChatModeBtnG[data-host="1"],#prRoom.party-youtube-layout #prChatModeBtnG[data-host="1"]{left:150px;background:linear-gradient(135deg,#0ea5e9,#2563eb);}
 #prSubRow #prTicker{min-width:0;flex:1 1 0;overflow:hidden;}
 </style>
 <script id="pkRoomFinalPolishJs">
@@ -7111,20 +7140,61 @@ body.pk-game-open #pkUniversalNav{display:none!important}
   var $=function(i){return document.getElementById(i);};
   function host(){ try{ return !!cinemaIsHost; }catch(e){ return false; } }
   function toggleMode(){ var m=String(window.__partyRoomMode||'chat'); if(window.setPartyRoomMode) window.setPartyRoomMode(m==='gaming'?'chat':'gaming'); }
+  function paintModeMenu(){
+    var mode=String(window.__partyRoomMode||'chat');
+    var menu=$('prModeMenu'); if(!menu) return;
+    menu.classList.toggle('open',menu.classList.contains('open'));
+    menu.setAttribute('aria-hidden',menu.classList.contains('open')?'false':'true');
+    var btn=$('prModeMenuBtn'); if(btn) btn.setAttribute('aria-expanded',menu.classList.contains('open')?'true':'false');
+    menu.querySelectorAll('.pr-mode-option').forEach(function(o){ o.classList.toggle('active',o.getAttribute('data-mode')===mode); });
+  }
+  function togglePartyRoomModeMenu(){ var menu=$('prModeMenu'); if(!menu)return; menu.classList.toggle('open'); paintModeMenu(); }
+  function closePartyRoomModeMenu(){ var menu=$('prModeMenu'); if(menu){menu.classList.remove('open');paintModeMenu();} }
+  async function selectPartyRoomMode(mode){
+    closePartyRoomModeMenu();
+    if(mode==='chat'||mode==='gaming'||mode==='youtube'){
+      if(!host()){ try{ if(window.pkRoomToast) window.pkRoomToast('Mode बदलने का अधिकार केवल Host के पास है।'); }catch(e){} return; }
+      if(window.setPartyRoomMode) await window.setPartyRoomMode(mode);
+      paintModeMenu();
+    }
+  }
+  window.togglePartyRoomModeMenu=togglePartyRoomModeMenu; window.selectPartyRoomMode=selectPartyRoomMode; window.paintPartyRoomModeMenu=paintModeMenu;
+  document.addEventListener('click',function(e){ var w=$('prModeMenuWrap'); if(w&&!w.contains(e.target)) closePartyRoomModeMenu(); });
   function ensureBtns(){
     var room=$('prRoom'); if(!room) return;
     var sub=$('prSubRow'), b=$('prModeBtn'), y=$('prYoutubeBtn');
-    if(sub && !b){ b=document.createElement('button'); b.type='button'; b.id='prModeBtn'; b.onclick=toggleMode;
-      var v=$('cinemaViewerBtn'); if(v&&v.nextSibling) sub.insertBefore(b,v.nextSibling); else sub.appendChild(b); }
-    if(sub && !y){ y=document.createElement('button'); y.type='button'; y.id='prYoutubeBtn'; y.onclick=function(){if(window.setPartyRoomMode)window.setPartyRoomMode('youtube');}; y.textContent='▶️ YouTube';
-      if(b&&b.nextSibling) sub.insertBefore(y,b.nextSibling); else sub.appendChild(y); }
-    var g=$('prModeBtnG'); if(!g){ g=document.createElement('button'); g.type='button'; g.id='prModeBtnG'; g.onclick=toggleMode; room.appendChild(g); }
-    var mode=String(window.__partyRoomMode||'chat'), gaming=mode==='gaming', h=host()?'1':'0', t=gaming?'💬 Chatting Mode':'🎮 Gaming Mode';
-    [b,g].forEach(function(x){ if(!x) return; if(x.dataset.host!==h) x.dataset.host=h; if(x.textContent!==t) x.textContent=t; });
-    if(y){ y.dataset.host=h; y.style.display=h==='1'?'inline-flex':'none'; y.style.borderColor=mode==='youtube'?'#22c55e':'#ef4444'; y.style.background=mode==='youtube'?'linear-gradient(145deg,#14532d,#166534)':'linear-gradient(135deg,#ff3030,#c40000)'; }
+    if(b) b.remove();
+    if(y) y.remove();
+    var g=$('prModeBtnG'); if(g) g.remove();
+    var c=$('prChatModeBtnG'); if(c) c.remove();
+    var mode=String(window.__partyRoomMode||'chat');
+    var iv=$('prInlineViewerCount'), vc=$('cinemaViewerCount'); if(iv&&vc) iv.textContent=vc.textContent||'0';
+    paintModeMenu();
   }
   var wasKb=0;
-  function closeComposer(){ var c=$('cinemaChatComposer'); if(c && c.classList.contains('party-composer-open') && window.partyRoomFocusChat) window.partyRoomFocusChat(); }
+  function closeComposer(){
+    var c=$('cinemaChatComposer'), panel=$('cinemaChatPanel'), room=$('prRoom'), input=$('cinemaChatInput');
+    if(!c) return;
+    if(c.classList.contains('party-composer-open') || (panel&&panel.classList.contains('chat-input-open'))){
+      c.classList.remove('party-composer-open');
+      c.style.display='none';
+      c.style.visibility='hidden';
+      c.style.opacity='0';
+      c.style.pointerEvents='none';
+      c.style.position='absolute';
+      c.style.top='auto';
+      c.style.bottom='68px';
+      c.style.left='7px';
+      c.style.right='7px';
+      if(panel) panel.classList.remove('chat-input-open');
+      if(room) room.classList.remove('party-keyboard-open');
+      try{ if(input) input.blur(); }catch(e){}
+      try{
+        var rt=$('partyRoomReactionTray'); if(rt) rt.style.display='none';
+        var gt=$('partyRoomGiftTray'); if(gt) gt.style.display='none';
+      }catch(e){}
+    }
+  }
   function layout(){
     var room=$('prRoom'), panel=$('cinemaChatPanel'), seats=$('cinemaSeats'); if(!room||!panel||!seats||!room.offsetParent) return;
     var open=room.classList.contains('party-keyboard-open');
@@ -7147,6 +7217,20 @@ body.pk-game-open #pkUniversalNav{display:none!important}
   setInterval(tick,200);
   var vv=window.visualViewport; if(vv){ vv.addEventListener('resize',tick); vv.addEventListener('scroll',tick); }
   window.addEventListener('resize',tick);
+  // Android keyboard Back: when the visual viewport returns to full height, close the composer immediately.
+  (function installKeyboardCloseDetector(){
+    var v=window.visualViewport, lastH=v?v.height:window.innerHeight;
+    if(!v) return;
+    v.addEventListener('resize',function(){
+      var now=v.height, delta=now-lastH;
+      lastH=now;
+      if(delta>80){ setTimeout(function(){
+        var c=$('cinemaChatComposer'), inp=$('cinemaChatInput');
+        var kb=Math.max(0,Math.round(window.innerHeight-(v.height+v.offsetTop)));
+        if(kb<60 && c && c.classList.contains('party-composer-open') && document.activeElement!==inp) closeComposer();
+      },40); }
+    });
+  })();
   // tapping outside / dismissing the keyboard closes the composer (like WhatsApp)
   document.addEventListener('focusout',function(e){
     if(e.target && e.target.id==='cinemaChatInput'){
@@ -8660,7 +8744,7 @@ input,textarea,select{font-size:16px}
 @media(max-width:380px){
   #partyRoomBottomDock{padding-left:4px!important;padding-right:4px!important;}
   #partyRoomBottomDock .prd-group{gap:4px!important;}
-  #partyRoomBottomDock button:not(.prd-gift):not(.prd-mic){width:38px!important;height:38px!important;font-size:18px!important;border-radius:12px!important;}
+  #partyRoomBottomDock button:not(.prd-gift):not(.prd-mic):not(.prd-youtube){width:36px!important;height:36px!important;font-size:17px!important;border-radius:11px!important;}
   #partyRoomBottomDock .prd-youtube{width:38px!important;height:38px!important;}
   #partyRoomBottomDock .prd-gift{width:44px!important;height:44px!important;}
   #partyRoomBottomDock .prd-mic{width:38px!important;height:38px!important;}
@@ -8713,6 +8797,7 @@ input,textarea,select{font-size:16px}
       <div class="yt-quick">
         <button id="ytPasteBtn">📋 Paste</button>
         <button id="ytAddQueueBtn">➕ Queue</button>
+        <button id="ytHistoryBtn">💾 History</button>
         <button id="ytShareBtn">🔗 Share</button>
         <button id="ytClearBtn" class="danger">🗑️ Clear</button>
       </div>
@@ -8748,21 +8833,29 @@ input,textarea,select{font-size:16px}
       </div>
 
       <div class="yt-info">
-        ✅ <b>Supported:</b> watch, youtu.be, /shorts, /embed, /live, Playlist, या सिर्फ ID
+        ✅ <b>Supported:</b> watch, youtu.be, /shorts, /embed, /live, या सिर्फ Video ID
       </div>
     </div>
 
     <!-- ===== TAB: QUEUE ===== -->
     <div class="yt-pane" data-pane="queue">
-      <div class="yt-quick">
-        <button id="ytShuffleBtn" class="gold">🔀 Shuffle</button>
-        <button id="ytClearQueue" class="danger">🗑️ Queue मिटाएँ</button>
+      <div style="padding:14px 14px 10px;border-radius:14px;background:rgba(15,23,42,.72);border:1px solid rgba(139,92,246,.28);margin-bottom:10px;">
+        <div style="font-weight:900;color:#fff;font-size:14px;margin-bottom:9px;">📺 YouTube लिंक Queue में डालें</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="ytQueueInput" class="yt-input" type="text" placeholder="YouTube video link यहाँ डालें..." style="flex:1;min-width:0;">
+          <button id="ytQueueAddBtn" class="yt-btn-load" type="button">➕ Add</button>
+        </div>
+        <div style="font-size:10.5px;color:#94a3b8;margin-top:8px;line-height:1.45;">कोई भी Viewer लिंक डालकर Queue में जोड़ सकता है। Host ही video चला सकता है।</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 2px 8px;">
+        <div style="font-weight:900;color:#fff;font-size:13px;">🎵 अगली Videos</div>
+        <div id="ytQueueViewerHint" style="font-size:10px;color:#94a3b8;">सभी Viewers को दिखेगा</div>
       </div>
       <div class="yt-list" id="ytQueueList">
         <div class="yt-empty">
           <span class="em">📺</span>
           Queue खाली है<br>
-          <span style="font-size:11px;">Play tab में जाकर "Queue" दबाएँ</span>
+          <span style="font-size:11px;">ऊपर YouTube लिंक डालकर Add करें</span>
         </div>
       </div>
     </div>
@@ -8807,7 +8900,7 @@ var queue=[],history=[],current=null,isHost=false,soundMode=false,volume=80,mute
 var ytPlayer=null,ytReady=false,ytApiLoaded=!!window.YT,ytProgressTimer=null,roomUnsub=null,lastRoomTs=0,listeningRoom='';
 var ytRoomStateUnsub=null,ytRoomQueueUnsub=null,ytRoomSyncTimer=null,ytRemoteApplying=false,ytRoomLastAction=0,ytRoomSuppressNextSync=false;
 var $=function(id){return document.getElementById(id);};
-var fab=$('ytFab'),fabBadge=fab&&fab.querySelector('.yt-badge'),mini=$('ytMini'),modal=$('ytModal'),closeBtn=$('ytCloseBtn'),input=$('ytInput'),loadBtn=$('ytLoadBtn'),pasteBtn=$('ytPasteBtn'),addQueue=$('ytAddQueueBtn'),shareBtn=$('ytShareBtn'),clearBtn=$('ytClearBtn'),frameHost=$('ytFrame'),queueList=$('ytQueueList'),historyList=$('ytHistoryList'),queueCount=$('ytQueueCount'),hostLock=$('ytHostLock'),enableSound=$('ytEnableSound'),clearHist=$('ytClearHistory'),playPause=$('ytPlayPause'),seekBack=$('ytSeekBack'),seekFwd=$('ytSeekFwd'),seekBar=$('ytSeekBar'),seekFill=$('ytSeekFill'),timeCur=$('ytTimeCur'),timeDur=$('ytTimeDur'),volSlider=$('ytVolSlider'),volVal=$('ytVolVal'),muteBtn=$('ytMuteBtn'),shuffleBtn=$('ytShuffleBtn'),clearQueue=$('ytClearQueue'),dockBtn=$('partyRoomYouTubeBtn'),dockBadge=$('partyRoomYoutubeBadge');
+var fab=$('ytFab'),fabBadge=fab&&fab.querySelector('.yt-badge'),mini=$('ytMini'),modal=$('ytModal'),closeBtn=$('ytCloseBtn'),input=$('ytInput'),loadBtn=$('ytLoadBtn'),pasteBtn=$('ytPasteBtn'),addQueue=$('ytAddQueueBtn'),historyBtn=$('ytHistoryBtn'),queueInput=$('ytQueueInput'),queueAddBtn=$('ytQueueAddBtn'),shareBtn=$('ytShareBtn'),clearBtn=$('ytClearBtn'),frameHost=$('ytFrame'),queueList=$('ytQueueList'),historyList=$('ytHistoryList'),queueCount=$('ytQueueCount'),hostLock=$('ytHostLock'),enableSound=$('ytEnableSound'),clearHist=$('ytClearHistory'),playPause=$('ytPlayPause'),seekBack=$('ytSeekBack'),seekFwd=$('ytSeekFwd'),seekBar=$('ytSeekBar'),seekFill=$('ytSeekFill'),timeCur=$('ytTimeCur'),timeDur=$('ytTimeDur'),volSlider=$('ytVolSlider'),volVal=$('ytVolVal'),muteBtn=$('ytMuteBtn'),dockBtn=$('partyRoomYouTubeBtn'),dockBadge=$('partyRoomYoutubeBadge');
 if(!modal||!input||!loadBtn)return;
 
 function toast(msg,ms){var t=document.createElement('div');t.className='yt-toast';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},ms||1800);}
@@ -9117,26 +9210,9 @@ function renderQueue(){
     return;
   }
   queueList.innerHTML=queue.map(function(v,i){
-    return '<div class="yt-item" data-qidx="'+i+'"><img src="https://img.youtube.com/vi/'+esc(v.id)+'/mqdefault.jpg" alt=""><div class="meta"><div class="t">'+esc(v.title||v.id)+'</div><div class="s">'+esc(v.addedBy||'You')+' • Queue #'+(i+1)+'</div></div><button class="del" data-delidx="'+i+'" type="button">✕</button></div>';
+    return '<div class="yt-item" data-qidx="'+i+'"><div style="min-width:42px;width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;font-weight:1000;font-size:12px;box-shadow:0 5px 14px rgba(124,58,237,.28);">Q'+(i+1)+'</div><img src="https://img.youtube.com/vi/'+esc(v.id)+'/mqdefault.jpg" alt=""><div class="meta"><div class="t">'+esc(v.title||v.id)+'</div><div class="s">'+esc(v.addedBy||'You')+' • Q'+(i+1)+'</div></div></div>';
   }).join('');
-  queueList.querySelectorAll('.yt-item').forEach(function(el){
-    el.addEventListener('click',function(e){
-      if(e.target.closest('.del'))return;
-      var idx=Number(el.dataset.qidx),v=queue[idx];
-      if(!v)return;
-      refreshHostState();
-      if(!isHost){toast('👑 सिर्फ Host video चला सकता है',1800);return;}
-      playInfo({type:'video',id:v.id,list:v.list||''},v.title,{addedBy:v.addedBy||'You'});
-      if(ytRoomIsActive()&&v.docId){try{var rr=ytRoomRef();if(rr)rr.collection('youtubeQueue').doc(v.docId).delete().catch(function(){});}catch(e){}} else {queue.splice(idx,1);storageSet(QUEUE_KEY,JSON.stringify(queue));renderQueue();}
-    });
-  });
-  queueList.querySelectorAll('.del').forEach(function(b){
-    b.addEventListener('click',function(e){
-      e.stopPropagation();
-      queue.splice(Number(b.dataset.delidx),1);
-      storageSet(QUEUE_KEY,JSON.stringify(queue));renderQueue();
-    });
-  });
+  // Queue is a shared viewer list. Items are informational here; only the Host controls playback.
 }
 
 function renderHistory(){
@@ -9219,14 +9295,27 @@ if(pasteBtn)pasteBtn.addEventListener('click',async function(){
     if(x){input.value=x;toast('📋 Paste हो गया');}else toast('Clipboard खाली है');
   }catch(e){toast('Clipboard permission नहीं मिली — manually paste करें',2000);}
 });
-if(addQueue)addQueue.addEventListener('click',function(){
-  var info=getYouTubeInfo(input.value);
-  if(!info||info.type!=='video'){toast('❌ Queue के लिए Video URL दें');return;}
-  if(queue.length>=MAX_QUEUE){toast('📺 Queue full है');return;}
-  var item={id:info.id,list:info.list||'',title:'YouTube • '+info.id,addedBy:typeof cinemaUserName==='function'?cinemaUserName():'You',addedByKey:typeof currentUserKey!=='undefined'?String(currentUserKey||''):'',ts:Date.now()};
-  try{var ref=ytRoomRef(); if(ytRoomIsActive()&&ref){ref.collection('youtubeQueue').add({id:item.id,list:item.list,title:item.title,addedBy:item.addedBy,addedByKey:item.addedByKey,createdAt:item.ts});} else {queue.push(item);storageSet(QUEUE_KEY,JSON.stringify(queue));renderQueue();}}catch(e){queue.push(item);storageSet(QUEUE_KEY,JSON.stringify(queue));renderQueue();}
-  input.value='';toast('➕ Queue में जोड़ा गया');
-});
+function addVideoToQueue(raw,clearTarget){
+  var info=getYouTubeInfo(raw);
+  if(!info||info.type!=='video'){toast('❌ सिर्फ YouTube Video लिंक डालें');return false;}
+  if(queue.length>=MAX_QUEUE){toast('📺 Queue full है');return false;}
+  var item={id:info.id,list:'',title:'YouTube • '+info.id,addedBy:typeof cinemaUserName==='function'?cinemaUserName():'You',addedByKey:typeof currentUserKey!=='undefined'?String(currentUserKey||''):'',ts:Date.now()};
+  try{
+    var ref=ytRoomRef();
+    if(ytRoomIsActive()&&ref){
+      ref.collection('youtubeQueue').add({id:item.id,title:item.title,addedBy:item.addedBy,addedByKey:item.addedByKey,createdAt:item.ts});
+    } else {
+      queue.push(item);storageSet(QUEUE_KEY,JSON.stringify(queue));renderQueue();
+    }
+  }catch(e){queue.push(item);storageSet(QUEUE_KEY,JSON.stringify(queue));renderQueue();}
+  if(clearTarget)clearTarget.value='';
+  toast('➕ Q'+(queue.length||'')+' Queue में जोड़ा गया');
+  return true;
+}
+if(historyBtn)historyBtn.addEventListener('click',function(){var tab=document.querySelector('.yt-tab[data-tab="history"]');if(tab)tab.click();});
+if(addQueue)addQueue.addEventListener('click',function(){addVideoToQueue(input.value,input);});
+if(queueAddBtn)queueAddBtn.addEventListener('click',function(){addVideoToQueue(queueInput.value,queueInput);});
+if(queueInput)queueInput.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();addVideoToQueue(queueInput.value,queueInput);}});
 if(shareBtn)shareBtn.addEventListener('click',function(){
   if(!current){toast('❌ पहले video चलाएँ');return;}
   shareToRoom(current);toast('🔗 Room में share किया गया');
@@ -9298,19 +9387,26 @@ listenRoomShare();
 <style id="partyRoomYouTubeMode">
 /* YouTube Mode: same compact 4-seat gaming layout, no game panel, synced room player. */
 #prRoom.party-youtube-layout{position:relative!important;overflow:hidden!important;}
-#prRoom.party-youtube-layout #prTop,#prRoom.party-youtube-layout #prSubRow,#prRoom.party-youtube-layout #prTicker,#prRoom.party-youtube-layout #prHostRow{display:none!important;}
-#prRoom.party-youtube-layout #cinemaSeats{position:absolute!important;top:64px!important;left:50%!important;right:auto!important;bottom:auto!important;transform:translateX(-50%)!important;width:auto!important;height:42px!important;display:grid!important;grid-template-columns:repeat(4,38px)!important;gap:6px!important;z-index:40!important;margin:0!important;padding:0!important;pointer-events:auto!important;}
+#prRoom.party-youtube-layout #prSubRow,#prRoom.party-youtube-layout #prTicker,#prRoom.party-youtube-layout #prHostRow{display:none!important;}
+#prRoom.party-youtube-layout #prTop{display:flex!important;position:relative!important;z-index:100!important;}
+#prRoom.party-youtube-layout #cinemaSeats{position:absolute!important;top:64px!important;left:50%!important;right:auto!important;bottom:128px!important;transform:translateX(-50%)!important;width:min(100% - 12px,360px)!important;height:auto!important;display:grid!important;grid-template-columns:repeat(6,38px)!important;grid-auto-rows:42px!important;align-content:space-between!important;gap:0 6px!important;z-index:40!important;margin:0!important;padding:0!important;pointer-events:auto!important;}
 #prRoom.party-youtube-layout #cinemaSeats> *{width:38px!important;height:42px!important;min-width:38px!important;min-height:42px!important;flex:none!important;}
+#prRoom.party-youtube-layout #cinemaSeats.pr-two-seat-mode{grid-template-columns:repeat(2,48px)!important;width:auto!important;bottom:auto!important;height:42px!important;top:64px!important;gap:0 10px!important;}
+#prRoom.party-youtube-layout #cinemaSeats.pr-eight-seat-mode{grid-template-columns:repeat(8,32px)!important;grid-auto-rows:36px!important;width:min(100% - 8px,300px)!important;height:36px!important;bottom:auto!important;top:64px!important;gap:0 4px!important;}
+#prRoom.party-youtube-layout #cinemaSeats.pr-eight-seat-mode> *{width:32px!important;height:36px!important;min-width:32px!important;min-height:36px!important;}
+#prRoom.party-youtube-layout #cinemaSeats.pr-eight-seat-mode .psf-frame-wrap,#prRoom.party-youtube-layout #cinemaSeats.pr-eight-seat-mode .psf-avatar{width:32px!important;height:32px!important;flex-basis:32px!important;}
+#prRoom.party-youtube-layout #cinemaSeats.pr-twelve-seat-mode{grid-template-columns:repeat(6,38px)!important;grid-template-rows:42px 42px!important;height:calc(100% - 192px)!important;min-height:90px!important;bottom:128px!important;top:64px!important;}
+#prRoom.party-youtube-layout #cinemaSeats.pr-six-seat-mode{grid-template-columns:repeat(6,38px)!important;grid-template-rows:42px!important;height:42px!important;bottom:auto!important;top:64px!important;}
+#prRoom.party-youtube-layout #cinemaSeats.pr-six-seat-mode> *{width:38px!important;height:42px!important;min-width:38px!important;min-height:42px!important;}
 #prRoom.party-youtube-layout #cinemaSeats .psf-frame-wrap,#prRoom.party-youtube-layout #cinemaSeats .psf-avatar{width:38px!important;height:38px!important;flex-basis:38px!important;}
 #prRoom.party-youtube-layout #cinemaSeats .psf-label,#prRoom.party-youtube-layout #cinemaSeats .pr-giftpill,#prRoom.party-youtube-layout #cinemaSeats .psf-voice-pct,#prRoom.party-youtube-layout #cinemaSeats .psf-sp{display:none!important;}
 #prRoom.party-youtube-layout #cinemaChatPanel{position:absolute!important;left:7px!important;right:7px!important;bottom:64px!important;top:auto!important;width:auto!important;height:72px!important;min-height:72px!important;margin:0!important;z-index:45!important;background:linear-gradient(180deg,rgba(3,7,18,.10),rgba(3,7,18,.74))!important;border-radius:12px!important;overflow:hidden!important;}
 #prRoom.party-youtube-layout #cinemaChatPanel #cinemaChatMessages{height:72px!important;padding:6px 8px 4px!important;overflow-y:auto!important;}
-#partyYoutubeStage{position:absolute;inset:0;z-index:8;background:#000;display:flex;align-items:center;justify-content:center;padding:8px 8px 86px;box-sizing:border-box;}
-#partyYoutubeStage .yt-room-card{position:relative;width:100%;height:100%;max-width:900px;background:#000;border-radius:14px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.45);}
+#partyYoutubeStage{position:absolute;top:76px;left:0;right:0;bottom:118px;z-index:8;background:transparent;display:flex;align-items:center;justify-content:center;padding:8px;box-sizing:border-box;pointer-events:none;}
+#partyYoutubeStage .yt-room-card{position:relative;width:min(100%,900px);height:auto;aspect-ratio:16/9;max-height:100%;background:#000;border-radius:14px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.45);pointer-events:auto;}
 #partyYoutubeStage iframe,#partyYoutubeStage #ytRoomPlayerDiv{position:absolute;inset:0;width:100%;height:100%;border:0;}
 #partyYoutubeStage .yt-room-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:#fff;text-align:center;font-weight:800;background:radial-gradient(circle at center,#1f2937,#020617 65%);}
-#partyYoutubeStage .yt-room-queue{position:absolute;left:10px;right:10px;bottom:76px;z-index:20;display:flex;align-items:center;justify-content:center;pointer-events:none;}
-#partyYoutubeStage .yt-room-queue button{pointer-events:auto;border:0;border-radius:999px;padding:9px 16px;background:rgba(220,38,38,.94);color:#fff;font-weight:900;box-shadow:0 5px 18px rgba(0,0,0,.35);}
+#partyYoutubeStage .yt-room-queue{display:none!important;}
 #partyYoutubeStage .yt-room-block{position:absolute;inset:0;z-index:15;background:transparent;display:none;}
 #partyYoutubeStage.yt-nonhost .yt-room-block{display:block;}
 #partyYoutubeStage .yt-room-hostbar{position:absolute;top:10px;right:10px;z-index:21;display:none;gap:6px;}
@@ -9318,11 +9414,16 @@ listenRoomShare();
 #partyYoutubeStage .yt-room-hostbar button{border:0;border-radius:10px;padding:7px 10px;background:rgba(15,23,42,.82);color:#fff;font-weight:800;}
 #prRoom.party-youtube-layout #prModeBtnG[data-host="1"]{display:flex!important;}
 </style>
+<style id="partyRoomYouTubeTapPolish">
+#partyYoutubeStage .yt-room-card{touch-action:manipulation;}
+#partyYoutubeStage.yt-host .yt-room-card iframe,#partyYoutubeStage.yt-host .yt-room-card #ytRoomPlayerDiv{cursor:pointer;}
+#partyYoutubeStage.yt-nonhost .yt-room-card iframe,#partyYoutubeStage.yt-nonhost .yt-room-card #ytRoomPlayerDiv{cursor:default;}
+</style>
 <style id="partyRoomYouTubeFinalVisibilityFix">
 /* YouTube is a permanent Party Room bottom-dock control. */
 #prRoom #partyRoomBottomDock #partyRoomYouTubeBtn,
 #partyRoomBottomDock #partyRoomYouTubeBtn{
-  display:flex!important;
+  display:none!important;
   visibility:visible!important;
   opacity:1!important;
   pointer-events:auto!important;
@@ -9377,5 +9478,76 @@ listenRoomShare();
 }
 </style>
 
+
+<script id="partyRoomKeyboardBackFinalFix">
+(function(){
+  'use strict';
+  function closePartyComposer(){
+    var c=document.getElementById('cinemaChatComposer');
+    var input=document.getElementById('cinemaChatInput');
+    var panel=document.getElementById('cinemaChatPanel');
+    var room=document.getElementById('prRoom');
+    if(!c) return;
+    c.classList.remove('party-composer-open');
+    c.style.display='none';
+    c.style.visibility='hidden';
+    c.style.opacity='0';
+    c.style.pointerEvents='none';
+    c.style.position='absolute';
+    c.style.top='auto';
+    c.style.bottom='68px';
+    c.style.left='7px';
+    c.style.right='7px';
+    if(panel) panel.classList.remove('chat-input-open');
+    if(room) room.classList.remove('party-keyboard-open');
+    try{ if(input) input.blur(); }catch(e){}
+  }
+  function keyboardClosed(){
+    var vv=window.visualViewport;
+    if(!vv) return false;
+    var full=window.innerHeight||document.documentElement.clientHeight||0;
+    return (full-vv.height-vv.offsetTop)<70;
+  }
+  var wasKeyboard=false;
+  function check(){
+    var c=document.getElementById('cinemaChatComposer');
+    if(!c || c.style.display==='none') return;
+    var vv=window.visualViewport;
+    if(vv){
+      var full=window.innerHeight||document.documentElement.clientHeight||0;
+      var kb=Math.max(0,full-vv.height-vv.offsetTop);
+      if(kb>120) wasKeyboard=true;
+      if(wasKeyboard && kb<60){
+        wasKeyboard=false;
+        setTimeout(function(){
+          if(keyboardClosed()) closePartyComposer();
+        },80);
+      }
+    }
+  }
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize',check);
+    window.visualViewport.addEventListener('scroll',check);
+  }
+  window.addEventListener('resize',check);
+  document.addEventListener('focusout',function(e){
+    if(e.target && e.target.id==='cinemaChatInput'){
+      setTimeout(function(){
+        if(keyboardClosed()) closePartyComposer();
+      },120);
+    }
+  },true);
+  document.addEventListener('touchstart',function(){ check(); },{passive:true});
+})();
+</script>
 </body>
 </html>
+
+<style id="partyRoomYoutubeBottomHideFinal">
+/* YouTube is opened from Mode in the room header, not from the bottom dock. */
+#prRoom #partyRoomBottomDock #partyRoomYouTubeBtn,
+#partyRoomBottomDock #partyRoomYouTubeBtn{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+#prRoom #partyRoomBottomDock .prd-gift,
+#prRoom #partyRoomBottomDock .prd-mic,
+#prRoom #partyRoomBottomDock .prd-music{transform:scale(.90);transform-origin:center;}
+</style>
