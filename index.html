@@ -7408,6 +7408,15 @@ body.pk-game-open #pkUniversalNav{display:none!important}
     if(mode==='chat'||mode==='gaming'||mode==='youtube'||mode==='cinema'){
       if(!host()){ try{ if(window.pkRoomToast) window.pkRoomToast('Mode बदलने का अधिकार केवल Host के पास है।'); }catch(e){} return; }
       if(window.setPartyRoomMode) await window.setPartyRoomMode(mode);
+      /* Cinema Mode should visibly open the Watch Together movie picker. */
+      if(mode==='cinema'){
+        try{
+          var movieInput=document.getElementById('movieFileInput');
+          if(movieInput){
+            setTimeout(function(){ try{ movieInput.click(); }catch(e){} },80);
+          }
+        }catch(e){}
+      }
       paintModeMenu();
     }
   }
