@@ -1308,32 +1308,9 @@ html, body { overscroll-behavior-y: none; }
   transform:translateY(-58px)!important;
   transition:transform .16s ease!important;
 }
-/* 1. चैट के मैसेज हमेशा स्क्रीन पर दिखते रहें */
-#cinemaChatStream,
-.party-chat-stream, 
-.party-chat-messages,
-#prRoom #cinemaChatStream {
-  display: flex !important;
-  flex-direction: column !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  pointer-events: auto !important;
-  transform: none !important;
-}
-
-/* 2. सामान्य स्थिति (कीबोर्ड बंद) में टाइपिंग पैनल पूरी तरह नीचे छिप जाए */
-#cinemaChatPanel {
-  transform: translateY(100%) !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  transition: transform .2s ease-out, opacity .2s ease-out !important;
-}
-
-/* 3. जब कीबोर्ड खुला हो, तभी टाइपिंग पैनल ऊपर आकर दिखे */
-#prRoom.party-keyboard-open #cinemaChatPanel {
-  transform: translateY(0%) !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
+#prRoom.party-keyboard-open #cinemaChatPanel{
+  transform:translateY(-20px)!important;
+  transition:transform .16s ease!important;
 }
 @media(max-height:700px){
   #prRoom.party-keyboard-open #prHostRow,
@@ -2935,6 +2912,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   let partyRoomChatSeenIds=new Set();
   let partyRoomChatReady=false;
   let partyRoomUnreadCount=0;
+  let partyRoomChatPending={};
   function partyRoomSetUnread(n){
     partyRoomUnreadCount=Math.max(0,Number(n)||0);
     const b=document.getElementById('partyRoomUnreadBadge');
@@ -3009,64 +2987,82 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   window.partyRoomSendReaction=partyRoomSendReaction;
   function cinemaStartChat(){
     if(!db||!cinemaRoomId)return;
-    if(cinemaChatUnsub)cinemaChatUnsub();
-    partyRoomChatSeenIds=new Set(); partyRoomChatReady=false; partyRoomSetUnread(0);
-    const box=document.getElementById('cinemaChatMessages'); if(box){ box.__ready=false; box.innerHTML='<div style="text-align:center;color:#64748b;font-size:12px;padding:28px 10px;">चैट लोड हो रही है…</div>'; }
-    cinemaChatUnsub=db.collection('cinemaRooms').doc(cinemaRoomId).collection('chat').orderBy('createdAt','asc').limitToLast(100).onSnapshot(snap=>{
+    if(cinemaChatUnsub){ try{cinemaChatUnsub();}catch(e){} cinemaChatUnsub=null; }
+    partyRoomChatSeenIds=new Set(); partyRoomChatReady=false; partyRoomSetUnread(0); partyRoomChatPending={};
+    const listenRoomId=String(cinemaRoomId);
+    const box=document.getElementById('cinemaChatMessages');
+    if(box){ box.__ready=false; box.innerHTML='<div style="text-align:center;color:#64748b;font-size:12px;padding:28px 10px;">चैट लोड हो रही है…</div>'; }
+    cinemaChatUnsub=db.collection('cinemaRooms').doc(listenRoomId).collection('chat').orderBy('createdAt','asc').limitToLast(100).onSnapshot(snap=>{
+      if(String(cinemaRoomId)!==listenRoomId)return;
       const el=document.getElementById('cinemaChatMessages'); if(!el)return;
-      if(snap.empty){el.__ready=false;el.innerHTML='<div style="text-align:center;color:#64748b;font-size:12px;padding:28px 10px;">अभी कोई मैसेज नहीं। पहला मैसेज भेजें 👋</div>';partyRoomChatReady=true;partyRoomSetUnread(0);return;}
       const incoming=[];
-      snap.docChanges().forEach(ch=>{ if(ch.type!=='added')return; const d=ch.doc.data()||{}; const mine=String(d.userKey||'')===String(currentUserKey||''); if(partyRoomChatReady && !partyRoomChatSeenIds.has(ch.doc.id) && !mine) incoming.push(ch.doc.id); partyRoomChatSeenIds.add(ch.doc.id); });
+      snap.docChanges().forEach(ch=>{
+        if(ch.type!=='added')return;
+        const d=ch.doc.data()||{}, mine=String(d.userKey||'')===String(currentUserKey||'');
+        if(partyRoomChatReady && !partyRoomChatSeenIds.has(ch.doc.id) && !mine) incoming.push(ch.doc.id);
+        partyRoomChatSeenIds.add(ch.doc.id);
+      });
       if(partyRoomChatReady && incoming.length) partyRoomSetUnread(partyRoomUnreadCount+incoming.length);
-      if(!el.__ready){
-        // पहली बार: पूरी लिस्ट एक साथ बनाएँ
-        el.innerHTML=''; el.appendChild(prNoticeRow());
-        const frag=document.createDocumentFragment();
-        snap.forEach(doc=>{ frag.appendChild(prChatRow(Object.assign({},doc.data()||{},{__docId:doc.id}))); });
-        el.appendChild(frag); el.__ready=true;
-        prResolveChatNames(snap.docs); prResolveChatAvatars(snap.docs);
-        el.scrollTop=el.scrollHeight;
-      } else {
-        // बाद में: सिर्फ़ नया/बदला हुआ मैसेज जोड़ें (पूरी लिस्ट दोबारा नहीं बनती)
-        const stick=(el.scrollHeight-el.scrollTop-el.clientHeight)<140; let mineNew=false; const fresh=[];
-        snap.docChanges().forEach(ch=>{
-          const id=ch.doc.id, sel='[data-chat-doc-id="'+id+'"]';
-          if(ch.type==='added'){
-            if(el.querySelector(sel)) return;
-            const d=Object.assign({},ch.doc.data()||{},{__docId:id});
-            const row=prChatRow(d); row.classList.add('pr-new');
-            el.insertBefore(row, el.children[ch.newIndex+1]||null);
-            fresh.push(ch.doc); if(String(d.userKey||'')===String(currentUserKey||'')) mineNew=true;
-          } else if(ch.type==='removed'){
-            const r=el.querySelector(sel); if(r) r.remove();
-          } else if(ch.type==='modified'){
-            const r=el.querySelector(sel); if(r) r.replaceWith(prChatRow(Object.assign({},ch.doc.data()||{},{__docId:id})));
-          }
-        });
-        while(el.children.length>131) el.removeChild(el.children[1]);
-        if(fresh.length){ prResolveChatNames(fresh); prResolveChatAvatars(fresh); }
-        /* New chat always stays at the newest message; older messages scroll away inside the chat viewport. */
-        if(fresh.length || mineNew){
-          el.scrollTop=el.scrollHeight;
-          requestAnimationFrame(function(){ el.scrollTop=el.scrollHeight; });
-          setTimeout(function(){ el.scrollTop=el.scrollHeight; },120);
-        }
+      const wasReady=!!el.__ready;
+      const docs=snap.docs.slice();
+      docs.forEach(doc=>{ delete partyRoomChatPending[doc.id]; });
+      Object.keys(partyRoomChatPending).forEach(id=>{
+        const p=partyRoomChatPending[id];
+        if(p && String(p.__roomId||'')===listenRoomId) docs.push({id:id,data:function(){return p;}});
+      });
+      docs.sort((a,b)=>{
+        const at=Number((a.data()||{}).createdAt)||0, bt=Number((b.data()||{}).createdAt)||0;
+        return at-bt || String(a.id).localeCompare(String(b.id));
+      });
+      if(!docs.length){
+        el.__ready=false;
+        el.innerHTML='<div style="text-align:center;color:#64748b;font-size:12px;padding:28px 10px;">अभी कोई मैसेज नहीं। पहला मैसेज भेजें 👋</div>';
+        const cc=document.getElementById('cinemaChatCount'); if(cc)cc.textContent='0 संदेश';
+        partyRoomChatReady=true; partyRoomSetUnread(0); return;
       }
-      const cc=document.getElementById('cinemaChatCount'); if(cc)cc.textContent=Math.max(0,el.children.length-1)+' संदेश';
+      // अधिकतम 100 messages की छोटी सूची हर snapshot में बनती है। इससे
+      // added/modified/removed और re-order होने पर कोई row गलत जगह नहीं अटकती।
+      el.innerHTML=''; el.appendChild(prNoticeRow());
+      const frag=document.createDocumentFragment();
+      docs.forEach(doc=>{ frag.appendChild(prChatRow(Object.assign({},doc.data()||{},{__docId:doc.id}))); });
+      el.appendChild(frag); el.__ready=true;
+      const fresh=snap.docChanges().filter(ch=>ch.type==='added').map(ch=>ch.doc);
+      if(fresh.length){ prResolveChatNames(fresh); prResolveChatAvatars(fresh); }
+      if(!wasReady || fresh.length){
+        el.scrollTop=el.scrollHeight;
+        requestAnimationFrame(function(){ el.scrollTop=el.scrollHeight; });
+      }
+      const cc=document.getElementById('cinemaChatCount'); if(cc)cc.textContent=String(docs.length)+' संदेश';
       partyRoomChatReady=true;
-    },()=>{const el=document.getElementById('cinemaChatMessages');if(el){el.__ready=false;el.innerHTML='<div style="text-align:center;color:#fca5a5;font-size:12px;padding:28px 10px;">Chat permission/connection की जाँच करें।</div>';}});
+    },()=>{
+      if(String(cinemaRoomId)!==listenRoomId)return;
+      const el=document.getElementById('cinemaChatMessages');
+      if(el){el.__ready=false;el.innerHTML='<div style="text-align:center;color:#fca5a5;font-size:12px;padding:28px 10px;">Chat permission/connection की जाँच करें।</div>';}
+    });
   }
   async function cinemaSendChat(){
     const input=document.getElementById('cinemaChatInput'); if(!input||!db||!cinemaRoomId)return;
     const text=String(input.value||'').trim(); if(!text)return;
+    const sendRoomId=String(cinemaRoomId);
     input.value='';
     try{ input.focus({preventScroll:true}); }catch(e){}   // कीबोर्ड खुला रहे, अगला मैसेज तुरंत टाइप हो
     const rt=document.getElementById('partyRoomReactionTray'); if(rt) rt.style.display='none';
     let photo=''; try{ photo=(typeof currentUserPhotoURL!=='undefined')?String(currentUserPhotoURL||''):''; }catch(e){}
     if(!/^https:\/\//i.test(photo) || photo.length>500) photo='';   // भारी base64 फोटो हर मैसेज के साथ नहीं भेजते
-    // पहले users डॉक पढ़ने का इंतज़ार नहीं: नाम सीधे उपलब्ध है, इसलिए मैसेज तुरंत Firestore में लिखा जाता है।
-    db.collection('cinemaRooms').doc(cinemaRoomId).collection('chat').add({text:text.slice(0,300),name:cinemaUserName(),userKey:String(currentUserKey||'guest'),photoURL:photo,createdAt:Date.now()})
+    // स्थिर id और local pending row से comment acknowledgement का इंतज़ार किए
+    // बिना दिखता है; वही id listener में duplicate बनने से भी बचाती है।
+    const ref=db.collection('cinemaRooms').doc(sendRoomId).collection('chat').doc();
+    const data={text:text.slice(0,300),name:cinemaUserName(),userKey:String(currentUserKey||'guest'),photoURL:photo,createdAt:Date.now()};
+    partyRoomChatPending[ref.id]=Object.assign({},data,{__roomId:sendRoomId});
+    const chatBox=document.getElementById('cinemaChatMessages');
+    if(chatBox && chatBox.__ready){
+      const pendingRow=prChatRow(Object.assign({},data,{__docId:ref.id}));
+      pendingRow.classList.add('pr-new','pr-pending');
+      chatBox.appendChild(pendingRow); chatBox.scrollTop=chatBox.scrollHeight;
+    }
+    ref.set(data)
       .then(()=>{
+        delete partyRoomChatPending[ref.id];
         /* Send के बाद Party Room में typing panel तुरंत पूरी तरह हटे; केवल छोटा 💬 icon रहे। */
         const composer=document.getElementById('cinemaChatComposer');
         const panel=document.getElementById('cinemaChatPanel');
@@ -3088,7 +3084,12 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         const dock=document.getElementById('partyRoomBottomDock');
         if(dock) dock.style.transform='';
       })
-      .catch(()=>{ if(!input.value) input.value=text; (window.pkRoomToast||alert)('मैसेज भेजा नहीं जा सका।'); });
+      .catch(()=>{
+        delete partyRoomChatPending[ref.id];
+        const row=chatBox&&chatBox.querySelector('[data-chat-doc-id="'+ref.id+'"]'); if(row)row.remove();
+        if(String(cinemaRoomId)===sendRoomId && !input.value) input.value=text;
+        (window.pkRoomToast||alert)('मैसेज भेजा नहीं जा सका।');
+      });
   }
   window.cinemaTakeSeat=cinemaTakeSeat;
   window.cinemaSendChat=cinemaSendChat;
@@ -3111,12 +3112,16 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(cinemaReactionUnsub){cinemaReactionUnsub();cinemaReactionUnsub=null;}
     if(cinemaRoomId && currentUserKey && db){
       db.collection('cinemaRooms').doc(cinemaRoomId).collection('viewers').doc(currentUserKey).delete().catch(()=>{});
-      // कमेंट क्लियर करें: यूज़र के रूम छोड़ते ही उसके कमेंट (सिस्टम/गिफ्ट मैसेज नहीं) रूम की चैट से हट जाएँ
+      // यूज़र के room छोड़ते ही उसके अपने text comments हटें।
+      // दूसरे users के comments और system/gift messages सुरक्षित रहें।
       try{
         var __clrRoomId=cinemaRoomId, __clrMe=String(currentUserKey);
         db.collection('cinemaRooms').doc(__clrRoomId).collection('chat').where('userKey','==',__clrMe).get().then(function(qs){
           var batch=db.batch(), any=false;
-          qs.forEach(function(doc){ var t=(doc.data()||{}).type; if(!t || t==='text'){ batch.delete(doc.ref); any=true; } });
+          qs.forEach(function(doc){
+            var t=(doc.data()||{}).type;
+            if(!t || t==='text'){ batch.delete(doc.ref); any=true; }
+          });
           if(any) batch.commit().catch(function(){});
         }).catch(function(){});
       }catch(e){}
@@ -3514,7 +3519,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     const text=cinemaMuted?'🔊':'🔇';
     const a=document.getElementById('cinemaMuteBtn'); if(a){a.textContent=text; a.style.display='none';}
     const b=document.getElementById('partyRoomMuteSideBtn'); if(b){b.textContent=icon; b.title='Audio';}
-    const d=document.getElementById('partyRoomMuteDockBtn'); if(d){d.textContent=cinemaMuted?'??':'🎙️'; d.classList.toggle('prd-off',!!cinemaMuted); d.title=cinemaMuted?'Unmute':'Mute';}
+    const d=document.getElementById('partyRoomMuteDockBtn'); if(d){d.textContent=cinemaMuted?'🔇':'🎙️'; d.classList.toggle('prd-off',!!cinemaMuted); d.title=cinemaMuted?'Unmute':'Mute';}
   }
   async function cinemaToggleMute(){
     cinemaMuted=!cinemaMuted;
@@ -8232,30 +8237,6 @@ input,textarea,select{font-size:16px}
   }
 })();
 </script>
-<script>
-// सेंड बटन दबाने पर टाइपिंग पैनल का फोकस हटाना
-document.addEventListener('click', function (e) {
-  if (e.target && e.target.closest('#cinemaChatPanel button')) {
-    const chatInput = document.querySelector('#cinemaChatPanel input, #cinemaChatPanel textarea');
-    if (chatInput) {
-      chatInput.blur();
-    }
-  }
-});
 
-// चैट स्ट्रीम को लगातार विजिबल रखना
-setInterval(function() {
-  const chatStreams = document.querySelectorAll('#cinemaChatStream, .party-chat-stream, .party-chat-messages');
-  chatStreams.forEach(function(el) {
-    if (el) {
-      el.style.setProperty('display', 'flex', 'important');
-      el.style.setProperty('opacity', '1', 'important');
-      el.style.setProperty('visibility', 'visible', 'important');
-      el.style.setProperty('pointer-events', 'auto', 'important');
-      el.style.setProperty('transform', 'none', 'important');
-    }
-  });
-}, 100);
-</script>
 </body>
 </html>
