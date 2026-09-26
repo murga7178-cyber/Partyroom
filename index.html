@@ -8233,16 +8233,29 @@ input,textarea,select{font-size:16px}
 })();
 </script>
 <script>
+// सेंड बटन दबाने पर टाइपिंग पैनल का फोकस हटाना
 document.addEventListener('click', function (e) {
-  // सेंड बटन पर क्लिक करते ही इनपुट से फोकस हटाएँ ताकि टाइपिंग पैनल बंद हो जाए
   if (e.target && e.target.closest('#cinemaChatPanel button')) {
     const chatInput = document.querySelector('#cinemaChatPanel input, #cinemaChatPanel textarea');
     if (chatInput) {
-      chatInput.blur(); // blur करने से कीबोर्ड और टाइपिंग पैनल नीचे छिप जाएगा
+      chatInput.blur();
     }
   }
 });
-</script>
 
+// चैट स्ट्रीम को लगातार विजिबल रखना
+setInterval(function() {
+  const chatStreams = document.querySelectorAll('#cinemaChatStream, .party-chat-stream, .party-chat-messages');
+  chatStreams.forEach(function(el) {
+    if (el) {
+      el.style.setProperty('display', 'flex', 'important');
+      el.style.setProperty('opacity', '1', 'important');
+      el.style.setProperty('visibility', 'visible', 'important');
+      el.style.setProperty('pointer-events', 'auto', 'important');
+      el.style.setProperty('transform', 'none', 'important');
+    }
+  });
+}, 100);
+</script>
 </body>
 </html>
