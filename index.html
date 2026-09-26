@@ -2422,7 +2422,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <iframe id="ytRoomFrame" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
             <div id="ytRoomPlayerDiv"></div>
             <div id="ytRoomBlock" class="yt-room-block"></div>
-            <div class="yt-room-hostbar"><button type="button" onclick="window.ytRoomOpenPanel&&window.ytRoomOpenPanel('queue')">📺 Queue</button><label style="display:flex;align-items:center;gap:5px;background:rgba(15,23,42,.82);border-radius:10px;padding:5px 8px;color:#fff;font-size:11px;">🔊<input id="ytRoomVolume" type="range" min="0" max="100" value="80" style="width:82px;"></label><button type="button" id="ytRoomCloseVideoBtn" class="yt-room-close-video" onclick="window.ytRoomCloseShared&&window.ytRoomCloseShared()" title="सभी के लिए YouTube बंद करें">✕ बंद करें</button></div>
+            <div class="yt-room-hostbar"><label style="display:flex;align-items:center;gap:5px;background:rgba(15,23,42,.82);border-radius:10px;padding:5px 8px;color:#fff;font-size:11px;">🔊<input id="ytRoomVolume" type="range" min="0" max="100" value="80" style="width:82px;"></label><button type="button" id="ytRoomCloseVideoBtn" class="yt-room-close-video" onclick="window.ytRoomCloseShared&&window.ytRoomCloseShared()" title="सभी के लिए YouTube बंद करें">✕ बंद करें</button></div>
           </div>
           <div id="ytRoomUrlBar" class="yt-room-url-bar">
             <div class="yt-room-input-label">YouTube URL यहाँ डालें</div>
@@ -2434,8 +2434,19 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
           </div>
           <div class="yt-room-input-tools" id="ytRoomInputTools">
             <div class="yt-room-tools-top">
-              <button type="button" id="ytRoomHistoryBtn" onclick="window.ytRoomOpenPanel&&window.ytRoomOpenPanel('history')">💾 History</button>
-              <button type="button" id="ytRoomQueueBtn" onclick="window.ytRoomOpenPanel&&window.ytRoomOpenPanel('queue')">Q <span id="ytRoomQueueBadge">0</span></button>
+              <button type="button" id="ytRoomHistoryBtn" onclick="window.ytRoomTogglePanel&&window.ytRoomTogglePanel('history')">💾 History</button>
+              <button type="button" id="ytRoomQueueBtn" onclick="window.ytRoomTogglePanel&&window.ytRoomTogglePanel('queue')">Q <span id="ytRoomQueueBadge">0</span></button>
+            </div>
+            <div id="ytRoomInlinePanel" class="yt-room-inline-panel" aria-live="polite">
+              <div id="ytRoomInlineQueue" class="yt-room-inline-pane">
+                <div class="yt-room-inline-title">📺 Q में YouTube लिंक डालें</div>
+                <div class="yt-room-inline-row"><input id="ytRoomInlineQueueInput" type="text" autocomplete="off" placeholder="YouTube link यहाँ paste करें..."><button type="button" id="ytRoomInlineQueueLoad">Load</button></div>
+                <div id="ytRoomInlineQueueList" class="yt-room-inline-list"></div>
+              </div>
+              <div id="ytRoomInlineHistory" class="yt-room-inline-pane">
+                <div class="yt-room-inline-title">💾 History</div>
+                <div id="ytRoomInlineHistoryList" class="yt-room-inline-list"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -8242,14 +8253,19 @@ input,textarea,select{font-size:16px}
     navSync();
   }
 
-  /* room top-left back / X buttons ask first when inside a room */
+  /* Party Room top X/back: direct back/exit. No extra minimize popup. */
   window.cinemaLobbyBack=function(){
-    if(roomId() && shown($('cinemaGharModal'))){ askExitMin(); return; }
-    if(typeof origLobbyBack==='function') return origLobbyBack.apply(this,arguments);
-    if(typeof window.closeCinemaGhar==='function') window.closeCinemaGhar();
+    try{ closeDialog(); }catch(e){}
+    try{ if(typeof window.closeCinemaGhar==='function') window.closeCinemaGhar();
+      else if(typeof origLobbyBack==='function') return origLobbyBack.apply(this,arguments);
+    }catch(e){}
   };
   var rx=$('pkRoomX');
-  if(rx) rx.onclick=function(){ if(roomId()) askExitMin(); else { try{ window.closeCinemaGhar(); }catch(e){} } };
+  if(rx) rx.onclick=function(e){
+    try{ if(e)e.preventDefault(); if(e)e.stopPropagation(); }catch(_e){}
+    try{ closeDialog(); }catch(_e){}
+    try{ window.closeCinemaGhar(); }catch(_e){}
+  };
 
   /* tapping the Party Room tile on Home while a room is minimized = go back into that room */
   var origHome=window.homeCinemaGharClicked;
@@ -9661,13 +9677,37 @@ window.ytRoomBottomSubmitImpl=function(v){
     addVideoToQueue(v,roomInput||null);
   }
 };
-window.ytRoomOpenPanel=function(name){
-  openModal();
-  setTimeout(function(){
-    var b=name==='history'?bottomHistoryBtn:bottomQueueBtn;
-    ytBottomShowPane(name,b);
-  },0);
-};
+function renderInlineRoomPanel(name){
+  var ql=document.getElementById('ytRoomInlineQueueList'),hl=document.getElementById('ytRoomInlineHistoryList');
+  if(ql){
+    if(!queue.length) ql.innerHTML='<div class="yt-room-inline-empty">Q खाली है</div>';
+    else ql.innerHTML=queue.map(function(v,i){return '<button type="button" class="yt-room-inline-item" data-qidx="'+i+'"><span class="yt-room-inline-thumb">Q'+(i+1)+'</span><span class="yt-room-inline-meta"><b>'+esc(v.title||v.id)+'</b><small>'+esc(v.addedBy||'You')+'</small></span></button>';}).join('');
+    ql.querySelectorAll('[data-qidx]').forEach(function(el){el.addEventListener('click',function(){var v=queue[Number(el.dataset.qidx)];if(!v)return;refreshHostState();if(!isHost){toast('👑 सिर्फ Host video चला सकता है',1800);return;}playInfo({type:'video',id:v.id,list:v.list||'',shorts:!!v.shorts},v.title,{addedBy:v.addedBy||'You'});});});
+  }
+  if(hl){
+    if(!history.length) hl.innerHTML='<div class="yt-room-inline-empty">अभी कोई video नहीं चला</div>';
+    else hl.innerHTML=history.map(function(v,i){return '<button type="button" class="yt-room-inline-item" data-hidx="'+i+'"><span class="yt-room-inline-thumb">▶</span><span class="yt-room-inline-meta"><b>'+esc(v.title||v.id)+'</b><small>'+new Date(v.ts||Date.now()).toLocaleString()+'</small></span></button>';}).join('');
+    hl.querySelectorAll('[data-hidx]').forEach(function(el){el.addEventListener('click',function(){var v=history[Number(el.dataset.hidx)];if(!v)return;refreshHostState();if(!isHost){toast('👑 सिर्फ Host video चला सकता है',1800);return;}playInfo({type:'video',id:v.id,list:v.list||'',shorts:!!v.shorts},v.title,{addedBy:v.addedBy||'You'});});});
+  }
+}
+function ytRoomTogglePanel(name){
+  var panel=document.getElementById('ytRoomInlinePanel'); if(!panel)return;
+  var currentPanel=panel.getAttribute('data-open')||'';
+  var next=currentPanel===name?'':name;
+  panel.setAttribute('data-open',next);
+  panel.classList.toggle('open',!!next);
+  var q=document.getElementById('ytRoomInlineQueue'),h=document.getElementById('ytRoomInlineHistory');
+  if(q)q.style.display=next==='queue'?'block':'none';
+  if(h)h.style.display=next==='history'?'block':'none';
+  renderInlineRoomPanel(next);
+  var inp=document.getElementById('ytRoomInlineQueueInput');
+  if(next==='queue'&&inp)setTimeout(function(){inp.focus();},30);
+}
+window.ytRoomTogglePanel=ytRoomTogglePanel;
+window.ytRoomOpenPanel=ytRoomTogglePanel;
+var inlineQueueLoad=document.getElementById('ytRoomInlineQueueLoad'),inlineQueueInput=document.getElementById('ytRoomInlineQueueInput');
+if(inlineQueueLoad)inlineQueueLoad.addEventListener('click',function(){var v=inlineQueueInput&&inlineQueueInput.value?inlineQueueInput.value.trim():'';if(!v){toast('🔗 पहले YouTube URL paste करें');return;}if(addVideoToQueue(v,inlineQueueInput))ytRoomTogglePanel('queue');});
+if(inlineQueueInput)inlineQueueInput.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();if(inlineQueueLoad)inlineQueueLoad.click();}});
 window.ytRoomToast=toast;
 if(bottomLoadBtn)bottomLoadBtn.addEventListener('click',ytBottomLoad);
 if(bottomInput)bottomInput.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();ytBottomLoad();}});
@@ -10454,6 +10494,24 @@ listenRoomShare();
 </div>
 </body>
 
+<style id="partyRoomYoutubeInlinePanelFix">
+/* YouTube Q/History open inside the same screen; never open the old full-page modal. */
+#prRoom.party-youtube-layout #ytRoomInlinePanel{display:none!important;width:100%;max-width:900px;box-sizing:border-box;padding:8px;border-radius:12px;background:rgba(7,12,27,.97);border:1px solid rgba(139,92,246,.42);box-shadow:0 10px 26px rgba(0,0,0,.4);}
+#prRoom.party-youtube-layout #ytRoomInlinePanel.open{display:block!important;}
+#prRoom.party-youtube-layout .yt-room-inline-pane{display:none;}
+#prRoom.party-youtube-layout .yt-room-inline-title{font-size:12px;font-weight:900;color:#ddd6fe;margin:0 0 7px 2px;}
+#prRoom.party-youtube-layout .yt-room-inline-row{display:flex;gap:7px;}
+#prRoom.party-youtube-layout .yt-room-inline-row input{flex:1;min-width:0;height:38px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:#111827;color:#fff;padding:0 10px;font-size:12px;outline:none;box-sizing:border-box;}
+#prRoom.party-youtube-layout .yt-room-inline-row button{width:64px;height:38px;border:0;border-radius:9px;background:linear-gradient(135deg,#ff0000,#c4302b);color:#fff;font-weight:900;}
+#prRoom.party-youtube-layout .yt-room-inline-list{max-height:125px;overflow-y:auto;margin-top:7px;display:flex;flex-direction:column;gap:5px;}
+#prRoom.party-youtube-layout .yt-room-inline-item{width:100%;display:flex;align-items:center;gap:8px;text-align:left;border:1px solid rgba(255,255,255,.09);border-radius:9px;background:rgba(255,255,255,.05);color:#fff;padding:6px;cursor:pointer;}
+#prRoom.party-youtube-layout .yt-room-inline-thumb{width:32px;height:32px;flex:0 0 32px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#7c3aed,#ec4899);font-size:10px;font-weight:900;}
+#prRoom.party-youtube-layout .yt-room-inline-meta{min-width:0;display:flex;flex-direction:column;gap:2px;overflow:hidden;}
+#prRoom.party-youtube-layout .yt-room-inline-meta b{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#prRoom.party-youtube-layout .yt-room-inline-meta small{font-size:9px;color:#94a3b8;}
+#prRoom.party-youtube-layout .yt-room-inline-empty{font-size:10px;color:#94a3b8;text-align:center;padding:8px;}
+#prRoom.party-youtube-layout .yt-room-hostbar button[onclick*="ytRoomOpenPanel"]{display:none!important;}
+</style>
 <style id="partyRoomYoutubeExactLayoutFix">
 /* Exact YouTube Mode order: VIDEO -> URL -> History/Q */
 #prRoom.party-youtube-layout #partyYoutubeStage{
