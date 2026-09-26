@@ -214,6 +214,8 @@ html, body { overscroll-behavior-y: none; }
 #partyRoomBottomDock .prd-gift{background:linear-gradient(145deg,#ff4f9a,#b832ff);box-shadow:0 7px 18px rgba(200,50,255,.28);}
 #partyRoomBottomDock .prd-mic{background:linear-gradient(145deg,#ff5b65,#ff2d55);box-shadow:0 7px 18px rgba(255,45,85,.22);}
 #partyRoomBottomDock .prd-badge{position:absolute;right:-3px;top:-5px;min-width:21px;height:21px;padding:0 5px;border-radius:999px;background:#ff5c8a;color:#fff;font-size:11px;font-weight:950;display:none;align-items:center;justify-content:center;border:2px solid #111027;box-sizing:border-box;}
+#partyRoomBottomDock .prd-badge-inbox{position:absolute;right:-3px;top:-5px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#e11d2e;color:#fff;font-size:9px;font-weight:950;display:none;align-items:center;justify-content:center;border:2px solid #111027;box-sizing:border-box;}
+#partyRoomBottomDock .prd-badge-inbox.on{display:flex;}
 #partyRoomGiftTray{position:absolute;left:12px;right:12px;bottom:73px;z-index:75;display:none;padding:10px;border:1px solid rgba(255,255,255,.18);border-radius:18px;background:rgba(10,8,27,.92);backdrop-filter:blur(14px);box-shadow:0 14px 35px rgba(0,0,0,.35);}
 #partyRoomGiftTray .gift-row{display:flex;justify-content:space-around;gap:7px;}
 #partyRoomGiftTray button{flex:1;min-width:0;border:0;border-radius:13px;padding:8px 5px;background:rgba(255,255,255,.08);color:#fff;font-size:18px;font-weight:800;cursor:pointer;}
@@ -422,6 +424,9 @@ html, body { overscroll-behavior-y: none; }
 .pr-room-sub{font-size:10.5px;color:rgba(255,255,255,.78);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25;}
 #prCloseBtn{flex:none;width:38px;height:38px;border:0;border-radius:50%;background:rgba(25,10,60,.48);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:19px;line-height:1;cursor:pointer;touch-action:manipulation;display:grid;place-items:center;}
 #prCloseBtn:active{transform:scale(.92);}
+#prTopRight{display:flex;align-items:center;gap:8px;flex:none;}
+#prTopGiftersBtn{flex:none;width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#ffd76a,#f59e0b 55%,#c2740a);border:1px solid rgba(255,255,255,.35);color:#3a2200;font-size:18px;line-height:1;cursor:pointer;touch-action:manipulation;display:grid;place-items:center;box-shadow:0 4px 14px rgba(217,119,6,.5),0 0 0 1px rgba(255,255,255,.08) inset;}
+#prTopGiftersBtn:active{transform:scale(.92);}
 
 /* second row: online count + more */
 #prSubRow{display:flex;align-items:center;justify-content:space-between;margin-top:8px;flex:0 0 auto;}
@@ -2171,7 +2176,10 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
               <div class="pr-room-sub"><span id="cinemaHostName"></span></div>
             </div>
           </div>
-          <button type="button" id="prCloseBtn" onclick="cinemaLobbyBack()" aria-label="रूम से बाहर निकलें">✕</button>
+          <div id="prTopRight">
+            <button type="button" id="prTopGiftersBtn" onclick="openPartyRoomTopGifters()" aria-label="Top Gifters">🏆</button>
+            <button type="button" id="prCloseBtn" onclick="cinemaLobbyBack()" aria-label="रूम से बाहर निकलें">✕</button>
+          </div>
         </div>
         <div id="prSubRow">
           <button id="cinemaViewerBtn" type="button" onclick="openPartyRoomViewers()" aria-label="Active viewers">👁 <span id="cinemaViewerCount">0</span></button>
@@ -2269,6 +2277,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
           <div class="prd-group">
             <button type="button" id="partyRoomFocusChatBtn" onclick="window.partyRoomFocusChat && window.partyRoomFocusChat()" aria-label="Open chat input">💬<span id="partyRoomUnreadBadge" class="prd-badge">0</span></button>
             <button type="button" onclick="togglePartyRoomReactionTray()" aria-label="Emoji reactions"><span class="prr-dock-ico"></span></button>
+            <button type="button" id="partyRoomInboxBtn" onclick="pkHomeOpenInbox()" aria-label="Messages">✉️<span id="partyRoomInboxBadge" class="prd-badge-inbox">0</span></button>
           </div>
           <div class="prd-group">
             <button type="button" class="prd-gift" onclick="togglePartyRoomGiftTray()" aria-label="Gifts">🎁</button>
@@ -2299,6 +2308,17 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
           <button type="button" onclick="closePartyRoomViewers()" style="width:32px;height:32px;border:1px solid #334155;border-radius:10px;background:#172033;color:#fff;font-size:19px;font-weight:900;cursor:pointer;">×</button>
         </div>
         <div id="cinemaViewerList" style="overflow:auto;padding:8px;"></div>
+      </div>
+    </div>
+    <div id="partyRoomTopGiftersPage" style="display:none;position:absolute;inset:0;z-index:36;background:linear-gradient(180deg,#0b1020,#111827);color:#fff;overflow:auto;">
+      <div style="min-height:100%;box-sizing:border-box;padding:14px;">
+        <div style="max-width:480px;margin:0 auto;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+            <button type="button" onclick="closePartyRoomTopGifters()" style="width:42px;height:42px;border:1px solid #334155;border-radius:13px;background:#172033;color:#fff;font-size:25px;font-weight:900;cursor:pointer;">‹</button>
+            <div><div style="font-size:19px;font-weight:950;">🏆 टॉप गिफ्टर</div><div style="font-size:11px;color:#94a3b8;">इस रूम में सबसे ज़्यादा गिफ्ट किसने भेजा</div></div>
+          </div>
+          <div id="prTopGiftersList"></div>
+        </div>
       </div>
     </div>
     <div id="partyRoomSettingsPage" style="display:none;position:absolute;inset:0;z-index:90;background:linear-gradient(180deg,#0b1020,#111827);color:#fff;overflow:auto;">
@@ -2992,7 +3012,10 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     const listenRoomId=String(cinemaRoomId);
     const box=document.getElementById('cinemaChatMessages');
     if(box){ box.__ready=false; box.innerHTML='<div style="text-align:center;color:#64748b;font-size:12px;padding:28px 10px;">चैट लोड हो रही है…</div>'; }
-    cinemaChatUnsub=db.collection('cinemaRooms').doc(listenRoomId).collection('chat').orderBy('createdAt','asc').limitToLast(100).onSnapshot(snap=>{
+    // रूम में हर बार नए सिरे से आने पर पुरानी चैट/गिफ्ट/स्वागत हिस्ट्री बिल्कुल नहीं दिखनी चाहिए —
+    // सिर्फ इसी पल के बाद जो भी नई एक्टिविटी (चैट, गिफ्ट, जॉइन) हो वही यहां से आगे दिखे।
+    const joinedAt=Date.now();
+    cinemaChatUnsub=db.collection('cinemaRooms').doc(listenRoomId).collection('chat').where('createdAt','>=',joinedAt).orderBy('createdAt','asc').limitToLast(100).onSnapshot(snap=>{
       if(String(cinemaRoomId)!==listenRoomId)return;
       const el=document.getElementById('cinemaChatMessages'); if(!el)return;
       const incoming=[];
@@ -3821,14 +3844,20 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     window.__prGiftUnsub=db.collection('cinemaRooms').doc(cinemaRoomId).collection('gifts')
       .orderBy('createdAt','desc').limit(300).onSnapshot(function(snap){
         var totals={}; var raw=[];
+        var gifterTotals={}, gifterMeta={};
         snap.forEach(function(doc){
           var d=doc.data()||{}; var k=String(d.toKey||''); if(!k) return;
           var v=(Number(d.value)||0)*(Number(d.count)||1);
           totals[k]=(totals[k]||0)+v;
           raw.push({toKey:k,value:v,createdAt:Number(d.createdAt)||0});
+          var sk=String(d.userKey||'');
+          if(sk){ gifterTotals[sk]=(gifterTotals[sk]||0)+v; if(!gifterMeta[sk]) gifterMeta[sk]={name:String(d.name||'')}; }
         });
         window.__prGiftTotals=totals;
         window.__prGiftDocsRaw=raw;
+        window.__prGifterTotals=gifterTotals;
+        window.__prGifterMeta=gifterMeta;
+        try{ var tgp=document.getElementById('partyRoomTopGiftersPage'); if(tgp && tgp.style.display!=='none' && typeof renderTopGiftersList==='function') renderTopGiftersList(); }catch(e){}
         var now=Date.now();
         snap.docChanges().forEach(function(ch){
           if(ch.type!=='added' || seen.has(ch.doc.id)) return;
@@ -3839,6 +3868,49 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         try{ cinemaRenderSeats(window.__cinemaPeople||[]); }catch(e){}
       },function(){});
   };
+  // ---------- Top Gifters (full page): who has gifted the most in this room ----------
+  function renderTopGiftersList(){
+    var box=document.getElementById('prTopGiftersList'); if(!box) return;
+    var totals=window.__prGifterTotals||{};
+    var keys=Object.keys(totals).filter(function(k){ return totals[k]>0; });
+    if(!keys.length){
+      box.innerHTML='<div style="text-align:center;color:#94a3b8;font-size:13px;padding:44px 10px;">अभी तक इस रूम में किसी ने गिफ्ट नहीं भेजा।</div>';
+      return;
+    }
+    keys.sort(function(a,b){ return totals[b]-totals[a]; });
+    var medals=['🥇','🥈','🥉'];
+    box.innerHTML=keys.map(function(k,i){
+      var meta=(window.__prGifterMeta||{})[k]||{};
+      var nm=nameOf(k)||meta.name||'User';
+      var photo=''; try{ photo=cinemaPhotoFor(k); }catch(e){}
+      var letter=(Array.from(String(nm).trim())[0]||'U').toUpperCase();
+      var avatar=(photo && cinemaOkPhoto(photo))
+        ? '<img src="'+esc(photo)+'" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none;">'
+        : '<div style="width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#312e81,#1e3a8a);font-size:17px;font-weight:900;flex:none;">'+esc(letter)+'</div>';
+      var rank=i<3?medals[i]:('#'+(i+1));
+      return '<div class="pr-topgifter-row" data-topgifter-key="'+esc(k)+'" style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:rgba(255,255,255,.05);margin-bottom:8px;cursor:pointer;">'
+        +'<div style="width:30px;text-align:center;font-size:'+(i<3?'20px':'13px')+';font-weight:900;color:'+(i<3?'#fbbf24':'#94a3b8')+';flex:none;">'+rank+'</div>'
+        +avatar
+        +'<div style="min-width:0;flex:1;"><div style="font-size:14px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(nm)+'</div></div>'
+        +'<div style="font-size:14px;font-weight:950;color:#fbbf24;flex:none;">🪙 '+esc(window.prFmt?window.prFmt(totals[k]):String(totals[k]))+'</div>'
+        +'</div>';
+    }).join('');
+  }
+  window.renderTopGiftersList=renderTopGiftersList;
+  window.openPartyRoomTopGifters=function(){
+    var page=document.getElementById('partyRoomTopGiftersPage'); if(!page) return;
+    renderTopGiftersList();
+    page.style.display='block';
+  };
+  window.closePartyRoomTopGifters=function(){
+    var page=document.getElementById('partyRoomTopGiftersPage'); if(page) page.style.display='none';
+  };
+  document.addEventListener('click',function(e){
+    var row=e.target.closest&&e.target.closest('.pr-topgifter-row[data-topgifter-key]'); if(!row) return;
+    var k=row.getAttribute('data-topgifter-key'); if(!k) return;
+    if(typeof window.prOpenRoomCard==='function') window.prOpenRoomCard(k);
+    else if(typeof window.prOpenUserCard==='function') window.prOpenUserCard(k);
+  });
   function showGift(d){
     var g=findGiftById(d.gid);
     var emoji=d.emoji||(g&&g.e)||'🎁';
@@ -4285,7 +4357,7 @@ const catalog={gold:{id:'gold',name:'Imperial Gold Crown',rupees:10,emoji:'♛'}
 window.PARTY_FRAME_CATALOG=catalog; window.__partyFrameOwned=window.__partyFrameOwned||{}; window.__partyEquippedFrame=window.__partyEquippedFrame||'none';
 function coinPrice(r){const rate=(typeof COIN_TO_RUPEE_RATE==='number'&&COIN_TO_RUPEE_RATE>0)?COIN_TO_RUPEE_RATE:.10;return Math.max(1,Math.ceil(Number(r)/rate))}
 function ensureStore(){let e=document.getElementById('partyFrameStore');if(e)return e;e=document.createElement('div');e.id='partyFrameStore';e.className='party-frame-store';e.innerHTML='<div class="party-frame-store-card"><div class="party-frame-store-head"><div><div style="font-size:19px;font-weight:950;">🛍️ Party Frame Store</div><div id="partyFrameStoreBalance" style="font-size:11px;color:#a7f3d0;margin-top:3px;">🪙 0 Game Coins</div></div><button type="button" onclick="closePartyFrameStore()" style="width:38px;height:38px;border:1px solid #334155;border-radius:12px;background:#172033;color:#fff;font-size:22px;font-weight:900;">×</button></div><div style="font-size:11px;color:#94a3b8;margin-bottom:10px;">👑 Crown • 🪽 Phoenix • 💎 Crystal • 🐉 Dragon • 🌌 Galaxy • 🔥 Fire — Frame खरीदने के बाद वह आपके अकाउंट में रहेगा। आप कभी भी उसे लगा या हटा सकते हैं।</div><div id="partyFrameStoreGrid" class="party-frame-grid"></div><div id="partyFrameStoreMsg" style="font-size:11px;min-height:18px;margin-top:9px;text-align:center;color:#fca5a5;"></div></div>';document.body.appendChild(e);return e}
-function refresh(){const e=ensureStore(),g=e.querySelector('#partyFrameStoreGrid');if(!g)return;const owned=window.__partyFrameOwned||{},eq=window.__partyEquippedFrame||'none',bal=Math.floor(Number(gamePoints)||0),b=e.querySelector('#partyFrameStoreBalance');if(b)b.textContent='🪙 '+bal+' Game Coins';g.innerHTML=Object.values(catalog).map(f=>{const c=coinPrice(f.rupees),has=owned[f.id]===true,is=eq===f.id;let a=is?'<button type="button" class="party-frame-store-btn remove" onclick="partyRemoveEquippedFrame()">❌ फ्रेम हटाएँ</button>':has?'<button type="button" class="party-frame-store-btn use" onclick="partyEquipFrame(\''+f.id+'\')">✨ फ्रेम लगाएँ</button>':'<button type="button" class="party-frame-store-btn buy" onclick="partyBuyFrame(\''+f.id+'\')">🪙 '+c+' Coins • ₹'+f.rupees+'</button>';return '<div class="party-frame-item"><div class="party-frame-preview" data-frame="'+f.id+'"><div class="pfp-avatar">'+f.emoji+'</div>'+(typeof partyFrameArt==='function'&&partyFrameArt(f.id)?'<img class="party-store-frame-art" alt="" src="'+partyFrameArt(f.id)+'">':'')+'</div><div style="font-size:12px;font-weight:950;">'+f.name+'</div><div style="font-size:10px;color:#c4b5fd;margin:3px 0 8px;">₹'+f.rupees+' • '+c+' Game Coins</div>'+a+'</div>'}).join('')}
+function refresh(){const e=ensureStore(),g=e.querySelector('#partyFrameStoreGrid');if(!g)return;const owned=window.__partyFrameOwned||{},eq=window.__partyEquippedFrame||'none',bal=Math.floor(Number(gamePoints)||0),b=e.querySelector('#partyFrameStoreBalance');if(b)b.textContent='🪙 '+bal+' Game Coins';g.innerHTML=Object.values(catalog).map(f=>{const c=coinPrice(f.rupees),has=owned[f.id]===true,is=eq===f.id;let a=is?'<button type="button" class="party-frame-store-btn remove" onclick="partyRemoveEquippedFrame()">❌ फ्रेम हटाएँ</button>':has?'<button type="button" class="party-frame-store-btn use" onclick="partyEquipFrame(\''+f.id+'\')">✨ फ्रेम लगाएँ</button>':'<button type="button" class="party-frame-store-btn buy" onclick="partyBuyFrame(\''+f.id+'\')">🪙 '+c+' Coins</button>';return '<div class="party-frame-item"><div class="party-frame-preview" data-frame="'+f.id+'"><div class="pfp-avatar">'+f.emoji+'</div>'+(typeof partyFrameArt==='function'&&partyFrameArt(f.id)?'<img class="party-store-frame-art" alt="" src="'+partyFrameArt(f.id)+'">':'')+'</div><div style="font-size:12px;font-weight:950;">'+f.name+'</div><div style="font-size:10px;color:#c4b5fd;margin:3px 0 8px;">🪙 '+c+' Game Coins</div>'+a+'</div>'}).join('')}
 async function load(){if(!db||!currentUserKey)return;try{const s=await db.collection('users').doc(String(currentUserKey)).get(),d=s.exists?(s.data()||{}):{};window.__partyFrameOwned=d.partyFrameOwned&&typeof d.partyFrameOwned==='object'?d.partyFrameOwned:{};window.__partyEquippedFrame=String(d.partyEquippedFrame||'none'); try{renderOwnProfileFrame();}catch(e){}window.__partyFrameCache=window.__partyFrameCache||{};window.__partyFrameCache[String(currentUserKey)]=window.__partyEquippedFrame;gamePoints=Math.max(0,Number(d.gamePoints)||0);try{prSyncCoinDisplays()}catch(e){}refresh();try{cinemaRenderSeats(window.__cinemaPeople||[])}catch(e){}}catch(e){}}
 async function open(){ensureStore().style.display='block';refresh();await load()}
 function close(){const e=document.getElementById('partyFrameStore');if(e)e.style.display='none'}
@@ -5730,7 +5802,7 @@ setInterval(function(){try{
   }
 
   /* ---------- inbox ---------- */
-  function setBadge(){var n=S.unread;var b=$('pkhMsgBadge');if(b){b.textContent=n>99?'99+':String(n);b.classList.toggle('on',n>0);}var ib=$('pkInboxBottomBadge');if(ib){ib.textContent=n>99?'99+':String(n);ib.classList.toggle('on',n>0);}}
+  function setBadge(){var n=S.unread;var b=$('pkhMsgBadge');if(b){b.textContent=n>99?'99+':String(n);b.classList.toggle('on',n>0);}var ib=$('pkInboxBottomBadge');if(ib){ib.textContent=n>99?'99+':String(n);ib.classList.toggle('on',n>0);}var rb=$('partyRoomInboxBadge');if(rb){rb.textContent=n>99?'99+':String(n);rb.classList.toggle('on',n>0);}}
   function tfmt(ts){if(!ts)return '';var d=new Date(ts),n=new Date();return d.toDateString()===n.toDateString()?d.toLocaleTimeString('hi-IN',{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString('hi-IN',{day:'numeric',month:'short'});}
   async function userInfo(k){
     if(S.uc[k])return S.uc[k];
@@ -7861,6 +7933,7 @@ input,textarea,select{font-size:16px}
       add('prGiftSheet',99094,shown,function(){ call('prCloseSheets'); });
       add('partyRoomSettingsPage',99090,shown,function(el){ if(!call('closePartyRoomSettings')) hide(el); });
       add('partyRoomViewersPage',99085,shown,function(el){ if(!call('closePartyRoomViewers')) hide(el); });
+      add('partyRoomTopGiftersPage',99086,shown,function(el){ if(!call('closePartyRoomTopGifters')) hide(el); });
       add('partyRoomGiftTray',99080,shown,function(el){ hide(el); });
       add('partyRoomReactionTray',99079,shown,function(el){ hide(el); });
       var gc=$('partyGamingCenter');
@@ -8237,6 +8310,14 @@ input,textarea,select{font-size:16px}
   }
 })();
 </script>
+
+<style id="prDockInboxFix">
+/* चैट/इमोजी/इनबॉक्स — तीनों हल्के और छोटे, ताकि एक ही लाइन में आराम से रहें */
+#partyRoomBottomDock .prd-group:first-child{gap:5px!important;}
+#partyRoomBottomDock .prd-group:first-child button{width:32px!important;height:32px!important;min-width:0!important;min-height:0!important;border-radius:10px!important;font-size:14px!important;background:rgba(255,255,255,.05)!important;box-shadow:none!important;}
+#partyRoomBottomDock .prd-group:first-child .prr-dock-ico{width:18px!important;height:18px!important;transform:none!important;}
+#partyRoomBottomDock .prd-badge-inbox{right:-4px!important;top:-4px!important;}
+</style>
 
 </body>
 </html>
