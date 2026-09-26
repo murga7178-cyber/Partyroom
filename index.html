@@ -425,7 +425,7 @@ html, body { overscroll-behavior-y: none; }
 #prCloseBtn{flex:none;width:38px;height:38px;border:0;border-radius:50%;background:rgba(25,10,60,.48);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:19px;line-height:1;cursor:pointer;touch-action:manipulation;display:grid;place-items:center;}
 #prCloseBtn:active{transform:scale(.92);}
 #prTopRight{display:flex;align-items:center;gap:8px;flex:none;}
-#prModeMenuWrap{position:relative;flex:0 0 auto;z-index:220;display:none;}
+#prModeMenuWrap{position:relative;flex:0 0 auto;z-index:220;display:none;margin-right:124px;}
 #prModeMenuWrap[data-host="1"]{display:block;}
 #prModeMenuBtn{height:40px;min-width:88px;padding:0 12px;border-radius:20px;border:1px solid rgba(167,139,250,.9);background:linear-gradient(135deg,rgba(49,27,105,.94),rgba(30,18,75,.94));color:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font:900 13px/1 Segoe UI,Arial,sans-serif;box-shadow:0 5px 18px rgba(88,28,135,.24),0 0 0 1px rgba(255,255,255,.05) inset;cursor:pointer;touch-action:manipulation;}
 #prModeMenuBtn:active{transform:scale(.96);}
@@ -2295,6 +2295,14 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         </div>
 
         <div id="cinemaSeats"></div>
+        <div id="ytRoomUrlBar" class="yt-room-url-bar">
+          <div class="yt-room-input-label">YouTube URL यहाँ डालें</div>
+          <div class="yt-room-url-row">
+            <input id="ytRoomInput" type="text" autocomplete="off" placeholder="YouTube link / Shorts link...">
+            <button type="button" id="ytRoomLoadBtn" onclick="window.ytRoomBottomSubmit&&window.ytRoomBottomSubmit()">Load</button>
+          </div>
+          <div class="yt-room-input-hint">Host: Load • Viewer: Queue में जोड़ेगा</div>
+        </div>
         <div id="partyYoutubeStage" aria-label="YouTube Mode" style="display:none;">
           <div class="yt-room-card">
             <div id="ytRoomEmpty" class="yt-room-empty"><div style="font-size:46px;">▶️</div><div>YouTube Queue से video चुनें</div><div style="font-size:12px;opacity:.7;">Queue में link कोई भी डाल सकता है • Play सिर्फ Host करेगा</div></div>
@@ -2308,12 +2316,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
                 <button type="button" id="ytRoomHistoryBtn" onclick="window.ytRoomOpenPanel&&window.ytRoomOpenPanel('history')">💾 History</button>
                 <button type="button" id="ytRoomQueueBtn" onclick="window.ytRoomOpenPanel&&window.ytRoomOpenPanel('queue')">Q <span id="ytRoomQueueBadge">0</span></button>
               </div>
-              <div class="yt-room-input-label">YouTube URL यहाँ डालें</div>
-              <div class="yt-room-url-row">
-                <input id="ytRoomInput" type="text" autocomplete="off" placeholder="YouTube link / Shorts link...">
-                <button type="button" id="ytRoomLoadBtn" onclick="window.ytRoomBottomSubmit&&window.ytRoomBottomSubmit()">Load</button>
-              </div>
-              <div class="yt-room-input-hint">Host: Load • Viewer: Queue में जोड़ेगा</div>
             </div>
           </div>
         </div>
@@ -8580,6 +8582,12 @@ input,textarea,select{font-size:16px}
   background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
   color:#fff;font-size:18px;cursor:pointer;
 }
+.yt-stop{
+  flex:none;height:34px;padding:0 12px;border-radius:17px;margin-left:auto;margin-right:8px;
+  background:linear-gradient(135deg,#ff3b3b,#c4302b);border:0;
+  color:#fff;font-size:11.5px;font-weight:900;cursor:pointer;touch-action:manipulation;
+}
+.yt-stop:active{transform:scale(.95);}
 .yt-tabs{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap;}
 .yt-tab{
   flex:1;min-width:calc(25% - 4px);padding:9px 4px;border-radius:11px;
@@ -8898,6 +8906,7 @@ input,textarea,select{font-size:16px}
   <div id="ytCard">
     <div class="yt-head">
       <h3><span class="ic">🎬</span> YouTube Player</h3>
+      <button class="yt-stop" id="ytStopBtn" title="Video बंद करें (कहीं से भी)">⏹ बंद करें</button>
       <button class="yt-close" id="ytCloseBtn">✕</button>
     </div>
 
@@ -9504,6 +9513,10 @@ if(shareBtn)shareBtn.addEventListener('click',function(){
   shareToRoom(current);toast('🔗 Room में share किया गया');
 });
 if(clearBtn)clearBtn.addEventListener('click',function(){stopVideo();input.value='';toast('🗑️ Video बंद');});
+if(document.getElementById('ytStopBtn'))document.getElementById('ytStopBtn').addEventListener('click',function(){
+  if(ytRoomIsActive()&&!ytRoomHost()){toast('👑 सिर्फ Host video बंद कर सकता है',1800);return;}
+  stopVideo();input.value='';toast('🗑️ Video बंद');
+});
 if(clearHist)clearHist.addEventListener('click',function(){if(confirm('History मिटानी है?')){history=[];storageSet(HISTORY_KEY,'[]');renderHistory();}});
 if(clearQueue)clearQueue.addEventListener('click',function(){queue=[];storageSet(QUEUE_KEY,'[]');renderQueue();});
 if(shuffleBtn)shuffleBtn.addEventListener('click',function(){
@@ -9839,6 +9852,27 @@ listenRoomShare();
 }
 /* In Shorts, keep the portrait player usable while the input stays visible underneath. */
 #prRoom.party-youtube-layout #partyYoutubeStage.yt-shorts-mode .yt-room-card{max-height:calc(100% - 88px)!important;}
+
+/* URL box moved off the video: sits in the gap between the top bar and the seat row. */
+#ytRoomUrlBar{display:none;}
+#prRoom.party-youtube-layout #ytRoomUrlBar{
+  display:block;
+  position:absolute;
+  left:8px;right:8px;
+  top:58px;
+  z-index:45;
+  box-sizing:border-box;
+  padding:6px 8px;
+  border-radius:12px;
+  background:rgba(8,12,28,.96);
+  border:1px solid rgba(139,92,246,.42);
+  box-shadow:0 8px 20px rgba(0,0,0,.38);
+}
+#prRoom.party-youtube-layout #ytRoomUrlBar .yt-room-input-label{margin:0 0 3px 2px;}
+#prRoom.party-youtube-layout #ytRoomUrlBar .yt-room-input-hint{margin-top:2px;}
+@media(max-width:430px){
+  #prRoom.party-youtube-layout #ytRoomUrlBar{top:54px;padding:5px 7px;}
+}
 </style>
 <script id="partyRoomYouTubeRoomInputFinal">
 (function(){
