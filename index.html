@@ -1312,6 +1312,11 @@ html, body { overscroll-behavior-y: none; }
   transform:translateY(-20px)!important;
   transition:transform .16s ease!important;
 }
+#cinemaChatPanel:not(.party-composer-open) {
+  transform: translateY(100%) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
 @media(max-height:700px){
   #prRoom.party-keyboard-open #prHostRow,
   #prRoom.party-keyboard-open #cinemaSeats{transform:translateY(-70px)!important;}
