@@ -1308,11 +1308,9 @@ html, body { overscroll-behavior-y: none; }
   transform:translateY(-58px)!important;
   transition:transform .16s ease!important;
 }
-#cinemaChatPanel {
-  transform: translateY(0px) !important;
-  transition: transform .16s ease !important;
+#cinemaChatPanel:not(.party-composer-open) {
+  display: none !important;
 }
-
 #prRoom.party-keyboard-open #cinemaChatPanel{
   transform:translateY(-20px)!important;
   transition:transform .16s ease!important;
