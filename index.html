@@ -1308,7 +1308,15 @@ html, body { overscroll-behavior-y: none; }
   transform:translateY(-58px)!important;
   transition:transform .16s ease!important;
 }
-/* 1. जब टाइपिंग न हो रही हो तो पैनल नीचे छिपा रहे */
+/* 1. मैसेज लिस्ट हमेशा दिखती रहे */
+.party-chat-stream, 
+#cinemaChatStream {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* 2. जब कीबोर्ड बंद हो तो टाइपिंग वाला बॉक्स छिप जाए */
 #cinemaChatPanel {
   transform: translateY(100%) !important;
   opacity: 0 !important;
@@ -1316,16 +1324,12 @@ html, body { overscroll-behavior-y: none; }
   transition: transform .16s ease, opacity .16s ease !important;
 }
 
-/* 2. जब कीबोर्ड खुला हो या इनपुट पर क्लिक/फोकस हो (टाइप और सेंड करते समय) */
+/* 3. जब कीबोर्ड खुला हो तो टाइपिंग वाला बॉक्स सामने आ जाए */
 #prRoom.party-keyboard-open #cinemaChatPanel,
 #cinemaChatPanel:focus-within {
   transform: translateY(-20px) !important;
   opacity: 1 !important;
   pointer-events: auto !important;
-}
-#prRoom.party-keyboard-open #cinemaChatPanel{
-  transform:translateY(-20px)!important;
-  transition:transform .16s ease!important;
 }
 @media(max-height:700px){
   #prRoom.party-keyboard-open #prHostRow,
@@ -8227,3 +8231,14 @@ input,textarea,select{font-size:16px}
 
 </body>
 </html>
+// सेंड बटन क्लिक होने पर इनपुट पर फोकस बनाए रखने के लिए
+document.addEventListener('click', function (e) {
+  if (e.target && e.target.closest('#cinemaChatPanel button')) {
+    const chatInput = document.querySelector('#cinemaChatPanel input, #cinemaChatPanel textarea');
+    if (chatInput) {
+      setTimeout(() => {
+        chatInput.focus();
+      }, 50);
+    }
+  }
+});
