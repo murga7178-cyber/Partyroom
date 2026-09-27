@@ -11011,6 +11011,82 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 }
 </style>
 
+
+<style id="partyRoomYoutubeSingleQFinalFix">
+/* SINGLE-Q FINAL FIX: one Q only; controls closed by default; Q opens URL+Load+Upload and queue list. */
+#prRoom.party-youtube-layout #ytRoomQueueBtn{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+#prRoom.party-youtube-layout #ytRoomUiHideBtn{display:flex!important;visibility:visible!important;pointer-events:auto!important;}
+#prRoom.party-youtube-layout #ytRoomUrlBar,
+#prRoom.party-youtube-layout #ytRoomInputTools{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+#prRoom.party-youtube-layout.yt-q-open #ytRoomUrlBar,
+#prRoom.party-youtube-layout.yt-q-open #ytRoomInputTools{display:block!important;visibility:visible!important;pointer-events:auto!important;}
+#prRoom.party-youtube-layout #ytRoomInlinePanel{display:none!important;visibility:hidden!important;}
+#prRoom.party-youtube-layout.yt-q-open #ytRoomInlinePanel{display:block!important;visibility:visible!important;}
+#prRoom.party-youtube-layout #ytRoomInlineHistory{display:none!important;}
+#prRoom.party-youtube-layout #ytRoomInlineQueueInput,
+#prRoom.party-youtube-layout #ytRoomInlineQueueLoad,
+#prRoom.party-youtube-layout #ytRoomInlineQueue .yt-room-inline-title{display:none!important;}
+#prRoom.party-youtube-layout #ytRoomInlineQueueList{display:block!important;}
+#prRoom.party-youtube-layout .yt-room-inline-item{min-height:64px!important;width:100%!important;padding:10px 48px 10px 14px!important;}
+/* Move seats and the video stage slightly upward to use the available gap. */
+#prRoom.party-youtube-layout #cinemaSeats.pr-two-seat-mode,
+#prRoom.party-youtube-layout #cinemaSeats.pr-six-seat-mode,
+#prRoom.party-youtube-layout #cinemaSeats.pr-eight-seat-mode{top:120px!important;}
+#prRoom.party-youtube-layout #cinemaSeats.pr-twelve-seat-mode{top:120px!important;}
+#prRoom.party-youtube-layout #partyYoutubeStage{top:176px!important;bottom:118px!important;}
+#prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #partyYoutubeStage{top:226px!important;}
+#prRoom.party-youtube-layout #ytRoomUiHideBtn{top:185px!important;right:9px!important;z-index:120!important;}
+#prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomUiHideBtn{top:235px!important;}
+@media(max-width:430px){
+  #prRoom.party-youtube-layout #partyYoutubeStage{top:176px!important;bottom:116px!important;}
+  #prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #partyYoutubeStage{top:226px!important;}
+  #prRoom.party-youtube-layout #ytRoomUiHideBtn{top:183px!important;right:7px!important;}
+  #prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomUiHideBtn{top:233px!important;}
+  #prRoom.party-youtube-layout #cinemaSeats.pr-two-seat-mode,
+  #prRoom.party-youtube-layout #cinemaSeats.pr-six-seat-mode,
+  #prRoom.party-youtube-layout #cinemaSeats.pr-eight-seat-mode,
+  #prRoom.party-youtube-layout #cinemaSeats.pr-twelve-seat-mode{top:120px!important;}
+}
+</style>
+<script id="partyRoomYoutubeSingleQFinalFixScript">
+(function(){
+  function $(id){return document.getElementById(id);}
+  function room(){return $('prRoom');}
+  function isYT(){var r=room();return !!(r&&r.classList.contains('party-youtube-layout'));}
+  function setOpen(open){
+    var r=room(), b=$('ytRoomUiHideBtn'); if(!r||!b)return;
+    r.classList.toggle('yt-q-open',!!open);
+    b.innerHTML='Q'+((($('ytRoomQueueBadge')&&$('ytRoomQueueBadge').textContent)||'').trim()?'<span style="font-size:8px;margin-left:2px;">'+$('ytRoomQueueBadge').textContent+'</span>':'');
+    b.setAttribute('aria-expanded',open?'true':'false');
+  }
+  function wire(){
+    var r=room(), b=$('ytRoomUiHideBtn'); if(!r||!b)return;
+    b.style.pointerEvents='auto';
+    if(!b.__singleQ){
+      b.__singleQ=true;
+      b.addEventListener('click',function(e){
+        if(!isYT())return;
+        e.preventDefault(); e.stopPropagation();
+        setOpen(!r.classList.contains('yt-q-open'));
+        if(r.classList.contains('yt-q-open') && window.renderInlineRoomPanel) window.renderInlineRoomPanel('queue');
+      },true);
+    }
+    var load=$('ytRoomLoadBtn');
+    if(load && !load.__singleQClose){
+      load.__singleQClose=true;
+      load.addEventListener('click',function(){setTimeout(function(){if(isYT())setOpen(false);},250);},true);
+    }
+    var upload=$('ytRoomUploadBtn');
+    if(upload && !upload.__singleQClose){
+      upload.__singleQClose=true;
+      upload.addEventListener('click',function(){setTimeout(function(){if(isYT())setOpen(false);},250);},true);
+    }
+    if(!isYT()) r.classList.remove('yt-q-open');
+  }
+  document.addEventListener('DOMContentLoaded',wire);
+  setInterval(wire,500);
+})();
+</script>
 </html>
 
 <script id="partyRoomYoutubeHideExtrasScript">/* Replaced by final Q-only YouTube controls. */</script>
@@ -11249,6 +11325,7 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 /* Final requested YouTube room controls: Q replaces Hide; History/Paste are gone. */
 #prRoom.party-youtube-layout #ytRoomUiHideBtn{
   position:absolute!important; top:193px!important; right:9px!important;
+  pointer-events:auto!important; touch-action:manipulation!important; cursor:pointer!important;
   min-width:38px!important; width:38px!important; height:30px!important;
   padding:0!important; display:flex!important; align-items:center!important; justify-content:center!important;
   border-radius:10px!important; z-index:90!important; font-size:12px!important; font-weight:900!important;
@@ -11294,7 +11371,7 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
     var r=$('prRoom'),b=$('ytRoomUiHideBtn'); if(!r||!b)return;
     if(!b.__qWired){
       b.__qWired=true;
-      b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();if(!isYT())return;setOpen(!r.classList.contains('yt-q-open'));});
+      b.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();if(!isYT())return;var open=!r.classList.contains('yt-q-open');setOpen(open);if(open){var p=$('ytRoomInlinePanel');if(p){p.setAttribute('data-open','queue');p.classList.add('open');}renderInlineRoomPanel('queue');}else{var p2=$('ytRoomInlinePanel');if(p2){p2.setAttribute('data-open','');p2.classList.remove('open');}renderInlineRoomPanel('');}},true);
     }
     if(!isYT()){r.classList.remove('yt-q-open');return;}
     setOpen(r.classList.contains('yt-q-open'));
