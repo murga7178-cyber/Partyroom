@@ -501,9 +501,9 @@ html, body { overscroll-behavior-y: none; }
 #prSubRow button{border:1px solid rgba(255,255,255,.14);color:#fff;font-weight:800;cursor:pointer;touch-action:manipulation;}
 #cinemaViewerBtn{display:inline-flex;align-items:center;gap:5px;font-size:12px;background:rgba(25,10,60,.48)!important;border-radius:999px!important;padding:6px 12px!important;backdrop-filter:blur(8px);}
 #cinemaSettingsBtn{font-size:12px!important;background:rgba(25,10,60,.48)!important;border-radius:999px!important;padding:6px 12px!important;border:1px solid rgba(255,255,255,.14)!important;box-shadow:none!important;}
-#prTicker{margin:8px 0 0 auto;max-width:78%;align-self:flex-end;display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px 0 0 999px;background:linear-gradient(90deg,rgba(60,30,130,.55),rgba(35,60,140,.6));border:1px solid rgba(255,255,255,.14);border-right:0;color:#fff;font-size:13px;font-weight:800;line-height:1.2;flex:0 0 auto;}
+#prTicker{display:none!important;margin:8px 0 0 auto;max-width:78%;align-self:flex-end;display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px 0 0 999px;background:linear-gradient(90deg,rgba(60,30,130,.55),rgba(35,60,140,.6));border:1px solid rgba(255,255,255,.14);border-right:0;color:#fff;font-size:13px;font-weight:800;line-height:1.2;flex:0 0 auto;}
 #prTickerTxt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#prTicker .pr-edit{display:none;font-size:11px;opacity:.75;}
+#prTicker .pr-edit{display:inline-flex;align-items:center;justify-content:center;font-size:13px;opacity:.9;cursor:pointer;flex:0 0 auto;}
 #prTicker.pr-canedit{cursor:pointer;}
 #prTicker.pr-canedit .pr-edit{display:inline;}
 
@@ -1004,7 +1004,7 @@ html, body { overscroll-behavior-y: none; }
 /* Store previews: show the actual ornate artwork instead of emoji/ring placeholders. */
 .party-frame-preview .pfp-avatar{background:radial-gradient(circle at 35% 30%,#3f2a73,#120c26 72%) !important;border:1px solid rgba(255,255,255,.08);}
 </style>
-<style id="partyHeaderCompact">#cinemaSettingsBtn{display:none!important;}#prSubRow #prTicker{margin:0 0 0 auto;align-self:center;min-width:0;}</style>
+<style id="partyHeaderCompact">#cinemaSettingsBtn{display:none!important;}#prSubRow #prTicker{display:none!important;margin:0 0 0 auto;align-self:center;min-width:0;}</style>
 <style id="whiteInputs">
 #cinemaChatInput,#cinemaNewRoomName,#cinemaNewRoomPass,#pmEditTitle{background:#ffffff!important;color:#111111!important;-webkit-text-fill-color:#111111!important;caret-color:#111111!important;border:1px solid #d1d5db!important;}
 #cinemaChatInput::placeholder,#cinemaNewRoomName::placeholder,#cinemaNewRoomPass::placeholder,#pmEditTitle::placeholder{color:#6b7280!important;-webkit-text-fill-color:#6b7280!important;opacity:1;}
@@ -1635,28 +1635,6 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{
 #prRoom.yt-sound-only #partyYoutubeStage{background:transparent!important;}
 #prRoom.yt-sound-only #ytRoomUrlBar{display:none!important;}
 .yt-bottom-sheet-buttons #ytBottomSoundBtn{font-size:11px!important;padding:7px 10px!important;min-width:58px!important;}
-</style>
-
-<style id="partyChatNoPanelFinal">
-#cinemaChatComposer{
-  background:transparent!important;
-  border:0!important;
-  box-shadow:none!important;
-  border-radius:0!important;
-  padding:0!important;
-  height:46px!important;
-  gap:6px!important;
-  align-items:center!important;
-}
-#cinemaChatComposer #cinemaChatInput{
-  background:rgba(15,23,42,.92)!important;
-  border:1px solid rgba(255,255,255,.2)!important;
-  box-shadow:none!important;
-  border-radius:19px!important;
-}
-#cinemaChatComposer button[aria-label="Send message"]{
-  background:#9be94f!important;color:#111!important;border:0!important;box-shadow:none!important;
-}
 </style>
 </head>
 
@@ -2402,26 +2380,14 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <button type="button" class="pr-seg-mode" data-mode="gaming" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('gaming')"><span class="pr-seg-icon">🎮</span><span>Game</span></button>
             <button type="button" class="pr-seg-mode" data-mode="youtube" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('youtube')"><span class="pr-seg-icon">▶️</span><span>YouTube</span></button>
           </div>
-          <div id="prModeMenuWrap">
-            <button type="button" id="prModeMenuBtn" aria-haspopup="menu" aria-expanded="false" onclick="window.togglePartyRoomModeMenu&&window.togglePartyRoomModeMenu()">⚙️ <span>Mode</span><span class="pr-mode-chevron">⌄</span></button>
-            <div id="prModeMenu" role="menu" aria-hidden="true">
-              <button type="button" class="pr-mode-option" data-mode="chat" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('chat')"><span class="pr-mode-option-icon chat">💬</span><span>Chatting Mode</span><span class="pr-mode-check" aria-hidden="true">✓</span></button>
-              <button type="button" class="pr-mode-option" data-mode="gaming" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('gaming')"><span class="pr-mode-option-icon gaming">🎮</span><span>Gaming Mode</span><span class="pr-mode-check" aria-hidden="true">✓</span></button>
-              <button type="button" class="pr-mode-option" data-mode="youtube" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('youtube')"><span class="pr-mode-option-icon youtube">▶️</span><span>YouTube Mode</span><span class="pr-mode-check" aria-hidden="true">✓</span></button>
-            </div>
-            <button type="button" id="prSeatQuickBtn" onclick="event.stopPropagation();togglePartySeatQuickSettings()" aria-label="Seat Settings" title="Seat Settings">⚙️</button>
-            <div id="prSeatQuickPanel" aria-hidden="true"></div>
-          </div>
           <div id="prTopRight">
-            <button type="button" id="prCornerProfile" onclick="openPartyRoomViewers()" aria-label="Profile photo"><span id="prCornerProfileInner">👤</span></button>
             <button type="button" id="prFloatingViewerBtn" onclick="openPartyRoomViewers()" aria-label="Active viewers">👁 <span id="prFloatingViewerCount">0</span></button>
-            <button type="button" id="prCloseBtn" onclick="cinemaLobbyBack()" aria-label="रूम से बाहर निकलें">✕</button>
             <button type="button" id="prTopGiftersBtn" onclick="openPartyRoomTopGifters()" aria-label="Top Gifter"><span aria-hidden="true" style="display:none">🏆</span><span>Top Gifter</span></button>
           </div>
         </div>
         <div id="prSubRow">
           <button id="cinemaViewerBtn" type="button" onclick="openPartyRoomViewers()" aria-label="Active viewers">👁 <span id="cinemaViewerCount">0</span></button>
-          <div id="prTicker"><span id="prTickerTxt">रूम में आपका स्वागत है 🎙</span></div>
+          
         </div>
 
         <div id="prHostRow">
@@ -2513,10 +2479,10 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
 
         <div id="cinemaChatPanel">
           <div id="cinemaChatMessages"><div style="text-align:center;color:rgba(255,255,255,.6);font-size:12px;padding:16px 6px;">चैट लोड हो रही है…</div></div>
-          <div id="cinemaChatComposer" style="display:none;position:fixed;left:12px;right:12px;bottom:0;z-index:150;height:46px;gap:6px;margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;box-sizing:border-box;align-items:center;">
-            <button type="button" onmousedown="event.preventDefault()" onclick="window.prOpenTagPicker&&window.prOpenTagPicker()" aria-label="Tag someone" title="किसी को टैग करें" style="width:32px;height:32px;flex:0 0 32px;border:0;border-radius:50%;background:rgba(15,23,42,.82);color:#c4b5fd;font-size:14px;font-weight:900;cursor:pointer;">@</button>
-            <input id="cinemaChatInput" maxlength="300" placeholder="मैसेज लिखें…" autocomplete="off" enterkeyhint="send" autocapitalize="sentences" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();cinemaSendChat();}" style="flex:1;min-width:0;height:38px;padding:7px 12px;border-radius:19px;border:1px solid rgba(255,255,255,.2);background:rgba(15,23,42,.92);color:#fff;outline:none;font-size:14px;box-sizing:border-box;">
-            <button type="button" onmousedown="event.preventDefault()" onclick="cinemaSendChat()" aria-label="Send message" style="width:38px;height:38px;flex:0 0 38px;border:0;border-radius:50%;background:#9be94f;color:#111;font-size:18px;font-weight:900;cursor:pointer;">➤</button>
+          <div id="cinemaChatComposer" style="display:none;position:absolute;left:7px;right:7px;bottom:68px;z-index:150;height:48px;gap:6px;margin:0;padding:5px;background:rgba(8,15,31,.98);border:1px solid rgba(255,255,255,.28);border-radius:15px;box-shadow:0 8px 24px rgba(0,0,0,.45);box-sizing:border-box;">
+            <button type="button" onmousedown="event.preventDefault()" onclick="window.prOpenTagPicker&&window.prOpenTagPicker()" aria-label="Tag someone" title="किसी को टैग करें" style="width:34px;height:34px;flex:0 0 34px;border:1px solid #334155;border-radius:11px;background:#070d18;color:#a78bfa;font-size:15px;font-weight:900;cursor:pointer;">@</button>
+            <input id="cinemaChatInput" maxlength="300" placeholder="मैसेज लिखें…" autocomplete="off" enterkeyhint="send" autocapitalize="sentences" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();cinemaSendChat();}" style="flex:1;min-width:0;height:34px;padding:6px 10px;border-radius:11px;border:1px solid #334155;background:#070d18;color:#fff;outline:none;font-size:13px;box-sizing:border-box;">
+            <button type="button" onmousedown="event.preventDefault()" onclick="cinemaSendChat()" aria-label="Send message" style="width:44px;height:34px;flex:0 0 44px;border:0;border-radius:11px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:18px;font-weight:900;cursor:pointer;">➤</button>
           </div>
         </div>
 
@@ -3996,8 +3962,11 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   // ---------- room header info ----------
   window.prApplyRoomMeta=function(d){
     d=d||{};
-    var t=$('prTickerTxt'); if(t) t.textContent=d.topic||'रूम में आपका स्वागत है 🎙';
-    window.__prTopic=d.topic||'';
+    var rawTopic=String(d.topic||'').trim();
+    /* Legacy 'Hi' was an old placeholder/topic. Do not show it anymore. */
+    var topic=(rawTopic.toLowerCase()==='hi')?'':rawTopic;
+    var t=$('prTickerTxt'); if(t) t.textContent=topic||'नोट/टाइटल लिखें';
+    window.__prTopic=topic;
     var tk=$('prTicker'); if(tk) tk.classList.toggle('pr-canedit',!!cinemaIsHost);
     var a=$('prRoomAvatar'); var nm=d.roomName||cinemaRoomName||'';
     if(a){ if(/^data:image\/(jpeg|png|webp);base64,/.test(d.roomPhoto||'')){ a.textContent=''; a.style.backgroundImage='url('+d.roomPhoto+')'; a.style.backgroundSize='cover'; a.style.backgroundPosition='center'; } else { a.style.backgroundImage=''; a.textContent=nm?letterOf(nm):'🎉'; } }
@@ -5369,10 +5338,20 @@ setInterval(function(){try{
     _wrappedProfileRender.__pkNavWrapped=true;
     window.prOpenUserCard=_wrappedProfileRender;
   }
-  window.pkOpenDirectMessage=async function(key,name){var inbox=document.getElementById('pkInboxOverlay');if(inbox)inbox.classList.remove('open');var dmBox=document.getElementById('pkDirectMessages');if(dmBox){dmBox.dataset.dmRendered='';dmBox.dataset.dmForceScroll='0';}direct.otherKey=String(key||'');window.__pkDmOpenKey=direct.otherKey;try{window.pkDmMarkRead&&window.pkDmMarkRead(direct.otherKey);}catch(e){}direct.otherName=String(name||'User');direct.otherPhoto='';direct.myPhoto='';var title=document.getElementById('pkDirectTitle'),av=document.getElementById('pkDirectHeaderAvatar');if(title)title.textContent=direct.otherName;if(av)av.textContent=(direct.otherName.trim()[0]||'U').toUpperCase();show('pkDirectMessageOverlay','flex');try{if(db&&direct.otherKey){var os=await db.collection('users').doc(direct.otherKey).get(),od=os.exists?(os.data()||{}):{};direct.otherPhoto=String(od.photoURL||od.photo||od.avatar||'');if(av)av.innerHTML=direct.otherPhoto?'<img src="'+esc(direct.otherPhoto)+'" alt="">':esc((direct.otherName.trim()[0]||'U').toUpperCase());}if(db&&currentUserKey){var ms=await db.collection('users').doc(String(currentUserKey)).get(),md=ms.exists?(ms.data()||{}):{};direct.myPhoto=String(md.photoURL||md.photo||md.avatar||'');}}catch(e){}await loadDM();try{pkDirectCloseComposeBar();}catch(e){}};
+  (function(){
+  if(window.__pkInboxKeyboardController)return; window.__pkInboxKeyboardController=1;
+  function dmSetFull(full){var d=document.getElementById('pkDirectMessageOverlay');if(d)d.classList.toggle('pk-dm-fullscreen',!!full);}
+  function sync(){var d=document.getElementById('pkDirectMessageOverlay'),i=document.getElementById('pkDirectInput');if(!d)return; var active=document.activeElement===i; var vv=window.visualViewport; var reduced=vv&&window.innerHeight-vv.height>120; dmSetFull(active||reduced);}
+  document.addEventListener('focusin',function(e){if(e.target&&e.target.id==='pkDirectInput')dmSetFull(true);});
+  document.addEventListener('focusout',function(e){if(e.target&&e.target.id==='pkDirectInput')setTimeout(sync,120);});
+  if(window.visualViewport)window.visualViewport.addEventListener('resize',sync);
+  window.addEventListener('resize',sync);
+  window.__pkDmSetFull=dmSetFull;
+})();
+window.pkOpenDirectMessage=async function(key,name){var inbox=document.getElementById('pkInboxOverlay');if(inbox)inbox.classList.remove('open');var dmOverlay=document.getElementById('pkDirectMessageOverlay');if(dmOverlay){dmOverlay.classList.remove('pk-dm-fullscreen');}var dmBox=document.getElementById('pkDirectMessages');if(dmBox){dmBox.dataset.dmRendered='';dmBox.dataset.dmForceScroll='0';}direct.otherKey=String(key||'');window.__pkDmOpenKey=direct.otherKey;try{window.pkDmMarkRead&&window.pkDmMarkRead(direct.otherKey);}catch(e){}direct.otherName=String(name||'User');direct.otherPhoto='';direct.myPhoto='';var title=document.getElementById('pkDirectTitle'),av=document.getElementById('pkDirectHeaderAvatar');if(title)title.textContent=direct.otherName;if(av)av.textContent=(direct.otherName.trim()[0]||'U').toUpperCase();show('pkDirectMessageOverlay','flex');try{if(db&&direct.otherKey){var os=await db.collection('users').doc(direct.otherKey).get(),od=os.exists?(os.data()||{}):{};direct.otherPhoto=String(od.photoURL||od.photo||od.avatar||'');if(av)av.innerHTML=direct.otherPhoto?'<img src="'+esc(direct.otherPhoto)+'" alt="">':esc((direct.otherName.trim()[0]||'U').toUpperCase());}if(db&&currentUserKey){var ms=await db.collection('users').doc(String(currentUserKey)).get(),md=ms.exists?(ms.data()||{}):{};direct.myPhoto=String(md.photoURL||md.photo||md.avatar||'');}}catch(e){}await loadDM();try{pkDirectCloseComposeBar();}catch(e){}};
   window.pkCloseDirectMessage=function(){window.__pkDmOpenKey='';show('pkDirectMessageOverlay','none');try{direct.dmUnsub&&direct.dmUnsub();}catch(e){}var inbox=ensureInbox();inbox.classList.add('open');renderInbox();};
   window.pkDirectMessageMore=function(){if(typeof toast==='function')toast('Chat options जल्द उपलब्ध होंगे');};
-  window.pkDirectFormat=function(){document.getElementById('pkDirectInput')?.focus();};
+  window.pkDirectFormat=function(){var i=document.getElementById('pkDirectInput');if(i){if(window.__pkDmSetFull)window.__pkDmSetFull(true);i.focus();}};
   window.pkDirectEmoji=function(){var i=document.getElementById('pkDirectInput');if(i){i.value+=(i.value?' ':'')+'😊';i.focus();i.dispatchEvent(new Event('input'));}};
   /* ---------- Photo + voice messages (stored like profile photos: compressed data URLs in Firestore) ---------- */
   function dmNote(m){ if(typeof toast==='function')toast(m); else alert(m); }
@@ -6022,7 +6001,26 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
 #pkInboxOverlay .pki-mid span{display:block;font-size:13px;color:#7b8090;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #pkInboxOverlay .pki-mid span.un{color:#171717;font-weight:700}
 #pkInboxOverlay .pki-end{flex:none;text-align:right}
-#pkInboxOverlay .pki-end small{display:block;font-size:11px;color:#9aa0ad}
+#pkInboxOverlay .pki-end small{display:block;font-size:11px;color:#9aa0ad};
+/* Party Room / mobile inbox: half-screen sheet, newest first. */
+@media (max-width:600px){
+  #pkInboxOverlay{
+    inset:auto 0 0 0!important; height:50dvh!important; max-height:50dvh!important;
+    border-radius:22px 22px 0 0!important; box-shadow:0 -10px 35px rgba(0,0,0,.25)!important;
+    overflow:hidden!important;
+  }
+  #pkInboxOverlay.open{display:flex!important;}
+  #pkInboxOverlay .pki-head{height:52px!important; border-radius:22px 22px 0 0!important;}
+  #pkInboxOverlay .pki-list{min-height:0!important; overflow-y:auto!important; overscroll-behavior:contain!important;}
+  #pkInboxOverlay .pki-bottom-nav{display:none!important;}
+  #pkInboxOverlay .pki-head:after{content:'Swipe / scroll for older messages'; margin-left:auto; font-size:9px; color:#9aa0ad; opacity:.85;}
+  /* While composing a DM, keep the inbox out of the way and expand the DM to full screen. */
+  #pkDirectMessageOverlay.pk-dm-fullscreen{inset:0!important;}
+}
+@media (min-width:601px){
+  #pkInboxOverlay{max-width:560px;left:50%!important;right:auto!important;transform:translateX(-50%);inset:auto auto 0!important;height:50vh!important;border-radius:22px 22px 0 0!important;}
+}
+
 #pkInboxOverlay .pki-end em{display:inline-block;margin-top:5px;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#f04b55;color:#fff;font-size:11px;font-weight:800;font-style:normal;line-height:18px;text-align:center}
 #pkInboxOverlay .pki-empty{text-align:center;color:#8a8f9c;padding:50px 20px;font-size:14px}
 /* ===== Layering: everything opened from the profile must appear in FRONT of it (profile = 100010) ===== */
@@ -6205,7 +6203,8 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     var box=$('pkInboxList');if(!box)return;
     if(!S.inbox.length){box.innerHTML='<div class="pki-empty">अभी कोई मैसेज नहीं है</div>';return;}
     var need=[];
-    box.innerHTML=S.inbox.map(function(x){
+    var inboxRows=(S.inbox||[]).slice().sort(function(a,b){return Number(b.lastAt||0)-Number(a.lastAt||0);});
+    box.innerHTML=inboxRows.map(function(x){
       var k=String(x.key),c=S.uc[k],name=(c&&c.name)||String(x.otherName||'User'),ph=c?c.photo:'';
       if(!c)need.push(k);
       var un=Number(x.unread)||0;
@@ -6213,7 +6212,7 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     }).join('');
     if(need.length)Promise.all(need.map(userInfo)).then(function(){if($('pkInboxOverlay')&&$('pkInboxOverlay').classList.contains('open'))renderInbox();});
   }
-  window.pkHomeOpenInbox=function(){var o=ensureInbox();o.classList.add('open');renderInbox();};
+  window.pkHomeOpenInbox=function(){var o=ensureInbox();o.classList.add('open');try{o.dataset.fromPartyRoom=(document.getElementById('prRoom')?'1':'0');}catch(e){}renderInbox();};
   function watchInbox(){
     if(!db||!currentUserKey)return;var me=String(currentUserKey);
     if(S.inboxKey===me&&S.inboxUnsub)return;
@@ -7520,7 +7519,7 @@ body.pk-game-open #pkUniversalNav{display:none!important}
   top:calc(env(safe-area-inset-top,0px) + 10px);padding:10px 16px;border-radius:14px;font-size:15px;}
 #prRoom.party-gaming-layout #prModeBtnG[data-host="1"],#prRoom.party-youtube-layout #prModeBtnG[data-host="1"]{left:10px;background:linear-gradient(135deg,#7c3aed,#db2777);}
 #prRoom.party-gaming-layout #prChatModeBtnG[data-host="1"],#prRoom.party-youtube-layout #prChatModeBtnG[data-host="1"]{left:150px;background:linear-gradient(135deg,#0ea5e9,#2563eb);}
-#prSubRow #prTicker{min-width:0;flex:1 1 0;overflow:hidden;}
+#prSubRow #prTicker{display:none!important;min-width:0;flex:1 1 0;overflow:hidden;}
 </style>
 <style id="partyRoomCinemaIsolationFinal">
 /* Cinema Mode is a separate local-video mode; never show YouTube controls there. */
@@ -8033,7 +8032,7 @@ input,textarea,select{font-size:16px}
 </script>
 
 <style id="pkLuteriCss">
-#partyGamingCenter.pgc-luteri #pgcExitBtn{left:auto;right:10px;}
+#partyGamingCenter.pgc-luteri #pgcExitBtn{left:10px!important;right:auto!important;}
 </style>
 <script id="pkLuteriJs">
 (function(){
@@ -10804,6 +10803,13 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   <video id="remoteMoviePlayer" playsinline autoplay controls></video>
   <button id="closeMovieViewer" type="button">✕</button>
 </div>
+
+<script id="pkInboxHalfSheetController">
+(function(){
+  function full(){if(window.__pkDmSetFull)window.__pkDmSetFull(true);}
+  document.addEventListener('click',function(e){if(e.target.closest('#pkDirectInput,.pk-direct-compose,.pk-direct-compose-trigger'))full();},true);
+})();
+</script>
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
@@ -11308,3 +11314,9 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   document.addEventListener('DOMContentLoaded',function(){syncMode();syncProfile();});
 })();
 </script>
+
+<style id="partyRoomRemoveProfileAndClose">
+/* Party Room: remove the duplicate profile/viewer photo and close button only. */
+#prRoom #prCornerProfile,
+#prRoom #prCloseBtn{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+</style>
