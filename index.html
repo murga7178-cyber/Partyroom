@@ -9211,7 +9211,7 @@ input,textarea,select{font-size:16px}
     <div class="yt-tabs">
       <button class="yt-tab active" data-tab="play">▶ Play</button>
       <button class="yt-tab" data-tab="queue">📺 Queue <span id="ytQueueCount">(0)</span></button>
-      
+      <button class="yt-tab" data-tab="history">💾 History</button>
       <button class="yt-tab" data-tab="sound">🎵 Sound</button>
     </div>
 
@@ -9229,9 +9229,9 @@ input,textarea,select{font-size:16px}
       </div>
 
       <div class="yt-quick">
-        
+        <button id="ytPasteBtn">📋 Paste</button>
         <button id="ytAddQueueBtn">➕ Queue</button>
-        
+        <button id="ytHistoryBtn">💾 History</button>
         <button id="ytShareBtn">🔗 Share</button>
         <button id="ytClearBtn" class="danger">🗑️ Clear</button>
       </div>
@@ -9297,7 +9297,7 @@ input,textarea,select{font-size:16px}
     <!-- ===== TAB: HISTORY ===== -->
     <div class="yt-pane" data-pane="history">
       <div class="yt-quick">
-        
+        <button id="ytClearHistory" class="danger">🗑️ History मिटाएँ</button>
       </div>
       <div class="yt-list" id="ytHistoryList">
         <div class="yt-empty">
@@ -9327,7 +9327,7 @@ input,textarea,select{font-size:16px}
     <!-- ===== LOWER SHEET CONTROLS ===== -->
     <div class="yt-bottom-sheet-tools" id="ytBottomSheetTools">
       <div class="yt-bottom-sheet-buttons">
-        
+        <button type="button" id="ytBottomHistoryBtn">💾 History</button>
         <button type="button" id="ytBottomQueueBtn">Q</button>
         <button type="button" id="ytBottomSoundBtn">🎵 Sound</button>
       </div>
@@ -11011,6 +11011,82 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 }
 </style>
 
+
+<style id="partyRoomYoutubeSingleQFinalFix">
+/* SINGLE-Q FINAL FIX: one Q only; controls closed by default; Q opens URL+Load+Upload and queue list. */
+#prRoom.party-youtube-layout #ytRoomQueueBtn{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+#prRoom.party-youtube-layout #ytRoomUiHideBtn{display:flex!important;visibility:visible!important;pointer-events:auto!important;}
+#prRoom.party-youtube-layout #ytRoomUrlBar,
+#prRoom.party-youtube-layout #ytRoomInputTools{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+#prRoom.party-youtube-layout.yt-q-open #ytRoomUrlBar,
+#prRoom.party-youtube-layout.yt-q-open #ytRoomInputTools{display:block!important;visibility:visible!important;pointer-events:auto!important;}
+#prRoom.party-youtube-layout #ytRoomInlinePanel{display:none!important;visibility:hidden!important;}
+#prRoom.party-youtube-layout.yt-q-open #ytRoomInlinePanel{display:block!important;visibility:visible!important;}
+#prRoom.party-youtube-layout #ytRoomInlineHistory{display:none!important;}
+#prRoom.party-youtube-layout #ytRoomInlineQueueInput,
+#prRoom.party-youtube-layout #ytRoomInlineQueueLoad,
+#prRoom.party-youtube-layout #ytRoomInlineQueue .yt-room-inline-title{display:none!important;}
+#prRoom.party-youtube-layout #ytRoomInlineQueueList{display:block!important;}
+#prRoom.party-youtube-layout .yt-room-inline-item{min-height:64px!important;width:100%!important;padding:10px 48px 10px 14px!important;}
+/* Move seats and the video stage slightly upward to use the available gap. */
+#prRoom.party-youtube-layout #cinemaSeats.pr-two-seat-mode,
+#prRoom.party-youtube-layout #cinemaSeats.pr-six-seat-mode,
+#prRoom.party-youtube-layout #cinemaSeats.pr-eight-seat-mode{top:120px!important;}
+#prRoom.party-youtube-layout #cinemaSeats.pr-twelve-seat-mode{top:120px!important;}
+#prRoom.party-youtube-layout #partyYoutubeStage{top:176px!important;bottom:118px!important;}
+#prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #partyYoutubeStage{top:226px!important;}
+#prRoom.party-youtube-layout #ytRoomUiHideBtn{top:185px!important;right:9px!important;z-index:120!important;}
+#prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomUiHideBtn{top:235px!important;}
+@media(max-width:430px){
+  #prRoom.party-youtube-layout #partyYoutubeStage{top:176px!important;bottom:116px!important;}
+  #prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #partyYoutubeStage{top:226px!important;}
+  #prRoom.party-youtube-layout #ytRoomUiHideBtn{top:183px!important;right:7px!important;}
+  #prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomUiHideBtn{top:233px!important;}
+  #prRoom.party-youtube-layout #cinemaSeats.pr-two-seat-mode,
+  #prRoom.party-youtube-layout #cinemaSeats.pr-six-seat-mode,
+  #prRoom.party-youtube-layout #cinemaSeats.pr-eight-seat-mode,
+  #prRoom.party-youtube-layout #cinemaSeats.pr-twelve-seat-mode{top:120px!important;}
+}
+</style>
+<script id="partyRoomYoutubeSingleQFinalFixScript">
+(function(){
+  function $(id){return document.getElementById(id);}
+  function room(){return $('prRoom');}
+  function isYT(){var r=room();return !!(r&&r.classList.contains('party-youtube-layout'));}
+  function setOpen(open){
+    var r=room(), b=$('ytRoomUiHideBtn'); if(!r||!b)return;
+    r.classList.toggle('yt-q-open',!!open);
+    b.innerHTML='Q'+((($('ytRoomQueueBadge')&&$('ytRoomQueueBadge').textContent)||'').trim()?'<span style="font-size:8px;margin-left:2px;">'+$('ytRoomQueueBadge').textContent+'</span>':'');
+    b.setAttribute('aria-expanded',open?'true':'false');
+  }
+  function wire(){
+    var r=room(), b=$('ytRoomUiHideBtn'); if(!r||!b)return;
+    b.style.pointerEvents='auto';
+    if(!b.__singleQ){
+      b.__singleQ=true;
+      b.addEventListener('click',function(e){
+        if(!isYT())return;
+        e.preventDefault(); e.stopPropagation();
+        setOpen(!r.classList.contains('yt-q-open'));
+        if(r.classList.contains('yt-q-open') && window.renderInlineRoomPanel) window.renderInlineRoomPanel('queue');
+      },true);
+    }
+    var load=$('ytRoomLoadBtn');
+    if(load && !load.__singleQClose){
+      load.__singleQClose=true;
+      load.addEventListener('click',function(){setTimeout(function(){if(isYT())setOpen(false);},250);},true);
+    }
+    var upload=$('ytRoomUploadBtn');
+    if(upload && !upload.__singleQClose){
+      upload.__singleQClose=true;
+      upload.addEventListener('click',function(){setTimeout(function(){if(isYT())setOpen(false);},250);},true);
+    }
+    if(!isYT()) r.classList.remove('yt-q-open');
+  }
+  document.addEventListener('DOMContentLoaded',wire);
+  setInterval(wire,500);
+})();
+</script>
 </html>
 
 <script id="partyRoomYoutubeHideExtrasScript">/* Replaced by final Q-only YouTube controls. */</script>
@@ -11302,36 +11378,5 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   }
   setInterval(wire,700);
   document.addEventListener('DOMContentLoaded',wire);
-})();
-</script>
-
-<script>
-/* Q-panel fallback: Host and Viewer share the same Q open/close UI.
-   Host-only queue deletion remains controlled by existing permission logic. */
-(function(){
-  function wireQ(){
-    if (document.documentElement.dataset.qToggleFallback === "1") return;
-    const qs = Array.from(document.querySelectorAll(
-      '[id*="QBtn" i],[id*="QueueBtn" i],[data-q-button],[data-q-toggle]'
-    ));
-    if (!qs.length) return;
-    document.documentElement.dataset.qToggleFallback = "1";
-    qs.forEach(function(btn){
-      if (btn.dataset.qToggleFallback === "1") return;
-      btn.dataset.qToggleFallback = "1";
-      btn.addEventListener("click", function(){
-        const panels = Array.from(document.querySelectorAll(
-          '[id*="Queue" i],[id*="queue" i],[id*="Youtube" i][id*="Panel" i]'
-        )).filter(function(el){ return el !== btn && el.offsetParent !== null || el.hidden; });
-        /* Existing application handlers own the exact state; this fallback
-           only toggles explicit Q panels marked by the app. */
-        document.querySelectorAll('[data-q-panel]').forEach(function(panel){
-          panel.hidden = !panel.hidden;
-        });
-      });
-    });
-  }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wireQ);
-  else wireQ();
 })();
 </script>
