@@ -503,7 +503,7 @@ html, body { overscroll-behavior-y: none; }
 #cinemaSettingsBtn{font-size:12px!important;background:rgba(25,10,60,.48)!important;border-radius:999px!important;padding:6px 12px!important;border:1px solid rgba(255,255,255,.14)!important;box-shadow:none!important;}
 #prTicker{margin:8px 0 0 auto;max-width:78%;align-self:flex-end;display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px 0 0 999px;background:linear-gradient(90deg,rgba(60,30,130,.55),rgba(35,60,140,.6));border:1px solid rgba(255,255,255,.14);border-right:0;color:#fff;font-size:13px;font-weight:800;line-height:1.2;flex:0 0 auto;}
 #prTickerTxt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#prTicker .pr-edit{display:none;font-size:11px;opacity:.75;}
+#prTicker .pr-edit{display:inline-flex;align-items:center;justify-content:center;font-size:13px;opacity:.9;cursor:pointer;flex:0 0 auto;}
 #prTicker.pr-canedit{cursor:pointer;}
 #prTicker.pr-canedit .pr-edit{display:inline;}
 
@@ -2387,7 +2387,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         </div>
         <div id="prSubRow">
           <button id="cinemaViewerBtn" type="button" onclick="openPartyRoomViewers()" aria-label="Active viewers">👁 <span id="cinemaViewerCount">0</span></button>
-          <div id="prTicker"><span id="prTickerTxt">रूम में आपका स्वागत है 🎙</span></div>
+          <div id="prTicker" onclick="window.prEditTopic&&window.prEditTopic()" role="button" tabindex="0" aria-label="नोट या टाइटल एडिट करें"><span id="prTickerTxt">नोट/टाइटल लिखें</span><span class="pr-edit" aria-hidden="true">✏️</span></div>
         </div>
 
         <div id="prHostRow">
@@ -3962,8 +3962,11 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   // ---------- room header info ----------
   window.prApplyRoomMeta=function(d){
     d=d||{};
-    var t=$('prTickerTxt'); if(t) t.textContent=d.topic||'रूम में आपका स्वागत है 🎙';
-    window.__prTopic=d.topic||'';
+    var rawTopic=String(d.topic||'').trim();
+    /* Legacy 'Hi' was an old placeholder/topic. Do not show it anymore. */
+    var topic=(rawTopic.toLowerCase()==='hi')?'':rawTopic;
+    var t=$('prTickerTxt'); if(t) t.textContent=topic||'नोट/टाइटल लिखें';
+    window.__prTopic=topic;
     var tk=$('prTicker'); if(tk) tk.classList.toggle('pr-canedit',!!cinemaIsHost);
     var a=$('prRoomAvatar'); var nm=d.roomName||cinemaRoomName||'';
     if(a){ if(/^data:image\/(jpeg|png|webp);base64,/.test(d.roomPhoto||'')){ a.textContent=''; a.style.backgroundImage='url('+d.roomPhoto+')'; a.style.backgroundSize='cover'; a.style.backgroundPosition='center'; } else { a.style.backgroundImage=''; a.textContent=nm?letterOf(nm):'🎉'; } }
