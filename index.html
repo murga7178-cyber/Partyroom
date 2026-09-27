@@ -435,6 +435,8 @@ html, body { overscroll-behavior-y: none; }
 #prCloseBtn{flex:none;width:38px;height:38px;border:0;border-radius:50%;background:rgba(25,10,60,.48);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:19px;line-height:1;cursor:pointer;touch-action:manipulation;display:grid;place-items:center;}
 #prCloseBtn:active{transform:scale(.92);}
 #prTopRight{display:flex;align-items:center;gap:8px;flex:none;}
+#prFloatingViewerBtn{flex:none;display:inline-flex;align-items:center;gap:4px;height:38px;padding:0 12px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(25,10,60,.48);color:#fff;font-weight:800;font-size:12px;cursor:pointer;touch-action:manipulation;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+#prFloatingViewerBtn:active{transform:scale(.94);}
 #prModeMenuWrap{position:relative;flex:0 0 auto;z-index:220;display:none;margin-right:124px;}
 #prModeMenuWrap[data-host="1"]{display:block;}
 #prModeMenuBtn{height:40px;min-width:88px;padding:0 12px;border-radius:20px;border:1px solid rgba(167,139,250,.9);background:linear-gradient(135deg,rgba(49,27,105,.94),rgba(30,18,75,.94));color:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font:900 13px/1 Segoe UI,Arial,sans-serif;box-shadow:0 5px 18px rgba(88,28,135,.24),0 0 0 1px rgba(255,255,255,.05) inset;cursor:pointer;touch-action:manipulation;}
@@ -2384,6 +2386,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <div id="prSeatQuickPanel" aria-hidden="true"></div>
           </div>
           <div id="prTopRight">
+            <button type="button" id="prFloatingViewerBtn" onclick="openPartyRoomViewers()" aria-label="Active viewers">👁 <span id="prFloatingViewerCount">0</span></button>
             <button type="button" id="prCloseBtn" onclick="cinemaLobbyBack()" aria-label="रूम से बाहर निकलें">✕</button>
             <button type="button" id="prTopGiftersBtn" onclick="openPartyRoomTopGifters()" aria-label="Top Gifter"><span aria-hidden="true" style="display:none">🏆</span><span>Top Gifter</span></button>
           </div>
@@ -2803,6 +2806,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       window.__cinemaPeople=people;
       const count=document.getElementById('cinemaViewerCount');
       if(count) count.textContent=people.length;
+      const fvc=document.getElementById('prFloatingViewerCount');
+      if(fvc) fvc.textContent=people.length;
       cinemaRenderSeats(people);
     });
   }
@@ -7537,7 +7542,7 @@ body.pk-game-open #pkUniversalNav{display:none!important}
     var g=$('prModeBtnG'); if(g) g.remove();
     var c=$('prChatModeBtnG'); if(c) c.remove();
     var mode=String(window.__partyRoomMode||'chat');
-    var iv=$('prInlineViewerCount'), vc=$('cinemaViewerCount'); if(iv&&vc) iv.textContent=vc.textContent||'0';
+    var iv=$('prInlineViewerCount'), vc=$('cinemaViewerCount'), fv=$('prFloatingViewerCount'); if(iv&&vc) iv.textContent=vc.textContent||'0'; if(fv&&vc) fv.textContent=vc.textContent||'0';
     var mw=$('prModeMenuWrap'); if(mw){ if(host()) mw.setAttribute('data-host','1'); else { mw.removeAttribute('data-host'); closePartyRoomModeMenu(); } }
     paintModeMenu();
   }
@@ -10966,6 +10971,42 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 }
 #prRoom.party-youtube-layout.pr-youtube-extras-hidden:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomUiHideBtn{
   top:240px!important;
+}
+</style>
+
+<style id="prTopHostBtnsCompactFinal">
+/* Mode / Seat-toggle (4-8-12 seat switch) / Close: made small and pushed to
+   the edge, so the room avatar photo + title get more space. The seat-quick
+   panel now opens anchored to the RIGHT edge of its button instead of the
+   left, so it can no longer render past the screen edge (that was why
+   tapping it looked like it "did nothing"). Mode button keeps its size,
+   just sits closer to the edge cluster. */
+#prModeMenuWrap{margin-right:6px!important;}
+#prModeMenuWrap[data-host="1"]{display:flex!important;align-items:center;}
+#prSeatQuickBtn{
+  position:static!important;
+  width:26px!important;height:26px!important;min-width:26px!important;
+  margin-left:6px!important;
+  font-size:12px!important;
+  border-radius:50%!important;
+  display:inline-flex!important;align-items:center;justify-content:center;
+}
+#prSeatQuickPanel{
+  left:auto!important;
+  right:0!important;
+  top:calc(100% + 5px)!important;
+  width:168px!important;
+}
+#prCloseBtn{
+  width:26px!important;height:26px!important;min-width:26px!important;
+  font-size:13px!important;
+  order:5!important;
+}
+#prTopRight{gap:5px!important;}
+#prRoomPill{max-width:calc(100% - 150px)!important;}
+@media(max-width:430px){
+  #prRoomPill{max-width:calc(100% - 138px)!important;}
+  #prModeMenuBtn{min-width:64px!important;padding:0 8px!important;font-size:11.5px!important;height:30px!important;}
 }
 </style>
 
