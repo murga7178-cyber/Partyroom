@@ -2493,8 +2493,16 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     try{cinemaRenderSeats(window.__cinemaPeople||[])}catch(e){}
     try{window.pkSyncGamingBar&&window.pkSyncGamingBar()}catch(e){}
   }
+  function partyRoomHostNow(){
+    var me=String(currentUserKey||'');
+    var hk=String(window.__cinemaHostKey||'');
+    if(me && hk && me===hk) return true;
+    try{ var au=(typeof auth!=='undefined'&&auth&&auth.currentUser)?String(auth.currentUser.uid||''):''; if(au&&hk&&au===hk) return true; }catch(e){}
+    return !!cinemaIsHost;
+  }
   async function setPartyRoomMode(mode){
-    if(!cinemaRoomId || !cinemaIsHost) return;
+    if(!cinemaRoomId || !partyRoomHostNow()) { try{ if(window.pkRoomToast) window.pkRoomToast('सिर्फ Host ही Mode बदल सकता है।'); }catch(e){} return; }
+    cinemaIsHost=true;
     mode=(mode==='gaming'||mode==='youtube')?mode:'chat';
     window.__partyRoomMode=mode;
     const chatPage=document.getElementById('prRoom'), gamePage=document.getElementById('partyGamingModePage');
@@ -2971,7 +2979,13 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         const hash=await cinemaHashPassword(pass);
         if(hash!==String(d.passwordHash||'')){alert('❌ पासवर्ड गलत है।');return;}
       }
-      await cinemaEnterRoom(id,d.roomName||name,d.ownerKey===currentUserKey);
+      var roomHostKey=String(d.hostKey||d.ownerKey||'');
+      var myKeyNow=String(currentUserKey||'');
+      var authKeyNow='';
+      try{ authKeyNow=(typeof auth!=='undefined'&&auth&&auth.currentUser)?String(auth.currentUser.uid||''):''; }catch(e){}
+      var isOwner=!!roomHostKey && (roomHostKey===myKeyNow || roomHostKey===authKeyNow);
+      window.__cinemaHostKey=roomHostKey;
+      await cinemaEnterRoom(id,d.roomName||name,isOwner);
     }catch(e){alert('रूम में प्रवेश नहीं हो पाया।');}
   }
   async function cinemaLoadCurrentUserIdentity(){
@@ -2998,6 +3012,11 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   async function cinemaEnterRoom(id,name,isOwner){
     await cinemaLoadCurrentUserIdentity();
     cinemaRoomId=id; cinemaRoomName=name||'पार्टी रूम'; cinemaIsHost=!!isOwner; closePartyRoomSettings();
+    try{
+      var hostKeyHint=String(window.__cinemaHostKey||'');
+      var meKey=String(currentUserKey||'');
+      if(hostKeyHint && meKey && hostKeyHint===meKey) cinemaIsHost=true;
+    }catch(e){}
     window.__cinemaPhotoCache={}; window.__cinemaPhotoPending={};
     cinemaLobbyMode=false;
     const lobby=document.getElementById('cinemaLobby'), stage=document.getElementById('cinemaRoomStage'), title=document.getElementById('cinemaHeaderTitle'), count=document.getElementById('cinemaViewerCount'), label=document.getElementById('cinemaRoomLabelTop');
@@ -4159,9 +4178,11 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
 
   function recipientKeys(){
     var me=myKey();
-    var others=people().filter(function(p){ return String(p.key)!==me; });
+    var all=people();
+    var self=all.find(function(p){ return String(p.key)===me; }) || {key:me,name:cinemaUserName()};
+    var others=all.filter(function(p){ return String(p.key)!==me; });
     var seated=others.filter(isSeated), rest=others.filter(function(p){ return !isSeated(p); });
-    return {seated:seated,rest:rest};
+    return {self:self,seated:seated,rest:rest};
   }
   function renderRecipients(){
     var box=$('prRecipients'); if(!box) return;
@@ -4264,14 +4285,18 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         }
         var after=balance-totalCost;
         var selfGift=targets.length===1 && String(targets[0].key)===me;
-        if(!selfGift) tx.set(myRef,{gamePoints:after},{merge:true});
         for(var j=0;j<targets.length;j++){
           var rd=recipientSnaps[j].snap.data()||{};
           var rb=Math.max(0,Math.floor(Number(rd.diamonds)||0));
-          if(String(targets[j].key)!==me) tx.set(recipientSnaps[j].ref,{diamonds:rb+(Number(g.v)||0)},{merge:true});
+          if(String(targets[j].key)===me){
+            tx.set(myRef,{gamePoints:after,diamonds:rb+(Number(g.v)||0)},{merge:true});
+          }else{
+            tx.set(myRef,{gamePoints:after},{merge:true});
+            tx.set(recipientSnaps[j].ref,{diamonds:rb+(Number(g.v)||0)},{merge:true});
+          }
           tx.set(giftRefs[j],{gid:g.id,emoji:g.e,value:g.v,count:1,name:myName,userKey:me,toKey:String(targets[j].key),toName:targets[j].name||'User',createdAt:now},{merge:true});
         }
-        return selfGift?balance:after;
+        return after;
       });
       gamePoints=Math.max(0,Number(newBalance)||0);
       stateLoaded=true;
@@ -4307,7 +4332,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(!db||!currentUserKey)return {ok:false,reason:'unavailable'};
     var me=myKey(),recipient=String(toKey||'');
     if(!recipient)return {ok:false,reason:'missing-recipient'};
-    if(recipient===me)return {ok:false,reason:'self-gift'};
+    /* Self-gift is allowed in Party Room. */
     var g=findGiftById(String(giftId||''));
     if(!g)return {ok:false,reason:'missing-gift'};
     var myRef=db.collection('users').doc(me);
@@ -7250,7 +7275,7 @@ body.pk-game-open #pkUniversalNav{display:none!important}
 (function(){
   'use strict';
   var $=function(i){return document.getElementById(i);};
-  function host(){ try{ return !!cinemaIsHost; }catch(e){ return false; } }
+  function host(){ try{ return (typeof partyRoomHostNow==='function') ? partyRoomHostNow() : !!cinemaIsHost; }catch(e){ return !!cinemaIsHost; } }
   function toggleMode(){ var m=String(window.__partyRoomMode||'chat'); if(window.setPartyRoomMode) window.setPartyRoomMode(m==='gaming'?'chat':'gaming'); }
   function paintModeMenu(){
     var mode=String(window.__partyRoomMode||'chat');
@@ -7281,7 +7306,7 @@ body.pk-game-open #pkUniversalNav{display:none!important}
     var c=$('prChatModeBtnG'); if(c) c.remove();
     var mode=String(window.__partyRoomMode||'chat');
     var iv=$('prInlineViewerCount'), vc=$('cinemaViewerCount'); if(iv&&vc) iv.textContent=vc.textContent||'0';
-    var mw=$('prModeMenuWrap'); if(mw){ if(host()) mw.setAttribute('data-host','1'); else { mw.removeAttribute('data-host'); closePartyRoomModeMenu(); } }
+    var mw=$('prModeMenuWrap'); if(mw){ if(host() || partyRoomHostNow()) { mw.setAttribute('data-host','1'); } else { mw.removeAttribute('data-host'); closePartyRoomModeMenu(); } }
     paintModeMenu();
   }
   var wasKb=0;
