@@ -2380,16 +2380,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <button type="button" class="pr-seg-mode" data-mode="gaming" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('gaming')"><span class="pr-seg-icon">🎮</span><span>Game</span></button>
             <button type="button" class="pr-seg-mode" data-mode="youtube" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('youtube')"><span class="pr-seg-icon">▶️</span><span>YouTube</span></button>
           </div>
-          <div id="prModeMenuWrap">
-            <button type="button" id="prModeMenuBtn" aria-haspopup="menu" aria-expanded="false" onclick="window.togglePartyRoomModeMenu&&window.togglePartyRoomModeMenu()">⚙️ <span>Mode</span><span class="pr-mode-chevron">⌄</span></button>
-            <div id="prModeMenu" role="menu" aria-hidden="true">
-              <button type="button" class="pr-mode-option" data-mode="chat" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('chat')"><span class="pr-mode-option-icon chat">💬</span><span>Chatting Mode</span><span class="pr-mode-check" aria-hidden="true">✓</span></button>
-              <button type="button" class="pr-mode-option" data-mode="gaming" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('gaming')"><span class="pr-mode-option-icon gaming">🎮</span><span>Gaming Mode</span><span class="pr-mode-check" aria-hidden="true">✓</span></button>
-              <button type="button" class="pr-mode-option" data-mode="youtube" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('youtube')"><span class="pr-mode-option-icon youtube">▶️</span><span>YouTube Mode</span><span class="pr-mode-check" aria-hidden="true">✓</span></button>
-            </div>
-            <button type="button" id="prSeatQuickBtn" onclick="event.stopPropagation();togglePartySeatQuickSettings()" aria-label="Seat Settings" title="Seat Settings">⚙️</button>
-            <div id="prSeatQuickPanel" aria-hidden="true"></div>
-          </div>
           <div id="prTopRight">
             <button type="button" id="prCornerProfile" onclick="openPartyRoomViewers()" aria-label="Profile photo"><span id="prCornerProfileInner">👤</span></button>
             <button type="button" id="prFloatingViewerBtn" onclick="openPartyRoomViewers()" aria-label="Active viewers">👁 <span id="prFloatingViewerCount">0</span></button>
