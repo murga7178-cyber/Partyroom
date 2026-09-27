@@ -11385,5 +11385,157 @@ listenRoomShare();
 #pkHostManageSheet button{font-family:inherit;touch-action:manipulation;}
 #pkHostManageSheet button:active{transform:scale(.98);}
 </style>
+
+<style id="partyRoomStableChatModeFinal2026">
+/* Final stability patch: chat input is a simple bottom composer; mode switching is single-flight. */
+#prChatSheetBackdrop{display:none!important;pointer-events:none!important;background:transparent!important;}
+#prChatSheetBackdrop.on{display:none!important;pointer-events:none!important;}
+#prRoom #cinemaChatComposer.pr-new-chat-sheet{
+  position:fixed!important;left:10px!important;right:10px!important;bottom:calc(env(safe-area-inset-bottom,0px) + 10px)!important;
+  top:auto!important;width:auto!important;height:60px!important;z-index:2147483641!important;
+}
+#prRoom #cinemaChatComposer.pr-new-chat-sheet input#cinemaChatInput{font-size:16px!important;}
+</style>
+<script id="partyRoomStableChatModeFinal2026Script">
+(function(){
+  'use strict';
+  var $=function(id){return document.getElementById(id);};
+
+  /* ---------- CHAT: no fake browser history / no Exit / no Minimize ---------- */
+  function chatEls(){return {c:$('cinemaChatComposer'),p:$('cinemaChatPanel'),i:$('cinemaChatInput')};}
+  function closeChat(){
+    var x=chatEls(); if(!x.c)return;
+    x.c.classList.remove('party-composer-open');
+    x.c.style.display='none'; x.c.style.visibility='hidden'; x.c.style.opacity='0'; x.c.style.pointerEvents='none';
+    x.c.style.position='absolute'; x.c.style.top='auto'; x.c.style.bottom='68px'; x.c.style.left='7px'; x.c.style.right='7px';
+    if(x.p)x.p.classList.remove('chat-input-open');
+    var r=$('prRoom'); if(r)r.classList.remove('party-keyboard-open');
+    try{if(x.i)x.i.blur();}catch(e){}
+  }
+  function openChat(prefill){
+    var x=chatEls(); if(!x.c||!x.i)return;
+    /* Never add history entries. Android Back therefore closes the composer,
+       instead of showing an Exit/Minimize-like navigation state. */
+    x.c.classList.add('party-composer-open');
+    x.c.style.display='flex'; x.c.style.visibility='visible'; x.c.style.opacity='1'; x.c.style.pointerEvents='auto';
+    x.c.style.position='fixed'; x.c.style.top='auto';
+    x.c.style.bottom='calc(env(safe-area-inset-bottom,0px) + 10px)';
+    x.c.style.left='10px'; x.c.style.right='10px'; x.c.style.zIndex='2147483641';
+    if(x.p)x.p.classList.add('chat-input-open');
+    if(prefill!=null)x.i.value=String(prefill);
+    setTimeout(function(){try{x.i.focus({preventScroll:true});}catch(e){try{x.i.focus();}catch(_){} }},60);
+  }
+  window.partyRoomFocusChat=openChat;
+  window.partyRoomCloseChat=closeChat;
+  window.prOpenComposer=function(prefill){openChat(prefill);};
+  window.prTagUserToComment=function(key,name){openChat('@'+String(name||'User')+' ');};
+
+  /* Back = close the message box only. It must never leave Party Room. */
+  window.addEventListener('popstate',function(){
+    /* Older patches may have left one history entry behind. Do not navigate again. */
+    closeChat();
+  },true);
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){
+      var x=chatEls(); if(x.c&&x.c.classList.contains('party-composer-open')){e.preventDefault();closeChat();}
+    }
+  },true);
+  document.addEventListener('focusout',function(e){
+    if(e.target&&e.target.id==='cinemaChatInput'){
+      setTimeout(function(){
+        var x=chatEls();
+        /* If keyboard really closed, close composer. Do not close it merely because
+           Send temporarily moves focus. */
+        if(!x.i||document.activeElement===x.i)return;
+        var vv=window.visualViewport;
+        var kb=vv?Math.max(0,window.innerHeight-(vv.height+vv.offsetTop)):0;
+        if(kb<60)closeChat();
+      },180);
+    }
+  },true);
+
+  /* ---------- MODE: one controller, no recursive overrides ---------- */
+  var baseSet=window.setPartyRoomMode;
+  var modeBusy=false;
+  async function stableSetMode(mode){
+    mode=String(mode||'chat');
+    if(['chat','gaming','youtube','cinema'].indexOf(mode)<0)mode='chat';
+    if(modeBusy)return false;
+    var host=false; try{host=!!window.cinemaIsHost;}catch(e){}
+    if(!host){try{window.pkRoomToast&&window.pkRoomToast('Mode बदलने का अधिकार केवल Host के पास है।');}catch(e){}return false;}
+    modeBusy=true;
+    try{
+      /* Close transient UI before changing layout. */
+      closeChat();
+      var menu=$('prModeMenu'); if(menu)menu.classList.remove('open');
+      var reaction=$('partyRoomReactionTray'); if(reaction)reaction.style.display='none';
+      var gift=$('partyRoomGiftTray'); if(gift)gift.style.display='none';
+
+      /* Call the already-built room-mode implementation exactly once. */
+      if(typeof baseSet==='function') await baseSet(mode);
+      window.__partyRoomMode=mode;
+
+      var room=$('prRoom'), game=$('partyGamingCenter'), yt=$('partyYoutubeStage'), hall=$('partyCinemaHall');
+      if(room){
+        room.classList.toggle('party-gaming-layout',mode==='gaming');
+        room.classList.toggle('party-youtube-layout',mode==='youtube');
+        room.classList.toggle('party-cinema-layout',mode==='cinema');
+      }
+      if(game)game.style.display=mode==='gaming'?'flex':'none';
+      if(yt && mode!=='youtube')yt.style.display='none';
+      if(hall)hall.style.display=mode==='cinema'?'flex':'none';
+      if(mode!=='cinema'){
+        var screen=$('partyCinemaScreen'); if(screen)screen.innerHTML='';
+      }
+      try{window.paintPartyRoomModeMenu&&window.paintPartyRoomModeMenu();}catch(e){}
+      try{window.renderPartySeatQuickSettings&&window.renderPartySeatQuickSettings();}catch(e){}
+      return true;
+    }catch(e){
+      console.error('[PartyRoom] mode switch failed',e);
+      try{window.pkRoomToast&&window.pkRoomToast('Mode बदलने में समस्या हुई।');}catch(_){}
+      return false;
+    }finally{modeBusy=false;}
+  }
+  window.setPartyRoomMode=stableSetMode;
+  window.selectPartyRoomMode=function(mode){
+    mode=String(mode||'chat');
+    var menu=$('prModeMenu'); if(menu)menu.classList.remove('open');
+    /* Cinema picker must happen from the tap before any await. */
+    if(mode==='cinema'){
+      var host=false;try{host=!!window.cinemaIsHost;}catch(e){}
+      if(!host){try{window.pkRoomToast&&window.pkRoomToast('Mode बदलने का अधिकार केवल Host के पास है।');}catch(e){}return;}
+      try{var inp=$('movieFileInput');if(inp){inp.value='';inp.click();}}catch(e){console.warn('[Cinema] picker',e);}
+    }
+    stableSetMode(mode);
+  };
+  window.__partyRoomStableModeController=true;
+
+  /* Keep the mode button responsive while preventing double taps during transition. */
+  document.addEventListener('click',function(e){
+    var opt=e.target&&e.target.closest?e.target.closest('#prModeMenu .pr-mode-option'):null;
+    if(!opt)return;
+    e.preventDefault();e.stopPropagation();
+    window.selectPartyRoomMode(opt.getAttribute('data-mode')||'chat');
+  },true);
+
+  /* Periodically enforce only the currently selected mode's stage. */
+  setInterval(function(){
+    var mode=String(window.__partyRoomMode||'chat'),room=$('prRoom');if(!room)return;
+    if(mode==='chat'){
+      room.classList.remove('party-gaming-layout','party-youtube-layout','party-cinema-layout');
+      var h=$('partyCinemaHall');if(h)h.style.display='none';
+    }else if(mode==='gaming'){
+      room.classList.add('party-gaming-layout');room.classList.remove('party-youtube-layout','party-cinema-layout');
+      var h=$('partyCinemaHall');if(h)h.style.display='none';
+    }else if(mode==='youtube'){
+      room.classList.add('party-youtube-layout');room.classList.remove('party-gaming-layout','party-cinema-layout');
+      var h=$('partyCinemaHall');if(h)h.style.display='none';
+    }else if(mode==='cinema'){
+      room.classList.add('party-cinema-layout');room.classList.remove('party-gaming-layout','party-youtube-layout');
+      var h=$('partyCinemaHall');if(h)h.style.display='flex';
+    }
+  },500);
+})();
+</script>
 </body>
 </html>
