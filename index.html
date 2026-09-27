@@ -2384,7 +2384,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
 
         <div id="prHostRow">
           <button type="button" id="cinemaHostSeatBtn" class="hse-btn" onclick="cinemaHostToggleSeat()" aria-label="Host सीट - खाली">
-          <svg class="hse-emblem" width="76" height="62" viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <svg class="hse-emblem" width="76" height="62" viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true">
             <defs>
               <linearGradient id="hsG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4b0"/><stop offset=".35" stop-color="#ffcf3f"/><stop offset=".72" stop-color="#e29a12"/><stop offset="1" stop-color="#a86407"/></linearGradient>
               <linearGradient id="hsR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6a6a"/><stop offset=".55" stop-color="#e0212f"/><stop offset="1" stop-color="#a80e1c"/></linearGradient>
@@ -2971,17 +2971,20 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         const hnm=document.getElementById('prHostName'); if(hnm) hnm.textContent=window.__cinemaHostName||'Host';
         const hgf=document.getElementById('prHostGift'); if(hgf) hgf.textContent='🎁 '+(typeof prFmt==='function'?prFmt(totals[hk]||0):0);
         const imgEl=hb.querySelector('.hse-photo'), initEl=hb.querySelector('.hse-initial');
+        const XLINK='http://www.w3.org/1999/xlink';
+        const setHostImgHref=(el,v)=>{ el.setAttribute('href',v); try{ el.setAttributeNS(XLINK,'xlink:href',v); }catch(e){} };
+        const clearHostImgHref=(el)=>{ el.removeAttribute('href'); try{ el.removeAttributeNS(XLINK,'href'); }catch(e){} };
         if(imgEl && initEl){
-          if(!imgEl.__hooked){ imgEl.__hooked=true; imgEl.addEventListener('error',()=>{ imgEl.style.display='none'; imgEl.removeAttribute('href'); initEl.style.display=''; }); }
+          if(!imgEl.__hooked){ imgEl.__hooked=true; imgEl.addEventListener('error',()=>{ imgEl.style.display='none'; clearHostImgHref(imgEl); initEl.style.display=''; }); }
           const hph=seated?cinemaPhotoFor(hk):'';
           if(seated && hph && cinemaOkPhoto(hph)){
-            if(imgEl.getAttribute('href')!==hph) imgEl.setAttribute('href',hph);
+            if(imgEl.getAttribute('href')!==hph) setHostImgHref(imgEl,hph);
             imgEl.style.display=''; initEl.style.display='none';
           } else if(seated){
-            imgEl.style.display='none'; imgEl.removeAttribute('href');
+            imgEl.style.display='none'; clearHostImgHref(imgEl);
             initEl.textContent=(Array.from(String(hp.name||'H').trim())[0]||'H').toUpperCase(); initEl.style.display='';
           } else {
-            imgEl.style.display='none'; imgEl.removeAttribute('href'); initEl.style.display='none';
+            imgEl.style.display='none'; clearHostImgHref(imgEl); initEl.style.display='none';
           }
         }
       }
@@ -8113,7 +8116,7 @@ input,textarea,select{font-size:16px}
       var p=pl.find(function(x){return String(x&&x.key||'')===id;});
       var muted=!!(p&&p.muted===true);
       var lv=level(id),was=!!on[id],sp=was?lv>12:lv>20;on[id]=sp;
-      if(muted)mode='muted';else if(mus[id])mode='music';else if(sp)mode='mic';
+      if(mus[id])mode='music';else if(muted)mode='muted';else if(sp)mode='mic';
     }
     if(!mode){if(b)b.remove();return;}
     if(!b){b=document.createElement('span');b.className='pk-vi';holder.appendChild(b);}
@@ -10743,7 +10746,6 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 #prRoom.party-youtube-layout.pr-youtube-extras-hidden #prModeMenuWrap,
 #prRoom.party-youtube-layout.pr-youtube-extras-hidden #prSeatQuickBtn,
 #prRoom.party-youtube-layout.pr-youtube-extras-hidden #partyRoomBottomDock,
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden #prChatYoutubeMusicBtn,
 #prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomUrlBar,
 #prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomInputTools,
 #prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomInlinePanel,
@@ -10897,127 +10899,6 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 }
 </style>
 
-<style id="partyChatYoutubeMusicMode">
-/* Chatting Mode: compact music control + inline paste panel */
-#prChatYoutubeMusicBtn{display:none!important;width:42px!important;height:42px!important;border-radius:14px!important;background:linear-gradient(145deg,#7c3aed,#db2777)!important;color:#fff!important;border:1px solid rgba(255,255,255,.2)!important;font-size:19px!important;position:relative!important;}
-#prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #prChatYoutubeMusicBtn{display:grid!important;place-items:center!important;position:absolute!important;z-index:90!important;}
-#prRoom #prChatYoutubeMusicBtn.pr-seat-music-position{margin:0!important;}
-#prChatYoutubeMusicPanel{display:none;position:absolute;left:10px;right:10px;bottom:72px;z-index:2147483642;padding:9px;border-radius:14px;background:rgba(10,8,28,.97);border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 30px rgba(0,0,0,.4);}
-#prChatYoutubeMusicPanel.open{display:block;}
-.pr-cym-row{display:flex;gap:6px;align-items:center;}
-#prChatYoutubeMusicInput{flex:1;min-width:0;height:38px;border-radius:10px;border:1px solid #475569;background:#070d18;color:#fff;padding:0 9px;font-size:12px;outline:none;}
-.pr-cym-btn{height:38px;border:0;border-radius:10px;padding:0 10px;background:#334155;color:#fff;font-weight:900;white-space:nowrap;}
-.pr-cym-play{background:linear-gradient(135deg,#7c3aed,#db2777)!important;}
-#prChatYoutubeMusicStatus{font-size:10.5px;color:#cbd5e1;margin-top:6px;text-align:center;min-height:14px;}
-/* Music badge sits on the user's seat even when their microphone is muted. */
-#cinemaSeats .psf-seat.pr-music-active .psf-avatar::before{content:"🎵";position:absolute;right:-5px;top:-6px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#7c3aed;color:#fff;font-size:12px;z-index:30;box-shadow:0 0 0 2px rgba(255,255,255,.85),0 3px 12px rgba(124,58,237,.65);animation:prMusicPulse 1.25s ease-in-out infinite;}
-#cinemaHostSeatBtn.pr-music-active::after{content:"🎵";position:absolute;right:-4px;top:-4px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#7c3aed;color:#fff;font-size:12px;z-index:50;box-shadow:0 0 0 2px rgba(255,255,255,.85),0 3px 12px rgba(124,58,237,.65);animation:prMusicPulse 1.25s ease-in-out infinite;}
-@keyframes prMusicPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
-#prChatYoutubeMusicMini{position:absolute;left:50%;transform:translateX(-50%);bottom:118px;z-index:2147483641;display:none;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;background:rgba(18,8,40,.92);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:10px;font-weight:800;pointer-events:none;}
-#prChatYoutubeMusicMini.show{display:flex;}
-#prChatYoutubeMusicFrame{position:absolute!important;width:1px!important;height:1px!important;left:-9999px!important;top:-9999px!important;opacity:.01!important;pointer-events:none!important;}
-</style>
-<script id="partyChatYoutubeMusicModeScript">
-(function(){
-  var musicState=null, musicUnsub=null, musicRoomKey='', musicPlayer=null, musicPlayerReady=false, musicCurrentId='';
-  function el(id){return document.getElementById(id);}
-  function activeChat(){return String(window.__partyRoomMode||'chat')==='chat';}
-  function myKey(){try{return String(currentUserKey||'');}catch(e){return '';}}
-  function roomRef(){try{if(typeof db!=='undefined'&&db&&cinemaRoomId)return db.collection('cinemaRooms').doc(String(cinemaRoomId));}catch(e){}return null;}
-  function ensureUI(){
-    var room=el('prRoom'); if(!room||el('prChatYoutubeMusicBtn'))return;
-    var dock=el('partyRoomBottomDock');
-    var b=document.createElement('button'); b.type='button'; b.id='prChatYoutubeMusicBtn'; b.innerHTML='🎵'; b.title='Chat में YouTube Music'; b.setAttribute('aria-label','YouTube Music');
-    b.onclick=function(e){e.preventDefault();e.stopPropagation();togglePanel();};
-    room.appendChild(b);
-    positionMusicButton();
-    var panel=document.createElement('div'); panel.id='prChatYoutubeMusicPanel';
-    panel.innerHTML='<div class="pr-cym-row"><input id="prChatYoutubeMusicInput" type="text" inputmode="none" autocomplete="off" placeholder="YouTube URL paste करें"><button type="button" class="pr-cym-btn" id="prChatYoutubePaste">📋 Paste</button><button type="button" class="pr-cym-btn pr-cym-play" id="prChatYoutubePlay">▶</button><button type="button" class="pr-cym-btn" id="prChatYoutubeStop">■</button></div><div id="prChatYoutubeMusicStatus">🎵 लिंक paste करके Play दबाएँ</div>';
-    room.appendChild(panel);
-    var mini=document.createElement('div'); mini.id='prChatYoutubeMusicMini'; mini.innerHTML='🎵 <span id="prChatYoutubeMusicMiniText">Music चल रहा है</span>'; room.appendChild(mini);
-    var f=document.createElement('div'); f.id='prChatYoutubeMusicFrame'; room.appendChild(f);
-    el('prChatYoutubePaste').onclick=async function(){try{var x=await navigator.clipboard.readText();if(x){el('prChatYoutubeMusicInput').value=x;setStatus('📋 URL paste हो गया');}}catch(e){var inp=el('prChatYoutubeMusicInput');if(inp){inp.focus();setStatus('📋 अब URL box पर दबाकर Paste करें');}}};
-    el('prChatYoutubePlay').onclick=function(){startMusicFromInput();};
-    el('prChatYoutubeStop').onclick=function(){stopMusic();};
-  }
-  function positionMusicButton(){
-    var room=el('prRoom'), btn=el('prChatYoutubeMusicBtn'), seats=el('cinemaSeats');
-    if(!room||!btn||!seats)return;
-    var cs=getComputedStyle(room), sr=seats.getBoundingClientRect(), rr=room.getBoundingClientRect();
-    var count=Number(window.__chatSeatCount||window.PR_SEATS||12);
-    /* Music button stays at the edge of the seat area, beside the last seat.
-       It must never sit in the middle/below the whole seat row. */
-    var left=sr.right-rr.left+7, top=sr.top-rr.top + Math.max(0,(sr.height-42)/2);
-    if(count===2){ left=sr.right-rr.left+7; top=sr.top-rr.top + Math.max(0,(sr.height-42)/2); }
-    /* If the edge is too close to the room boundary, tuck it just inside the edge. */
-    if(left>rr.width-48) left=Math.max(6,sr.right-rr.left-48);
-    left=Math.max(6,Math.min(left,rr.width-48));
-    top=Math.max(60,Math.min(top,rr.height-150));
-    btn.style.left=left+'px'; btn.style.top=top+'px'; btn.classList.add('pr-seat-music-position');
-  }
-  function setStatus(t){var x=el('prChatYoutubeMusicStatus');if(x)x.textContent=t||'';}
-  function togglePanel(){ensureUI();var p=el('prChatYoutubeMusicPanel');if(p)p.classList.toggle('open');}
-  function parse(raw){try{if(typeof getYouTubeInfo==='function')return getYouTubeInfo(raw);}catch(e){} var m=String(raw||'').match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);return m?{type:'video',id:m[1]}:null;}
-  function stateRef(){var r=roomRef();return r?r.collection('youtubeAudio').doc('state'):null;}
-  function startMusicFromInput(){
-    if(!activeChat()){setStatus('पहले Chatting Mode में आएँ');return;}
-    var inp=el('prChatYoutubeMusicInput'), info=parse(inp&&inp.value);
-    if(!info||info.type!=='video'||!info.id){setStatus('❌ सही YouTube Video URL paste करें');return;}
-    var ref=stateRef(); if(!ref){setStatus('रूम connection नहीं मिला');return;}
-    var me=myKey(); if(!me){setStatus('User connection नहीं मिला');return;}
-    var id=String(info.id);
-    /* Start the player from the same Play-button gesture. Waiting for the
-       Firestore snapshot first can lose Android/WebView's autoplay permission. */
-    setStatus('⏳ Music शुरू हो रहा है...');
-    createMusicPlayer(id,true);
-    var data={videoId:id,userKey:me,userName:(typeof cinemaUserName==='function'?cinemaUserName():'User'),playing:true,startedAt:Date.now()};
-    ref.set(data,{merge:true}).then(function(){setStatus('🎵 Music चल रहा है');}).catch(function(){setStatus('Music start नहीं हो पाया');});
-  }
-  function stopMusic(){var ref=stateRef();if(!ref)return;var me=myKey();if(!musicState||String(musicState.userKey)!==me)return;ref.set({playing:false,videoId:'',userKey:me,stoppedAt:Date.now()},{merge:true}).catch(function(){});destroyMusicPlayer();setStatus('Music बंद है');}
-  function destroyMusicPlayer(){try{if(musicPlayer&&musicPlayer.destroy)musicPlayer.destroy();}catch(e){}musicPlayer=null;musicPlayerReady=false;musicCurrentId='';}
-  function createMusicPlayer(id,userGesture){
-    if(!id)return; if(musicCurrentId===id&&musicPlayer)return;
-    destroyMusicPlayer(); musicCurrentId=id;
-    var host=el('prChatYoutubeMusicFrame'); if(!host)return;
-    try{loadYTApi(function(){
-      if(!window.YT||!window.YT.Player)return;
-      var d=document.createElement('div');d.id='prChatYoutubeMusicYT';d.style.cssText='width:2px;height:2px;';host.innerHTML='';host.appendChild(d);
-      musicPlayer=new YT.Player(d,{width:'2',height:'2',videoId:id,playerVars:{autoplay:1,controls:0,playsinline:1,rel:0,origin:location.origin},events:{onReady:function(e){
-        musicPlayerReady=true;
-        try{e.target.setVolume(100);e.target.unMute();e.target.playVideo();}catch(x){}
-        setTimeout(function(){try{if(musicPlayer&&musicPlayer.getPlayerState&&musicPlayer.getPlayerState()!==1){setStatus('▶️ Music के लिए Play फिर दबाएँ');}}catch(x){}},900);
-      },onStateChange:function(e){
-        if(window.YT&&e.data===YT.PlayerState.PLAYING)setStatus('🎵 Music चल रहा है');
-        if(window.YT&&e.data===YT.PlayerState.ENDED){if(String(musicState&&musicState.userKey||'')===myKey())stopMusic();}
-      },onError:function(){setStatus('❌ यह YouTube वीडियो Music के लिए नहीं चल पाया');}}});
-    });}catch(e){setStatus('❌ Music player शुरू नहीं हुआ');}
-  }
-  function paintMusicSeats(){
-    var people=Array.isArray(window.__cinemaPeople)?window.__cinemaPeople:[], key=musicState&&musicState.playing?String(musicState.userKey||''):'';
-    var box=el('cinemaSeats'); if(box){Array.prototype.forEach.call(box.querySelectorAll('.psf-seat.pr-music-active'),function(x){x.classList.remove('pr-music-active');});if(key){var seat=people.find(function(p){return String(p.key)===key&&Number.isInteger(p.seat);});if(seat&&box.children[Number(seat.seat)])box.children[Number(seat.seat)].classList.add('pr-music-active');}}
-    var hb=el('cinemaHostSeatBtn');if(hb)hb.classList.toggle('pr-music-active',!!(key&&people.some(function(p){return String(p.key)===key&&p.hostSeated===true;})));
-    var mini=el('prChatYoutubeMusicMini');if(mini)mini.classList.toggle('show',!!(key&&activeChat()));
-    var mt=el('prChatYoutubeMusicMiniText');if(mt&&key)mt.textContent='🎵 '+String(musicState.userName||'User')+' Music';
-  }
-  function applyState(d){
-    musicState=d||null; ensureUI(); paintMusicSeats();
-    if(activeChat()&&musicState&&musicState.playing&&musicState.videoId){createMusicPlayer(String(musicState.videoId),false);if(!musicPlayerReady)setStatus('🎵 Music चल रहा है');}
-    else if(!activeChat()||!musicState||!musicState.playing){destroyMusicPlayer();}
-  }
-  function startSync(){
-    var r=roomRef(),rk=r?String(cinemaRoomId):''; if(!r)return;
-    if(musicRoomKey===rk&&musicUnsub)return; if(musicUnsub)try{musicUnsub();}catch(e){};
-    musicRoomKey=rk; musicUnsub=r.collection('youtubeAudio').doc('state').onSnapshot(function(s){applyState(s.exists?s.data():null);},function(){});
-  }
-  function stopSync(){if(musicUnsub)try{musicUnsub();}catch(e){}musicUnsub=null;musicRoomKey='';destroyMusicPlayer();}
-  function onMode(){ensureUI();paintMusicSeats();if(activeChat())startSync();else destroyMusicPlayer();}
-  var timer=setInterval(function(){ensureUI();positionMusicButton();if(roomRef()){startSync();}paintMusicSeats();},1200);
-  window.addEventListener('resize',positionMusicButton);
-  window.addEventListener('orientationchange',function(){setTimeout(positionMusicButton,80);});
-  document.addEventListener('visibilitychange',function(){if(!document.hidden){ensureUI();onMode();}});
-  window.partyChatMusicRefresh=onMode;
-})();
-</script>
 
 <script id="partyModeMusicVideoStopFinal">
 (function(){
