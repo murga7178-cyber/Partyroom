@@ -11351,7 +11351,7 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
     </div>
     <div class="me2-menu">
       <button class="me2-row" type="button" onclick="pkMeSimpleEdit()"><span class="r-ico">✎</span><b>Edit</b><span class="r-arrow">›</span></button>
-      <button class="me2-row" type="button" onclick="pkMeOpenStore()"><span class="r-ico">▣</span><b>Frame</b><span class="r-arrow">›</span></button>
+      <button class="me2-row" type="button" onclick="pkMeOpenFrame()"><span class="r-ico">▣</span><b>Frame</b><span class="r-arrow">›</span></button>
       <button class="me2-row" type="button" onclick="pkMeOpenStore()"><span class="r-ico">🛍</span><b>Store</b><span class="r-arrow">›</span></button>
       <button class="me2-row wallet" type="button" onclick="pkMeSimpleWallet()"><span class="r-ico">💰</span><b>Wallet</b><span class="r-arrow">›</span></button>
       <button class="me2-row vip" type="button" onclick="pkMeOpenVip()"><span class="r-ico">👑</span><b>VIP</b><span class="r-arrow">›</span></button>
@@ -11506,3 +11506,183 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 })();
 </script>
 
+
+
+<!-- FINAL ME V3: persistent bottom nav + working child panels -->
+<style id="pkMeV3Style">
+#pkMeSimpleV2{z-index:2147482400!important}
+#pkMeSimpleV2 .me2-scroll{padding-bottom:105px!important}
+#pkUniversalNav{z-index:2147482500!important}
+</style>
+<script id="pkMeV3Script">
+(function(){
+  function $(id){return document.getElementById(id)}
+  function simpleOpen(){var x=$('pkMeSimpleV2');return !!(x&&x.classList.contains('open'))}
+  function keepNav(){
+    if(!simpleOpen()) return;
+    var n=$('pkUniversalNav');if(!n)return;
+    n.style.display='flex';
+    n.querySelectorAll('[data-nav]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-nav')==='me')});
+  }
+  function closeSimple(){try{if(typeof window.pkMeSimpleClose==='function')window.pkMeSimpleClose()}catch(e){}try{if(typeof window.pkMeSimpleCloseFixed==='function')window.pkMeSimpleCloseFixed()}catch(e){}}
+  // Keep Home / Message / Me navigation visible while Me is open.
+  var oldSync=window.pkUniversalNavSync;
+  window.pkUniversalNavSync=function(){try{if(typeof oldSync==='function')oldSync()}catch(e){}keepNav()};
+  // Bottom navigation remains visible even when Edit/VIP/Visitor/Ranking child panels open.
+  setInterval(function(){
+    if(simpleOpen()){
+      var n=$('pkUniversalNav');if(n)n.style.display='flex';
+      n&&n.querySelectorAll('[data-nav]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-nav')==='me')});
+    }
+  },250);
+  // Close the Me page before Home/Message navigation, then let the original nav handler run.
+  document.addEventListener('click',function(e){
+    var b=e.target.closest&&e.target.closest('#pkUniversalNav [data-nav]');
+    if(!b)return;
+    var a=b.getAttribute('data-nav');
+    if(a==='home'||a==='message') closeSimple();
+  },true);
+  // Keep child panels connected to the Me page; do not close the Me page first.
+  window.pkMeSimpleEdit=function(){
+    try{if(typeof pkOpenEditProfile==='function'){pkOpenEditProfile();return}}catch(e){}
+    try{if(typeof pkOwnProfileEdit==='function'){pkOwnProfileEdit();return}}catch(e){}
+    try{toast('Edit उपलब्ध नहीं है')}catch(e){}
+  };
+  window.pkMeSimpleWallet=function(){
+    try{if(typeof pkOpenWallet==='function'){pkOpenWallet();return}}catch(e){}
+    try{toast('Wallet उपलब्ध नहीं है')}catch(e){}
+  };
+  window.pkMeSimpleVisitors=function(){
+    try{if(typeof pkOpenVisitors==='function'){pkOpenVisitors();return}}catch(e){}
+    try{toast('Visitor उपलब्ध नहीं है')}catch(e){}
+  };
+  window.pkMeSimpleRanking=function(){
+    try{if(typeof pkOpenGamingRanking==='function'){pkOpenGamingRanking();return}}catch(e){}
+    try{toast('Ranking उपलब्ध नहीं है')}catch(e){}
+  };
+  window.pkMeOpenStore=function(){
+    // Store is intentionally empty for now.
+    try{toast('Store अभी खाली है')}catch(e){}
+  };
+  window.pkMeOpenVip=function(){
+    try{if(typeof pkOpenVipPanel==='function'){pkOpenVipPanel();return}}catch(e){}
+    try{toast('VIP उपलब्ध नहीं है')}catch(e){}
+  };
+  window.pkMeSimpleTopGifter=function(){
+    try{if(typeof pkOpenProfileTopGifter==='function'){pkOpenProfileTopGifter();return}}catch(e){}
+    try{if(typeof openPartyRoomTopGifters==='function'){openPartyRoomTopGifters();return}}catch(e){}
+    try{toast('Top Gifter')}catch(e){}
+  };
+  // Frame opens the frame store; Store stays empty.
+  window.pkMeOpenFrame=function(){
+    try{if(typeof openPartyFrameStore==='function'){openPartyFrameStore();return}}catch(e){}
+    try{toast('Frame Store उपलब्ध नहीं है')}catch(e){}
+  };
+  // If profile data has no Top Gifter fields, use the current profile image as a non-empty visual fallback.
+  var oldOpen=window.pkOpenMeProfile;
+  window.pkOpenMeProfile=function(){
+    try{if(typeof oldOpen==='function')oldOpen();else if(typeof window.pkMeSimpleV2!=='undefined'){} }catch(e){}
+    setTimeout(function(){
+      var x=$('pkMe2TopPhoto'),n=$('pkMe2TopName');
+      if(!x||!n)return;
+      var img=x.querySelector('img');
+      if(!img){
+        try{
+          var ph=(typeof currentUserPhotoURL!=='undefined'&&currentUserPhotoURL)||'';
+          if(!ph&&typeof currentUserKey!=='undefined'&&typeof cinemaPhotoFor==='function')ph=cinemaPhotoFor(currentUserKey)||'';
+          if(ph)x.innerHTML='<img alt="Top Gifter" src="'+String(ph).replace(/"/g,'&quot;')+'">';
+        }catch(e){}
+      }
+      if(!n.textContent.trim()||n.textContent.trim()==='Top Gifter')n.textContent='Top Gifter';
+      keepNav();
+    },120);
+  };
+})();
+</script>
+
+<!-- FINAL ME OVERLAY ROUTER: child pages always come to the front -->
+<style id="pkMeFinalOverlayFix">
+  #pkMeSimpleV2{z-index:2147482400!important}
+  #pkUniversalNav{z-index:2147482500!important;display:flex!important}
+  #pkMeProfilePanel{z-index:2147482390!important}
+  #pkMeActionSheet{z-index:2147483646!important}
+  /* Any legacy Me sheet must never sit above the new Me page. */
+  body.pk-me-final-child-open #pkMeSimpleV2{display:none!important}
+</style>
+<script id="pkMeFinalOverlayRouter">
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  function closeMe(){
+    var x=$('pkMeSimpleV2');
+    if(x){x.classList.remove('open');x.setAttribute('aria-hidden','true');x.style.display='none';}
+    var old=$('pkMeProfilePanel');
+    if(old){old.style.display='none';old.setAttribute('aria-hidden','true');}
+    document.body.classList.add('pk-me-final-child-open');
+  }
+  function nav(){
+    var n=$('pkUniversalNav');
+    if(n){n.style.display='flex';n.style.zIndex='2147482500';}
+  }
+  function openChild(fn){
+    closeMe(); nav();
+    setTimeout(function(){
+      try{if(typeof window[fn]==='function')window[fn]();}
+      catch(e){console.error('Me child open:',fn,e)}
+      nav();
+    },20);
+  }
+  window.pkMeFinalBack=function(){
+    document.body.classList.remove('pk-me-final-child-open');
+    var x=$('pkMeSimpleV2');
+    if(x){x.style.display='block';x.classList.add('open');x.setAttribute('aria-hidden','false');}
+    nav();
+  };
+  window.pkMeFinalEdit=function(){openChild('pkOpenEditProfile')};
+  window.pkMeFinalFrame=function(){openChild('openPartyFrameStore')};
+  window.pkMeFinalWallet=function(){openChild('pkOpenWallet')};
+  window.pkMeFinalVip=function(){openChild('pkOpenVipPanel')};
+  window.pkMeFinalVisitor=function(){openChild('pkOpenVisitors')};
+  window.pkMeFinalRanking=function(){openChild('pkOpenGamingRanking')};
+  window.pkMeFinalTopGifter=function(){openChild('pkOpenProfileTopGifter')};
+  window.pkMeFinalStore=function(){
+    /* Store is intentionally empty for now; show a clean empty panel rather than Frame Store. */
+    closeMe(); nav();
+    var p=$('pkMeEmptyStorePanel');
+    if(!p){
+      p=document.createElement('div');p.id='pkMeEmptyStorePanel';
+      p.style.cssText='position:fixed;inset:0;z-index:2147482405;background:#fff;overflow:auto;';
+      p.innerHTML='<div style="height:58px;display:flex;align-items:center;padding:0 14px;border-bottom:1px solid #f1dfe5;font:900 20px Segoe UI,Arial,sans-serif"><button type="button" id="pkMeEmptyStoreBack" style="border:0;background:#fff;font-size:30px;width:40px">‹</button><span style="flex:1;text-align:center">Store</span><span style="width:40px"></span></div>';
+      document.body.appendChild(p);
+      $('pkMeEmptyStoreBack').onclick=function(){p.remove();document.body.classList.remove('pk-me-final-child-open');window.pkMeFinalBack();};
+    }
+    p.style.display='block';nav();
+  };
+  function route(){
+    var x=$('pkMeSimpleV2');if(!x)return;
+    var rows=x.querySelectorAll('.me2-menu .me2-row');
+    if(rows[0])rows[0].onclick=function(e){e.preventDefault();pkMeFinalEdit()};
+    if(rows[1])rows[1].onclick=function(e){e.preventDefault();pkMeFinalFrame()};
+    if(rows[2])rows[2].onclick=function(e){e.preventDefault();pkMeFinalStore()};
+    if(rows[3])rows[3].onclick=function(e){e.preventDefault();pkMeFinalWallet()};
+    if(rows[4])rows[4].onclick=function(e){e.preventDefault();pkMeFinalVip()};
+    if(rows[5])rows[5].onclick=function(e){e.preventDefault();pkMeFinalVisitor()};
+    if(rows[6])rows[6].onclick=function(e){e.preventDefault();pkMeFinalRanking()};
+    var top=x.querySelector('.me2-topgifter');if(top)top.onclick=function(e){e.preventDefault();pkMeFinalTopGifter()};
+    var back=x.querySelector('.me2-back');if(back)back.onclick=function(e){e.preventDefault();pkMeFinalBack()};
+  }
+  function start(){route();nav();}
+  document.addEventListener('DOMContentLoaded',start);
+  setTimeout(start,100);setTimeout(start,800);setTimeout(start,1800);
+  /* When Home/Message/Me is tapped, only the active child closes; the nav itself stays. */
+  document.addEventListener('click',function(e){
+    var b=e.target.closest&&e.target.closest('#pkUniversalNav [data-nav]');if(!b)return;
+    var a=b.getAttribute('data-nav');
+    if(a==='home'||a==='message'){
+      var p=$('pkMeEmptyStorePanel');if(p)p.remove();
+      document.body.classList.remove('pk-me-final-child-open');
+      var x=$('pkMeSimpleV2');if(x){x.style.display='none';x.classList.remove('open');}
+      nav();
+    }
+  },true);
+})();
+</script>
