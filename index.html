@@ -3370,6 +3370,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         }
         if(panel) panel.classList.remove('chat-input-open');
         const room=document.getElementById('prRoom'); if(room) room.classList.remove('party-keyboard-open');
+        /* New bottom chat sheet: remove backdrop/history state too, but do not navigate away. */
+        try{ if(typeof window.partyRoomCloseChat==='function') window.partyRoomCloseChat(false); }catch(e){}
         try{input.blur();}catch(e){}
         const dock=document.getElementById('partyRoomBottomDock');
         if(dock) dock.style.transform='';
@@ -4110,6 +4112,55 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(window.__prGiftUnsub){ try{ window.__prGiftUnsub(); }catch(e){} window.__prGiftUnsub=null; }
     prStopCoinBalance();
   };
+  async function prClaimIncomingGift(docId,d){
+    if(!db||!cinemaRoomId||!currentUserKey||!docId||!d) return;
+    var me=String(currentUserKey), to=String(d.toKey||'');
+    if(!to || to!==me) return;
+    var value=Math.max(0,Math.floor(Number(d.value)||0))*Math.max(1,Math.floor(Number(d.count)||1));
+    if(value<=0) return;
+    try{
+      var giftRef=db.collection('cinemaRooms').doc(cinemaRoomId).collection('gifts').doc(String(docId));
+      var myRef=db.collection('users').doc(me);
+      await db.runTransaction(async function(tx){
+        var giftSnap=await tx.get(giftRef);
+        if(!giftSnap.exists) return;
+        var gd=giftSnap.data()||{};
+        var claimed=gd.claimedBy&&gd.claimedBy[me];
+        if(claimed) return;
+        var mySnap=await tx.get(myRef);
+        var md=mySnap.exists?(mySnap.data()||{}):{};
+        var diamonds=Math.max(0,Math.floor(Number(md.diamonds)||0));
+        var patch={claimedBy:{}};
+        patch.claimedBy[me]=Date.now();
+        tx.set(myRef,{diamonds:diamonds+value,updatedAt:Date.now()},{merge:true});
+        tx.set(giftRef,patch,{merge:true});
+      });
+    }catch(e){
+      /* The gift animation/chat still works even if the account rule blocks the claim. */
+      console.warn('gift claim failed',e);
+    }
+  }
+  async function prClaimChatGift(docId,d){
+    if(!db||!currentUserKey||!docId||!d) return;
+    var me=String(currentUserKey), to=String(d.toKey||'');
+    if(!to || to!==me) return;
+    var value=Math.max(0,Math.floor(Number(d.value)||0))*Math.max(1,Math.floor(Number(d.count)||1));
+    if(value<=0) return;
+    try{
+      var myRef=db.collection('users').doc(me);
+      await db.runTransaction(async function(tx){
+        var mySnap=await tx.get(myRef);
+        var md=mySnap.exists?(mySnap.data()||{}):{};
+        var claimed=(md.claimedGifts&&md.claimedGifts[String(docId)])||false;
+        if(claimed) return;
+        var diamonds=Math.max(0,Math.floor(Number(md.diamonds)||0));
+        var patch={};
+        patch['diamonds']=diamonds+value;
+        patch['claimedGifts.'+String(docId)]=Date.now();
+        tx.set(myRef,patch,{merge:true});
+      });
+    }catch(e){ console.warn('chat gift claim failed',e); }
+  }
   window.prStartGifts=function(){
     window.prStopGifts();
     window.__prGiftTotals={};
@@ -4138,10 +4189,31 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
           if(ch.type!=='added' || seen.has(ch.doc.id)) return;
           seen.add(ch.doc.id);
           var d=ch.doc.data()||{};
+          if(String(d.toKey||'')===String(currentUserKey||'') && String(d.userKey||'')!==String(currentUserKey||'')){
+            prClaimIncomingGift(ch.doc.id,d);
+          }
           if(now-(Number(d.createdAt)||0)<=8000) showGift(d);
         });
         try{ cinemaRenderSeats(window.__cinemaPeople||[]); }catch(e){}
       },function(){});
+    /* Gift events are also mirrored into the room chat.  This path works with
+       normal Firestore rules where users may write chat but may not write a
+       gift document directly. */
+    var giftChatUnsub=db.collection('cinemaRooms').doc(cinemaRoomId).collection('chat')
+      .orderBy('createdAt','desc').limit(300)
+      .onSnapshot(function(snap){
+        snap.forEach(function(doc){
+          var d=doc.data()||{};
+          if(String(d.type||'')!=='gift') return;
+          var k=String(d.userKey||'');
+          var to=String(d.toKey||'');
+          var v=(Number(d.value)||0)*(Number(d.count)||1);
+          if(k && v){ window.__prGifterTotals[k]=(window.__prGifterTotals[k]||0)+v; }
+          if(to===String(currentUserKey||'')) prClaimChatGift(doc.id,d);
+        });
+      },function(e){ console.warn('gift chat listener failed',e); });
+    var oldGiftUnsub=window.__prGiftUnsub;
+    window.__prGiftUnsub=function(){ try{oldGiftUnsub&&oldGiftUnsub();}catch(e){} try{giftChatUnsub&&giftChatUnsub();}catch(e){} prStopCoinBalance(); };
   };
   // ---------- Top Gifters (full page): who has gifted the most in this room ----------
   function renderTopGiftersList(){
@@ -4352,9 +4424,12 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
 
   function recipientKeys(){
     var me=myKey();
-    var others=people().filter(function(p){ return String(p.key)!==me; });
+    var allPeople=people();
+    var self=allPeople.find(function(p){ return String(p.key)===me; })||null;
+    if(!self && me) self={key:me,name:(typeof cinemaUserName==='function'?cinemaUserName():'आप')};
+    var others=allPeople.filter(function(p){ return String(p.key)!==me; });
     var seated=others.filter(isSeated), rest=others.filter(function(p){ return !isSeated(p); });
-    return {seated:seated,rest:rest};
+    return {seated:seated,rest:rest,self:self};
   }
   function renderRecipients(){
     var box=$('prRecipients'); if(!box) return;
@@ -4406,12 +4481,20 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   }
   window.prOpenGift=function(toKey){
     if(!window.__prGiftId) window.__prGiftId='rose';
-    var r=recipientKeys(), all=r.seated.concat(r.rest).concat(r.self?[r.self]:[]);
-    if(toKey){ window.__prTo=String(toKey); }
-    else if(!window.__prTo || (window.__prTo!=='ALL' && !all.some(function(p){ return String(p.key)===String(window.__prTo); }))){
-      var hk=String(window.__cinemaHostKey||'');
-      var host=r.seated.find(function(p){ return String(p.key)===hk; });
-      window.__prTo=host?String(host.key):(r.seated[0]?String(r.seated[0].key):(all[0]?String(all[0].key):''));
+    var r=recipientKeys(), me=myKey();
+    /* हर बार नया Gift खोलने पर पुराना recipient दोबारा इस्तेमाल न हो।
+       अगर profile/seat से recipient मिला है तो उसी को स्पष्ट रूप से चुनें। */
+    if(toKey){
+      var requested=String(toKey);
+      if(requested===me){
+        window.__prTo='';
+        toast('खुद को गिफ्ट नहीं भेज सकते');
+        return;
+      }
+      var valid=r.seated.concat(r.rest).some(function(p){ return String(p.key)===requested; });
+      window.__prTo=valid?requested:'';
+    }else{
+      window.__prTo='';
     }
     renderRecipients(); renderGiftGrid(); renderSendInfo(); renderBaggagePanel(); showPartyGiftTab('gifts');
     openSheet('prGiftSheet');
@@ -4425,10 +4508,16 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   window.prSendGift=async function(){
     if(!db||!cinemaRoomId||!currentUserKey) return;
     var g=findGiftById(window.__prGiftId)||GIFTS[0];
-    var to=window.__prTo, me=myKey(), targets=[];
-    if(to==='ALL') targets=recipientKeys().seated;
-    else if(to){ targets=[{key:String(to),name:nameOf(to)}];}
-    if(!targets.length){ toast('पहले किसी को चुनें'); return; }
+    var to=String(window.__prTo||''), me=myKey(), targets=[];
+    var r=recipientKeys();
+    if(to==='ALL') targets=r.seated;
+    else if(to===me){
+      targets=[{key:me,name:(r.self&&r.self.name)||cinemaUserName()||'आप'}];
+    }else if(to){
+      var selected=r.seated.concat(r.rest).find(function(p){ return String(p.key)===to; });
+      if(selected) targets=[{key:String(selected.key),name:selected.name||nameOf(selected.key)}];
+    }
+    if(!targets.length){ toast('पहले किसी व्यक्ति को चुनें'); renderSendInfo(); return; }
     var totalCost=(Number(g.v)||0)*targets.length;
     if(Math.floor(Number(gamePoints)||0)<totalCost){
       toast('आपके पास इतने Game Coins नहीं हैं');
@@ -4442,44 +4531,38 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     var myRef=db.collection('users').doc(me);
     var myName=cinemaUserName();
     var toName=to==='ALL'?'सभी':targets[0].name;
-    var giftRefs=targets.map(function(p){ return col.collection('gifts').doc(); });
     try{
+      /* Only write the sender's own account here.  The actual gift event is
+         written to the room chat, which the room already permits for chat. */
       var newBalance=await db.runTransaction(async function(tx){
         var mySnap=await tx.get(myRef);
         var myData=mySnap.exists?(mySnap.data()||{}):{};
         var balance=Math.max(0,Math.floor(Number(mySnap.exists?myData.gamePoints:gamePoints)||0));
         if(balance<totalCost) throw new Error('insufficient');
-        var recipientSnaps=[];
-        for(var i=0;i<targets.length;i++){
-          var ref=db.collection('users').doc(String(targets[i].key));
-          var snap=await tx.get(ref);
-                    recipientSnaps.push({ref:ref,snap:snap});
-        }
         var after=balance-totalCost;
-        var selfGift=targets.length===1 && String(targets[0].key)===me;
-        if(!selfGift) tx.set(myRef,{gamePoints:after},{merge:true});
-        for(var j=0;j<targets.length;j++){
-          var rd=recipientSnaps[j].snap.data()||{};
-          var rb=Math.max(0,Math.floor(Number(rd.diamonds)||0));
-          if(String(targets[j].key)!==me) tx.set(recipientSnaps[j].ref,{diamonds:rb+(Number(g.v)||0)},{merge:true});
-          tx.set(giftRefs[j],{gid:g.id,emoji:g.e,value:g.v,count:1,name:myName,userKey:me,toKey:String(targets[j].key),toName:targets[j].name||'User',createdAt:now},{merge:true});
-        }
-        return selfGift?balance:after;
+        tx.set(myRef,{gamePoints:after,updatedAt:Date.now()},{merge:true});
+        return after;
       });
+      var giftText='🎁 '+g.e+' '+g.n+' · 🪙 '+window.prFmt(Number(g.v)||0)+' Coins';
+      for(var gi=0;gi<targets.length;gi++){
+        var target=targets[gi];
+        var giftData={
+          type:'gift',gid:g.id,giftId:g.id,emoji:g.e,giftName:g.n,value:Number(g.v)||0,count:1,
+          text:giftText,name:myName,userKey:me,toKey:String(target.key),toName:target.name||'User',createdAt:now+gi,claimedBy:{}
+        };
+        await col.collection('chat').doc().set(giftData,{merge:true});
+      }
       gamePoints=Math.max(0,Number(newBalance)||0);
       stateLoaded=true;
       prSyncCoinDisplays();
       renderSendInfo();
       prCloseSheets();
-      var ck=[me,to,g.id].join('|'), c=window.__prCombo;
-      if(!c || c.key!==ck || now-c.t>3000){
-        col.collection('chat').add({type:'gift',gid:g.id,emoji:g.e,value:g.v,count:1,text:'',name:myName,userKey:me,toKey:String(to),toName:toName,createdAt:now}).catch(function(){});
-      }
-      window.__prCombo={key:ck,t:now};
+      window.__prTo='';
       try{ saveState(); }catch(e){}
+      try{ toast('🎁 गिफ्ट भेज दिया गया'); }catch(e){}
     }catch(e){
       if(e && e.message==='insufficient') toast('आपके पास इतने Game Coins नहीं हैं');
-      else { console.warn('gift failed',e); toast('गिफ्ट नहीं गया, दोबारा कोशिश करें ('+String((e&&(e.code||e.message))||'error').slice(0,40)+')'); }
+      else { console.warn('gift failed',e); toast('गिफ्ट नहीं गया, दोबारा कोशिश करें ('+String((e&&(e.code||e.message))||'error').slice(0,50)+')'); }
     }
   };
 
@@ -10762,12 +10845,9 @@ listenRoomShare();
       var b=document.createElement('div');b.id='prChatSheetBackdrop';document.body.appendChild(b);
       b.addEventListener('click',function(){closeSheet(true);});
     }
-    if(!document.getElementById('prChatSheetClose')){
-      var close=document.createElement('button');close.id='prChatSheetClose';close.type='button';close.textContent='×';close.setAttribute('aria-label','Chat बंद करें');
-      close.addEventListener('click',function(){closeSheet(true);});
-      x.c.appendChild(close);
-      var title=document.createElement('span');title.id='prChatSheetTitle';title.textContent='मैसेज';x.c.appendChild(title);
-    }
+    /* Clean composer: only input + send button. No extra Exit/Minimize controls. */
+    var oldClose=document.getElementById('prChatSheetClose'); if(oldClose) oldClose.remove();
+    var oldTitle=document.getElementById('prChatSheetTitle'); if(oldTitle) oldTitle.remove();
     return x;
   }
   function closeSheet(back){
@@ -10857,6 +10937,29 @@ listenRoomShare();
 })();
 </script>
 
+
+<style id="partyRoomCleanComposerFinal2026">
+/* Final Party Room message bar: simple input + send only. */
+#prChatSheetClose,#prChatSheetTitle{display:none!important;}
+#prChatSheetBackdrop{display:none!important;}
+#cinemaChatComposer.pr-new-chat-sheet{
+  height:58px!important; min-height:58px!important; padding:6px 8px 6px 14px!important;
+  gap:8px!important; border-radius:30px!important;
+  background:#fff!important; border:1px solid rgba(0,0,0,.10)!important;
+  box-shadow:0 6px 24px rgba(0,0,0,.22)!important;
+}
+#cinemaChatComposer.pr-new-chat-sheet input#cinemaChatInput{
+  height:44px!important; min-height:44px!important; padding:0 10px!important;
+  background:#fff!important; color:#111!important; border:0!important;
+  font-size:18px!important; outline:none!important; box-shadow:none!important;
+}
+#cinemaChatComposer.pr-new-chat-sheet button{
+  width:46px!important; height:46px!important; min-width:46px!important;
+  flex:0 0 46px!important; border:0!important; border-radius:50%!important;
+  background:linear-gradient(135deg,#7c3aed,#db2777)!important; color:#fff!important;
+  font-size:22px!important; box-shadow:none!important;
+}
+</style>
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
