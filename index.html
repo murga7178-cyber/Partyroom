@@ -377,10 +377,9 @@ html, body { overscroll-behavior-y: none; }
 .hse-btn.hse-canSit{cursor:pointer;}
 .hse-btn.hse-canSit:active{transform:scale(.95);}
 .hse-emblem{display:block;opacity:.78;filter:saturate(.7) brightness(.88) drop-shadow(0 0 2px rgba(255,190,60,.25));transition:opacity .3s,filter .3s;}
-.hse-canSit:not(.hse-seated) .hse-emblem{animation:hseHint 2.6s ease-in-out infinite;}
-.hse-seated .hse-emblem{opacity:1;animation:hseGlow 2.8s ease-in-out infinite;}
-.hse-seated .hse-throne{display:none;}
-.hse-muted .hse-emblem{animation:none;opacity:.85;filter:saturate(.45) brightness(.9) drop-shadow(0 0 2px rgba(255,190,60,.25));}
+.hse-canSit:not(.hse-seated) .hse-emblem{animation:none;opacity:.85;}
+.hse-seated .hse-emblem{opacity:1;animation:none;filter:none;}
+.hse-muted .hse-emblem{animation:none;opacity:.85;filter:none;}
 .hse-badge{display:none!important;position:absolute;right:6px;bottom:2px;width:18px;height:18px;border-radius:50%;background:#0f172a;border:1px solid rgba(255,255,255,.3);font-size:10px;line-height:1;align-items:center;justify-content:center;}
 .hse-muted .hse-badge{display:none!important;}
 .hse-dot{display:none;position:absolute;right:8px;bottom:4px;width:10px;height:10px;border-radius:50%;background:#22c55e;border:1.5px solid #0f172a;box-shadow:0 0 6px rgba(34,197,94,.85);}
@@ -400,7 +399,7 @@ html, body { overscroll-behavior-y: none; }
 .psf-seat.psf-speaking .psf-dot{background:#39ff72;box-shadow:0 0 6px #22c55e,0 0 15px rgba(34,197,94,.98);}
 .psf-seat.psf-speaking .psf-voice-pct,.hse-btn.hse-speaking .hse-voice-pct{opacity:1;}
 .psf-seat.psf-speaking .psf-voice-meter,.hse-btn.hse-speaking .hse-voice-meter{filter:drop-shadow(0 0 5px rgba(34,197,94,.98)) drop-shadow(0 0 12px rgba(34,197,94,.62));}
-.hse-btn.hse-speaking .hse-emblem{animation:partyVoiceHostPulse .22s ease-in-out infinite alternate!important;filter:drop-shadow(0 0 6px rgba(34,197,94,.82)) drop-shadow(0 0 16px rgba(34,197,94,.56))!important;}
+.hse-btn.hse-speaking .hse-emblem{animation:none!important;filter:none!important;}
 .hse-btn.hse-speaking .hse-dot{background:#39ff72;box-shadow:0 0 6px #22c55e,0 0 15px rgba(34,197,94,.98);}
 @keyframes partyVoiceSeatPulse{from{transform:scale(1)}to{transform:scale(1.045)}}
 @keyframes partyVoiceHostPulse{from{transform:scale(1)}to{transform:scale(1.035)}}
@@ -2386,40 +2385,10 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
           <button type="button" id="cinemaHostSeatBtn" class="hse-btn" onclick="cinemaHostToggleSeat()" aria-label="Host सीट - खाली">
           <svg class="hse-emblem" width="76" height="62" viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true">
             <defs>
-              <linearGradient id="hsG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4b0"/><stop offset=".35" stop-color="#ffcf3f"/><stop offset=".72" stop-color="#e29a12"/><stop offset="1" stop-color="#a86407"/></linearGradient>
-              <linearGradient id="hsR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6a6a"/><stop offset=".55" stop-color="#e0212f"/><stop offset="1" stop-color="#a80e1c"/></linearGradient>
-              <linearGradient id="hsW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#c9d2e6"/></linearGradient>
               <radialGradient id="hsN" cx=".4" cy=".3" r=".9"><stop offset="0" stop-color="#2b379a"/><stop offset="1" stop-color="#151b58"/></radialGradient>
-              <path id="hsF" d="M0,0 C5,-9 5,-25 0,-36 C-5,-25 -5,-9 0,0Z"/>
               <clipPath id="hsClip"><circle cx="60" cy="52" r="36.6"/></clipPath>
-              <path id="hsS" d="M0,0 C4,-6 4,-16 0,-24 C-4,-16 -4,-6 0,0Z"/>
-              <g id="hsWing">
-                <use href="#hsF" transform="translate(23,62) rotate(-46) scale(.85)" fill="url(#hsG)" stroke="#8a5206" stroke-width=".7"/>
-                <use href="#hsF" transform="translate(22,58) rotate(-33) scale(1.05)" fill="url(#hsG)" stroke="#8a5206" stroke-width=".7"/>
-                <use href="#hsF" transform="translate(21,54) rotate(-20) scale(1.2)" fill="url(#hsG)" stroke="#8a5206" stroke-width=".7"/>
-                <use href="#hsF" transform="translate(21,50) rotate(-8) scale(1.22)" fill="url(#hsG)" stroke="#8a5206" stroke-width=".7"/>
-                <use href="#hsF" transform="translate(22,46) rotate(4) scale(1.1)" fill="url(#hsG)" stroke="#8a5206" stroke-width=".7"/>
-              </g>
-              <g id="hsWhite">
-                <use href="#hsS" transform="translate(27,84) rotate(-105)" fill="url(#hsW)" stroke="#aab4cc" stroke-width=".6"/>
-                <use href="#hsS" transform="translate(27,82) rotate(-90) scale(1.1)" fill="url(#hsW)" stroke="#aab4cc" stroke-width=".6"/>
-                <use href="#hsS" transform="translate(28,80) rotate(-75)" fill="url(#hsW)" stroke="#aab4cc" stroke-width=".6"/>
-              </g>
             </defs>
-            <use href="#hsWing"/><use href="#hsWing" transform="translate(120,0) scale(-1,1)"/>
-            <use href="#hsWhite"/><use href="#hsWhite" transform="translate(120,0) scale(-1,1)"/>
-            <circle class="hse-outer-ring" cx="60" cy="52" r="41" fill="none" stroke="url(#hsG)" stroke-width="3.2"/>
             <circle cx="60" cy="52" r="37.4" fill="url(#hsN)" stroke="#fff1a8" stroke-opacity=".55" stroke-width=".8"/>
-            <g class="hse-throne">
-            <path d="M45,62 V37 Q45,25 60,25 Q75,25 75,37 V62 Z" fill="url(#hsR)" stroke="url(#hsG)" stroke-width="3" stroke-linejoin="round"/>
-            <path d="M51,58 V38 Q51,31 60,31 Q69,31 69,38 V58 Z" fill="#ff8f8f" fill-opacity=".28"/>
-            <circle cx="60" cy="22.5" r="3" fill="url(#hsG)"/>
-            <rect x="38.5" y="50" width="7" height="17" rx="3.5" fill="url(#hsG)"/><rect x="74.5" y="50" width="7" height="17" rx="3.5" fill="url(#hsG)"/>
-            <circle cx="42" cy="50" r="4" fill="url(#hsG)"/><circle cx="78" cy="50" r="4" fill="url(#hsG)"/>
-            <rect x="44" y="59" width="32" height="10" rx="4.5" fill="url(#hsR)" stroke="url(#hsG)" stroke-width="1.6"/>
-            <path d="M40,69 H80 L77,73.5 H43 Z" fill="url(#hsG)"/>
-            <rect x="43.5" y="73" width="4" height="7" rx="1.5" fill="url(#hsG)"/><rect x="72.5" y="73" width="4" height="7" rx="1.5" fill="url(#hsG)"/>
-            </g>
             <image class="hse-photo" x="23" y="15" width="74" height="74" preserveAspectRatio="xMidYMid slice" clip-path="url(#hsClip)" style="display:none"/>
             <text class="hse-initial" x="60" y="52" text-anchor="middle" dominant-baseline="central" font-size="36" font-weight="300" fill="#f0f0ff" font-family="Segoe UI,Arial,sans-serif" style="display:none"></text>
           </svg>
@@ -2881,7 +2850,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   function partyApplyHostFrame(btn,key){
     if(!btn) return;
     const frame=partyFrameFor(key);
-    ['ruby','royal','diamond','galaxy','gold'].forEach(x=>btn.classList.remove('hse-frame-'+x));
+    var ids=(window.PARTY_FRAME_CATALOG?Object.keys(window.PARTY_FRAME_CATALOG):['gold','ruby','royal','diamond','galaxy','redcrown','phoenix','amethyst','dragon','cosmic','emerald','love','ice','blackroyal','silverwing','firedragon','butterfly','forest','moon','curtain','futuristic']);
+    ids.forEach(function(x){btn.classList.remove('hse-frame-'+x);});
     /* host seat: no frame by design */
   }
 
@@ -2966,7 +2936,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         hb.classList.toggle('hse-mine',seated&&hk===String(currentUserKey||''));
         hb.classList.toggle('hse-canSit',!!cinemaIsHost);
         // Host seat never inherits the user's profile frame.
-        ['ruby','royal','diamond','galaxy','gold'].forEach(x=>hb.classList.remove('hse-frame-'+x));
+        (window.PARTY_FRAME_CATALOG?Object.keys(window.PARTY_FRAME_CATALOG):['gold','ruby','royal','diamond','galaxy','redcrown','phoenix','amethyst','dragon','cosmic','emerald','love','ice','blackroyal','silverwing','firedragon','butterfly','forest','moon','curtain','futuristic']).forEach(function(x){hb.classList.remove('hse-frame-'+x);});
         hb.setAttribute('aria-label',seated?'Host सीट - भरी हुई':'Host सीट - खाली');
         const hnm=document.getElementById('prHostName'); if(hnm) hnm.textContent=window.__cinemaHostName||'Host';
         const hgf=document.getElementById('prHostGift'); if(hgf) hgf.textContent='🎁 '+(typeof prFmt==='function'?prFmt(totals[hk]||0):0);
@@ -8070,7 +8040,7 @@ input,textarea,select{font-size:16px}
 <style id="pkSeatIndicatorCss">
 .psf-voice-meter,.hse-voice-meter,.psf-voice-pct,.hse-voice-pct{display:none!important}
 #cinemaSeats .psf-seat.psf-speaking .psf-avatar{transform:none!important;animation:none!important}
-#prHostRow .hse-btn.hse-speaking .hse-emblem{transform:none!important;filter:none!important;animation:hseGlow 2.8s ease-in-out infinite!important}
+#prHostRow .hse-btn.hse-speaking .hse-emblem{transform:scale(calc(1 + (var(--voice-level,0) * .00022)))!important;filter:none!important;animation:none!important;}
 .psf-dot,.hse-dot,.psf-seat.psf-speaking .psf-dot,.hse-btn.hse-speaking .hse-dot{box-shadow:0 0 3px rgba(34,197,94,.7)!important}
 .pk-vi{position:absolute;left:-3px;bottom:-3px;width:22px;height:22px;border-radius:50%;background:rgba(17,24,39,.82);color:#fff;display:grid;place-items:center;z-index:30;pointer-events:none;box-shadow:0 2px 6px rgba(0,0,0,.35)}
 .pk-vi svg{width:13px;height:13px;display:block}
