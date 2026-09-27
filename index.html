@@ -11505,3 +11505,75 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   setInterval(wire,1000);
 })();
 </script>
+
+<script id="master-q-controller">
+(function(){
+  'use strict';
+
+  function visible(el){ return !!el && !el.hidden && getComputedStyle(el).display !== 'none'; }
+  function qButtons(){
+    return Array.from(document.querySelectorAll(
+      'button,[role="button"],.btn'
+    )).filter(function(el){
+      return (el.textContent || '').trim() === 'Q' ||
+             /^(yt|youtube).*q/i.test(el.id || '');
+    });
+  }
+  function controls(){
+    return Array.from(document.querySelectorAll(
+      'input,button,[role="button"],label'
+    )).filter(function(el){
+      var t=(el.textContent||'').trim().toLowerCase();
+      var ph=(el.getAttribute('placeholder')||'').toLowerCase();
+      var id=(el.id||'').toLowerCase();
+      return /youtube|yt|queue|url/.test(id) ||
+             /load|upload|paste url|youtube url/.test(t) ||
+             /youtube|url|link/.test(ph);
+    });
+  }
+
+  var open=false;
+
+  function apply(){
+    var qs=qButtons();
+    if(qs.length){
+      qs.slice(1).forEach(function(el){ el.style.display='none'; });
+      var q=qs[0];
+      q.style.display=open?'none':'';
+      q.setAttribute('aria-expanded', String(open));
+    }
+
+    /* Only collapse elements explicitly marked by the existing YouTube UI.
+       Avoid hiding the actual video or chat. */
+    document.querySelectorAll(
+      '[data-q-panel],[data-youtube-q-panel],[data-youtube-controls]'
+    ).forEach(function(p){
+      p.hidden=!open;
+    });
+
+    document.documentElement.classList.toggle('q-panel-open', open);
+  }
+
+  function bind(){
+    var qs=qButtons();
+    if(!qs.length) return;
+    qs.forEach(function(q,i){
+      if(i>0) q.style.display='none';
+      if(q.dataset.masterQBound==='1') return;
+      q.dataset.masterQBound='1';
+      q.addEventListener('click', function(ev){
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        open=!open;
+        apply();
+      }, true);
+    });
+    apply();
+  }
+
+  document.addEventListener('DOMContentLoaded', bind);
+  new MutationObserver(function(){ bind(); }).observe(document.documentElement,{
+    childList:true, subtree:true
+  });
+})();
+</script>
