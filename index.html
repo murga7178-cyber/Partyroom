@@ -2378,7 +2378,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
               <button type="button" class="pr-mode-option" data-mode="chat" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('chat')"><span class="pr-mode-option-icon chat">💬</span><span>Chatting Mode</span><span class="pr-mode-check" aria-hidden="true">✓</span></button>
               <button type="button" class="pr-mode-option" data-mode="gaming" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('gaming')"><span class="pr-mode-option-icon gaming">🎮</span><span>Gaming Mode</span><span class="pr-mode-check" aria-hidden="true">✓</span></button>
               <button type="button" class="pr-mode-option" data-mode="youtube" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('youtube')"><span class="pr-mode-option-icon youtube">▶️</span><span>YouTube Mode</span><span class="pr-mode-check" aria-hidden="true">✓</span></button>
-              <button type="button" class="pr-mode-option" data-mode="cinema" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('cinema')"><span class="pr-mode-option-icon cinema">🎬</span><span>Cinema Mode</span><span class="pr-mode-check" aria-hidden="true">✓</span></button>
             </div>
           </div>
           <div id="prTopRight">
@@ -2569,7 +2568,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
               <button type="button" id="partyModeChatBtn" onclick="setPartyRoomMode('chat')" style="padding:13px 8px;border-radius:14px;border:1px solid #22c55e;background:linear-gradient(145deg,#14532d,#166534);color:#fff;font-weight:950;cursor:pointer;">💬 Chatting<br><span style="font-size:10px;opacity:.75;">Chat • Voice • Seats</span></button>
               <button type="button" id="partyModeGameBtn" onclick="setPartyRoomMode('gaming')" style="padding:13px 8px;border-radius:14px;border:1px solid #7c3aed;background:#241044;color:#fff;font-weight:950;cursor:pointer;">🎮 Gaming<br><span style="font-size:10px;opacity:.75;">Games • Play Together</span></button>
               <button type="button" id="partyModeYoutubeBtn" onclick="setPartyRoomMode('youtube')" style="padding:13px 8px;border-radius:14px;border:1px solid #ef4444;background:#3b1010;color:#fff;font-weight:950;cursor:pointer;">▶️ YouTube<br><span style="font-size:10px;opacity:.75;">Watch Together</span></button>
-              <button type="button" id="partyModeCinemaBtn" onclick="setPartyRoomMode('cinema')" style="padding:13px 8px;border-radius:14px;border:1px solid #2563eb;background:#151a3b;color:#fff;font-weight:950;cursor:pointer;">🎬 Cinema<br><span style="font-size:10px;opacity:.75;">Movie • Watch Together</span></button>
             </div>
           </div>
         </div>
@@ -2765,8 +2763,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(settingsBtn) settingsBtn.style.display='inline-flex';
     window.__partyRoomControls=Object.assign({chat:true,audio:true,seats:true,hostArea:true},d?.controls||{});
     var legacySeat=[2,6,8,12].includes(Number(d?.seatCount))?Number(d.seatCount):12;window.__chatSeatCount=[2,6,8,12].includes(Number(d?.chatSeatCount))?Number(d.chatSeatCount):legacySeat;window.__youtubeSeatCount=[2,6,8,12].includes(Number(d?.youtubeSeatCount))?Number(d.youtubeSeatCount):6;window.__gamingSeatCount=[2,4].includes(Number(d?.gamingSeatCount))?Number(d.gamingSeatCount):4;window.__cinemaSeatCount=[2,6,8,12].includes(Number(d?.cinemaSeatCount))?Number(d.cinemaSeatCount):6;
-    cinemaApplyRoomMode(d?.roomMode||'chat');
-    window.PR_SEATS=(window.__partyRoomMode==='gaming')?window.__gamingSeatCount:(window.__partyRoomMode==='youtube'?window.__youtubeSeatCount:(window.__partyRoomMode==='cinema'?window.__cinemaSeatCount:window.__chatSeatCount));
+    cinemaApplyRoomMode((d?.roomMode==='cinema')?'chat':(d?.roomMode||'chat'));
+    window.PR_SEATS=(window.__partyRoomMode==='gaming')?window.__gamingSeatCount:(window.__partyRoomMode==='youtube'?window.__youtubeSeatCount:window.__chatSeatCount);
     try{cinemaRenderSeats(window.__cinemaPeople||[]);renderPartySeatQuickSettings();}catch(e){}
     window.__partySeatStyle='ocean';
     const modal=document.getElementById('cinemaGharModal');
@@ -11087,116 +11085,6 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
       var out=oldApply(mode);try{window.partyChatMusicRefresh&&window.partyChatMusicRefresh();}catch(e){}return out;
     };
   }
-})();
-</script>
-
-<style id="partyCinemaHallFinal">
-#prRoom.party-cinema-layout #partyCinemaHall{display:flex!important;}
-#partyCinemaHall{display:none;position:absolute;left:8px;right:8px;top:72px;bottom:112px;z-index:28;border-radius:18px;overflow:hidden;background:radial-gradient(circle at 50% 20%,rgba(124,58,237,.28),transparent 42%),linear-gradient(160deg,#120d25,#050712 72%);border:1px solid rgba(167,139,250,.35);box-shadow:inset 0 0 50px rgba(0,0,0,.55),0 12px 30px rgba(0,0,0,.3);align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:18px;box-sizing:border-box;color:#fff;text-align:center;}
-#partyCinemaHall .pch-screen{width:min(92%,560px);aspect-ratio:16/8.8;border-radius:16px;background:#000;border:2px solid rgba(255,255,255,.12);box-shadow:0 0 0 5px rgba(124,58,237,.10),0 18px 45px rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
-#partyCinemaHall .pch-screen::before{content:"🎬";font-size:46px;opacity:.55;}
-#partyCinemaHall .pch-title{font-size:20px;font-weight:1000;letter-spacing:.2px;}
-#partyCinemaHall .pch-sub{font-size:12px;color:#cbd5e1;max-width:300px;line-height:1.5;}
-#partyCinemaHall .pch-btn{border:0;border-radius:999px;padding:11px 20px;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;font-weight:900;font-size:13px;box-shadow:0 8px 20px rgba(79,70,229,.35);}
-#partyCinemaHall .pch-btn:active{transform:scale(.97);}
-#partyCinemaHall .pch-host{font-size:10px;color:#a78bfa;}
-#prRoom.party-cinema-layout #cinemaSeats{z-index:40;top:auto!important;bottom:116px!important;}
-#prRoom.party-cinema-layout #cinemaChatPanel{z-index:45;}
-#prRoom.party-cinema-layout #partyCinemaHall .pch-screen video{width:100%;height:100%;object-fit:contain;background:#000;}
-</style>
-<script id="partyCinemaHallFinalScript">
-(function(){
-  function $(id){return document.getElementById(id);}
-  function ensureHall(){
-    var room=$('prRoom');if(!room)return null;
-    var h=$('partyCinemaHall');
-    if(!h){
-      h=document.createElement('div');h.id='partyCinemaHall';
-      h.innerHTML='<div class="pch-screen" id="partyCinemaScreen"></div><div class="pch-title">🎬 Cinema Hall</div><div class="pch-sub">Host यहाँ movie file चुनकर सबके साथ Cinema Hall में चला सकता है।</div><button type="button" class="pch-btn" id="partyCinemaChooseBtn">🎞️ Movie चुनें</button><div class="pch-host">👑 सिर्फ Host movie चला सकता है</div>';
-      room.appendChild(h);
-      $('partyCinemaChooseBtn').addEventListener('click',function(){
-        var isHost=false;try{isHost=!!cinemaIsHost;}catch(e){}
-        if(!isHost){ try{window.wtCinemaToast&&window.wtCinemaToast('सिर्फ Host movie चला सकता है');}catch(e){} return; }
-        var inp=$('movieFileInput');if(inp)inp.click();
-      });
-    }
-    return h;
-  }
-  function syncHallVisibility(){
-    var p=$('hostMoviePlayer'),h=$('partyCinemaHall'),room=$('prRoom');
-    if(!p||!h||!room) return;
-    if(!room.classList.contains('party-cinema-layout')) return;
-    h.style.display=p.classList.contains('movie-active')?'none':'flex';
-  }
-  function showCinema(){
-    var room=$('prRoom');if(!room)return;
-    ensureHall();
-    room.classList.add('party-cinema-layout');
-    room.classList.remove('party-youtube-layout','party-gaming-layout');
-    var gc=$('partyGamingCenter');if(gc)gc.style.display='none';
-    var stage=$('partyYoutubeStage');if(stage)stage.style.display='none';
-    var seats=$('cinemaSeats');if(seats){window.PR_SEATS=6;seats.innerHTML='';seats.__sigs=[];try{cinemaRenderSeats(window.__cinemaPeople||[]);}catch(e){}}
-    syncHallVisibility();
-  }
-  function hideCinema(){
-    var room=$('prRoom');if(room)room.classList.remove('party-cinema-layout');
-    var h=$('partyCinemaHall');if(h)h.style.display='none';
-  }
-  var oldSet=window.setPartyRoomMode;
-  window.setPartyRoomMode=async function(mode){
-    if(mode!=='cinema') return oldSet?oldSet(mode):undefined;
-    try{
-      if(!cinemaRoomId||!cinemaIsHost)return;
-      window.__partyRoomMode='cinema';
-      showCinema();
-      try{await db.collection('cinemaRooms').doc(cinemaRoomId).set({roomMode:'cinema',updatedAt:Date.now()},{merge:true});}catch(e){}
-      try{window.paintPartyRoomModeMenu&&window.paintPartyRoomModeMenu();}catch(e){}
-      try{renderPartySeatQuickSettings();}catch(e){}
-    }catch(e){console.error('Cinema mode error',e);}
-  };
-  var oldApply=window.cinemaApplyRoomMode;
-  window.cinemaApplyRoomMode=function(mode){
-    if(mode==='cinema'){showCinema();return;}
-    hideCinema();
-    return oldApply?oldApply(mode):undefined;
-  };
-  var oldSelect=window.selectPartyRoomMode;
-  window.selectPartyRoomMode=function(mode){
-    if(mode==='cinema'){
-      try{var m=$('prModeMenu');if(m)m.classList.remove('open');}catch(e){}
-      if(window.setPartyRoomMode)return window.setPartyRoomMode('cinema');
-    }
-    return oldSelect?oldSelect(mode):undefined;
-  };
-  function hookMovie(){
-    var inp=$('movieFileInput');if(!inp||inp.__cinemaHook)return;
-    inp.__cinemaHook=true;
-    /* Pehle yahan movie <video> element ko JS se Cinema Hall ke andar
-       appendChild karke move kiya jaata tha — WebView me video element ko
-       DOM me move karne se uski playback ruk/reset ho jaati thi (isiliye
-       kabhi movie khulti hi nahi thi, aur kabhi khulkar bhi chalti nahi thi).
-       Ab video apni asli jagah (poori screen par, jaisa pehle se kaam kar
-       raha tha) chalti hai; hum sirf Cinema Hall ke placeholder screen ko
-       chhupa/dikha dete hain taaki dono cheezein overlap na ho. */
-    inp.addEventListener('change',function(){ setTimeout(syncHallVisibility,250); });
-  }
-  hookMovie();setTimeout(hookMovie,500);setTimeout(hookMovie,1500);
-  var __cinemaPlayerObs=null;
-  function watchPlayerClass(){
-    var p=$('hostMoviePlayer');if(!p||__cinemaPlayerObs||!window.MutationObserver)return;
-    __cinemaPlayerObs=new MutationObserver(syncHallVisibility);
-    __cinemaPlayerObs.observe(p,{attributes:true,attributeFilter:['class']});
-  }
-  watchPlayerClass();setTimeout(watchPlayerClass,500);setTimeout(watchPlayerClass,1500);
-  window.wtCinemaToast=function(msg){
-    try{
-      var t=document.createElement('div');
-      t.className='pr-movie-toast';
-      t.textContent=msg;
-      document.body.appendChild(t);
-      setTimeout(function(){t.remove();},2600);
-    }catch(e){}
-  };
 })();
 </script>
 
