@@ -2381,9 +2381,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <button type="button" class="pr-seg-mode" data-mode="youtube" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('youtube')"><span class="pr-seg-icon">▶️</span><span>YouTube</span></button>
           </div>
           <div id="prTopRight">
-            <button type="button" id="prCornerProfile" onclick="openPartyRoomViewers()" aria-label="Profile photo"><span id="prCornerProfileInner">👤</span></button>
             <button type="button" id="prFloatingViewerBtn" onclick="openPartyRoomViewers()" aria-label="Active viewers">👁 <span id="prFloatingViewerCount">0</span></button>
-            <button type="button" id="prCloseBtn" onclick="cinemaLobbyBack()" aria-label="रूम से बाहर निकलें">✕</button>
             <button type="button" id="prTopGiftersBtn" onclick="openPartyRoomTopGifters()" aria-label="Top Gifter"><span aria-hidden="true" style="display:none">🏆</span><span>Top Gifter</span></button>
           </div>
         </div>
@@ -11276,3 +11274,9 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   document.addEventListener('DOMContentLoaded',function(){syncMode();syncProfile();});
 })();
 </script>
+
+<style id="partyRoomRemoveProfileAndClose">
+/* Party Room: remove the duplicate profile/viewer photo and close button only. */
+#prRoom #prCornerProfile,
+#prRoom #prCloseBtn{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+</style>
