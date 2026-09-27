@@ -11403,3 +11403,105 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   setInterval(wire,500);
 })();
 </script>
+
+<style id="partyRoomQFinalAtomicFix">
+/* Q FINAL: Q controls one atomic panel. Closed = only Q. Open = URL/Load/Upload panel + queue. */
+#prRoom.party-youtube-layout #ytRoomUrlBar,
+#prRoom.party-youtube-layout #ytRoomInputTools{
+  display:none !important;
+  visibility:hidden !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+}
+#prRoom.party-youtube-layout.yt-q-open #ytRoomUrlBar,
+#prRoom.party-youtube-layout.yt-q-open #ytRoomInputTools{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  pointer-events:auto !important;
+}
+#prRoom.party-youtube-layout.yt-q-open #ytRoomUrlBar .yt-room-url-row,
+#prRoom.party-youtube-layout.yt-q-open #ytRoomInputTools #ytRoomInlinePanel,
+#prRoom.party-youtube-layout.yt-q-open #ytRoomInlineQueue{
+  visibility:visible !important;
+  opacity:1 !important;
+  pointer-events:auto !important;
+}
+#prRoom.party-youtube-layout #ytRoomUiHideBtn{
+  display:flex !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  pointer-events:auto !important;
+  touch-action:manipulation !important;
+  z-index:99999 !important;
+}
+/* Viewer gets URL + Load, but not the local Upload control. */
+#prRoom.party-youtube-layout.yt-viewer #ytRoomUploadBtn,
+#prRoom.party-youtube-layout.yt-nonhost #ytRoomUploadBtn,
+#prRoom.party-youtube-layout.viewer #ytRoomUploadBtn{
+  display:none !important;
+}
+/* Keep only the main URL row in the Q panel; the old duplicate Q/history controls stay hidden. */
+#prRoom.party-youtube-layout #ytRoomInputTools .yt-room-tools-top,
+#prRoom.party-youtube-layout #ytRoomQueueBtn,
+#prRoom.party-youtube-layout #ytRoomInlineHistory{
+  display:none !important;
+}
+#prRoom.party-youtube-layout #ytRoomInlineQueueInput,
+#prRoom.party-youtube-layout #ytRoomInlineQueueLoad,
+#prRoom.party-youtube-layout #ytRoomInlineQueue .yt-room-inline-title{
+  display:none !important;
+}
+#prRoom.party-youtube-layout #ytRoomInlineQueueList{display:block !important;}
+</style>
+<script id="partyRoomQFinalAtomicFixScript">
+(function(){
+  function el(id){return document.getElementById(id);}
+  function root(){return el('prRoom');}
+  function isYT(){var r=root();return !!(r&&r.classList.contains('party-youtube-layout'));}
+  function isHost(){try{return typeof ytRoomHost==='function'&&!!ytRoomHost();}catch(e){try{return !!window.cinemaIsHost;}catch(x){return false;}}}
+  function setOpen(open){
+    var r=root(), q=el('ytRoomUiHideBtn'), url=el('ytRoomUrlBar'), tools=el('ytRoomInputTools'), panel=el('ytRoomInlinePanel'), queue=el('ytRoomInlineQueue');
+    if(!r||!q)return;
+    open=!!open;
+    r.classList.toggle('yt-q-open',open);
+    q.innerHTML='Q <span id="ytRoomUiHideBadge"></span>';
+    q.setAttribute('aria-label',open?'Queue और YouTube controls बंद करें':'Queue और YouTube controls खोलें');
+    q.title=q.getAttribute('aria-label');
+    [url,tools].forEach(function(x){if(!x)return;x.style.display=open?'block':'none';x.style.visibility=open?'visible':'hidden';x.style.opacity=open?'1':'0';x.style.pointerEvents=open?'auto':'none';});
+    if(panel){panel.style.display=open?'block':'none';panel.classList.toggle('open',open);panel.setAttribute('data-open',open?'queue':'');}
+    if(queue)queue.style.display=open?'block':'none';
+    if(!open && typeof renderInlineRoomPanel==='function')renderInlineRoomPanel('');
+    if(open && typeof renderInlineRoomPanel==='function')renderInlineRoomPanel('queue');
+    var upload=el('ytRoomUploadBtn');
+    if(upload)upload.style.display=(open&&isHost())?'inline-flex':'none';
+  }
+  function wire(){
+    var r=root(), q=el('ytRoomUiHideBtn'); if(!r||!q)return;
+    q.style.pointerEvents='auto'; q.style.touchAction='manipulation';
+    if(!q.__atomicQ){
+      q.__atomicQ=true;
+      q.addEventListener('click',function(e){
+        e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();
+        if(!isYT())return false;
+        setOpen(!r.classList.contains('yt-q-open'));
+        return false;
+      },true);
+      q.addEventListener('pointerup',function(e){e.stopPropagation();},true);
+      q.addEventListener('touchend',function(e){e.stopPropagation();},true);
+    }
+    if(!isYT()) setOpen(false);
+    else {
+      var open=r.classList.contains('yt-q-open');
+      setOpen(open);
+    }
+  }
+  window.ytRoomAtomicQSet=function(open){setOpen(!!open);};
+  window.ytRoomCollapseControls=function(){setOpen(false);};
+  window.ytRoomOpenQ=function(){setOpen(true);};
+  window.ytRoomCloseQ=function(){setOpen(false);};
+  document.addEventListener('DOMContentLoaded',wire);
+  setTimeout(wire,100);setTimeout(wire,500);setTimeout(wire,1200);
+  setInterval(wire,1000);
+})();
+</script>
