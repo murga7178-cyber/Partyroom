@@ -11,6 +11,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <style id="pkSharedBase">
 * { box-sizing: border-box; }
 html {
@@ -2026,6 +2027,7 @@ const firebaseConfig = {
   };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+let storage = null; try{ storage = firebase.storage(); }catch(e){ try{console.error('firebase.storage() failed',e);}catch(_){} }
 let auth = null; try{ auth = firebase.auth(); }catch(e){ window.__pkAuthInitError = e; try{console.error('firebase.auth() failed',e);}catch(_){} }
 try{ db.settings({ experimentalAutoDetectLongPolling:true, merge:true }); }catch(e){}
 
@@ -2415,6 +2417,10 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <div id="ytRoomEmpty" class="yt-room-empty"><div style="font-size:46px;">▶️</div><div>YouTube Queue से video चुनें</div><div style="font-size:12px;opacity:.7;">Queue में link कोई भी डाल सकता है • Play सिर्फ Host करेगा</div></div>
             <iframe id="ytRoomFrame" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
             <div id="ytRoomPlayerDiv"></div>
+            <video id="ytRoomLocalVideo" playsinline webkit-playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:none;"></video>
+            <div id="ytRoomUploadBar" style="position:absolute;left:10px;right:10px;bottom:10px;z-index:22;display:none;align-items:center;gap:8px;">
+              <div id="ytRoomUploadProgress" style="flex:1;height:6px;border-radius:4px;background:rgba(255,255,255,.18);overflow:hidden;display:none;"><div id="ytRoomUploadProgressFill" style="height:100%;width:0%;background:linear-gradient(90deg,#22c55e,#16a34a);"></div></div>
+            </div>
             <div id="ytRoomBlock" class="yt-room-block"></div>
             <div class="yt-room-hostbar"><label style="display:flex;align-items:center;gap:5px;background:rgba(15,23,42,.82);border-radius:10px;padding:5px 8px;color:#fff;font-size:11px;">🔊<input id="ytRoomVolume" type="range" min="0" max="100" value="80" style="width:82px;"></label><button type="button" id="ytRoomCloseVideoBtn" class="yt-room-close-video" onclick="window.ytRoomCloseShared&&window.ytRoomCloseShared()" title="सभी के लिए YouTube बंद करें">✕ बंद करें</button></div>
           </div>
@@ -2425,6 +2431,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
               <input id="ytRoomInput" type="text" autocomplete="off" inputmode="none" placeholder="YouTube link / Shorts link...">
               <button type="button" id="ytRoomPasteBtn" title="Clipboard से YouTube लिंक Paste करें">📋</button>
               <button type="button" id="ytRoomLoadBtn" onclick="window.ytRoomBottomSubmit&&window.ytRoomBottomSubmit()">Load</button>
+              <button type="button" id="ytRoomUploadBtn" title="गैलरी से Video चलाएँ (अधिकतम 100MB)">📤</button>
+              <input type="file" id="ytRoomUploadInput" accept="video/*" style="display:none;">
             </div>
             <div class="yt-room-input-hint">Host: Load • Viewer: Queue में जोड़ेगा</div>
           </div>
@@ -9343,19 +9351,42 @@ function ytRoomWriteState(patch){
   try{ref.collection('youtube').doc('state').set(patch,{merge:true}).catch(function(){});}catch(e){}
 }
 function ytRoomSyncNow(force){
-  if(!ytRoomIsActive()||!ytRoomHost()||!ytPlayer||!ytReady)return;
+  if(!ytRoomIsActive()||!ytRoomHost())return;
+  if(current&&current.upload){
+    var lvS=$('ytRoomLocalVideo'); if(!lvS)return;
+    try{
+      var ctU=lvS.currentTime||0, playingU=!lvS.paused&&!lvS.ended;
+      if(force||playingU) ytRoomWriteState({type:'upload',videoUrl:current.url||'',title:current.title||'',playing:playingU,currentTime:ctU,stopped:false});
+    }catch(e){}
+    return;
+  }
+  if(!ytPlayer||!ytReady)return;
   try{
     var st=window.YT&&ytPlayer.getPlayerState(), playing=st===YT.PlayerState.PLAYING;
     var ct=ytPlayer.getCurrentTime()||0;
-    if(force||playing) ytRoomWriteState({playing:playing,currentTime:ct,videoId:current&&current.id||'',listId:current&&current.list||'',title:current&&current.title||'',shorts:!!(current&&current.shorts)});
+    if(force||playing) ytRoomWriteState({type:'youtube',playing:playing,currentTime:ct,videoId:current&&current.id||'',listId:current&&current.list||'',title:current&&current.title||'',shorts:!!(current&&current.shorts)});
   }catch(e){}
 }
 function ytRoomApplyState(d){
   if(!ytRoomIsActive()||!d)return;
   ytRemoteApplying=true;
   try{
+    if(d.type==='upload'&&d.videoUrl){
+      var sameU=!!(current&&current.upload&&current.url===d.videoUrl);
+      if(!sameU){ ytRoomSuppressNextSync=true; playUploadedVideo(d.videoUrl,d.title||'Video',{start:Number(d.currentTime)||0,playing:d.playing!==false,addedBy:d.updatedBy||'Host',remote:true}); }
+      else{
+        var lv=$('ytRoomLocalVideo');
+        if(lv){
+          var targetU=Math.max(0,Number(d.currentTime)||0), nowU=lv.currentTime||0;
+          if(Math.abs(nowU-targetU)>2){ try{lv.currentTime=targetU;}catch(e){} }
+          if(d.playing===true){ var pr=lv.play(); if(pr&&pr.catch)pr.catch(function(){}); } else if(d.playing===false){ try{lv.pause();}catch(e){} }
+        }
+      }
+      ytRemoteApplying=false; return;
+    }
+    if(d.stopped&&current&&current.upload){ stopVideo(); ytRemoteApplying=false; return; }
     var info=d.videoId?{type:'video',id:String(d.videoId),list:d.listId||'',shorts:!!d.shorts}:null;
-    var same=!!(info&&current&&String(current.id)===String(info.id)&&String(current.list||'')===String(info.list||''));
+    var same=!!(info&&current&&!current.upload&&String(current.id)===String(info.id)&&String(current.list||'')===String(info.list||''));
     if(info&&!same){ ytRoomSuppressNextSync=true; playInfo(info,d.title||('YouTube • '+info.id),{addedBy:d.updatedBy||'Host',share:false,start:Number(d.currentTime)||0}); }
     else if(info&&ytPlayer&&ytReady){
       var target=Math.max(0,Number(d.currentTime)||0), now=ytPlayer.getCurrentTime()||0;
@@ -9366,6 +9397,72 @@ function ytRoomApplyState(d){
   }catch(e){}
   ytRemoteApplying=false;
 }
+/* ---- Gallery-uploaded video (real-time sync, same as YouTube Mode) ---- */
+function ytRoomUploadStoragePath(fileName){
+  var rid=getRoomId()||'default';
+  return 'roomVideos/'+rid+'/'+Date.now()+'_'+String(fileName||'video').replace(/[^a-zA-Z0-9_.-]/g,'_');
+}
+function playUploadedVideo(url,title,opts){
+  opts=opts||{};
+  destroyPlayer();
+  var lv=$('ytRoomLocalVideo'); if(!lv)return;
+  current={id:'',upload:true,url:url,title:title||'Video',addedBy:opts.addedBy||'You',ts:Date.now()};
+  lv.src=url; lv.style.display='block'; lv.controls=!!ytRoomHost();
+  var emp=$('ytRoomEmpty'); if(emp)emp.style.display='none';
+  var start=Math.max(0,Number(opts.start)||0);
+  var applyStart=function(){ try{ if(start)lv.currentTime=start; }catch(e){} if(opts.playing!==false){ var pr=lv.play(); if(pr&&pr.catch)pr.catch(function(){}); } lv.removeEventListener('loadedmetadata',applyStart); };
+  lv.addEventListener('loadedmetadata',applyStart);
+  if(ytRoomHost()&&!opts.remote){
+    ytRoomWriteState({type:'upload',videoUrl:url,title:current.title,playing:true,currentTime:start,stopped:false});
+  }
+  ytRoomUpdateUI();
+  toast('🎬 Playing: '+current.title,1600);
+}
+function ytRoomHandleUploadFile(file){
+  if(!file)return;
+  refreshHostState();
+  if(!ytRoomHost()){toast('👑 सिर्फ Host video चला सकता है',1800);return;}
+  if(!file.type||file.type.indexOf('video')!==0){toast('❌ सिर्फ Video file चुनें');return;}
+  var MAXB=100*1024*1024;
+  if(file.size>MAXB){toast('❌ Video 100MB से बड़ी है, छोटी video चुनें');return;}
+  if(!storage){toast('❌ Upload उपलब्ध नहीं है');return;}
+  var bar=$('ytRoomUploadBar'), prog=$('ytRoomUploadProgress'), fill=$('ytRoomUploadProgressFill');
+  if(bar)bar.style.display='flex'; if(prog)prog.style.display='block'; if(fill)fill.style.width='0%';
+  toast('📤 Upload हो रहा है...',1500);
+  var path=ytRoomUploadStoragePath(file.name);
+  var task=storage.ref().child(path).put(file,{contentType:file.type});
+  task.on('state_changed',function(snap){
+    var pct=snap.totalBytes?Math.round((snap.bytesTransferred/snap.totalBytes)*100):0;
+    if(fill)fill.style.width=pct+'%';
+  },function(err){
+    if(bar)bar.style.display='none';
+    toast('❌ Upload नहीं हो पाया, दोबारा कोशिश करें');
+  },function(){
+    task.snapshot.ref.getDownloadURL().then(function(url){
+      if(bar)bar.style.display='none';
+      playUploadedVideo(url,file.name||'Video',{addedBy:'You'});
+    }).catch(function(){ if(bar)bar.style.display='none'; toast('❌ Video link नहीं मिला'); });
+  });
+}
+(function initYtRoomUpload(){
+  var btn=document.getElementById('ytRoomUploadBtn'), inp=document.getElementById('ytRoomUploadInput'), lv=document.getElementById('ytRoomLocalVideo');
+  if(btn&&inp){
+    btn.addEventListener('click',function(){
+      refreshHostState();
+      if(!ytRoomHost()){toast('👑 सिर्फ Host video चला सकता है',1800);return;}
+      inp.value=''; inp.click();
+    });
+    inp.addEventListener('change',function(){ if(inp.files&&inp.files[0])ytRoomHandleUploadFile(inp.files[0]); });
+  }
+  if(lv){
+    lv.addEventListener('play',function(){ if(ytRoomIsActive()&&current&&current.upload&&ytRoomHost()&&!ytRemoteApplying) ytRoomWriteState({type:'upload',videoUrl:current.url,title:current.title,playing:true,currentTime:lv.currentTime||0,stopped:false}); });
+    lv.addEventListener('pause',function(){ if(ytRoomIsActive()&&current&&current.upload&&ytRoomHost()&&!ytRemoteApplying) ytRoomWriteState({type:'upload',videoUrl:current.url,title:current.title,playing:false,currentTime:lv.currentTime||0,stopped:false}); });
+    lv.addEventListener('seeked',function(){ if(ytRoomIsActive()&&current&&current.upload&&ytRoomHost()&&!ytRemoteApplying) ytRoomWriteState({type:'upload',videoUrl:current.url,title:current.title,playing:!lv.paused,currentTime:lv.currentTime||0,stopped:false}); });
+    lv.addEventListener('ended',function(){ if(ytRoomIsActive()&&current&&current.upload&&ytRoomHost()&&!ytRemoteApplying){ toast('⏹️ Video खत्म',1500); ytRoomWriteState({type:'upload',videoUrl:current.url,title:current.title,playing:false,currentTime:lv.duration||0,stopped:true}); } });
+  }
+})();
+window.ytRoomHandleUploadFile=ytRoomHandleUploadFile;
+window.playUploadedVideo=playUploadedVideo;
 function ytRoomStartSync(){
   var ref=ytRoomRef(); if(!ref)return;
   if(ytRoomStateUnsub)try{ytRoomStateUnsub();}catch(e){}
@@ -9411,7 +9508,7 @@ function partyRoomYoutubeExit(keepSound){
   }
   try{
     if(ytRoomHost() && current){
-      ytRoomWriteState({videoId:'',listId:'',title:'',playing:false,currentTime:0,stopped:true,closedBy:'mode-change',closedAt:Date.now()});
+      ytRoomWriteState({type:'',videoId:'',listId:'',videoUrl:'',title:'',playing:false,currentTime:0,stopped:true,closedBy:'mode-change',closedAt:Date.now()});
     }
   }catch(e){}
   try{destroyPlayer();}catch(e){}
@@ -9515,6 +9612,7 @@ function destroyPlayer(){
   var d=$('ytPlayerDiv');if(d)d.remove();
   if(frameHost){frameHost.style.display='block';frameHost.removeAttribute('src');}
   var rf=$('ytRoomFrame');if(rf){rf.style.display='block';rf.removeAttribute('src');}
+  var lv=$('ytRoomLocalVideo');if(lv){try{lv.pause();}catch(e){}lv.removeAttribute('src');lv.load&&lv.load();lv.style.display='none';lv.removeAttribute('controls');}
   var stage=ytRoomStage();if(stage){stage.classList.remove('yt-shorts-mode');stage.removeAttribute('data-video-type');}
   var rem=$('ytRoomEmpty');if(rem)rem.style.display='flex';
 }
@@ -9720,7 +9818,7 @@ function updatePlayPause(){
   }catch(e){}
 }
 function stopVideo(){
-  if(ytRoomIsActive()&&!ytRemoteApplying&&ytRoomHost()) ytRoomWriteState({videoId:'',listId:'',title:'',playing:false,currentTime:0,stopped:true,volume:volume,muted:muted});
+  if(ytRoomIsActive()&&!ytRemoteApplying&&ytRoomHost()) ytRoomWriteState({type:'',videoId:'',listId:'',videoUrl:'',title:'',playing:false,currentTime:0,stopped:true,volume:volume,muted:muted});
   destroyPlayer();current=null;
   var closeBtnRoom=$('ytRoomCloseVideoBtn'); if(closeBtnRoom)closeBtnRoom.style.display='none';
   if(mini)mini.classList.remove('open');
@@ -9733,7 +9831,7 @@ function ytRoomCloseShared(){
   if(!ytRoomIsActive()||!ytRoomHost()){toast('👑 सिर्फ Host सभी के लिए YouTube बंद कर सकता है',1800);return;}
   if(!current){toast('YouTube video अभी नहीं चल रहा',1500);return;}
   /* Host writes the stop state first. Every viewer is subscribed to this same document. */
-  ytRoomWriteState({videoId:'',listId:'',title:'',playing:false,currentTime:0,stopped:true,volume:volume,muted:muted,closedBy:'host',closedAt:Date.now()});
+  ytRoomWriteState({type:'',videoId:'',listId:'',videoUrl:'',title:'',playing:false,currentTime:0,stopped:true,volume:volume,muted:muted,closedBy:'host',closedAt:Date.now()});
   destroyPlayer();
   current=null;
   var closeBtnRoom=$('ytRoomCloseVideoBtn'); if(closeBtnRoom)closeBtnRoom.style.display='none';
