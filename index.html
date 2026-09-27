@@ -435,6 +435,8 @@ html, body { overscroll-behavior-y: none; }
 #prCloseBtn{flex:none;width:38px;height:38px;border:0;border-radius:50%;background:rgba(25,10,60,.48);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:19px;line-height:1;cursor:pointer;touch-action:manipulation;display:grid;place-items:center;}
 #prCloseBtn:active{transform:scale(.92);}
 #prTopRight{display:flex;align-items:center;gap:8px;flex:none;}
+#prFloatingViewerBtn{flex:none;display:inline-flex;align-items:center;gap:4px;height:38px;padding:0 12px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(25,10,60,.48);color:#fff;font-weight:800;font-size:12px;cursor:pointer;touch-action:manipulation;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+#prFloatingViewerBtn:active{transform:scale(.94);}
 #prModeMenuWrap{position:relative;flex:0 0 auto;z-index:220;display:none;margin-right:124px;}
 #prModeMenuWrap[data-host="1"]{display:block;}
 #prModeMenuBtn{height:40px;min-width:88px;padding:0 12px;border-radius:20px;border:1px solid rgba(167,139,250,.9);background:linear-gradient(135deg,rgba(49,27,105,.94),rgba(30,18,75,.94));color:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font:900 13px/1 Segoe UI,Arial,sans-serif;box-shadow:0 5px 18px rgba(88,28,135,.24),0 0 0 1px rgba(255,255,255,.05) inset;cursor:pointer;touch-action:manipulation;}
@@ -497,7 +499,7 @@ html, body { overscroll-behavior-y: none; }
 /* second row: online count + more */
 #prSubRow{display:flex;align-items:center;justify-content:space-between;margin-top:8px;flex:0 0 auto;}
 #prSubRow button{border:1px solid rgba(255,255,255,.14);color:#fff;font-weight:800;cursor:pointer;touch-action:manipulation;}
-#cinemaViewerBtn{display:inline-flex;align-items:center;gap:5px;font-size:12px;background:rgba(25,10,60,.48)!important;border-radius:999px!important;padding:6px 12px!important;backdrop-filter:blur(8px);}
+#cinemaViewerBtn{display:none!important;}
 #cinemaSettingsBtn{font-size:12px!important;background:rgba(25,10,60,.48)!important;border-radius:999px!important;padding:6px 12px!important;border:1px solid rgba(255,255,255,.14)!important;box-shadow:none!important;}
 #prTicker{margin:8px 0 0 auto;max-width:78%;align-self:flex-end;display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px 0 0 999px;background:linear-gradient(90deg,rgba(60,30,130,.55),rgba(35,60,140,.6));border:1px solid rgba(255,255,255,.14);border-right:0;color:#fff;font-size:13px;font-weight:800;line-height:1.2;flex:0 0 auto;}
 #prTickerTxt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -2364,6 +2366,52 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
           </div>
         </div>
       </div>
+      <style id="partyChatPastelSkin">
+/* ===== Chat Mode pastel glass re-skin — only when NOT gaming/youtube/cinema ===== */
+#prRoom.pcps-active{background:linear-gradient(160deg,#eef1ff 0%,#f4e9fb 28%,#eaf1ff 55%,#dfeaff 100%)!important;}
+#prRoom.pcps-active::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:1!important;
+  background-image:
+    radial-gradient(ellipse 150% 55% at 10% 118%, rgba(196,181,253,.55), transparent 62%),
+    radial-gradient(ellipse 150% 55% at 92% 128%, rgba(147,197,253,.5), transparent 62%),
+    radial-gradient(ellipse 90% 40% at 50% 150%, rgba(244,190,225,.4), transparent 60%)!important;}
+#prRoom.pcps-active #prTop,#prRoom.pcps-active #cinemaSeats,#prRoom.pcps-active #partyRoomBottomDock,#prRoom.pcps-active #pcpsTabs{position:relative;z-index:5;}
+#prRoom.pcps-active #prRoomPill{background:rgba(255,255,255,.78)!important;border:1px solid rgba(255,255,255,.95)!important;box-shadow:0 8px 22px rgba(124,58,237,.14)!important;border-radius:999px!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:5px 16px 5px 6px!important;}
+#prRoom.pcps-active #prRoomAvatar{background:#fde68a!important;border:2px solid #fff!important;box-shadow:0 3px 10px rgba(0,0,0,.15)!important;}
+#prRoom.pcps-active #cinemaRoomLabelTop{color:#312e81!important;font-weight:900!important;}
+#prRoom.pcps-active .pr-room-sub{color:#6d28d9!important;}
+#pcpsTabs{display:flex!important;align-items:center;gap:4px;background:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.9);border-radius:999px;padding:4px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 16px rgba(124,58,237,.1);position:relative;z-index:120;}
+/* पुराना Mode dropdown और gaming/YouTube वाले अलग floating mode बटन हमेशा के लिए हटाए गए — अब हर mode में यही pill-tabs दिखेंगे */
+#prModeMenuBtn,#prModeMenu,#prModeBtnG,#prChatModeBtnG{display:none!important;}
+#prModeMenuWrap{margin-right:0!important;}
+#prRoom.party-gaming-layout #pcpsTabs,#prRoom.party-youtube-layout #pcpsTabs{position:relative!important;left:auto!important;top:auto!important;}
+.pcps-tab{border:0;background:transparent;color:#4c1d95;font-weight:800;font-size:12px;padding:7px 10px;border-radius:999px;display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;}
+.pcps-tab.active{background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;box-shadow:0 4px 10px rgba(124,58,237,.35);}
+#prRoom.pcps-active #prTopRight{gap:6px!important;}
+#prRoom.pcps-active #prSeatQuickBtn,#prRoom.pcps-active #prFloatingViewerBtn,#prRoom.pcps-active #prCloseBtn,#prRoom.pcps-active #prTopGiftersBtn{background:rgba(255,255,255,.78)!important;border:1px solid rgba(255,255,255,.95)!important;color:#4c1d95!important;box-shadow:0 6px 14px rgba(124,58,237,.12)!important;}
+#prRoom.pcps-active #cinemaSeats .psf-avatar{background:radial-gradient(circle at 35% 28%, rgba(255,255,255,.95), rgba(196,209,255,.55) 40%, rgba(167,139,250,.5) 75%)!important;border:1px solid rgba(255,255,255,.85)!important;box-shadow:0 6px 14px rgba(124,58,237,.22),inset 0 2px 4px rgba(255,255,255,.8),inset 0 -6px 10px rgba(124,58,237,.18)!important;border-radius:50%!important;}
+#prRoom.pcps-active #cinemaSeats .psf-avatar::after{content:"";position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);width:70%;height:8px;border-radius:50%;background:linear-gradient(180deg,#c4b5fd,#8b5cf6);box-shadow:0 3px 6px rgba(124,58,237,.35);}
+#prRoom.pcps-active #cinemaSeats .psf-core{background:transparent!important;color:#5b21b6!important;text-shadow:0 1px 2px rgba(255,255,255,.6);}
+#prRoom.pcps-active #cinemaSeats .psf-label{background:rgba(255,255,255,.85)!important;border:1px solid rgba(255,255,255,.95)!important;border-radius:999px!important;padding:3px 9px!important;color:#4c1d95!important;box-shadow:0 3px 8px rgba(124,58,237,.12)!important;margin-top:9px!important;}
+#prRoom.pcps-active #cinemaSeats .psf-label .psf-nm::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#22c55e;margin-right:5px;vertical-align:middle;}
+#prRoom.pcps-active #cinemaSeats .psf-ring,#prRoom.pcps-active #cinemaSeats .psf-ring2,#prRoom.pcps-active #cinemaSeats .psf-glow,#prRoom.pcps-active #cinemaSeats .psf-dash,#prRoom.pcps-active #cinemaSeats .psf-sp{display:none!important;}
+#prRoom.pcps-active #partyRoomBottomDock{background:rgba(255,255,255,.75)!important;border:1px solid rgba(255,255,255,.95)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 -6px 20px rgba(124,58,237,.1)!important;}
+#prRoom.pcps-active #partyRoomBottomDock input,#prRoom.pcps-active #partyRoomBottomDock button:not(.prd-gift){color:#4c1d95!important;}
+#prRoom.pcps-active #cinemaChatInput{background:rgba(124,58,237,.08)!important;border:1px solid rgba(124,58,237,.18)!important;color:#312e81!important;}
+</style>
+      <script>
+      (function(){
+        function pcpsSync(){
+          var r=document.getElementById('prRoom'); if(!r) return;
+          var m=String(window.__partyRoomMode||'chat');
+          r.classList.toggle('pcps-active', m==='chat');
+          document.querySelectorAll('.pcps-tab').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-pcps-mode')===m); });
+        }
+        var _sel=window.selectPartyRoomMode;
+        window.selectPartyRoomMode=function(m){ if(typeof _sel==='function') _sel(m); setTimeout(pcpsSync,50); };
+        document.addEventListener('DOMContentLoaded', function(){ setTimeout(pcpsSync,300); });
+        setInterval(pcpsSync,1500);
+      })();
+      </script>
       <div id="prRoom">
         <div id="prTop">
           <div id="prRoomPill">
@@ -2372,6 +2420,11 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
               <div id="cinemaRoomLabelTop">—</div>
               <div class="pr-room-sub"><span id="cinemaHostName"></span><span class="pr-inline-viewers">👥 <span id="prInlineViewerCount">0</span></span></div>
             </div>
+          </div>
+          <div id="pcpsTabs">
+            <button type="button" class="pcps-tab" data-pcps-mode="chat" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('chat')">💬 Chat</button>
+            <button type="button" class="pcps-tab" data-pcps-mode="gaming" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('gaming')">🎮 Game</button>
+            <button type="button" class="pcps-tab" data-pcps-mode="youtube" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('youtube')">▶️ YouTube</button>
           </div>
           <div id="prModeMenuWrap">
             <button type="button" id="prModeMenuBtn" aria-haspopup="menu" aria-expanded="false" onclick="window.togglePartyRoomModeMenu&&window.togglePartyRoomModeMenu()">⚙️ <span>Mode</span><span class="pr-mode-chevron">⌄</span></button>
@@ -2384,6 +2437,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <div id="prSeatQuickPanel" aria-hidden="true"></div>
           </div>
           <div id="prTopRight">
+            <button type="button" id="prFloatingViewerBtn" onclick="openPartyRoomViewers()" aria-label="Active viewers">👁 <span id="prFloatingViewerCount">0</span></button>
             <button type="button" id="prCloseBtn" onclick="cinemaLobbyBack()" aria-label="रूम से बाहर निकलें">✕</button>
             <button type="button" id="prTopGiftersBtn" onclick="openPartyRoomTopGifters()" aria-label="Top Gifter"><span aria-hidden="true" style="display:none">🏆</span><span>Top Gifter</span></button>
           </div>
@@ -2429,13 +2483,14 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <div class="yt-room-input-label">YouTube URL यहाँ डालें</div>
             <div class="yt-room-url-row">
               <input id="ytRoomInput" type="text" autocomplete="off" inputmode="none" placeholder="YouTube link / Shorts link...">
-              <button type="button" id="ytRoomPasteBtn" title="Clipboard से YouTube लिंक Paste करें">📋</button>
+              <button type="button" id="ytRoomClearBtn" title="साफ़ करें" aria-label="Clear">✕</button>
               <button type="button" id="ytRoomLoadBtn" onclick="window.ytRoomBottomSubmit&&window.ytRoomBottomSubmit()">Load</button>
               <button type="button" id="ytRoomUploadBtn" title="गैलरी से Video चलाएँ (अधिकतम 100MB)">📤</button>
               <input type="file" id="ytRoomUploadInput" accept="video/*" style="display:none;">
             </div>
-            <div class="yt-room-input-hint">Host: Load • Viewer: Queue में जोड़ेगा</div>
+            <div class="yt-room-input-hint">Host: Load</div>
           </div>
+          <button type="button" id="ytRoomMiniQBtn" class="yt-room-mini-q" onclick="window.ytRoomTogglePanel&&window.ytRoomTogglePanel('queue')" aria-label="Queue" title="Queue में लिंक जोड़ें">Q <span id="ytRoomMiniQBadge">0</span></button>
           <div class="yt-room-input-tools" id="ytRoomInputTools">
             <div class="yt-room-tools-top">
               <button type="button" id="ytRoomHistoryBtn" onclick="window.ytRoomTogglePanel&&window.ytRoomTogglePanel('history')">💾 History</button>
@@ -2444,7 +2499,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <div id="ytRoomInlinePanel" class="yt-room-inline-panel" aria-live="polite">
               <div id="ytRoomInlineQueue" class="yt-room-inline-pane">
                 <div class="yt-room-inline-title">📺 Q में YouTube लिंक डालें</div>
-                <div class="yt-room-inline-row"><input id="ytRoomInlineQueueInput" type="text" autocomplete="off" placeholder="YouTube link यहाँ paste करें..."><button type="button" id="ytRoomInlineQueueLoad">Load</button></div>
+                <div class="yt-room-inline-row"><input id="ytRoomInlineQueueInput" type="text" autocomplete="off" placeholder="YouTube link यहाँ paste करें..."><button type="button" id="ytRoomInlineQueueClearBtn" title="साफ़ करें" aria-label="Clear">✕</button><button type="button" id="ytRoomInlineQueueLoad">Load</button></div>
                 <div id="ytRoomInlineQueueList" class="yt-room-inline-list"></div>
               </div>
               <div id="ytRoomInlineHistory" class="yt-room-inline-pane">
@@ -2454,7 +2509,32 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             </div>
           </div>
         </div>
-        <div id="partyGamingCenter" aria-label="Gaming area">
+        <style id="ytRoomViewerCleanup">
+#partyYoutubeStage.yt-nonhost #ytRoomUrlBar{display:none!important;}
+#partyYoutubeStage.yt-nonhost .yt-room-tools-top{display:none!important;}
+#partyYoutubeStage.yt-host .yt-room-mini-q{display:none!important;}
+.yt-room-mini-q{position:absolute;top:10px;right:66px;z-index:22;display:flex;align-items:center;gap:4px;border:0;border-radius:999px;padding:6px 10px;background:rgba(15,23,42,.82);color:#fff;font-weight:900;font-size:11px;}
+.yt-room-mini-q:active{transform:scale(.94);}
+#ytRoomClearBtn,#ytRoomInlineQueueClearBtn{width:34px;flex:0 0 34px;background:rgba(255,255,255,.10)!important;border:1px solid rgba(255,255,255,.16)!important;color:#fff!important;font-size:14px!important;border-radius:10px;}
+#ytRoomClearBtn:active,#ytRoomInlineQueueClearBtn:active{transform:scale(.96);}
+        </style>
+        <script>
+        (function(){
+          function bindClear(btnId, inputId){
+            var b=document.getElementById(btnId), i=document.getElementById(inputId);
+            if(b && i && !b.__clearBound){
+              b.__clearBound=true;
+              b.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); i.value=''; i.dispatchEvent(new Event('input',{bubbles:true})); i.focus(); });
+            }
+          }
+          function bindMiniQ(){
+            var qb=document.getElementById('ytRoomQueueBadge'), mb=document.getElementById('ytRoomMiniQBadge');
+            if(qb && mb) mb.textContent=qb.textContent;
+          }
+          document.addEventListener('DOMContentLoaded', function(){ setTimeout(function(){ bindClear('ytRoomClearBtn','ytRoomInput'); bindClear('ytRoomInlineQueueClearBtn','ytRoomInlineQueueInput'); },300); });
+          setInterval(function(){ bindClear('ytRoomClearBtn','ytRoomInput'); bindClear('ytRoomInlineQueueClearBtn','ytRoomInlineQueueInput'); bindMiniQ(); },1500);
+        })();
+        </script>
           <div class="pgc-head">
             <button type="button" id="pgcBackBtn" class="pgc-btn pgc-gear pgc-back" onclick="pkCloseJumpGame()" aria-label="सभी गेम">←</button>
             <div class="pgc-badge">🎮</div>
@@ -2803,6 +2883,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       window.__cinemaPeople=people;
       const count=document.getElementById('cinemaViewerCount');
       if(count) count.textContent=people.length;
+      const fvc=document.getElementById('prFloatingViewerCount');
+      if(fvc) fvc.textContent=people.length;
       cinemaRenderSeats(people);
     });
   }
@@ -7537,7 +7619,7 @@ body.pk-game-open #pkUniversalNav{display:none!important}
     var g=$('prModeBtnG'); if(g) g.remove();
     var c=$('prChatModeBtnG'); if(c) c.remove();
     var mode=String(window.__partyRoomMode||'chat');
-    var iv=$('prInlineViewerCount'), vc=$('cinemaViewerCount'); if(iv&&vc) iv.textContent=vc.textContent||'0';
+    var iv=$('prInlineViewerCount'), vc=$('cinemaViewerCount'), fv=$('prFloatingViewerCount'); if(iv&&vc) iv.textContent=vc.textContent||'0'; if(fv&&vc) fv.textContent=vc.textContent||'0';
     var mw=$('prModeMenuWrap'); if(mw){ if(host()) mw.setAttribute('data-host','1'); else { mw.removeAttribute('data-host'); closePartyRoomModeMenu(); } }
     paintModeMenu();
   }
@@ -10966,6 +11048,42 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 }
 #prRoom.party-youtube-layout.pr-youtube-extras-hidden:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomUiHideBtn{
   top:240px!important;
+}
+</style>
+
+<style id="prTopHostBtnsCompactFinal">
+/* Mode / Seat-toggle (4-8-12 seat switch) / Close: made small and pushed to
+   the edge, so the room avatar photo + title get more space. The seat-quick
+   panel now opens anchored to the RIGHT edge of its button instead of the
+   left, so it can no longer render past the screen edge (that was why
+   tapping it looked like it "did nothing"). Mode button keeps its size,
+   just sits closer to the edge cluster. */
+#prModeMenuWrap{margin-right:6px!important;}
+#prModeMenuWrap[data-host="1"]{display:flex!important;align-items:center;}
+#prSeatQuickBtn{
+  position:static!important;
+  width:26px!important;height:26px!important;min-width:26px!important;
+  margin-left:6px!important;
+  font-size:12px!important;
+  border-radius:50%!important;
+  display:inline-flex!important;align-items:center;justify-content:center;
+}
+#prSeatQuickPanel{
+  left:auto!important;
+  right:0!important;
+  top:calc(100% + 5px)!important;
+  width:168px!important;
+}
+#prCloseBtn{
+  width:26px!important;height:26px!important;min-width:26px!important;
+  font-size:13px!important;
+  order:5!important;
+}
+#prTopRight{gap:5px!important;}
+#prRoomPill{max-width:calc(100% - 150px)!important;}
+@media(max-width:430px){
+  #prRoomPill{max-width:calc(100% - 138px)!important;}
+  #prModeMenuBtn{min-width:64px!important;padding:0 8px!important;font-size:11.5px!important;height:30px!important;}
 }
 </style>
 
