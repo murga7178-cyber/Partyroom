@@ -11017,10 +11017,18 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
       h.innerHTML='<div class="pch-screen" id="partyCinemaScreen"></div><div class="pch-title">🎬 Cinema Hall</div><div class="pch-sub">Host यहाँ movie file चुनकर सबके साथ Cinema Hall में चला सकता है।</div><button type="button" class="pch-btn" id="partyCinemaChooseBtn">🎞️ Movie चुनें</button><div class="pch-host">👑 सिर्फ Host movie चला सकता है</div>';
       room.appendChild(h);
       $('partyCinemaChooseBtn').addEventListener('click',function(){
+        var isHost=false;try{isHost=!!cinemaIsHost;}catch(e){}
+        if(!isHost){ try{window.wtCinemaToast&&window.wtCinemaToast('सिर्फ Host movie चला सकता है');}catch(e){} return; }
         var inp=$('movieFileInput');if(inp)inp.click();
       });
     }
     return h;
+  }
+  function syncHallVisibility(){
+    var p=$('hostMoviePlayer'),h=$('partyCinemaHall'),room=$('prRoom');
+    if(!p||!h||!room) return;
+    if(!room.classList.contains('party-cinema-layout')) return;
+    h.style.display=p.classList.contains('movie-active')?'none':'flex';
   }
   function showCinema(){
     var room=$('prRoom');if(!room)return;
@@ -11030,6 +11038,7 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
     var gc=$('partyGamingCenter');if(gc)gc.style.display='none';
     var stage=$('partyYoutubeStage');if(stage)stage.style.display='none';
     var seats=$('cinemaSeats');if(seats){window.PR_SEATS=6;seats.innerHTML='';seats.__sigs=[];try{cinemaRenderSeats(window.__cinemaPeople||[]);}catch(e){}}
+    syncHallVisibility();
   }
   function hideCinema(){
     var room=$('prRoom');if(room)room.classList.remove('party-cinema-layout');
@@ -11064,19 +11073,32 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   function hookMovie(){
     var inp=$('movieFileInput');if(!inp||inp.__cinemaHook)return;
     inp.__cinemaHook=true;
-    inp.addEventListener('change',function(){
-      setTimeout(function(){
-        var p=$('hostMoviePlayer'),screen=$('partyCinemaScreen');
-        if(p&&screen&&p.src){
-          screen.innerHTML='';
-          p.style.position='absolute';p.style.inset='0';p.style.width='100%';p.style.height='100%';p.style.zIndex='1';p.style.display='block';p.style.objectFit='contain';
-          screen.appendChild(p);
-          var h=$('partyCinemaHall');if(h)h.style.display='flex';
-        }
-      },250);
-    });
+    /* Pehle yahan movie <video> element ko JS se Cinema Hall ke andar
+       appendChild karke move kiya jaata tha — WebView me video element ko
+       DOM me move karne se uski playback ruk/reset ho jaati thi (isiliye
+       kabhi movie khulti hi nahi thi, aur kabhi khulkar bhi chalti nahi thi).
+       Ab video apni asli jagah (poori screen par, jaisa pehle se kaam kar
+       raha tha) chalti hai; hum sirf Cinema Hall ke placeholder screen ko
+       chhupa/dikha dete hain taaki dono cheezein overlap na ho. */
+    inp.addEventListener('change',function(){ setTimeout(syncHallVisibility,250); });
   }
   hookMovie();setTimeout(hookMovie,500);setTimeout(hookMovie,1500);
+  var __cinemaPlayerObs=null;
+  function watchPlayerClass(){
+    var p=$('hostMoviePlayer');if(!p||__cinemaPlayerObs||!window.MutationObserver)return;
+    __cinemaPlayerObs=new MutationObserver(syncHallVisibility);
+    __cinemaPlayerObs.observe(p,{attributes:true,attributeFilter:['class']});
+  }
+  watchPlayerClass();setTimeout(watchPlayerClass,500);setTimeout(watchPlayerClass,1500);
+  window.wtCinemaToast=function(msg){
+    try{
+      var t=document.createElement('div');
+      t.className='pr-movie-toast';
+      t.textContent=msg;
+      document.body.appendChild(t);
+      setTimeout(function(){t.remove();},2600);
+    }catch(e){}
+  };
 })();
 </script>
 
