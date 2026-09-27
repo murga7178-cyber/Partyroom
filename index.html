@@ -2375,6 +2375,11 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
               <div class="pr-room-sub"><span id="cinemaHostName"></span><span class="pr-inline-viewers">👥 <span id="prInlineViewerCount">0</span></span></div>
             </div>
           </div>
+          <div id="prModeSegment" aria-label="Party Room Mode">
+            <button type="button" class="pr-seg-mode active" data-mode="chat" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('chat')"><span class="pr-seg-icon">💬</span><span>Chat</span></button>
+            <button type="button" class="pr-seg-mode" data-mode="gaming" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('gaming')"><span class="pr-seg-icon">🎮</span><span>Game</span></button>
+            <button type="button" class="pr-seg-mode" data-mode="youtube" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('youtube')"><span class="pr-seg-icon">▶️</span><span>YouTube</span></button>
+          </div>
           <div id="prModeMenuWrap">
             <button type="button" id="prModeMenuBtn" aria-haspopup="menu" aria-expanded="false" onclick="window.togglePartyRoomModeMenu&&window.togglePartyRoomModeMenu()">⚙️ <span>Mode</span><span class="pr-mode-chevron">⌄</span></button>
             <div id="prModeMenu" role="menu" aria-hidden="true">
@@ -2386,6 +2391,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <div id="prSeatQuickPanel" aria-hidden="true"></div>
           </div>
           <div id="prTopRight">
+            <button type="button" id="prCornerProfile" onclick="openPartyRoomViewers()" aria-label="Profile photo"><span id="prCornerProfileInner">👤</span></button>
             <button type="button" id="prFloatingViewerBtn" onclick="openPartyRoomViewers()" aria-label="Active viewers">👁 <span id="prFloatingViewerCount">0</span></button>
             <button type="button" id="prCloseBtn" onclick="cinemaLobbyBack()" aria-label="रूम से बाहर निकलें">✕</button>
             <button type="button" id="prTopGiftersBtn" onclick="openPartyRoomTopGifters()" aria-label="Top Gifter"><span aria-hidden="true" style="display:none">🏆</span><span>Top Gifter</span></button>
@@ -11143,3 +11149,140 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 /* Remove the old room-settings / more button from the bottom dock. */
 #prRoom #partyRoomBottomDock button[onclick*="openPartyRoomSettings"]{display:none!important;visibility:hidden!important;pointer-events:none!important;}
 </style>
+
+
+<style id="partyRoomOption3GlassHeader">
+/* Option 3 — Glass / Blur header: single room avatar + glass mode switch + corner profile. */
+#prTop{
+  gap:8px!important;
+  padding:5px 6px 7px!important;
+  min-height:56px!important;
+  box-sizing:border-box!important;
+  border-radius:20px!important;
+  background:rgba(22,14,52,.28)!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  box-shadow:0 8px 28px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.12)!important;
+  backdrop-filter:blur(18px) saturate(135%)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(135%)!important;
+}
+#prRoomPill{
+  flex:1 1 auto!important;
+  max-width:none!important;
+  min-width:0!important;
+  padding:4px 8px 4px 4px!important;
+  gap:8px!important;
+  background:rgba(255,255,255,.075)!important;
+  border:1px solid rgba(255,255,255,.18)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10)!important;
+  backdrop-filter:blur(14px)!important;
+  -webkit-backdrop-filter:blur(14px)!important;
+}
+/* Keep exactly one room/avatar element visible in the header. */
+#prRoomPill #prRoomAvatar{display:grid!important;flex:none!important;width:38px!important;height:38px!important;min-width:38px!important;}
+#prModeSegment{
+  flex:0 0 auto!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:3px!important;
+  padding:3px!important;
+  border-radius:999px!important;
+  background:rgba(20,10,45,.34)!important;
+  border:1px solid rgba(255,255,255,.20)!important;
+  box-shadow:inset 0 1px 8px rgba(0,0,0,.20),0 3px 14px rgba(0,0,0,.10)!important;
+  backdrop-filter:blur(16px)!important;
+  -webkit-backdrop-filter:blur(16px)!important;
+}
+.pr-seg-mode{
+  border:0!important;
+  height:34px!important;
+  min-width:50px!important;
+  padding:0 7px!important;
+  border-radius:999px!important;
+  background:transparent!important;
+  color:rgba(255,255,255,.84)!important;
+  font-size:10px!important;
+  font-weight:900!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:3px!important;
+  cursor:pointer!important;
+  touch-action:manipulation!important;
+  white-space:nowrap!important;
+  transition:.18s ease!important;
+}
+.pr-seg-mode .pr-seg-icon{font-size:15px!important;line-height:1!important;}
+.pr-seg-mode.active{
+  color:#fff!important;
+  background:linear-gradient(145deg,rgba(130,83,255,.88),rgba(82,58,210,.68))!important;
+  box-shadow:0 0 0 1px rgba(255,255,255,.25) inset,0 4px 16px rgba(118,78,255,.30)!important;
+}
+#prModeMenuWrap{display:none!important;}
+#prTopRight{flex:0 0 auto!important;gap:5px!important;display:flex!important;align-items:center!important;}
+#prCornerProfile{
+  width:38px!important;height:38px!important;min-width:38px!important;
+  padding:0!important;border-radius:13px!important;
+  border:1px solid rgba(255,255,255,.72)!important;
+  background:rgba(255,255,255,.10)!important;
+  color:#fff!important;display:grid!important;place-items:center!important;
+  overflow:hidden!important;cursor:pointer!important;
+  box-shadow:0 0 0 1px rgba(110,76,255,.30),0 5px 16px rgba(0,0,0,.18)!important;
+}
+#prCornerProfileInner{width:100%;height:100%;display:grid;place-items:center;font-size:18px;font-weight:900;background:linear-gradient(145deg,#3d275e,#171226);background-size:cover;background-position:center;}
+#prCornerProfileInner img{width:100%;height:100%;object-fit:cover;display:block;}
+#prFloatingViewerBtn,#prTopGiftersBtn{display:none!important;}
+#prCloseBtn{width:32px!important;height:32px!important;min-width:32px!important;font-size:15px!important;background:rgba(255,255,255,.08)!important;border-color:rgba(255,255,255,.18)!important;}
+.pr-room-sub{color:rgba(255,255,255,.76)!important;}
+@media(max-width:430px){
+  #prTop{padding:4px!important;gap:5px!important;border-radius:17px!important;}
+  #prRoomPill{padding-right:6px!important;gap:6px!important;}
+  #prRoomAvatar{width:35px!important;height:35px!important;min-width:35px!important;font-size:16px!important;}
+  #cinemaRoomLabelTop{font-size:13px!important;}
+  .pr-room-sub{font-size:9.5px!important;}
+  #prModeSegment{gap:2px!important;padding:2px!important;}
+  .pr-seg-mode{height:31px!important;min-width:42px!important;padding:0 5px!important;font-size:8.5px!important;gap:2px!important;}
+  .pr-seg-mode .pr-seg-icon{font-size:13px!important;}
+  #prCornerProfile{width:34px!important;height:34px!important;min-width:34px!important;border-radius:11px!important;}
+  #prCloseBtn{width:29px!important;height:29px!important;min-width:29px!important;font-size:13px!important;}
+}
+</style>
+<script id="partyRoomOption3GlassHeaderScript">
+(function(){
+  function $(id){return document.getElementById(id);}
+  function syncMode(){
+    var mode=String(window.__partyRoomMode||'chat');
+    document.querySelectorAll('#prModeSegment .pr-seg-mode').forEach(function(b){
+      b.classList.toggle('active',String(b.getAttribute('data-mode'))===mode);
+    });
+  }
+  function syncProfile(){
+    var box=$('prCornerProfileInner'); if(!box)return;
+    var ph='';
+    try{
+      if(typeof currentUserPhotoURL!=='undefined') ph=currentUserPhotoURL||'';
+      if(!ph && typeof currentUserKey!=='undefined' && typeof cinemaPhotoFor==='function') ph=cinemaPhotoFor(currentUserKey)||'';
+    }catch(e){}
+    if(ph && /^(data:image\/(jpeg|png|webp);base64,|https?:\/\/)/.test(ph)){
+      var old=box.querySelector('img');
+      if(!old){ box.innerHTML='<img alt="" src="'+ph.replace(/"/g,'&quot;')+'">'; }
+      else if(old.getAttribute('src')!==ph){ old.src=ph; }
+    }else if(!box.querySelector('img')){
+      var nm='';try{nm=(typeof currentUserName!=='undefined'?currentUserName:'').trim();}catch(e){}
+      box.textContent=(Array.from(nm||'U')[0]||'U').toUpperCase();
+    }
+  }
+  function wrapMode(){
+    if(window.__prOption3ModeWrapped || typeof window.selectPartyRoomMode!=='function') return;
+    var old=window.selectPartyRoomMode; window.__prOption3ModeWrapped=true;
+    window.selectPartyRoomMode=function(mode){
+      syncMode();
+      var out=old.apply(this,arguments);
+      Promise.resolve(out).finally(syncMode);
+      setTimeout(syncMode,120); setTimeout(syncMode,500);
+      return out;
+    };
+  }
+  setInterval(function(){wrapMode();syncMode();syncProfile();},500);
+  document.addEventListener('DOMContentLoaded',function(){syncMode();syncProfile();});
+})();
+</script>
