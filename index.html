@@ -2609,7 +2609,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   }
   window.__partyRoomMode='chat';
   window.__chatSeatCount=12;
-  window.__youtubeSeatCount=4;
+  window.__youtubeSeatCount=8;
   window.__cinemaSeatCount=4;
   window.__gamingSeatCount=4;
   function cinemaSetGamingLayout(mode){
@@ -11143,3 +11143,339 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 /* Remove the old room-settings / more button from the bottom dock. */
 #prRoom #partyRoomBottomDock button[onclick*="openPartyRoomSettings"]{display:none!important;visibility:hidden!important;pointer-events:none!important;}
 </style>
+
+
+<style id="partyRoomYoutubeRequestedLayoutV1">
+/* ===== Requested YouTube Mode: single-screen mobile layout ===== */
+#prRoom.party-youtube-layout{
+  position:relative!important;
+  overflow:hidden!important;
+  background:radial-gradient(circle at 50% -10%,#2b1767 0,#0d0b25 48%,#050711 100%)!important;
+}
+
+/* Keep only the clean room header area; remove the old sub-row/host strip. */
+#prRoom.party-youtube-layout #prSubRow,
+#prRoom.party-youtube-layout #prTicker,
+#prRoom.party-youtube-layout #prHostRow,
+#prRoom.party-youtube-layout #partyRoomBottomDock,
+#prRoom.party-youtube-layout #partyGamingCenter{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+
+/* Header: compact room title + the three always-visible mode tabs. */
+#prRoom.party-youtube-layout #prTop{
+  position:relative!important;
+  height:58px!important;
+  min-height:58px!important;
+  display:flex!important;
+  align-items:center!important;
+  z-index:200!important;
+  background:linear-gradient(135deg,#35108a,#6817d8 55%,#4b0e9e)!important;
+  box-shadow:0 8px 22px rgba(0,0,0,.28)!important;
+}
+#prRoom.party-youtube-layout #prRoomPill{
+  display:none!important;
+}
+#prRoom.party-youtube-layout #prTopRight{
+  display:flex!important;
+  margin-left:auto!important;
+  margin-right:8px!important;
+}
+#prRoom.party-youtube-layout #prTopRight #prFloatingViewerBtn,
+#prRoom.party-youtube-layout #prTopRight #prTopGiftersBtn{
+  display:none!important;
+}
+#prRoom.party-youtube-layout #prTopRight #prCloseBtn{
+  display:inline-flex!important;
+  width:30px!important;height:30px!important;
+  align-items:center!important;justify-content:center!important;
+  border-radius:50%!important;
+  background:rgba(255,255,255,.12)!important;
+  color:#fff!important;
+}
+
+#prRoom.party-youtube-layout #prModeMenuWrap{
+  position:absolute!important;
+  left:7px!important;right:43px!important;
+  top:62px!important;
+  height:46px!important;
+  margin:0!important;
+  display:block!important;
+  z-index:210!important;
+}
+#prRoom.party-youtube-layout #prModeMenuBtn,
+#prRoom.party-youtube-layout #prSeatQuickBtn,
+#prRoom.party-youtube-layout #prSeatQuickPanel{
+  display:none!important;
+}
+#prRoom.party-youtube-layout #prModeMenu{
+  position:static!important;
+  display:grid!important;
+  grid-template-columns:1fr 1fr 1fr!important;
+  gap:5px!important;
+  width:100%!important;
+  height:46px!important;
+  padding:4px!important;
+  margin:0!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:16px!important;
+  background:rgba(12,8,34,.92)!important;
+  box-shadow:0 8px 24px rgba(0,0,0,.30)!important;
+  backdrop-filter:blur(12px)!important;
+  -webkit-backdrop-filter:blur(12px)!important;
+  overflow:visible!important;
+}
+#prRoom.party-youtube-layout #prModeMenu .pr-mode-option{
+  position:relative!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:4px!important;
+  min-width:0!important;
+  height:38px!important;
+  padding:0 4px!important;
+  border:1px solid transparent!important;
+  border-radius:12px!important;
+  background:rgba(255,255,255,.06)!important;
+  color:#e9e7ff!important;
+  font-size:10px!important;
+  font-weight:900!important;
+  white-space:nowrap!important;
+  cursor:pointer!important;
+}
+#prRoom.party-youtube-layout #prModeMenu .pr-mode-option-icon{font-size:14px!important;line-height:1!important;}
+#prRoom.party-youtube-layout #prModeMenu .pr-mode-option[data-mode="youtube"].active{
+  color:#fff!important;
+  background:linear-gradient(135deg,#7c3aed,#e11dff)!important;
+  border-color:#e9b5ff!important;
+  box-shadow:0 0 14px rgba(216,80,255,.45),inset 0 1px 0 rgba(255,255,255,.22)!important;
+}
+#prRoom.party-youtube-layout #prModeMenu .pr-mode-option[data-mode="chat"].active,
+#prRoom.party-youtube-layout #prModeMenu .pr-mode-option[data-mode="gaming"].active{
+  background:rgba(255,255,255,.10)!important;
+  border-color:rgba(255,255,255,.18)!important;
+}
+#prRoom.party-youtube-layout #prModeMenu .pr-mode-check{
+  display:none!important;
+}
+
+/* Seats: one compact row for 8; 12 automatically becomes two compact rows. */
+#prRoom.party-youtube-layout #cinemaSeats{
+  position:absolute!important;
+  top:116px!important;
+  left:50%!important;
+  right:auto!important;
+  bottom:auto!important;
+  transform:translateX(-50%)!important;
+  width:calc(100% - 12px)!important;
+  height:46px!important;
+  display:grid!important;
+  grid-template-columns:repeat(8,minmax(0,1fr))!important;
+  grid-auto-rows:42px!important;
+  gap:0 3px!important;
+  align-items:start!important;
+  justify-items:center!important;
+  padding:0 2px!important;
+  z-index:160!important;
+  pointer-events:auto!important;
+}
+#prRoom.party-youtube-layout #cinemaSeats> *{
+  width:38px!important;height:42px!important;
+  min-width:0!important;min-height:42px!important;
+}
+#prRoom.party-youtube-layout #cinemaSeats.pr-two-seat-mode{
+  grid-template-columns:repeat(2,48px)!important;width:110px!important;height:48px!important;gap:0 8px!important;
+}
+#prRoom.party-youtube-layout #cinemaSeats.pr-four-seat-mode{
+  grid-template-columns:repeat(4,42px)!important;width:180px!important;gap:0 5px!important;
+}
+#prRoom.party-youtube-layout #cinemaSeats.pr-eight-seat-mode{
+  grid-template-columns:repeat(8,38px)!important;width:100%!important;height:42px!important;gap:0 3px!important;
+}
+#prRoom.party-youtube-layout #cinemaSeats.pr-eight-seat-mode> *{width:38px!important;height:42px!important;}
+#prRoom.party-youtube-layout #cinemaSeats.pr-twelve-seat-mode{
+  grid-template-columns:repeat(6,38px)!important;
+  grid-template-rows:42px 42px!important;
+  width:246px!important;height:88px!important;
+  gap:4px 3px!important;
+}
+#prRoom.party-youtube-layout #cinemaSeats .psf-label,
+#prRoom.party-youtube-layout #cinemaSeats .pr-giftpill,
+#prRoom.party-youtube-layout #cinemaSeats .psf-voice-pct,
+#prRoom.party-youtube-layout #cinemaSeats .psf-sp{display:none!important;}
+
+/* Main video + Q strip. */
+#prRoom.party-youtube-layout #partyYoutubeStage{
+  position:absolute!important;
+  top:164px!important;
+  left:7px!important;right:7px!important;
+  bottom:0!important;
+  display:block!important;
+  padding:0!important;
+  margin:0!important;
+  overflow:visible!important;
+  z-index:100!important;
+  pointer-events:none!important;
+}
+#prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #partyYoutubeStage{top:212px!important;}
+#prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #cinemaChatPanel{top:calc(212px + clamp(150px,27dvh,220px) + 55px)!important;}
+#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-card{
+  position:absolute!important;
+  top:0!important;left:0!important;right:0!important;
+  width:100%!important;
+  height:clamp(150px,27dvh,220px)!important;
+  aspect-ratio:auto!important;
+  max-width:none!important;
+  border-radius:14px!important;
+  overflow:hidden!important;
+  box-shadow:0 10px 26px rgba(0,0,0,.40)!important;
+  pointer-events:auto!important;
+}
+#prRoom.party-youtube-layout #partyYoutubeStage iframe,
+#prRoom.party-youtube-layout #partyYoutubeStage #ytRoomPlayerDiv,
+#prRoom.party-youtube-layout #partyYoutubeStage #ytRoomLocalVideo{
+  width:100%!important;height:100%!important;
+}
+
+/* Q button only — History/Sound are not shown in this clean theme. */
+#prRoom.party-youtube-layout #ytRoomInputTools{
+  position:absolute!important;
+  top:calc(clamp(150px,27dvh,220px) + 7px)!important;
+  left:0!important;right:0!important;
+  width:100%!important;height:42px!important;
+  display:block!important;
+  padding:0!important;
+  margin:0!important;
+  pointer-events:auto!important;
+  z-index:140!important;
+}
+#prRoom.party-youtube-layout #ytRoomInputTools .yt-room-tools-top{
+  display:block!important;width:100%!important;height:42px!important;margin:0!important;
+}
+#prRoom.party-youtube-layout #ytRoomHistoryBtn,
+#prRoom.party-youtube-layout #ytRoomSoundBtn,
+#prRoom.party-youtube-layout #ytRoomInputTools .yt-room-tools-top button:not(#ytRoomQueueBtn){display:none!important;}
+#prRoom.party-youtube-layout #ytRoomQueueBtn{
+  display:flex!important;
+  align-items:center!important;justify-content:center!important;
+  width:100%!important;height:42px!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:13px!important;
+  background:linear-gradient(135deg,#7c3aed,#c026d3)!important;
+  color:#fff!important;
+  font-size:13px!important;font-weight:950!important;
+  box-shadow:0 7px 18px rgba(124,58,237,.25)!important;
+}
+#prRoom.party-youtube-layout #ytRoomInlinePanel{
+  position:absolute!important;
+  left:0!important;right:0!important;
+  top:48px!important;
+  z-index:250!important;
+}
+#prRoom.party-youtube-layout #ytRoomInlineHistory{display:none!important;}
+#prRoom.party-youtube-layout #ytRoomInlinePanel[data-open="queue"] #ytRoomInlineQueue{display:block!important;}
+
+/* Chat/comments: directly under Q. */
+#prRoom.party-youtube-layout #cinemaChatPanel{
+  position:absolute!important;
+  left:7px!important;right:7px!important;
+  top:calc(164px + clamp(150px,27dvh,220px) + 55px)!important;
+  bottom:78px!important;
+  width:auto!important;height:auto!important;min-height:104px!important;
+  z-index:120!important;
+  margin:0!important;
+  border:1px solid rgba(255,255,255,.13)!important;
+  border-radius:14px!important;
+  background:linear-gradient(180deg,rgba(19,14,45,.96),rgba(7,9,24,.96))!important;
+  overflow:hidden!important;
+}
+#prRoom.party-youtube-layout #cinemaChatPanel #cinemaChatMessages{
+  height:100%!important;
+  padding:7px 8px 7px!important;
+  overflow-y:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+#prRoom.party-youtube-layout #cinemaChatComposer{
+  bottom:5px!important;
+}
+
+/* Host URL / Submit: always the final block at the bottom. */
+#prRoom.party-youtube-layout #ytRoomUrlBar{
+  position:absolute!important;
+  left:0!important;right:0!important;
+  bottom:0!important;
+  width:100%!important;height:70px!important;
+  display:block!important;
+  padding:7px 8px!important;
+  border:1px solid rgba(255,255,255,.14)!important;
+  border-radius:14px!important;
+  background:linear-gradient(145deg,rgba(27,18,58,.98),rgba(10,9,27,.98))!important;
+  z-index:180!important;
+  pointer-events:auto!important;
+  box-sizing:border-box!important;
+}
+#prRoom.party-youtube-layout #ytRoomUrlBar .yt-room-input-label{
+  display:block!important;
+  margin:0 0 4px 2px!important;
+  color:#c4b5fd!important;
+  font-size:10px!important;
+  font-weight:900!important;
+}
+#prRoom.party-youtube-layout #ytRoomUrlBar .yt-room-url-row{
+  display:flex!important;gap:6px!important;height:36px!important;
+}
+#prRoom.party-youtube-layout #ytRoomInput{
+  flex:1 1 auto!important;min-width:0!important;height:36px!important;
+  border-radius:10px!important;
+  background:#fff!important;color:#252044!important;
+  font-size:11px!important;
+}
+#prRoom.party-youtube-layout #ytRoomPasteBtn{
+  width:36px!important;height:36px!important;padding:0!important;border-radius:10px!important;
+}
+#prRoom.party-youtube-layout #ytRoomLoadBtn{
+  width:76px!important;height:36px!important;padding:0!important;border-radius:10px!important;
+  background:linear-gradient(135deg,#7c3aed,#db2777)!important;color:#fff!important;
+  font-size:11px!important;font-weight:950!important;
+}
+#prRoom.party-youtube-layout #ytRoomUploadBtn,
+#prRoom.party-youtube-layout #ytRoomUrlBar .yt-room-input-hint{display:none!important;}
+
+/* Remove old eye/extra controls from the requested fixed theme. */
+#prRoom.party-youtube-layout #ytRoomUiHideBtn,
+#prRoom.party-youtube-layout .yt-room-hostbar{display:none!important;}
+
+@media(max-width:430px){
+  #prRoom.party-youtube-layout #prModeMenuWrap{left:5px!important;right:39px!important;top:61px!important;}
+  #prRoom.party-youtube-layout #prModeMenu{height:44px!important;}
+  #prRoom.party-youtube-layout #prModeMenu .pr-mode-option{height:36px!important;font-size:9.5px!important;}
+  #prRoom.party-youtube-layout #cinemaSeats{top:112px!important;}
+  #prRoom.party-youtube-layout #partyYoutubeStage{top:160px!important;}
+  #prRoom.party-youtube-layout #cinemaChatPanel{top:calc(160px + clamp(150px,27dvh,210px) + 55px)!important;}
+}
+</style>
+
+<script id="partyRoomYoutubeRequestedLayoutScriptV1">
+(function(){
+  function sync(){
+    var r=document.getElementById('prRoom');
+    if(!r)return;
+    var yt=r.classList.contains('party-youtube-layout');
+    if(yt){
+      /* The requested visual defaults to one compact row of 8 seats. */
+      if(!window.__youtubeSeatCount || Number(window.__youtubeSeatCount)===4){
+        window.__youtubeSeatCount=8;
+        window.PR_SEATS=8;
+        try{cinemaRenderSeats(window.__cinemaPeople||[]);}catch(e){}
+      }
+      try{var m=document.getElementById('prModeMenu');if(m){m.classList.add('open');m.setAttribute('aria-hidden','false');}}catch(e){}
+    }else{
+      try{var m2=document.getElementById('prModeMenu');if(m2){m2.classList.remove('open');m2.setAttribute('aria-hidden','true');}}catch(e){}
+    }
+  }
+  setInterval(sync,500);
+  document.addEventListener('DOMContentLoaded',sync);
+})();
+</script>
