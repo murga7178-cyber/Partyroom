@@ -1623,6 +1623,10 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{
 #prRoom.yt-sound-only #ytRoomUrlBar{display:none!important;}
 .yt-bottom-sheet-buttons #ytBottomSoundBtn{font-size:11px!important;padding:7px 10px!important;min-width:58px!important;}
 </style>
+<style id="cleanInitialLoadingBackground">
+/* Clean initial loading screen: no striped/banded gradient behind the loader. */
+html,body{background:#fff!important;}
+</style>
 </head>
 
 <body>
@@ -10797,6 +10801,62 @@ listenRoomShare();
   },250);
 })();
 </script>
+
+<style id="cinemaPickerFinalFix2026">
+/* Cinema Mode: keep the native Android video picker usable from a direct tap. */
+#movieFileInput{position:fixed!important;left:-10000px!important;top:0!important;width:2px!important;height:2px!important;opacity:.01!important;display:block!important;pointer-events:auto!important;z-index:-1!important;}
+</style>
+<script id="cinemaPickerFinalScript2026">
+(function(){
+  function $(id){return document.getElementById(id);}
+  function isHost(){try{return !!window.cinemaIsHost;}catch(e){return false;}}
+  function directPicker(){
+    var inp=$('movieFileInput');
+    if(!inp){try{if(typeof window.pkRoomToast==='function')window.pkRoomToast('Video picker नहीं मिला');}catch(e){}return false;}
+    try{inp.value='';}catch(e){}
+    try{inp.click();return true;}catch(e){console.warn('[Cinema] picker failed',e);return false;}
+  }
+  window.openPartyCinemaMoviePicker=directPicker;
+
+  /* Final Cinema selector: open Android file picker FIRST, while the tap gesture
+     is still active; only then change the room mode asynchronously. */
+  window.selectPartyRoomMode=function(mode){
+    mode=String(mode||'');
+    if(mode!=='cinema'){
+      try{
+        var old=window.__previousPartyRoomModeSelector;
+        if(typeof old==='function') return old(mode);
+      }catch(e){}
+      return;
+    }
+    if(!isHost()){
+      try{if(typeof window.pkRoomToast==='function')window.pkRoomToast('Mode बदलने का अधिकार केवल Host के पास है।');}catch(e){}
+      return;
+    }
+    try{var menu=$('prModeMenu');if(menu)menu.classList.remove('open');}catch(e){}
+    /* This MUST happen synchronously from the user's tap. */
+    directPicker();
+    try{
+      if(typeof window.setPartyRoomMode==='function'){
+        Promise.resolve(window.setPartyRoomMode('cinema')).catch(function(e){console.warn('[Cinema] mode',e);});
+      }
+    }catch(e){console.warn('[Cinema] mode',e);}
+  };
+
+  /* Also make the Cinema Hall button open the same native picker directly. */
+  document.addEventListener('click',function(e){
+    var b=e.target&&e.target.closest?e.target.closest('#partyCinemaChooseBtn'):null;
+    if(!b)return;
+    e.preventDefault();e.stopPropagation();
+    if(!isHost()){
+      try{if(typeof window.pkRoomToast==='function')window.pkRoomToast('सिर्फ Host video चला सकता है');}catch(x){}
+      return;
+    }
+    directPicker();
+  },true);
+})();
+</script>
+
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
@@ -11218,7 +11278,7 @@ listenRoomShare();
 <script>
 (function(){var b=document.getElementById('pkPPtagBtn');if(b)b.onclick=function(){if(typeof pkTagProfile==='function')pkTagProfile();};})();
 </script>
-\n<style id="partyHostManageCompactFinal">
+<style id="partyHostManageCompactFinal">
 #pkHostManageSheet button{font-family:inherit;touch-action:manipulation;}
 #pkHostManageSheet button:active{transform:scale(.98);}
 </style>
