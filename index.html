@@ -439,11 +439,6 @@ html, body { overscroll-behavior-y: none; }
 .pr-mode-option-icon.chat{background:linear-gradient(145deg,#2563eb,#38bdf8);}
 .pr-mode-option-icon.gaming{background:linear-gradient(145deg,#7c3aed,#a855f7);}
 .pr-mode-option-icon.youtube{background:linear-gradient(145deg,#ef4444,#be123c);}
-.pr-mode-option-icon.cinema{background:linear-gradient(145deg,#7c3aed,#2563eb);}
-#prRoom.party-cinema-layout{background:radial-gradient(circle at 50% 18%,rgba(124,58,237,.16),transparent 42%),inherit;}
-#prRoom.party-cinema-layout #cinemaChatComposer{display:none!important;}
-#prRoom.party-cinema-layout #cinemaChatPanel{opacity:.82;}
-
 .pr-mode-check{margin-left:auto;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:#fff;background:#22c55e;font-size:14px;font-weight:1000;visibility:hidden;}
 .pr-mode-option.active .pr-mode-check{visibility:visible;}
 .pr-inline-viewers{display:inline-flex;align-items:center;gap:2px;margin-left:7px;opacity:.9;}
@@ -1498,134 +1493,6 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{
   -webkit-user-select:text!important;-moz-user-select:text!important;-ms-user-select:text!important;user-select:text!important;
   -webkit-touch-callout:default!important;
 }
-
-
-/* ===== Watch Together ===== */
-#movieBtn {
-  background: linear-gradient(145deg, #7c3aed, #2563eb) !important;
-  box-shadow: 0 7px 18px rgba(59,130,246,.35) !important;
-}
-
-#movieModeBar {
-  position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 12px);
-  left: 12px;
-  right: 12px;
-  z-index: 99999;
-  padding: 10px 16px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(37,99,235,.95));
-  color: #fff;
-  font: 800 13px/1.3 Segoe UI, Arial, sans-serif;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 10px 30px rgba(0,0,0,.4);
-  animation: movieBarIn .3s ease-out;
-}
-@keyframes movieBarIn {
-  from { transform: translateY(-20px); opacity: 0; }
-  to   { transform: translateY(0); opacity: 1; }
-}
-#movieModeBar #exitMovieBtn {
-  border: 0;
-  background: rgba(255,255,255,.22);
-  color: #fff;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 15px;
-  display: grid;
-  place-items: center;
-}
-#movieModeBar #exitMovieBtn:active { transform: scale(.9); }
-
-#movieViewer {
-  position: fixed;
-  inset: 0;
-  z-index: 99998;
-  background: #000;
-  display: flex;
-  flex-direction: column;
-}
-#movieViewer #remoteMoviePlayer {
-  flex: 1;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background: #000;
-}
-#movieViewer #closeMovieViewer {
-  position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + 12px);
-  right: 12px;
-  z-index: 2;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: rgba(0,0,0,.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: #fff;
-  font-size: 18px;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(255,255,255,.25);
-}
-#movieViewer #closeMovieViewer:active { transform: scale(.9); }
-
-#hostMoviePlayer.movie-active {
-  display: block !important;
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 99997;
-  background: #000;
-  object-fit: contain;
-}
-
-.pr-movie-toast {
-  position: fixed;
-  bottom: 100px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 999999;
-  padding: 10px 20px;
-  border-radius: 999px;
-  background: rgba(0,0,0,.85);
-  color: #fff;
-  font: 700 13px/1.4 Segoe UI, Arial, sans-serif;
-  animation: prToast 2.5s ease forwards;
-  pointer-events: none;
-  white-space: nowrap;
-  max-width: 90vw;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-@keyframes prToast {
-  0%   { opacity: 0; transform: translate(-50%, 10px); }
-  12%  { opacity: 1; transform: translate(-50%, 0); }
-  85%  { opacity: 1; }
-  100% { opacity: 0; transform: translate(-50%, -10px); }
-}
-/* ===== End Watch Together ===== */
-</style>
-
-<style id="partyRoomYouTubeSoundOnlyFinal">
-#prRoom.yt-sound-only #partyYoutubeStage .yt-room-card,
-#prRoom.yt-sound-only #ytRoomFrame,
-#prRoom.yt-sound-only #ytRoomPlayerDiv,
-#prRoom.yt-sound-only #ytRoomEmpty{display:none!important;}
-#prRoom.yt-sound-only #partyYoutubeStage{background:transparent!important;}
-#prRoom.yt-sound-only #ytRoomUrlBar{display:none!important;}
-.yt-bottom-sheet-buttons #ytBottomSoundBtn{font-size:11px!important;padding:7px 10px!important;min-width:58px!important;}
-</style>
-<style id="cleanInitialLoadingBackground">
-/* Clean initial loading screen: no striped/banded gradient behind the loader. */
-html,body{background:#fff!important;}
 </style>
 </head>
 
@@ -2069,7 +1936,7 @@ async function pkLoadUser(key){
 function pkShow(id, on){ const el=document.getElementById(id); if(el) el.style.display = on ? 'flex' : 'none'; }
 function pkShowLogin(){ pkShow('pkBoot',false); pkShow('pkHomeScreen',false); pkShow('pkLoginScreen',true); }
 function pkShowHome(){ try{ var gb=document.getElementById('pkGuestBar'); if(gb) gb.style.display=window.__pkGuest?'flex':'none'; }catch(e){} pkShow('pkBoot',false); pkShow('pkLoginScreen',false); pkShow('pkHomeScreen',true); try{ window.pkHomeInit && window.pkHomeInit(); }catch(e){} }
-function pkHomeOpenRooms(mode){ mode=(mode==='gaming'||mode==='youtube'||mode==='cinema')?mode:'chat'; window.__cinemaLobbyRoomMode=mode; pkOpenParty(); try{ window.cinemaSetLobbyRoomMode && window.cinemaSetLobbyRoomMode(mode); }catch(e){} }
+function pkHomeOpenRooms(mode){ mode=(mode==='gaming'||mode==='youtube')?mode:'chat'; window.__cinemaLobbyRoomMode=mode; pkOpenParty(); try{ window.cinemaSetLobbyRoomMode && window.cinemaSetLobbyRoomMode(mode); }catch(e){} }
 function pkOpenParty(){ pkShow('pkBoot',false); pkShow('pkLoginScreen',false); pkShow('pkHomeScreen',false); homeCinemaGharClicked(); }
 function pkErrInfo(e){ var c=String((e&&e.code)||'').replace('firestore/',''); var hint=''; if(c==='permission-denied')hint=' - Firebase Security Rules ne request roki hai.'; else if(c==='resource-exhausted')hint=' - Firebase ka daily free quota khatam ho gaya lagta hai.'; else if(c==='unavailable'||c==='deadline-exceeded'||c==='failed-precondition'||/offline/i.test(String((e&&e.message)||'')))hint=' - Firestore server se connection nahi ban pa raha.'; return '['+(c||String((e&&e.message)||e||'error').slice(0,80))+']'+hint; }
 function pkAuthEmail(loginValue){ var v=String(loginValue||'').trim().toLowerCase(); return v.replace(/[^a-z0-9._-]/g,'_')+'@paisa-kamaaye-894ac.firebaseapp.com'; }
@@ -2366,7 +2233,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
               <button type="button" class="pr-mode-option" data-mode="chat" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('chat')"><span class="pr-mode-option-icon chat">💬</span><span>Chatting Mode</span><span class="pr-mode-check" aria-hidden="true">✓</span></button>
               <button type="button" class="pr-mode-option" data-mode="gaming" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('gaming')"><span class="pr-mode-option-icon gaming">🎮</span><span>Gaming Mode</span><span class="pr-mode-check" aria-hidden="true">✓</span></button>
               <button type="button" class="pr-mode-option" data-mode="youtube" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('youtube')"><span class="pr-mode-option-icon youtube">▶️</span><span>YouTube Mode</span><span class="pr-mode-check" aria-hidden="true">✓</span></button>
-              <button type="button" class="pr-mode-option" data-mode="cinema" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('cinema')"><span class="pr-mode-option-icon cinema">🎬</span><span>Cinema Mode</span><span class="pr-mode-check" aria-hidden="true">✓</span></button>
             </div>
           </div>
           <div id="prTopRight">
@@ -2429,39 +2295,26 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         </div>
 
         <div id="cinemaSeats"></div>
+        <div id="ytRoomUrlBar" class="yt-room-url-bar">
+          <div class="yt-room-input-label">YouTube URL यहाँ डालें</div>
+          <div class="yt-room-url-row">
+            <input id="ytRoomInput" type="text" autocomplete="off" placeholder="YouTube link / Shorts link...">
+            <button type="button" id="ytRoomLoadBtn" onclick="window.ytRoomBottomSubmit&&window.ytRoomBottomSubmit()">Load</button>
+          </div>
+          <div class="yt-room-input-hint">Host: Load • Viewer: Queue में जोड़ेगा</div>
+        </div>
         <div id="partyYoutubeStage" aria-label="YouTube Mode" style="display:none;">
-          <!-- Fixed order: VIDEO first, URL second, History + Q third. -->
           <div class="yt-room-card">
             <div id="ytRoomEmpty" class="yt-room-empty"><div style="font-size:46px;">▶️</div><div>YouTube Queue से video चुनें</div><div style="font-size:12px;opacity:.7;">Queue में link कोई भी डाल सकता है • Play सिर्फ Host करेगा</div></div>
             <iframe id="ytRoomFrame" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
             <div id="ytRoomPlayerDiv"></div>
             <div id="ytRoomBlock" class="yt-room-block"></div>
-            <div class="yt-room-hostbar"><label style="display:flex;align-items:center;gap:5px;background:rgba(15,23,42,.82);border-radius:10px;padding:5px 8px;color:#fff;font-size:11px;">🔊<input id="ytRoomVolume" type="range" min="0" max="100" value="80" style="width:82px;"></label><button type="button" id="ytRoomCloseVideoBtn" class="yt-room-close-video" onclick="window.ytRoomCloseShared&&window.ytRoomCloseShared()" title="सभी के लिए YouTube बंद करें">✕ बंद करें</button></div>
-          </div>
-          <div id="ytRoomUrlBar" class="yt-room-url-bar">
-            <div class="yt-room-input-label">YouTube URL यहाँ डालें</div>
-            <div class="yt-room-url-row">
-              <input id="ytRoomInput" type="text" autocomplete="off" inputmode="none" placeholder="YouTube link / Shorts link...">
-              <button type="button" id="ytRoomPasteBtn" title="Clipboard से YouTube लिंक Paste करें">📋</button>
-              <button type="button" id="ytRoomClearBtn" title="URL बॉक्स खाली करें">Clear</button>
-              <button type="button" id="ytRoomLoadBtn" onclick="window.ytRoomBottomSubmit&&window.ytRoomBottomSubmit()">Load</button>
-            </div>
-            <div class="yt-room-input-hint">Host: Load • Viewer: Queue में जोड़ेगा</div>
-          </div>
-          <div class="yt-room-input-tools" id="ytRoomInputTools">
-            <div class="yt-room-tools-top">
-              <button type="button" id="ytRoomHistoryBtn" onclick="window.ytRoomTogglePanel&&window.ytRoomTogglePanel('history')">💾 History</button>
-              <button type="button" id="ytRoomQueueBtn" onclick="window.ytRoomTogglePanel&&window.ytRoomTogglePanel('queue')">Q <span id="ytRoomQueueBadge">0</span></button>
-            </div>
-            <div id="ytRoomInlinePanel" class="yt-room-inline-panel" aria-live="polite">
-              <div id="ytRoomInlineQueue" class="yt-room-inline-pane">
-                <div class="yt-room-inline-title">📺 Q में YouTube लिंक डालें</div>
-                <div class="yt-room-inline-row"><input id="ytRoomInlineQueueInput" type="text" autocomplete="off" placeholder="YouTube link यहाँ paste करें..."><button type="button" id="ytRoomInlineQueueLoad">Load</button></div>
-                <div id="ytRoomInlineQueueList" class="yt-room-inline-list"></div>
-              </div>
-              <div id="ytRoomInlineHistory" class="yt-room-inline-pane">
-                <div class="yt-room-inline-title">💾 History</div>
-                <div id="ytRoomInlineHistoryList" class="yt-room-inline-list"></div>
+            <div class="yt-room-hostbar"><button type="button" onclick="window.ytRoomOpenPanel&&window.ytRoomOpenPanel('queue')">📺 Queue</button><label style="display:flex;align-items:center;gap:5px;background:rgba(15,23,42,.82);border-radius:10px;padding:5px 8px;color:#fff;font-size:11px;">🔊<input id="ytRoomVolume" type="range" min="0" max="100" value="80" style="width:82px;"></label></div>
+            <div class="yt-room-queue"><button type="button" onclick="window.ytRoomOpenPanel&&window.ytRoomOpenPanel('queue')">📺 Queue <span id="ytRoomQueueCount">0</span></button></div>
+            <div class="yt-room-input-tools" id="ytRoomInputTools">
+              <div class="yt-room-tools-top">
+                <button type="button" id="ytRoomHistoryBtn" onclick="window.ytRoomOpenPanel&&window.ytRoomOpenPanel('history')">💾 History</button>
+                <button type="button" id="ytRoomQueueBtn" onclick="window.ytRoomOpenPanel&&window.ytRoomOpenPanel('queue')">Q <span id="ytRoomQueueBadge">0</span></button>
               </div>
             </div>
           </div>
@@ -2580,7 +2433,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
               <button type="button" id="partyModeChatBtn" onclick="setPartyRoomMode('chat')" style="padding:13px 8px;border-radius:14px;border:1px solid #22c55e;background:linear-gradient(145deg,#14532d,#166534);color:#fff;font-weight:950;cursor:pointer;">💬 Chatting<br><span style="font-size:10px;opacity:.75;">Chat • Voice • Seats</span></button>
               <button type="button" id="partyModeGameBtn" onclick="setPartyRoomMode('gaming')" style="padding:13px 8px;border-radius:14px;border:1px solid #7c3aed;background:#241044;color:#fff;font-weight:950;cursor:pointer;">🎮 Gaming<br><span style="font-size:10px;opacity:.75;">Games • Play Together</span></button>
               <button type="button" id="partyModeYoutubeBtn" onclick="setPartyRoomMode('youtube')" style="padding:13px 8px;border-radius:14px;border:1px solid #ef4444;background:#3b1010;color:#fff;font-weight:950;cursor:pointer;">▶️ YouTube<br><span style="font-size:10px;opacity:.75;">Watch Together</span></button>
-              <button type="button" id="partyModeCinemaBtn" onclick="setPartyRoomMode('cinema')" style="padding:13px 8px;border-radius:14px;border:1px solid #2563eb;background:#151a3b;color:#fff;font-weight:950;cursor:pointer;">🎬 Cinema<br><span style="font-size:10px;opacity:.75;">Movie • Watch Together</span></button>
             </div>
           </div>
         </div>
@@ -2598,7 +2450,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(mbc){ mbc.style.borderColor=mode==='chat'?'#22c55e':'#475569'; mbc.style.background=mode==='chat'?'linear-gradient(145deg,#14532d,#166534)':'#172033'; }
     if(mbg){ mbg.style.borderColor=mode==='gaming'?'#22c55e':'#7c3aed'; mbg.style.background=mode==='gaming'?'linear-gradient(145deg,#14532d,#166534)':'#241044'; }
     if(mby){ mby.style.borderColor=mode==='youtube'?'#22c55e':'#ef4444'; mby.style.background=mode==='youtube'?'linear-gradient(145deg,#14532d,#166534)':'#3b1010'; }
-    const mbcin=document.getElementById('partyModeCinemaBtn'); if(mbcin){ mbcin.style.borderColor=mode==='cinema'?'#22c55e':'#2563eb'; mbcin.style.background=mode==='cinema'?'linear-gradient(145deg,#14532d,#166534)':'#151a3b'; }
     const chat=document.getElementById('partySetChat'), audio=document.getElementById('partySetAudio'), seats=document.getElementById('partySetSeats'), host=document.getElementById('partySetHost');
     const c6=document.getElementById('partySeatCount6Btn'), c8=document.getElementById('partySeatCount8Btn'), c12=document.getElementById('partySeatCount12Btn');
     if(c6 && c8 && c12){
@@ -2619,32 +2470,24 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   window.__partyRoomMode='chat';
   window.__chatSeatCount=12;
   window.__youtubeSeatCount=6;
-  window.__cinemaSeatCount=6;
   window.__gamingSeatCount=4;
   function cinemaSetGamingLayout(mode){
     const page=document.getElementById('prRoom'), center=document.getElementById('partyGamingCenter');
-    const gaming=mode==='gaming', youtube=mode==='youtube', cinema=mode==='cinema';
-    if(page){ page.classList.toggle('party-gaming-layout',gaming); page.classList.toggle('party-youtube-layout',youtube); page.classList.toggle('party-cinema-layout',cinema); }
+    const gaming=mode==='gaming', youtube=mode==='youtube';
+    if(page){ page.classList.toggle('party-gaming-layout',gaming); page.classList.toggle('party-youtube-layout',youtube); }
     if(center) center.style.display=gaming?'flex':'none';
-    if(gaming || youtube || cinema){
+    if(gaming || youtube){
       window.__chatSeatCount=[2,6,8,12].includes(Number(window.__chatSeatCount))?Number(window.__chatSeatCount):12;
       window.__youtubeSeatCount=[2,6,8,12].includes(Number(window.__youtubeSeatCount))?Number(window.__youtubeSeatCount):6;
-      window.__cinemaSeatCount=[2,6,8,12].includes(Number(window.__cinemaSeatCount))?Number(window.__cinemaSeatCount):6;
       window.__gamingSeatCount=[2,4].includes(Number(window.__gamingSeatCount))?Number(window.__gamingSeatCount):4;
-      window.PR_SEATS=gaming?window.__gamingSeatCount:(cinema?window.__cinemaSeatCount:window.__youtubeSeatCount);
+      window.PR_SEATS=gaming?window.__gamingSeatCount:window.__youtubeSeatCount;
       const box=document.getElementById('cinemaSeats'); if(box){box.innerHTML='';box.__sigs=[];}
-      /* YouTube UI/listeners must exist ONLY in YouTube Mode.
-         Cinema Mode has its own local-video player and must never inherit
-         YouTube's History/Q/URL UI. */
-      if(youtube){
-        if(window.partyRoomYoutubeEnter) window.partyRoomYoutubeEnter();
-      }else{
-        if(window.partyRoomYoutubeExit) window.partyRoomYoutubeExit(mode==='chat');
-      }
+      if(youtube && window.partyRoomYoutubeEnter) window.partyRoomYoutubeEnter();
+      if(gaming && window.partyRoomYoutubeExit) window.partyRoomYoutubeExit();
     }else{
       window.PR_SEATS=[2,6,8,12].includes(Number(window.__chatSeatCount))?Number(window.__chatSeatCount):12;
       try{window.pkCloseJumpGame&&window.pkCloseJumpGame()}catch(e){}
-      if(window.partyRoomYoutubeExit) window.partyRoomYoutubeExit(mode==='chat');
+      if(window.partyRoomYoutubeExit) window.partyRoomYoutubeExit();
       const box=document.getElementById('cinemaSeats'); if(box){box.innerHTML='';box.__sigs=[];}
     }
     try{cinemaRenderSeats(window.__cinemaPeople||[])}catch(e){}
@@ -2652,7 +2495,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   }
   async function setPartyRoomMode(mode){
     if(!cinemaRoomId || !cinemaIsHost) return;
-    mode=(mode==='gaming'||mode==='youtube'||mode==='cinema')?mode:'chat';
+    mode=(mode==='gaming'||mode==='youtube')?mode:'chat';
     window.__partyRoomMode=mode;
     const chatPage=document.getElementById('prRoom'), gamePage=document.getElementById('partyGamingModePage');
     if(chatPage) chatPage.style.display='';
@@ -2668,7 +2511,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   }
   window.setPartyRoomMode=setPartyRoomMode;
   function cinemaApplyRoomMode(mode){
-    mode=(mode==='gaming'||mode==='youtube'||mode==='cinema')?mode:'chat'; window.__partyRoomMode=mode;
+    mode=(mode==='gaming'||mode==='youtube')?mode:'chat'; window.__partyRoomMode=mode;
     const chatPage=document.getElementById('prRoom'), gamePage=document.getElementById('partyGamingModePage');
     if(chatPage) chatPage.style.display='';
     if(gamePage) gamePage.style.display='none';
@@ -2682,14 +2525,14 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   async function setPartySeatCount(n){
     if(!cinemaRoomId || !cinemaIsHost) return;
     n=Number(n);var mode=String(window.__partyRoomMode||'chat'),allowed=mode==='gaming'?[2,4]:[2,6,8,12];if(allowed.indexOf(n)<0)return;
-    if(mode==='gaming')window.__gamingSeatCount=n;else if(mode==='youtube')window.__youtubeSeatCount=n;else if(mode==='cinema')window.__cinemaSeatCount=n;else window.__chatSeatCount=n;window.PR_SEATS=n;
+    if(mode==='gaming')window.__gamingSeatCount=n;else if(mode==='youtube')window.__youtubeSeatCount=n;else window.__chatSeatCount=n;window.PR_SEATS=n;
     const box=document.getElementById('cinemaSeats');
     if(box){ box.innerHTML=''; box.__sigs=[]; }
     cinemaRenderSeats(window.__cinemaPeople||[]);
     const c2=document.getElementById('partySeatCount2Btn'), c6=document.getElementById('partySeatCount6Btn'), c8=document.getElementById('partySeatCount8Btn'), c12=document.getElementById('partySeatCount12Btn');
     [[c2,2],[c6,6],[c8,8],[c12,12]].forEach(function(pair){var b=pair[0],v=pair[1];if(b){b.style.borderColor=n===v?'#22c55e':(v===12?'#7c3aed':'#475569');b.style.background=n===v?'linear-gradient(145deg,#14532d,#166534)':(v===12?'#241044':'#172033');}});
     renderPartySeatQuickSettings();
-    try{var payload={seatCount:n,updatedAt:Date.now()};if(mode==='chat')payload.chatSeatCount=n;else if(mode==='youtube')payload.youtubeSeatCount=n;else if(mode==='cinema')payload.cinemaSeatCount=n;else payload.gamingSeatCount=n;await db.collection('cinemaRooms').doc(cinemaRoomId).set(payload,{merge:true});}catch(e){}
+    try{var payload={seatCount:n,updatedAt:Date.now()};if(mode==='chat')payload.chatSeatCount=n;else if(mode==='youtube')payload.youtubeSeatCount=n;else payload.gamingSeatCount=n;await db.collection('cinemaRooms').doc(cinemaRoomId).set(payload,{merge:true});}catch(e){}
   }
   window.setPartySeatCount=setPartySeatCount;
   const PARTY_BG = {
@@ -2710,7 +2553,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(!cinemaRoomId || !cinemaIsHost || !PARTY_BG[key]) return;
     const modal=document.getElementById('cinemaGharModal');
     cinemaApplyPartyBackground(modal,key,'');
-    window.__prBackgroundKey=key; window.__prBackgroundImage='';
     try{ await db.collection('cinemaRooms').doc(cinemaRoomId).set({backgroundKey:key,backgroundImage:'',updatedAt:Date.now()},{merge:true}); }catch(e){}
   }
   async function setPartyRoomGalleryBackground(file){
@@ -2736,17 +2578,9 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       } else dataOut=out;
       const modal=document.getElementById('cinemaGharModal');
       cinemaApplyPartyBackground(modal,'',dataOut);
-      window.__prBackgroundKey='gallery'; window.__prBackgroundImage=dataOut;
       await db.collection('cinemaRooms').doc(cinemaRoomId).set({backgroundKey:'gallery',backgroundImage:dataOut,updatedAt:Date.now()},{merge:true});
     }catch(e){ alert('गैलरी की फोटो नहीं लग पाई।'); }
   }
-  async function clearPartyRoomGalleryBackground(){
-    if(!cinemaRoomId || !cinemaIsHost) return;
-    await setPartyRoomBackground('midnight');
-  }
-  window.setPartyRoomBackground=setPartyRoomBackground;
-  window.setPartyRoomGalleryBackground=setPartyRoomGalleryBackground;
-  window.clearPartyRoomGalleryBackground=clearPartyRoomGalleryBackground;
   async function savePartyRoomControl(key,val){
     if(!cinemaRoomId || !cinemaIsHost) return;
     window.__partyRoomControls=Object.assign({chat:true,audio:true,seats:true,hostArea:true},window.__partyRoomControls||{}, {[key]:!!val});
@@ -2774,7 +2608,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     const host=String(d?.hostKey||d?.ownerKey||'');
     cinemaIsHost=!!currentUserKey && host===String(currentUserKey);
     window.__cinemaHostKey=host;
-    window.__prRoomAdmins=Array.isArray(d?.admins)?d.admins.map(String):[];
     window.__prLockedSeats=Array.isArray(d?.lockedSeats)?d.lockedSeats.map(Number):[];
     try{ if(window.pkRoomGuard) window.pkRoomGuard(d); }catch(e){}
     window.__cinemaHostName=d?.hostName || (cinemaIsHost ? cinemaUserName() : 'Host');
@@ -2782,16 +2615,13 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     const settingsBtn=document.getElementById('cinemaSettingsBtn');
     if(settingsBtn) settingsBtn.style.display='inline-flex';
     window.__partyRoomControls=Object.assign({chat:true,audio:true,seats:true,hostArea:true},d?.controls||{});
-    var legacySeat=[2,6,8,12].includes(Number(d?.seatCount))?Number(d.seatCount):12;window.__chatSeatCount=[2,6,8,12].includes(Number(d?.chatSeatCount))?Number(d.chatSeatCount):legacySeat;window.__youtubeSeatCount=[2,6,8,12].includes(Number(d?.youtubeSeatCount))?Number(d.youtubeSeatCount):6;window.__gamingSeatCount=[2,4].includes(Number(d?.gamingSeatCount))?Number(d.gamingSeatCount):4;window.__cinemaSeatCount=[2,6,8,12].includes(Number(d?.cinemaSeatCount))?Number(d.cinemaSeatCount):6;
+    var legacySeat=[2,6,8,12].includes(Number(d?.seatCount))?Number(d.seatCount):12;window.__chatSeatCount=[2,6,8,12].includes(Number(d?.chatSeatCount))?Number(d.chatSeatCount):legacySeat;window.__youtubeSeatCount=[2,6,8,12].includes(Number(d?.youtubeSeatCount))?Number(d.youtubeSeatCount):6;window.__gamingSeatCount=[2,4].includes(Number(d?.gamingSeatCount))?Number(d.gamingSeatCount):4;
     cinemaApplyRoomMode(d?.roomMode||'chat');
-    try{pkStartHostModerationWatch();}catch(e){}
-    window.PR_SEATS=(window.__partyRoomMode==='gaming')?window.__gamingSeatCount:(window.__partyRoomMode==='youtube'?window.__youtubeSeatCount:(window.__partyRoomMode==='cinema'?window.__cinemaSeatCount:window.__chatSeatCount));
+    window.PR_SEATS=(window.__partyRoomMode==='gaming')?window.__gamingSeatCount:(window.__partyRoomMode==='youtube'?window.__youtubeSeatCount:window.__chatSeatCount);
     try{cinemaRenderSeats(window.__cinemaPeople||[]);renderPartySeatQuickSettings();}catch(e){}
     window.__partySeatStyle='ocean';
-    window.__prBackgroundKey=d?.backgroundKey||'midnight';
-    window.__prBackgroundImage=d?.backgroundImage||'';
     const modal=document.getElementById('cinemaGharModal');
-    if(modal){ cinemaApplyPartyBackground(modal,window.__prBackgroundKey,window.__prBackgroundImage); }
+    if(modal){ cinemaApplyPartyBackground(modal,d?.backgroundKey,d?.backgroundImage||''); }
     const title=document.getElementById('cinemaHeaderTitle'); if(title && cinemaRoomName)title.textContent='🎉 '+cinemaRoomName;
     const top=document.getElementById('cinemaRoomLabelTop'); if(top)top.textContent=cinemaRoomName||d?.roomName||'पार्टी रूम';
     cinemaRenderSeats(window.__cinemaPeople||[]);
@@ -2799,18 +2629,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     try{ prApplyRoomMeta(d); }catch(e){}
     const sideMute=document.getElementById('partyRoomMuteSideBtn'); if(sideMute) sideMute.textContent=(typeof cinemaMuted!=='undefined'&&cinemaMuted)?'🔊':'🔇';
   }
-  function pkStartHostModerationWatch(){
-    try{ if(window.__pkModerationUnsub) window.__pkModerationUnsub(); }catch(e){}
-    if(!db||!cinemaRoomId||!currentUserKey)return;
-    var meKey=String(currentUserKey), roomId=String(cinemaRoomId);
-    window.__pkModerationUnsub=db.collection('cinemaRooms').doc(roomId).collection('viewers').doc(meKey).onSnapshot(function(snap){
-      var d=snap.exists?(snap.data()||{}):{};
-      window.__prMyChatMuted=d.chatMuted===true;
-      if(d.voiceMuted===true){ try{ if(typeof cinemaStopGroupCall==='function' && window.__prVoiceMutedHandled!==roomId){ window.__prVoiceMutedHandled=roomId; cinemaStopGroupCall(); if(typeof toast==='function')toast('🎙️ होस्ट ने आपकी आवाज़ म्यूट कर दी'); } }catch(e){} }
-    },function(){});
-  }
-  function pkStopHostModerationWatch(){try{if(window.__pkModerationUnsub)window.__pkModerationUnsub();}catch(e){}window.__pkModerationUnsub=null;window.__prMyChatMuted=false;window.__prVoiceMutedHandled='';}
-
   function cinemaStartPresence(){
     if(!currentUserKey || !cinemaRoomId) return;
     const ref=db.collection('cinemaRooms').doc(cinemaRoomId).collection('viewers').doc(currentUserKey);
@@ -2821,7 +2639,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(cinemaPresenceUnsub) cinemaPresenceUnsub();
     cinemaPresenceUnsub=ref.parent.onSnapshot(snap=>{
       const now=Date.now(), people=[]; let mineDoc=null;
-      snap.forEach(doc=>{const d=doc.data()||{}; if(doc.id===String(currentUserKey||'')) mineDoc=d; if(d.lastActive && now-d.lastActive<15000){ const nm=String(d.name||'').trim(); if(nm){ (window.__prUserNameCache||(window.__prUserNameCache={}))[String(doc.id)]=nm; } people.push({key:doc.id,name:nm||'User',seat:Number.isInteger(d.seat)?d.seat:null,seatSince:Number.isInteger(d.seat)?(Number(d.seatSince)||0):0,muted:d.muted===true,hostSeated:d.hostSeated===true,chatMuted:d.chatMuted===true,voiceMuted:d.voiceMuted===true}); }});
+      snap.forEach(doc=>{const d=doc.data()||{}; if(doc.id===String(currentUserKey||'')) mineDoc=d; if(d.lastActive && now-d.lastActive<15000){ const nm=String(d.name||'').trim(); if(nm){ (window.__prUserNameCache||(window.__prUserNameCache={}))[String(doc.id)]=nm; } people.push({key:doc.id,name:nm||'User',seat:Number.isInteger(d.seat)?d.seat:null,seatSince:Number.isInteger(d.seat)?(Number(d.seatSince)||0):0,muted:d.muted===true,hostSeated:d.hostSeated===true}); }});
       try{ if(window.pkRoomPresenceGuard && window.pkRoomPresenceGuard(mineDoc,ref)) return; }catch(e){}
       window.__cinemaPeople=people;
       const count=document.getElementById('cinemaViewerCount');
@@ -3286,7 +3104,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       snap.docChanges().forEach(ch=>{
         if(ch.type!=='added')return;
         const d=ch.doc.data()||{}, mine=String(d.userKey||'')===String(currentUserKey||'');
-        if(d.chatMuted===true) return;
         if(partyRoomChatReady && !partyRoomChatSeenIds.has(ch.doc.id) && !mine) incoming.push(ch.doc.id);
         partyRoomChatSeenIds.add(ch.doc.id);
       });
@@ -3331,8 +3148,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   async function cinemaSendChat(){
     const input=document.getElementById('cinemaChatInput'); if(!input||!db||!cinemaRoomId)return;
     const text=String(input.value||'').trim(); if(!text)return;
-    /* Host moderation: a chat-muted user cannot send room comments. */
-    try{ if(window.__prMyChatMuted===true){ if(typeof toast==='function')toast('🔇 होस्ट ने आपके मैसेज म्यूट किए हैं'); return; } }catch(e){}
     const sendRoomId=String(cinemaRoomId);
     input.value='';
     try{ input.focus({preventScroll:true}); }catch(e){}   // कीबोर्ड खुला रहे, अगला मैसेज तुरंत टाइप हो
@@ -3370,8 +3185,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         }
         if(panel) panel.classList.remove('chat-input-open');
         const room=document.getElementById('prRoom'); if(room) room.classList.remove('party-keyboard-open');
-        /* New bottom chat sheet: remove backdrop/history state too, but do not navigate away. */
-        try{ if(typeof window.partyRoomCloseChat==='function') window.partyRoomCloseChat(false); }catch(e){}
         try{input.blur();}catch(e){}
         const dock=document.getElementById('partyRoomBottomDock');
         if(dock) dock.style.transform='';
@@ -3540,8 +3353,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       cinemaLocalStream.getTracks().forEach(t=>t.stop()); cinemaLocalStream=null;
     }
     cinemaLocalStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1},video:mode==='video'});
-    window.localStream=cinemaLocalStream;
-    window.__cinemaLocalStream=cinemaLocalStream;
     cinemaCallMode=mode;
     cinemaMuted=false;
     try{ const AC=window.AudioContext||window.webkitAudioContext; if(AC){partyVoiceAudioCtx=partyVoiceAudioCtx||new AC();window.__partyVoiceAudioCtx=partyVoiceAudioCtx;await partyVoiceAudioCtx.resume().catch(()=>{});} }catch(e){}
@@ -3596,7 +3407,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(!otherId||otherId===me||!cinemaLocalStream||!cinemaRoomId) return;
     const k='out:'+otherId; if(cinemaPeers[k]) return;
     const base=cinemaCallPath(cinemaPairId(me,otherId)); const sess=cinemaSess();
-    const pc=new RTCPeerConnection(PK_ICE); window.activePeerConnections=window.activePeerConnections||[]; window.activePeerConnections.push(pc); pc.__sess=sess; cinemaPeers[k]=pc;
+    const pc=new RTCPeerConnection(PK_ICE); pc.__sess=sess; cinemaPeers[k]=pc;
     cinemaLocalStream.getAudioTracks().forEach(t=>pc.addTrack(t,cinemaLocalStream));
     pc.onicecandidate=e=>{ if(e.candidate) base.collection('candidates').add({side:'s',sess,candidate:e.candidate.toJSON(),createdAt:Date.now()}).catch(()=>{}); };
     cinemaWatchState(k,pc,()=>{
@@ -3621,11 +3432,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     const old=cinemaPeers[k]; if(old && old.__sess===sess) return;
     if(old) cinemaClosePeer(k);
     const base=cinemaCallPath(doc.id);
-    const pc=new RTCPeerConnection(PK_ICE); window.activePeerConnections=window.activePeerConnections||[]; window.activePeerConnections.push(pc); pc.__sess=sess; cinemaPeers[k]=pc;
+    const pc=new RTCPeerConnection(PK_ICE); pc.__sess=sess; cinemaPeers[k]=pc;
     pc.ontrack=e=>{
-      if (window.WatchTogether) {
-        window.WatchTogether.handleIncomingTrack(e);
-      }
       const st=(e.streams&&e.streams[0])||new MediaStream([e.track]);
       pkVLog('आवाज़ पहुँची ✓'); cinemaAddTile(from,'User',st,false); partyVoiceStartMeter(from,st);
     };
@@ -3681,8 +3489,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
 
   async function cinemaStartGroupCall(mode){
     mode='audio';
-    var _myRoomPerson=(window.__cinemaPeople||[]).find(function(x){return String(x&&x.key||'')===String(currentUserKey||'');});
-    if(_myRoomPerson&&_myRoomPerson.voiceMuted===true){ if(typeof toast==='function')toast('🔇 होस्ट ने आपकी आवाज़ म्यूट की है'); return; }
     cinemaMuted=false;
     if(!cinemaRoomId){alert('पहले Party Room में जाएँ।');return;}
     try{
@@ -3851,7 +3657,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       }catch(e){}
     });
     if(cinemaLocalStream){try{window.__partyVoiceStopMeter&&window.__partyVoiceStopMeter(me);}catch(e){} cinemaLocalStream.getTracks().forEach(t=>t.stop());cinemaLocalStream=null;}
-    try{ window.localStream=null; window.__cinemaLocalStream=null; }catch(e){}
     cinemaRemoveTile(me);
     if(full===true) cinemaStopListening();
     const m=document.getElementById('cinemaMuteBtn');
@@ -4112,55 +3917,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(window.__prGiftUnsub){ try{ window.__prGiftUnsub(); }catch(e){} window.__prGiftUnsub=null; }
     prStopCoinBalance();
   };
-  async function prClaimIncomingGift(docId,d){
-    if(!db||!cinemaRoomId||!currentUserKey||!docId||!d) return;
-    var me=String(currentUserKey), to=String(d.toKey||'');
-    if(!to || to!==me) return;
-    var value=Math.max(0,Math.floor(Number(d.value)||0))*Math.max(1,Math.floor(Number(d.count)||1));
-    if(value<=0) return;
-    try{
-      var giftRef=db.collection('cinemaRooms').doc(cinemaRoomId).collection('gifts').doc(String(docId));
-      var myRef=db.collection('users').doc(me);
-      await db.runTransaction(async function(tx){
-        var giftSnap=await tx.get(giftRef);
-        if(!giftSnap.exists) return;
-        var gd=giftSnap.data()||{};
-        var claimed=gd.claimedBy&&gd.claimedBy[me];
-        if(claimed) return;
-        var mySnap=await tx.get(myRef);
-        var md=mySnap.exists?(mySnap.data()||{}):{};
-        var diamonds=Math.max(0,Math.floor(Number(md.diamonds)||0));
-        var patch={claimedBy:{}};
-        patch.claimedBy[me]=Date.now();
-        tx.set(myRef,{diamonds:diamonds+value,updatedAt:Date.now()},{merge:true});
-        tx.set(giftRef,patch,{merge:true});
-      });
-    }catch(e){
-      /* The gift animation/chat still works even if the account rule blocks the claim. */
-      console.warn('gift claim failed',e);
-    }
-  }
-  async function prClaimChatGift(docId,d){
-    if(!db||!currentUserKey||!docId||!d) return;
-    var me=String(currentUserKey), to=String(d.toKey||'');
-    if(!to || to!==me) return;
-    var value=Math.max(0,Math.floor(Number(d.value)||0))*Math.max(1,Math.floor(Number(d.count)||1));
-    if(value<=0) return;
-    try{
-      var myRef=db.collection('users').doc(me);
-      await db.runTransaction(async function(tx){
-        var mySnap=await tx.get(myRef);
-        var md=mySnap.exists?(mySnap.data()||{}):{};
-        var claimed=(md.claimedGifts&&md.claimedGifts[String(docId)])||false;
-        if(claimed) return;
-        var diamonds=Math.max(0,Math.floor(Number(md.diamonds)||0));
-        var patch={};
-        patch['diamonds']=diamonds+value;
-        patch['claimedGifts.'+String(docId)]=Date.now();
-        tx.set(myRef,patch,{merge:true});
-      });
-    }catch(e){ console.warn('chat gift claim failed',e); }
-  }
   window.prStartGifts=function(){
     window.prStopGifts();
     window.__prGiftTotals={};
@@ -4189,31 +3945,10 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
           if(ch.type!=='added' || seen.has(ch.doc.id)) return;
           seen.add(ch.doc.id);
           var d=ch.doc.data()||{};
-          if(String(d.toKey||'')===String(currentUserKey||'') && String(d.userKey||'')!==String(currentUserKey||'')){
-            prClaimIncomingGift(ch.doc.id,d);
-          }
           if(now-(Number(d.createdAt)||0)<=8000) showGift(d);
         });
         try{ cinemaRenderSeats(window.__cinemaPeople||[]); }catch(e){}
       },function(){});
-    /* Gift events are also mirrored into the room chat.  This path works with
-       normal Firestore rules where users may write chat but may not write a
-       gift document directly. */
-    var giftChatUnsub=db.collection('cinemaRooms').doc(cinemaRoomId).collection('chat')
-      .orderBy('createdAt','desc').limit(300)
-      .onSnapshot(function(snap){
-        snap.forEach(function(doc){
-          var d=doc.data()||{};
-          if(String(d.type||'')!=='gift') return;
-          var k=String(d.userKey||'');
-          var to=String(d.toKey||'');
-          var v=(Number(d.value)||0)*(Number(d.count)||1);
-          if(k && v){ window.__prGifterTotals[k]=(window.__prGifterTotals[k]||0)+v; }
-          if(to===String(currentUserKey||'')) prClaimChatGift(doc.id,d);
-        });
-      },function(e){ console.warn('gift chat listener failed',e); });
-    var oldGiftUnsub=window.__prGiftUnsub;
-    window.__prGiftUnsub=function(){ try{oldGiftUnsub&&oldGiftUnsub();}catch(e){} try{giftChatUnsub&&giftChatUnsub();}catch(e){} prStopCoinBalance(); };
   };
   // ---------- Top Gifters (full page): who has gifted the most in this room ----------
   function renderTopGiftersList(){
@@ -4424,12 +4159,9 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
 
   function recipientKeys(){
     var me=myKey();
-    var allPeople=people();
-    var self=allPeople.find(function(p){ return String(p.key)===me; })||null;
-    if(!self && me) self={key:me,name:(typeof cinemaUserName==='function'?cinemaUserName():'आप')};
-    var others=allPeople.filter(function(p){ return String(p.key)!==me; });
+    var others=people().filter(function(p){ return String(p.key)!==me; });
     var seated=others.filter(isSeated), rest=others.filter(function(p){ return !isSeated(p); });
-    return {seated:seated,rest:rest,self:self};
+    return {seated:seated,rest:rest};
   }
   function renderRecipients(){
     var box=$('prRecipients'); if(!box) return;
@@ -4481,20 +4213,12 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   }
   window.prOpenGift=function(toKey){
     if(!window.__prGiftId) window.__prGiftId='rose';
-    var r=recipientKeys(), me=myKey();
-    /* हर बार नया Gift खोलने पर पुराना recipient दोबारा इस्तेमाल न हो।
-       अगर profile/seat से recipient मिला है तो उसी को स्पष्ट रूप से चुनें। */
-    if(toKey){
-      var requested=String(toKey);
-      if(requested===me){
-        window.__prTo='';
-        toast('खुद को गिफ्ट नहीं भेज सकते');
-        return;
-      }
-      var valid=r.seated.concat(r.rest).some(function(p){ return String(p.key)===requested; });
-      window.__prTo=valid?requested:'';
-    }else{
-      window.__prTo='';
+    var r=recipientKeys(), all=r.seated.concat(r.rest).concat(r.self?[r.self]:[]);
+    if(toKey){ window.__prTo=String(toKey); }
+    else if(!window.__prTo || (window.__prTo!=='ALL' && !all.some(function(p){ return String(p.key)===String(window.__prTo); }))){
+      var hk=String(window.__cinemaHostKey||'');
+      var host=r.seated.find(function(p){ return String(p.key)===hk; });
+      window.__prTo=host?String(host.key):(r.seated[0]?String(r.seated[0].key):(all[0]?String(all[0].key):''));
     }
     renderRecipients(); renderGiftGrid(); renderSendInfo(); renderBaggagePanel(); showPartyGiftTab('gifts');
     openSheet('prGiftSheet');
@@ -4508,16 +4232,10 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   window.prSendGift=async function(){
     if(!db||!cinemaRoomId||!currentUserKey) return;
     var g=findGiftById(window.__prGiftId)||GIFTS[0];
-    var to=String(window.__prTo||''), me=myKey(), targets=[];
-    var r=recipientKeys();
-    if(to==='ALL') targets=r.seated;
-    else if(to===me){
-      targets=[{key:me,name:(r.self&&r.self.name)||cinemaUserName()||'आप'}];
-    }else if(to){
-      var selected=r.seated.concat(r.rest).find(function(p){ return String(p.key)===to; });
-      if(selected) targets=[{key:String(selected.key),name:selected.name||nameOf(selected.key)}];
-    }
-    if(!targets.length){ toast('पहले किसी व्यक्ति को चुनें'); renderSendInfo(); return; }
+    var to=window.__prTo, me=myKey(), targets=[];
+    if(to==='ALL') targets=recipientKeys().seated;
+    else if(to){ targets=[{key:String(to),name:nameOf(to)}];}
+    if(!targets.length){ toast('पहले किसी को चुनें'); return; }
     var totalCost=(Number(g.v)||0)*targets.length;
     if(Math.floor(Number(gamePoints)||0)<totalCost){
       toast('आपके पास इतने Game Coins नहीं हैं');
@@ -4531,38 +4249,44 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     var myRef=db.collection('users').doc(me);
     var myName=cinemaUserName();
     var toName=to==='ALL'?'सभी':targets[0].name;
+    var giftRefs=targets.map(function(p){ return col.collection('gifts').doc(); });
     try{
-      /* Only write the sender's own account here.  The actual gift event is
-         written to the room chat, which the room already permits for chat. */
       var newBalance=await db.runTransaction(async function(tx){
         var mySnap=await tx.get(myRef);
         var myData=mySnap.exists?(mySnap.data()||{}):{};
         var balance=Math.max(0,Math.floor(Number(mySnap.exists?myData.gamePoints:gamePoints)||0));
         if(balance<totalCost) throw new Error('insufficient');
+        var recipientSnaps=[];
+        for(var i=0;i<targets.length;i++){
+          var ref=db.collection('users').doc(String(targets[i].key));
+          var snap=await tx.get(ref);
+                    recipientSnaps.push({ref:ref,snap:snap});
+        }
         var after=balance-totalCost;
-        tx.set(myRef,{gamePoints:after,updatedAt:Date.now()},{merge:true});
-        return after;
+        var selfGift=targets.length===1 && String(targets[0].key)===me;
+        if(!selfGift) tx.set(myRef,{gamePoints:after},{merge:true});
+        for(var j=0;j<targets.length;j++){
+          var rd=recipientSnaps[j].snap.data()||{};
+          var rb=Math.max(0,Math.floor(Number(rd.diamonds)||0));
+          if(String(targets[j].key)!==me) tx.set(recipientSnaps[j].ref,{diamonds:rb+(Number(g.v)||0)},{merge:true});
+          tx.set(giftRefs[j],{gid:g.id,emoji:g.e,value:g.v,count:1,name:myName,userKey:me,toKey:String(targets[j].key),toName:targets[j].name||'User',createdAt:now},{merge:true});
+        }
+        return selfGift?balance:after;
       });
-      var giftText='🎁 '+g.e+' '+g.n+' · 🪙 '+window.prFmt(Number(g.v)||0)+' Coins';
-      for(var gi=0;gi<targets.length;gi++){
-        var target=targets[gi];
-        var giftData={
-          type:'gift',gid:g.id,giftId:g.id,emoji:g.e,giftName:g.n,value:Number(g.v)||0,count:1,
-          text:giftText,name:myName,userKey:me,toKey:String(target.key),toName:target.name||'User',createdAt:now+gi,claimedBy:{}
-        };
-        await col.collection('chat').doc().set(giftData,{merge:true});
-      }
       gamePoints=Math.max(0,Number(newBalance)||0);
       stateLoaded=true;
       prSyncCoinDisplays();
       renderSendInfo();
       prCloseSheets();
-      window.__prTo='';
+      var ck=[me,to,g.id].join('|'), c=window.__prCombo;
+      if(!c || c.key!==ck || now-c.t>3000){
+        col.collection('chat').add({type:'gift',gid:g.id,emoji:g.e,value:g.v,count:1,text:'',name:myName,userKey:me,toKey:String(to),toName:toName,createdAt:now}).catch(function(){});
+      }
+      window.__prCombo={key:ck,t:now};
       try{ saveState(); }catch(e){}
-      try{ toast('🎁 गिफ्ट भेज दिया गया'); }catch(e){}
     }catch(e){
       if(e && e.message==='insufficient') toast('आपके पास इतने Game Coins नहीं हैं');
-      else { console.warn('gift failed',e); toast('गिफ्ट नहीं गया, दोबारा कोशिश करें ('+String((e&&(e.code||e.message))||'error').slice(0,50)+')'); }
+      else { console.warn('gift failed',e); toast('गिफ्ट नहीं गया, दोबारा कोशिश करें ('+String((e&&(e.code||e.message))||'error').slice(0,40)+')'); }
     }
   };
 
@@ -4674,7 +4398,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         '<div class="uc-detail"><strong>🪙 Gaming</strong><span>'+coins.toLocaleString('en-IN')+' Game Coins'+(label&&label.level?' · '+esc(label.name)+' Lv.'+label.level:'')+'</span></div>'+
         '<div class="uc-detail"><strong>🎁 Room Gifts</strong><span>'+window.prFmt(total)+' received</span></div>'+
       '</div>'+
-      ((cinemaIsHost && !isHost)?'<button type="button" class="uc-host-remove" data-pr-act="manage" data-key="'+esc(key)+'">👑 Manage</button>':'')+
+      ((cinemaIsHost && !isHost && seatNo!==null)?'<button type="button" class="uc-host-remove" data-pr-act="removeSeat" data-key="'+esc(key)+'">🪑 सीट से Remove करें</button>':'')+
       '<div class="uc-row">'+
         (me?'':'<button type="button" data-pr-act="follow" data-key="'+esc(key)+'" style="background:'+(isFollowing?'rgba(34,197,94,.22)':'linear-gradient(135deg,#7c3aed,#db2777)')+';">'+(isFollowing?'✓ Following':'＋ Follow')+'</button>')+
         (me?'':'<button type="button" data-pr-act="msgto" data-key="'+esc(key)+'" data-name="'+esc(name)+'">💬 मैसेज</button>')+
@@ -4702,7 +4426,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     else if(a==='giftto'){ window.prOpenGift(key); }
     else if(a==='follow'){ window.pkRoomFollowUser(key).then(function(){ window.prOpenUserCard(key); }); }
     else if(a==='removeSeat'){ window.pkHostRemoveFromSeat(key); }
-    else if(a==='manage'){ window.pkHostManageUser(key); }
     else if(a==='leaveSeat'){
       if(String(currentUserKey||'')!==myKey()) return;
       t.disabled=true; t.innerHTML='⏳ सीट छोड़ी जा रही है…';
@@ -4928,7 +4651,7 @@ function publish(){
   srcCol().doc(me()).set({on:true,key:me(),name:cinemaUserName(),sid:H.sid,title:f?niceName(f):'',paused:H.audio?!!H.audio.paused:true,beat:Date.now(),updatedAt:Date.now()}).catch(function(){});
 }
 async function hostAccept(id,d){
-  var H=S.host; var pc=new RTCPeerConnection(ICE); window.activePeerConnections=window.activePeerConnections||[]; window.activePeerConnections.push(pc); H.peers[id]=pc;
+  var H=S.host; var pc=new RTCPeerConnection(ICE); H.peers[id]=pc;
   try{
     var track=H.dest.stream.getAudioTracks()[0];
     var sender=pc.addTrack(track,H.dest.stream);
@@ -4991,14 +4714,9 @@ function evalSources(){
 async function listen(m){
   var L=S.lis; closeConn(); L.sid=m.sid; L.want=m;
   var cid=me()+'_'+Date.now().toString(36); L.cid=cid;
-  var pc=new RTCPeerConnection(ICE); window.activePeerConnections=window.activePeerConnections||[]; window.activePeerConnections.push(pc); L.pc=pc;
+  var pc=new RTCPeerConnection(ICE); L.pc=pc;
   pc.addTransceiver('audio',{direction:'recvonly'});
-  pc.ontrack=function(e){
-    if (window.WatchTogether) {
-      window.WatchTogether.handleIncomingTrack(e);
-    }
-    attach(e.streams&&e.streams[0]?e.streams[0]:new MediaStream([e.track]));
-  };
+  pc.ontrack=function(e){ attach(e.streams&&e.streams[0]?e.streams[0]:new MediaStream([e.track])); };
   var ref=sigCol().doc(cid), cref=ref.collection('c');
   pc.onicecandidate=function(e){ if(e.candidate) cref.add({side:'l',c:e.candidate.toJSON()}).catch(function(){}); };
   pc.onconnectionstatechange=function(){
@@ -5187,18 +4905,7 @@ setInterval(function(){try{
     var st=document.createElement('style');
     st.textContent='#prRoomAvatar{cursor:pointer}'
     +'#prDpEdit{position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px;font-family:Segoe UI,Arial,sans-serif}'
-    +'#prDpEdit .pde-box{width:100%;max-width:360px;max-height:88vh;overflow:auto;background:#fff;border-radius:20px;padding:18px 16px 16px;text-align:center;color:#3a3054;box-shadow:0 16px 40px rgba(0,0,0,.4)}'
-    +'#prDpEdit .pde-head{display:flex;align-items:center;justify-content:space-between;font-size:17px;margin-bottom:14px}'
-    +'#prDpEdit .pde-x{width:34px!important;height:34px;padding:0!important;border-radius:10px!important;background:#f1eafb!important;color:#4a148c!important;font-size:16px!important}'
-    +'#prDpEdit .pde-section-title{text-align:left;font-size:13px;font-weight:900;color:#4a148c;margin:4px 0 8px}'
-    +'#prDpEdit .pde-bg-title{margin-top:14px}'
-    +'#prDpEdit .pde-bg-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}'
-    +'#prDpEdit .pde-bg{padding:0;border:1.5px solid #e3daf2;border-radius:11px;background:#faf7ff;color:#4a148c;overflow:hidden;font-size:9px;font-weight:800;cursor:pointer}'
-    +'#prDpEdit .pde-bg.active{border-color:#8a2be2;box-shadow:0 0 0 2px rgba(138,43,226,.15)}'
-    +'#prDpEdit .pde-bg span{display:block;height:43px}'
-    +'#prDpEdit .pde-bg b{display:block;padding:5px 2px}'
-    +'#prDpEdit .pde-gallery{width:100%!important;margin-top:9px;padding:10px!important;background:#f3ecff!important;color:#5b21b6!important;border:1px solid #dfcff8!important;font-size:12px!important}'
-    +'#prDpEdit .pde-bg-current{text-align:left;min-height:16px;margin-top:6px;font-size:10px;color:#7c6f93}'
+    +'#prDpEdit .pde-box{width:100%;max-width:320px;background:#fff;border-radius:20px;padding:22px 18px 16px;text-align:center;color:#3a3054;box-shadow:0 16px 40px rgba(0,0,0,.4)}'
     +'#prDpEdit .pde-ph{width:96px;height:96px;border-radius:50%;margin:0 auto 6px;background:#efe7fb center/cover no-repeat;display:grid;place-items:center;font-size:36px;font-weight:900;color:#7c3aed;cursor:pointer;box-shadow:0 0 0 3px #e2d5f7}'
     +'#prDpEdit .pde-hint{font-size:12px;color:#8a7fa3;margin-bottom:14px}'
     +'#prDpEdit input[type=text]{width:100%;padding:12px;border:1.5px solid #e0d4f5;border-radius:12px;font-size:15px;text-align:center;outline:none;background:#faf7ff;box-sizing:border-box}'
@@ -5227,37 +4934,16 @@ setInterval(function(){try{
       closeDlg();
       var newPhoto='';
       var o=document.createElement('div'); o.id='prDpEdit';
-      o.innerHTML='<div class="pde-box"><div class="pde-head"><b>🎉 रूम सेटिंग</b><button type="button" class="pde-x">✕</button></div>'
-        +'<div class="pde-section-title">🖼️ Display Photo</div>'
-        +'<div class="pde-ph" id="pdePh"></div><div class="pde-hint">ऊपर दिखने वाली रूम फोटो बदलें</div>'
+      o.innerHTML='<div class="pde-box"><div class="pde-ph" id="pdePh"></div><div class="pde-hint">फोटो बदलने के लिए गोले पर टैप करें</div>'
         +'<input type="text" id="pdeName" maxlength="30" placeholder="रूम का नाम">'
-        +'<div class="pde-section-title pde-bg-title">🌈 Room Background Theme</div>'
-        +'<div class="pde-bg-grid">'
-        +'<button type="button" class="pde-bg" data-bg="midnight"><span style="background:radial-gradient(circle at 50% 0%,#334155,#030712)"></span><b>Midnight</b></button>'
-        +'<button type="button" class="pde-bg" data-bg="purple"><span style="background:radial-gradient(circle at 50% 0%,#4f46e5,#17052f)"></span><b>Purple</b></button>'
-        +'<button type="button" class="pde-bg" data-bg="sunset"><span style="background:radial-gradient(circle at 50% 0%,#c2410c,#1c0805)"></span><b>Sunset</b></button>'
-        +'<button type="button" class="pde-bg" data-bg="neon"><span style="background:radial-gradient(circle at 50% 0%,#0891b2,#020617)"></span><b>Neon</b></button>'
-        +'<button type="button" class="pde-bg" data-bg="bloom"><span style="background:linear-gradient(135deg,#ff5fa2,#6d5bff,#1fb5d6)"></span><b>Bloom</b></button>'
-        +'</div>'
-        +'<button type="button" class="pde-gallery" id="pdeBgGallery">🖼️ Gallery से Background Photo चुनें</button>'
-        +'<div class="pde-bg-current" id="pdeBgCurrent"></div>'
         +'<div class="pde-msg" id="pdeMsg"></div>'
         +'<div class="pde-row"><button type="button" class="pde-cancel">रद्द करें</button><button type="button" class="pde-save">सेव करें</button></div>'
-        +'<input type="file" id="pdeFile" accept="image/*" style="display:none"><input type="file" id="pdeBgFile" accept="image/*" style="display:none"></div>';
+        +'<input type="file" id="pdeFile" accept="image/*" style="display:none"></div>';
       document.body.appendChild(o);
-      var ph=$('pdePh'),nameI=$('pdeName'),msg=$('pdeMsg'),file=$('pdeFile'),bgFile=$('pdeBgFile');
-      var selectedBg=String(window.__prBackgroundKey||'midnight');
-      var selectedBgImage=String(window.__prBackgroundImage||'');
+      var ph=$('pdePh'),nameI=$('pdeName'),msg=$('pdeMsg'),file=$('pdeFile');
       nameI.value=cinemaRoomName||'';
       if(PH.test(window.__prRoomPhoto||'')) ph.style.backgroundImage='url('+window.__prRoomPhoto+')';
       else ph.textContent=Array.from(String(cinemaRoomName||'🎉'))[0]||'🎉';
-      document.querySelectorAll('#prDpEdit .pde-bg').forEach(function(b){
-        var k=b.getAttribute('data-bg'); if(k===selectedBg && !selectedBgImage)b.classList.add('active');
-        b.onclick=function(){ selectedBg=k; selectedBgImage=''; document.querySelectorAll('#prDpEdit .pde-bg').forEach(function(x){x.classList.remove('active')}); b.classList.add('active'); cinemaApplyPartyBackground(document.getElementById('cinemaGharModal'),k,''); var cur=$('pdeBgCurrent'); if(cur)cur.textContent='Theme: '+k; };
-      });
-      var curBg=$('pdeBgCurrent'); if(curBg)curBg.textContent=selectedBgImage?'🖼️ Custom Gallery Background':('Theme: '+selectedBg);
-      $('pdeBgGallery').onclick=function(){ bgFile.click(); };
-      bgFile.onchange=async function(){ var f=bgFile.files&&bgFile.files[0]; if(!f)return; try{ await setPartyRoomGalleryBackground(f); selectedBg='gallery'; selectedBgImage=window.__prBackgroundImage||''; document.querySelectorAll('#prDpEdit .pde-bg').forEach(function(x){x.classList.remove('active')}); if(curBg)curBg.textContent='🖼️ Custom Gallery Background'; }catch(e){msg.textContent='Background फोटो नहीं लग पाई।';} bgFile.value=''; };
       ph.onclick=function(){ file.click(); };
       file.onchange=async function(){
         var f=file.files&&file.files[0]; if(!f) return;
@@ -5267,19 +4953,15 @@ setInterval(function(){try{
       };
       o.addEventListener('click',function(e){ if(e.target===o) closeDlg(); });
       o.querySelector('.pde-cancel').onclick=closeDlg;
-      o.querySelector('.pde-x').onclick=closeDlg;
       o.querySelector('.pde-save').onclick=async function(){
         var nm=nameI.value.trim();
         if(!nm){ msg.textContent='रूम का नाम खाली नहीं हो सकता।'; return; }
         var upd={roomName:nm.slice(0,30),updatedAt:Date.now()};
         if(newPhoto) upd.roomPhoto=newPhoto;
-        if(selectedBg==='gallery' && selectedBgImage){ upd.backgroundKey='gallery'; upd.backgroundImage=selectedBgImage; }
-        else if(PARTY_BG[selectedBg]){ upd.backgroundKey=selectedBg; upd.backgroundImage=''; }
         try{
           await db.collection('cinemaRooms').doc(cinemaRoomId).set(upd,{merge:true});
           cinemaRoomName=upd.roomName;
           if(newPhoto) window.__prRoomPhoto=newPhoto;
-          if(upd.backgroundKey){ window.__prBackgroundKey=upd.backgroundKey; window.__prBackgroundImage=upd.backgroundImage||''; cinemaApplyPartyBackground($('cinemaGharModal'),window.__prBackgroundKey,window.__prBackgroundImage); }
           try{ prApplyRoomMeta(Object.assign({},{roomName:upd.roomName,roomPhoto:window.__prRoomPhoto||'',topic:window.__prTopic||''})); }catch(e){}
           closeDlg();
         }catch(e){ msg.textContent='सेव नहीं हो पाया, फिर कोशिश करें।'; }
@@ -5287,8 +4969,7 @@ setInterval(function(){try{
     }
     document.addEventListener('click',function(e){
       var a=e.target.closest&&e.target.closest('#prRoomAvatar');
-      var pill=e.target.closest&&e.target.closest('#prRoomPill');
-      if((a||pill)&&cinemaIsHost){ e.stopPropagation(); openDlg(); }
+      if(a&&cinemaIsHost){ e.stopPropagation(); openDlg(); }
     },true);
   })();
 })();
@@ -5775,15 +5456,10 @@ setInterval(function(){try{
     document.getElementById('pkCallTitle').textContent=(initiator?'Calling ':'Call with ')+direct.otherName;
     document.getElementById('pkCallIcon').textContent=mode==='video'?'📹':'📞';
     addVideo('pkLocalVideo',direct.stream,true);
-    var pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]}); window.activePeerConnections=window.activePeerConnections||[]; window.activePeerConnections.push(pc);
+    var pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
     direct.peer=pc;
     direct.stream.getTracks().forEach(t=>pc.addTrack(t,direct.stream));
-    pc.ontrack=e=>{
-      if (window.WatchTogether) {
-        window.WatchTogether.handleIncomingTrack(e);
-      }
-      if(e.streams?.[0])addVideo('pkRemoteVideo',e.streams[0],false);
-    };
+    pc.ontrack=e=>{if(e.streams?.[0])addVideo('pkRemoteVideo',e.streams[0],false)};
     var base=db.collection('directCalls').doc(callId),side=initiator?'a':'b',otherSide=initiator?'b':'a';
     direct.candUnsub=base.collection('candidates').where('side','==',otherSide).onSnapshot(s=>s.docChanges().forEach(ch=>{if(ch.type==='added'){var c=ch.doc.data();if(c?.candidate){var __try=0,__add=function(){pc.addIceCandidate(new RTCIceCandidate(c.candidate)).catch(function(){if(++__try<12)setTimeout(__add,600);});};__add();}}}));
     pc.onicecandidate=e=>{if(e.candidate)base.collection('candidates').add({side:side,candidate:e.candidate.toJSON(),createdAt:Date.now()}).catch(()=>{});};
@@ -5947,7 +5623,7 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
       </div>
     </div>
   </div>
-  <div class="pp-actions"><button type="button" class="pp-tag" id="pkPPtagBtn">🏷️ Tag</button><button type="button" class="pp-follow" id="pkPPfollowBtn">＋ Follow</button><button type="button" class="pp-dm" id="pkPPdmBtn" style="display:none!important">DM</button></div>
+  <div class="pp-actions"><button type="button" class="pp-follow" id="pkPPfollowBtn">＋ Follow</button><button type="button" class="pp-dm" id="pkPPdmBtn">DM</button></div>
 </div>
 <style id="pkProfileSingleBackgroundAndCompactPhoto">
 /* Profile: one continuous background, no separate white card behind the photo. */
@@ -6074,7 +5750,6 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
       try{ toast('सीट छोड़ी नहीं जा सकी, दोबारा कोशिश करें।'); }catch(_){}
     }
   };
-  window.pkTagProfile=function(){try{var n=document.getElementById('pkPPname')?.textContent||'User';n=n.replace(/👑 VIP/g,'').trim();var tag='@'+n.replace(/\s+/g,'');if(navigator.clipboard){navigator.clipboard.writeText(tag).then(function(){if(typeof toast==='function')toast(tag+' copied');}).catch(function(){if(typeof toast==='function')toast(tag);});}else if(typeof toast==='function')toast(tag);}catch(e){}};
   window.currentKeyForProfile=function(){return currentKey;};
   window.prOpenUserCard=function(key){render(String(key||''));};
   document.addEventListener('keydown',function(ev){if(ev.key==='Escape')pkClosePublicProfile();});
@@ -7054,53 +6729,6 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
   }
   window.pkRoomFollowUser=pkRoomFollowUser;
   function personName(key){ var p=(window.__cinemaPeople||[]).find(function(x){return String(x.key)===String(key);}); return (p&&p.name)||(window.__prUserNameCache&&window.__prUserNameCache[key])||'User'; }
-  function pkIsRoomAdmin(key){ key=String(key||''); return !!key && Array.isArray(window.__prRoomAdmins) && window.__prRoomAdmins.map(String).indexOf(key)>=0; }
-  function pkCanManageRoom(){ return !!cinemaIsHost || pkIsRoomAdmin(me()); }
-  function pkHostModerationRef(key){ return roomRef().collection('viewers').doc(String(key)); }
-  async function pkHostSetModeration(key,field,value,label){
-    if(!pkCanManageRoom()||!cinemaRoomId||!key||key===me()) return;
-    try{
-      var ref=pkHostModerationRef(key), upd={}; upd[field]=!!value; upd.updatedAt=Date.now();
-      await ref.set(upd,{merge:true});
-      window.pkRoomToast((value?'🔇 ':'🔊 ')+label+(value?' कर दिया':' हटा दिया'));
-      try{ window.pkCloseManage&&window.pkCloseManage(); }catch(e){}
-    }catch(e){ window.pkRoomToast(label+' नहीं बदला जा सका।'); }
-  }
-  window.pkHostToggleChatMute=function(key){
-    var p=(window.__cinemaPeople||[]).find(function(x){return String(x.key)===String(key);});
-    return pkHostSetModeration(key,'chatMuted',!(p&&p.chatMuted===true),'मैसेज म्यूट');
-  };
-  window.pkHostToggleVoiceMute=function(key){
-    var p=(window.__cinemaPeople||[]).find(function(x){return String(x.key)===String(key);});
-    return pkHostSetModeration(key,'voiceMuted',!(p&&p.voiceMuted===true),'आवाज़ म्यूट');
-  };
-  window.pkHostToggleAdmin=async function(key){
-    if(!cinemaIsHost||!cinemaRoomId||!key||String(key)===String(me())) return;
-    try{var admins=Array.isArray(window.__prRoomAdmins)?window.__prRoomAdmins.map(String):[],k=String(key),on=admins.indexOf(k)>=0,next=on?admins.filter(function(x){return x!==k;}):Array.from(new Set(admins.concat(k)));await roomRef().set({admins:next,updatedAt:Date.now()},{merge:true});window.__prRoomAdmins=next;window.pkRoomToast(on?'👤 Admin हटा दिया':'👑 Admin बना दिया');try{window.pkCloseManage&&window.pkCloseManage();}catch(e){}}catch(e){window.pkRoomToast('Admin सेट नहीं हो पाया।');}
-  };
-  window.pkHostManageUser=function(key){
-    if(!pkCanManageRoom()||!key||String(key)===String(me())) return;
-    var k=String(key), p=(window.__cinemaPeople||[]).find(function(x){return String(x.key)===k;})||{}, nm=personName(k), seated=Number.isInteger(p.seat)||p.hostSeated===true;
-    var old=document.getElementById('pkHostManageSheet'); if(old) old.remove();
-    var sheet=document.createElement('div'); sheet.id='pkHostManageSheet'; sheet.style.cssText='position:fixed;inset:0;z-index:2147483646;background:rgba(0,0,0,.48);display:flex;align-items:flex-end;justify-content:center;padding:12px;box-sizing:border-box;';
-    var box=document.createElement('div'); box.style.cssText='width:min(430px,100%);background:linear-gradient(160deg,#17132b,#0d1020);border:1px solid rgba(255,255,255,.14);border-radius:22px;padding:14px;box-shadow:0 20px 60px rgba(0,0,0,.45);color:#fff;';
-    box.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><b style="font-size:15px">👑 Manage · '+esc(nm)+'</b><button type="button" id="pkHMClose" style="width:32px;height:32px;border:0;border-radius:10px;background:rgba(255,255,255,.1);color:#fff;font-size:18px">✕</button></div>'
-      +'<div style="display:grid;gap:8px">'
-      +'<button type="button" id="pkHMSeat" style="height:44px;border:1px solid rgba(255,255,255,.12);border-radius:13px;background:rgba(255,255,255,.07);color:#fff;font-weight:900">🪑 '+(seated?'सीट से Leave कराएँ':'सीट से Leave कराएँ')+'</button>'
-      +'<button type="button" id="pkHMChat" style="height:44px;border:1px solid rgba(255,255,255,.12);border-radius:13px;background:rgba(255,255,255,.07);color:#fff;font-weight:900">💬 '+(p.chatMuted?'मैसेज Unmute करें':'मैसेज Mute करें')+'</button>'
-      +'<button type="button" id="pkHMVoice" style="height:44px;border:1px solid rgba(255,255,255,.12);border-radius:13px;background:rgba(255,255,255,.07);color:#fff;font-weight:900">🎙️ '+(p.voiceMuted?'आवाज़ Unmute करें':'आवाज़ Mute करें')+'</button>'
-      +(cinemaIsHost?'<button type="button" id="pkHMAdmin" style="height:44px;border:1px solid rgba(245,158,11,.28);border-radius:13px;background:rgba(245,158,11,.10);color:#fbbf24;font-weight:900">👑 '+(pkIsRoomAdmin(k)?'Admin हटाएँ':'Admin दें')+'</button>':'')
-      +'</div>';
-    sheet.appendChild(box);document.body.appendChild(sheet);
-    window.pkCloseManage=function(){var x=document.getElementById('pkHostManageSheet');if(x)x.remove();};
-    document.getElementById('pkHMClose').onclick=window.pkCloseManage;
-    document.getElementById('pkHMSeat').onclick=function(){ if(!seated){window.pkRoomToast('यह यूज़र अभी सीट पर नहीं है');return;} window.pkHostRemoveFromSeat(k);window.pkCloseManage(); };
-    document.getElementById('pkHMChat').onclick=function(){pkHostToggleChatMute(k);};
-    document.getElementById('pkHMVoice').onclick=function(){pkHostToggleVoiceMute(k);};
-    var adminBtn=document.getElementById('pkHMAdmin'); if(adminBtn)adminBtn.onclick=function(){window.pkHostToggleAdmin(k);};
-    sheet.addEventListener('click',function(e){if(e.target===sheet)window.pkCloseManage();});
-  };
-
   window.pkHostRemoveFromSeat=async function(key){
     if(!cinemaIsHost||!cinemaRoomId||!key||key===me()) return;
     try{
@@ -7155,7 +6783,12 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     var status=isHostTarget?'👑 Host':(seated?('🎙 माइक '+(p.seat+1)):(p?'रूम में':'रूम से बाहर'));
     var h='<div class="h"><span>🎙 पार्टी रूम</span><em>'+esc(status)+'</em></div>';
     h+='<button type="button" class="gift" onclick="pkRoomProfileGift()"><span class="ic">🎁</span><span>गिफ्ट भेजें<small>इस यूज़र को गिफ्ट दें</small></span></button>';
-    if(pkCanManageRoom() && !isHostTarget){ h+='<div class="ht">👑 '+(cinemaIsHost?'HOST':'ADMIN')+'</div><button type="button" class="down" onclick="pkHostManageUser(\''+esc(profKey)+'\')"><span class="ic">⚙️</span><span>Manage<small>सीट, मैसेज और आवाज़</small></span></button>'; }
+    if(cinemaIsHost && !isHostTarget){
+      h+='<div class="ht">👑 HOST CONTROLS</div>';
+      if(seated) h+='<button type="button" class="down" onclick="pkHostRemoveFromSeat(\''+esc(profKey)+'\')"><span class="ic">🪑</span><span>सीट से उतारें<small>यूज़र नीचे आ जाएगा, रूम में बना रहेगा</small></span></button>';
+      if(p) h+='<button type="button" class="kick" onclick="pkHostKick(\''+esc(profKey)+'\')"><span class="ic">🚪</span><span>रूम से निकालें<small>रूम से बाहर, दोबारा जुड़ सकता है</small></span></button>';
+      h+='<button type="button" class="block" onclick="pkHostBlock(\''+esc(profKey)+'\')"><span class="ic">⛔</span><span>ब्लॉक करें<small>दोबारा रूम में एंटर नहीं कर पाएगा</small></span></button>';
+    }
     box.innerHTML=h; box.style.display='block';
   };
 
@@ -7613,11 +7246,6 @@ body.pk-game-open #pkUniversalNav{display:none!important}
 #prRoom.party-gaming-layout #prChatModeBtnG[data-host="1"],#prRoom.party-youtube-layout #prChatModeBtnG[data-host="1"]{left:150px;background:linear-gradient(135deg,#0ea5e9,#2563eb);}
 #prSubRow #prTicker{min-width:0;flex:1 1 0;overflow:hidden;}
 </style>
-<style id="partyRoomCinemaIsolationFinal">
-/* Cinema Mode is a separate local-video mode; never show YouTube controls there. */
-#prRoom.party-cinema-layout #partyYoutubeStage{display:none!important;visibility:hidden!important;pointer-events:none!important;}
-#prRoom.party-cinema-layout #ytModal{display:none!important;}
-</style>
 <script id="pkRoomFinalPolishJs">
 (function(){
   'use strict';
@@ -7636,17 +7264,8 @@ body.pk-game-open #pkUniversalNav{display:none!important}
   function closePartyRoomModeMenu(){ var menu=$('prModeMenu'); if(menu){menu.classList.remove('open');paintModeMenu();} }
   async function selectPartyRoomMode(mode){
     closePartyRoomModeMenu();
-    if(mode==='chat'||mode==='gaming'||mode==='youtube'||mode==='cinema'){
+    if(mode==='chat'||mode==='gaming'||mode==='youtube'){
       if(!host()){ try{ if(window.pkRoomToast) window.pkRoomToast('Mode बदलने का अधिकार केवल Host के पास है।'); }catch(e){} return; }
-      /* IMPORTANT: Android/WebView file pickers must be opened directly from the
-         user's tap. Do this BEFORE awaiting the async room-mode change, otherwise
-         the browser can reject the file chooser because the user gesture is lost. */
-      if(mode==='cinema'){
-        try{
-          var movieInput=document.getElementById('movieFileInput');
-          if(movieInput){ movieInput.click(); }
-        }catch(e){ console.warn('[Cinema] file picker error',e); }
-      }
       if(window.setPartyRoomMode) await window.setPartyRoomMode(mode);
       paintModeMenu();
     }
@@ -8473,19 +8092,14 @@ input,textarea,select{font-size:16px}
     navSync();
   }
 
-  /* Party Room top X/back: direct back/exit. No extra minimize popup. */
+  /* room top-left back / X buttons ask first when inside a room */
   window.cinemaLobbyBack=function(){
-    try{ closeDialog(); }catch(e){}
-    try{ if(typeof window.closeCinemaGhar==='function') window.closeCinemaGhar();
-      else if(typeof origLobbyBack==='function') return origLobbyBack.apply(this,arguments);
-    }catch(e){}
+    if(roomId() && shown($('cinemaGharModal'))){ askExitMin(); return; }
+    if(typeof origLobbyBack==='function') return origLobbyBack.apply(this,arguments);
+    if(typeof window.closeCinemaGhar==='function') window.closeCinemaGhar();
   };
   var rx=$('pkRoomX');
-  if(rx) rx.onclick=function(e){
-    try{ if(e)e.preventDefault(); if(e)e.stopPropagation(); }catch(_e){}
-    try{ closeDialog(); }catch(_e){}
-    try{ window.closeCinemaGhar(); }catch(_e){}
-  };
+  if(rx) rx.onclick=function(){ if(roomId()) askExitMin(); else { try{ window.closeCinemaGhar(); }catch(e){} } };
 
   /* tapping the Party Room tile on Home while a room is minimized = go back into that room */
   var origHome=window.homeCinemaGharClicked;
@@ -8992,10 +8606,6 @@ input,textarea,select{font-size:16px}
 .yt-bottom-sheet-buttons{display:flex;gap:8px;margin-bottom:10px;}
 .yt-bottom-sheet-buttons button{flex:1;min-height:42px;border-radius:11px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:#fff;font-size:12px;font-weight:900;cursor:pointer;}
 .yt-bottom-sheet-buttons button.active{background:linear-gradient(135deg,#a855f7,#ec4899);border-color:transparent;box-shadow:0 5px 16px rgba(168,85,247,.28);}
-.yt-bottom-sound-panel{display:none;align-items:center;justify-content:space-between;gap:8px;margin:-2px 0 9px;padding:7px 9px;border-radius:10px;background:rgba(168,85,247,.10);border:1px solid rgba(168,85,247,.28);color:#ddd6fe;font-size:10.5px;font-weight:800;}
-.yt-bottom-sound-panel.open{display:flex;}
-.yt-bottom-sound-panel button{padding:6px 10px;border:0;border-radius:8px;background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;font-size:10px;font-weight:900;}
-#prRoom.party-youtube-layout.yt-sound-only #partyYoutubeStage #ytRoomPlayerDiv,#prRoom.party-youtube-layout.yt-sound-only #partyYoutubeStage iframe{width:1px!important;height:1px!important;min-width:1px!important;min-height:1px!important;position:fixed!important;left:-10px!important;top:-10px!important;opacity:.01!important;pointer-events:none!important;}
 .yt-bottom-url-row{display:flex;gap:8px;align-items:stretch;}
 .yt-bottom-url-row .yt-input{min-height:46px;font-size:13px;}
 .yt-bottom-url-row .yt-btn-load{min-width:76px;min-height:46px;}
@@ -9421,11 +9031,6 @@ input,textarea,select{font-size:16px}
       <div class="yt-bottom-sheet-buttons">
         <button type="button" id="ytBottomHistoryBtn">💾 History</button>
         <button type="button" id="ytBottomQueueBtn">Q</button>
-        <button type="button" id="ytBottomSoundBtn">🎵 Sound</button>
-      </div>
-      <div id="ytBottomSoundPanel" class="yt-bottom-sound-panel" aria-hidden="true">
-        <span>🎵 सिर्फ Audio</span>
-        <button type="button" id="ytBottomSoundToggle">चालू करें</button>
       </div>
       <div class="yt-bottom-sheet-label">YouTube URL डालें और Host के रूप में Load करें</div>
       <div class="yt-bottom-url-row">
@@ -9444,7 +9049,7 @@ var queue=[],history=[],current=null,isHost=false,soundMode=false,volume=80,mute
 var ytPlayer=null,ytReady=false,ytApiLoaded=!!window.YT,ytProgressTimer=null,roomUnsub=null,lastRoomTs=0,listeningRoom='';
 var ytRoomStateUnsub=null,ytRoomQueueUnsub=null,ytRoomSyncTimer=null,ytRemoteApplying=false,ytRoomLastAction=0,ytRoomSuppressNextSync=false;
 var $=function(id){return document.getElementById(id);};
-var fab=$('ytFab'),fabBadge=fab&&fab.querySelector('.yt-badge'),mini=$('ytMini'),modal=$('ytModal'),closeBtn=$('ytCloseBtn'),input=$('ytInput'),loadBtn=$('ytLoadBtn'),pasteBtn=$('ytPasteBtn'),addQueue=$('ytAddQueueBtn'),historyBtn=$('ytHistoryBtn'),queueInput=$('ytQueueInput'),queueAddBtn=$('ytQueueAddBtn'),shareBtn=$('ytShareBtn'),clearBtn=$('ytClearBtn'),bottomHistoryBtn=$('ytBottomHistoryBtn'),bottomQueueBtn=$('ytBottomQueueBtn'),bottomInput=$('ytBottomInput'),bottomLoadBtn=$('ytBottomLoadBtn'),bottomSoundBtn=$('ytBottomSoundBtn'),bottomSoundPanel=$('ytBottomSoundPanel'),bottomSoundToggle=$('ytBottomSoundToggle'),frameHost=$('ytFrame'),queueList=$('ytQueueList'),historyList=$('ytHistoryList'),queueCount=$('ytQueueCount'),hostLock=$('ytHostLock'),enableSound=$('ytEnableSound'),clearHist=$('ytClearHistory'),playPause=$('ytPlayPause'),seekBack=$('ytSeekBack'),seekFwd=$('ytSeekFwd'),seekBar=$('ytSeekBar'),seekFill=$('ytSeekFill'),timeCur=$('ytTimeCur'),timeDur=$('ytTimeDur'),volSlider=$('ytVolSlider'),volVal=$('ytVolVal'),muteBtn=$('ytMuteBtn'),dockBtn=$('partyRoomYouTubeBtn'),dockBadge=$('partyRoomYoutubeBadge');
+var fab=$('ytFab'),fabBadge=fab&&fab.querySelector('.yt-badge'),mini=$('ytMini'),modal=$('ytModal'),closeBtn=$('ytCloseBtn'),input=$('ytInput'),loadBtn=$('ytLoadBtn'),pasteBtn=$('ytPasteBtn'),addQueue=$('ytAddQueueBtn'),historyBtn=$('ytHistoryBtn'),queueInput=$('ytQueueInput'),queueAddBtn=$('ytQueueAddBtn'),shareBtn=$('ytShareBtn'),clearBtn=$('ytClearBtn'),bottomHistoryBtn=$('ytBottomHistoryBtn'),bottomQueueBtn=$('ytBottomQueueBtn'),bottomInput=$('ytBottomInput'),bottomLoadBtn=$('ytBottomLoadBtn'),frameHost=$('ytFrame'),queueList=$('ytQueueList'),historyList=$('ytHistoryList'),queueCount=$('ytQueueCount'),hostLock=$('ytHostLock'),enableSound=$('ytEnableSound'),clearHist=$('ytClearHistory'),playPause=$('ytPlayPause'),seekBack=$('ytSeekBack'),seekFwd=$('ytSeekFwd'),seekBar=$('ytSeekBar'),seekFill=$('ytSeekFill'),timeCur=$('ytTimeCur'),timeDur=$('ytTimeDur'),volSlider=$('ytVolSlider'),volVal=$('ytVolVal'),muteBtn=$('ytMuteBtn'),dockBtn=$('partyRoomYouTubeBtn'),dockBadge=$('partyRoomYoutubeBadge');
 if(!modal||!input||!loadBtn)return;
 
 function toast(msg,ms){var t=document.createElement('div');t.className='yt-toast';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},ms||1800);}
@@ -9517,7 +9122,6 @@ function ytRoomStopSync(){
 function ytRoomUpdateUI(){
   var st=ytRoomStage(); if(!st)return;
   var h=ytRoomHost(); st.classList.toggle('yt-host',h);st.classList.toggle('yt-nonhost',!h);
-  var closeBtnRoom=$('ytRoomCloseVideoBtn'); if(closeBtnRoom)closeBtnRoom.style.display=(h&&current)?'inline-flex':'none';
   var q=$('ytRoomQueueCount'); if(q)q.textContent=String(queue.length);
   var empty=$('ytRoomEmpty'); if(empty)empty.style.display=current?'none':'flex';
   st.style.display=ytRoomIsActive()?'flex':'none';
@@ -9526,30 +9130,8 @@ function partyRoomYoutubeEnter(){
   var st=ytRoomStage(); if(!st)return; st.style.display='flex'; ytRoomUpdateUI(); ytRoomStartSync();
   try{refreshHostState();}catch(e){}
 }
-function partyRoomYoutubeExit(keepSound){
-  /* Chatting Mode can keep Sound Mode playing in the background.
-     Gaming/Cinema (and a normal YouTube exit) must stop YouTube completely. */
-  keepSound=!!keepSound && !!soundMode && !!current;
-  if(keepSound){
-    try{
-      var room=document.getElementById('prRoom');
-      if(room) room.classList.add('yt-sound-only');
-      var stage=ytRoomStage(); if(stage) stage.style.display='none';
-      /* Keep the same player alive so its audio continues in the background. */
-      ytRoomStopSync();
-      return;
-    }catch(e){ keepSound=false; }
-  }
-  try{
-    if(ytRoomHost() && current){
-      ytRoomWriteState({videoId:'',listId:'',title:'',playing:false,currentTime:0,stopped:true,closedBy:'mode-change',closedAt:Date.now()});
-    }
-  }catch(e){}
-  try{destroyPlayer();}catch(e){}
-  current=null;
-  var room2=document.getElementById('prRoom'); if(room2) room2.classList.remove('yt-sound-only');
-  var st2=ytRoomStage(); if(st2)st2.style.display='none';
-  ytRoomStopSync();
+function partyRoomYoutubeExit(){
+  var st=ytRoomStage(); if(st)st.style.display='none'; ytRoomStopSync();
 }
 window.partyRoomYoutubeEnter=partyRoomYoutubeEnter;window.partyRoomYoutubeExit=partyRoomYoutubeExit;
 
@@ -9814,20 +9396,7 @@ function updateBadges(){
   if(dockBadge){dockBadge.textContent=n;dockBadge.style.display=n?'flex':'none';}
 }
 
-function openModal(){
-  /* In Party Room, YouTube controls must stay inside the same room screen.
-     Never open the old full-screen YouTube modal from Q/History/room actions. */
-  if(ytRoomIsActive()){
-    try{
-      modal.classList.remove('open');
-      var room=document.getElementById('prRoom');
-      if(room)room.classList.add('party-youtube-layout');
-      if(window.ytRoomUpdateUI)window.ytRoomUpdateUI();
-    }catch(e){}
-    return;
-  }
-  modal.classList.add('open');
-}
+function openModal(){modal.classList.add('open'); if(ytRoomIsActive()&&!ytRoomHost()){var qt=document.querySelector('.yt-tab[data-tab="queue"]');if(qt)qt.click();}}
 function closeModal(){modal.classList.remove('open');}
 function fmt(t){t=Math.max(0,Math.floor(Number(t)||0));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');}
 function startProgress(){
@@ -9853,39 +9422,17 @@ function updatePlayPause(){
 function stopVideo(){
   if(ytRoomIsActive()&&!ytRemoteApplying&&ytRoomHost()) ytRoomWriteState({videoId:'',listId:'',title:'',playing:false,currentTime:0,stopped:true,volume:volume,muted:muted});
   destroyPlayer();current=null;
-  var closeBtnRoom=$('ytRoomCloseVideoBtn'); if(closeBtnRoom)closeBtnRoom.style.display='none';
   if(mini)mini.classList.remove('open');
   if(seekFill)seekFill.style.width='0%';
   if(timeCur)timeCur.textContent='0:00';
   if(timeDur)timeDur.textContent='0:00';
 }
-function ytRoomCloseShared(){
-  refreshHostState();
-  if(!ytRoomIsActive()||!ytRoomHost()){toast('👑 सिर्फ Host सभी के लिए YouTube बंद कर सकता है',1800);return;}
-  if(!current){toast('YouTube video अभी नहीं चल रहा',1500);return;}
-  /* Host writes the stop state first. Every viewer is subscribed to this same document. */
-  ytRoomWriteState({videoId:'',listId:'',title:'',playing:false,currentTime:0,stopped:true,volume:volume,muted:muted,closedBy:'host',closedAt:Date.now()});
-  destroyPlayer();
-  current=null;
-  var closeBtnRoom=$('ytRoomCloseVideoBtn'); if(closeBtnRoom)closeBtnRoom.style.display='none';
-  var empty=$('ytRoomEmpty'); if(empty)empty.style.display='flex';
-  toast('✕ YouTube सभी के लिए बंद कर दिया गया',1800);
-}
-window.ytRoomCloseShared=ytRoomCloseShared;
-
 function setSoundMode(on){
   soundMode=!!on;storageSet(SOUND_KEY,soundMode?'1':'0');
-  var room=document.getElementById('prRoom');
-  if(room) room.classList.toggle('yt-sound-only',soundMode);
-  if(bottomSoundPanel) bottomSoundPanel.classList.add('open');
-  if(bottomSoundToggle) bottomSoundToggle.textContent=soundMode?'बंद करें':'चालू करें';
-  if(bottomSoundBtn) bottomSoundBtn.classList.toggle('active',soundMode);
-  if(soundMode&&current){if(mini)mini.classList.remove('open');closeModal();toast('🎵 सिर्फ Audio चालू');}
+  if(soundMode&&current){if(mini)mini.classList.add('open');closeModal();toast('🎵 Sound Mode चालू');}
   else if(!soundMode&&mini)mini.classList.remove('open');
 }
 
-if(bottomSoundBtn){bottomSoundBtn.addEventListener('click',function(){if(bottomSoundPanel)bottomSoundPanel.classList.toggle('open');});}
-if(bottomSoundToggle){bottomSoundToggle.addEventListener('click',function(){setSoundMode(!soundMode);});}
 document.querySelectorAll('.yt-tab').forEach(function(t){
   t.addEventListener('click',function(){
     document.querySelectorAll('.yt-tab').forEach(function(x){x.classList.remove('active');});
@@ -9948,79 +9495,13 @@ window.ytRoomBottomSubmitImpl=function(v){
     addVideoToQueue(v,roomInput||null);
   }
 };
-function renderInlineRoomPanel(name){
-  var ql=document.getElementById('ytRoomInlineQueueList'),hl=document.getElementById('ytRoomInlineHistoryList');
-  if(ql){
-    if(!queue.length) ql.innerHTML='<div class="yt-room-inline-empty">Q खाली है</div>';
-    else ql.innerHTML=queue.map(function(v,i){return '<button type="button" class="yt-room-inline-item" data-qidx="'+i+'"><span class="yt-room-inline-thumb">Q'+(i+1)+'</span><span class="yt-room-inline-meta"><b>'+esc(v.title||v.id)+'</b><small>'+esc(v.addedBy||'You')+'</small></span></button>';}).join('');
-    ql.querySelectorAll('[data-qidx]').forEach(function(el){el.addEventListener('click',function(){var v=queue[Number(el.dataset.qidx)];if(!v)return;refreshHostState();if(!isHost){toast('👑 सिर्फ Host video चला सकता है',1800);return;}playInfo({type:'video',id:v.id,list:v.list||'',shorts:!!v.shorts},v.title,{addedBy:v.addedBy||'You'});});});
-  }
-  if(hl){
-    if(!history.length) hl.innerHTML='<div class="yt-room-inline-empty">अभी कोई video नहीं चला</div>';
-    else hl.innerHTML=history.map(function(v,i){return '<button type="button" class="yt-room-inline-item" data-hidx="'+i+'"><span class="yt-room-inline-thumb">▶</span><span class="yt-room-inline-meta"><b>'+esc(v.title||v.id)+'</b><small>'+new Date(v.ts||Date.now()).toLocaleString()+'</small></span></button>';}).join('');
-    hl.querySelectorAll('[data-hidx]').forEach(function(el){el.addEventListener('click',function(){var v=history[Number(el.dataset.hidx)];if(!v)return;refreshHostState();if(!isHost){toast('👑 सिर्फ Host video चला सकता है',1800);return;}playInfo({type:'video',id:v.id,list:v.list||'',shorts:!!v.shorts},v.title,{addedBy:v.addedBy||'You'});});});
-  }
-}
-function ytRoomTogglePanel(name){
-  var panel=document.getElementById('ytRoomInlinePanel'); if(!panel)return;
-  var currentPanel=panel.getAttribute('data-open')||'';
-  var next=currentPanel===name?'':name;
-  panel.setAttribute('data-open',next);
-  panel.classList.toggle('open',!!next);
-  var q=document.getElementById('ytRoomInlineQueue'),h=document.getElementById('ytRoomInlineHistory');
-  if(q)q.style.display=next==='queue'?'block':'none';
-  if(h)h.style.display=next==='history'?'block':'none';
-  renderInlineRoomPanel(next);
-  var inp=document.getElementById('ytRoomInlineQueueInput');
-  if(next==='queue'&&inp)setTimeout(function(){inp.focus();},30);
-}
-window.ytRoomTogglePanel=ytRoomTogglePanel;
-// Room Q/History must never open the legacy YouTube modal.
-(function(){
-  function bindRoomTools(){
-    var q=document.getElementById('ytRoomQueueBtn'),h=document.getElementById('ytRoomHistoryBtn');
-    [q,h].forEach(function(b){if(!b||b.__sameScreenBound)return;b.__sameScreenBound=true;b.addEventListener('click',function(e){
-      e.preventDefault();e.stopPropagation();
-      try{modal.classList.remove('open');}catch(x){}
-      ytRoomTogglePanel(b===q?'queue':'history');
-    },true);});
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindRoomTools);else bindRoomTools();
-  setTimeout(bindRoomTools,300);setTimeout(bindRoomTools,1000);
-})();
-window.ytRoomOpenPanel=ytRoomTogglePanel;
-var inlineQueueLoad=document.getElementById('ytRoomInlineQueueLoad'),inlineQueueInput=document.getElementById('ytRoomInlineQueueInput');
-if(inlineQueueLoad)inlineQueueLoad.addEventListener('click',function(){var v=inlineQueueInput&&inlineQueueInput.value?inlineQueueInput.value.trim():'';if(!v){toast('🔗 पहले YouTube URL paste करें');return;}if(addVideoToQueue(v,inlineQueueInput))ytRoomTogglePanel('queue');});
-if(inlineQueueInput)inlineQueueInput.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();if(inlineQueueLoad)inlineQueueLoad.click();}});
-// Host/Viewer YouTube URL: keyboard stays closed, but Paste is always available.
-(function(){
-  var pb=document.getElementById('ytRoomPasteBtn'), inp=document.getElementById('ytRoomInput');
-  var cb=document.getElementById('ytRoomClearBtn');
-  if(cb && !cb.__clearBound){
-    cb.__clearBound=true;
-    cb.addEventListener('click',function(e){
-      e.preventDefault();e.stopPropagation();
-      if(inp){inp.value='';inp.focus();inp.dispatchEvent(new Event('input',{bubbles:true}));}
-    });
-  }
-  if(pb && !pb.__pasteBound){
-    pb.__pasteBound=true;
-    pb.addEventListener('click',async function(e){
-      e.preventDefault();e.stopPropagation();
-      try{
-        if(navigator.clipboard && navigator.clipboard.readText){
-          var txt=await navigator.clipboard.readText();
-          if(txt){inp.value=txt.trim();inp.dispatchEvent(new Event('input',{bubbles:true}));toast('📋 YouTube लिंक Paste हो गया');}
-          else toast('📋 Clipboard खाली है');
-        }else{toast('📋 Paste की सुविधा इस डिवाइस में उपलब्ध नहीं है');}
-      }catch(err){
-        toast('📋 Paste की अनुमति नहीं मिली — URL बॉक्स को दबाकर Paste करें',2200);
-        try{inp.focus();}catch(x){}
-      }
-    },true);
-  }
-  if(inp){inp.setAttribute('inputmode','none');}
-})();
+window.ytRoomOpenPanel=function(name){
+  openModal();
+  setTimeout(function(){
+    var b=name==='history'?bottomHistoryBtn:bottomQueueBtn;
+    ytBottomShowPane(name,b);
+  },0);
+};
 window.ytRoomToast=toast;
 if(bottomLoadBtn)bottomLoadBtn.addEventListener('click',ytBottomLoad);
 if(bottomInput)bottomInput.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();ytBottomLoad();}});
@@ -10089,7 +9570,7 @@ window.YTPlayer={
   clearQueue:function(){queue=[];storageSet(QUEUE_KEY,'[]');renderQueue();}
 };
 
-loadStorage();try{if(bottomSoundToggle)bottomSoundToggle.textContent=soundMode?'बंद करें':'चालू करें';if(bottomSoundBtn)bottomSoundBtn.classList.toggle('active',soundMode);}catch(e){} detectHost();updateHostUI();renderQueue();renderHistory();updateBadges();ytRoomUpdateUI();
+loadStorage();detectHost();updateHostUI();renderQueue();renderHistory();updateBadges();ytRoomUpdateUI();
 setInterval(function(){
   var room=$('prRoom');
   if(!room||room.offsetParent===null)modal.classList.remove('open');
@@ -10117,12 +9598,8 @@ listenRoomShare();
 #prRoom.party-youtube-layout #cinemaSeats .psf-label,#prRoom.party-youtube-layout #cinemaSeats .pr-giftpill,#prRoom.party-youtube-layout #cinemaSeats .psf-voice-pct,#prRoom.party-youtube-layout #cinemaSeats .psf-sp{display:none!important;}
 #prRoom.party-youtube-layout #cinemaChatPanel{position:absolute!important;left:7px!important;right:7px!important;bottom:64px!important;top:auto!important;width:auto!important;height:72px!important;min-height:72px!important;margin:0!important;z-index:45!important;background:linear-gradient(180deg,rgba(3,7,18,.10),rgba(3,7,18,.74))!important;border-radius:12px!important;overflow:hidden!important;}
 #prRoom.party-youtube-layout #cinemaChatPanel #cinemaChatMessages{height:72px!important;padding:6px 8px 4px!important;overflow-y:auto!important;}
-#partyYoutubeStage{position:absolute;top:76px;left:0;right:0;bottom:118px;z-index:8;background:transparent;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:6px;padding:8px;box-sizing:border-box;pointer-events:none;overflow:hidden;}
-#partyYoutubeStage .yt-room-card{position:relative;width:min(100%,900px);height:auto;aspect-ratio:16/9;max-height:none;flex:0 0 auto;align-self:center;background:#000;border-radius:14px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.45);pointer-events:auto;}
-#partyYoutubeStage > #ytRoomUrlBar{position:relative;inset:auto!important;width:100%;max-width:900px;align-self:center;box-sizing:border-box;z-index:30;pointer-events:auto;}
-#partyYoutubeStage > #ytRoomInputTools{position:relative!important;inset:auto!important;width:100%;max-width:900px;align-self:center;z-index:30;pointer-events:auto;box-sizing:border-box;}
-#partyYoutubeStage > #ytRoomUrlBar + #ytRoomInputTools{margin-top:0;}
-#partyYoutubeStage .yt-room-input-tools{flex:0 0 auto;}
+#partyYoutubeStage{position:absolute;top:76px;left:0;right:0;bottom:118px;z-index:8;background:transparent;display:flex;align-items:center;justify-content:center;padding:8px;box-sizing:border-box;pointer-events:none;}
+#partyYoutubeStage .yt-room-card{position:relative;width:min(100%,900px);height:auto;aspect-ratio:16/9;max-height:100%;background:#000;border-radius:14px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.45);pointer-events:auto;}
 #partyYoutubeStage iframe,#partyYoutubeStage #ytRoomPlayerDiv{position:absolute;inset:0;width:100%;height:100%;border:0;}
 #partyYoutubeStage .yt-room-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:#fff;text-align:center;font-weight:800;background:radial-gradient(circle at center,#1f2937,#020617 65%);}
 #partyYoutubeStage .yt-room-queue{display:none!important;}
@@ -10131,8 +9608,6 @@ listenRoomShare();
 #partyYoutubeStage .yt-room-hostbar{position:absolute;top:10px;right:10px;z-index:21;display:none;gap:6px;}
 #partyYoutubeStage.yt-host .yt-room-hostbar{display:flex;}
 #partyYoutubeStage .yt-room-hostbar button{border:0;border-radius:10px;padding:7px 10px;background:rgba(15,23,42,.82);color:#fff;font-weight:800;}
-#partyYoutubeStage .yt-room-hostbar .yt-room-close-video{background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;border:1px solid rgba(255,255,255,.22);box-shadow:0 5px 14px rgba(239,68,68,.28);white-space:nowrap;}
-#partyYoutubeStage .yt-room-hostbar .yt-room-close-video:active{transform:scale(.96);}
 #prRoom.party-youtube-layout #prModeBtnG[data-host="1"]{display:flex!important;}
 <style id="partyRoomYouTubeSeatFrameFinal">
 /* YouTube Mode: keep equipped frame attached to the seat exactly like Gaming Mode. */
@@ -10363,9 +9838,6 @@ listenRoomShare();
 .yt-room-url-row input{flex:1;min-width:0;height:37px;box-sizing:border-box;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:#111827;color:#fff;padding:0 11px;font-size:12px;outline:none;}
 .yt-room-url-row input:focus{border-color:#a855f7;box-shadow:0 0 0 2px rgba(168,85,247,.18);}
 .yt-room-url-row button{width:66px;height:37px;border:0;border-radius:10px;background:linear-gradient(135deg,#ff0000,#c4302b);color:#fff;font-size:12px;font-weight:950;cursor:pointer;}
-.yt-room-url-row #ytRoomPasteBtn{width:44px!important;background:rgba(255,255,255,.10)!important;border:1px solid rgba(255,255,255,.16)!important;color:#fff!important;font-size:17px!important;}
-.yt-room-url-row #ytRoomPasteBtn:active{transform:scale(.96);}
-
 .yt-room-input-hint{font-size:8.5px;color:#64748b;margin-top:3px;text-align:center;}
 #ytRoomQueueBadge{font-size:9px;color:#c4b5fd;}
 @media(max-width:430px){
@@ -10381,10 +9853,15 @@ listenRoomShare();
 /* In Shorts, keep the portrait player usable while the input stays visible underneath. */
 #prRoom.party-youtube-layout #partyYoutubeStage.yt-shorts-mode .yt-room-card{max-height:calc(100% - 88px)!important;}
 
-/* YouTube order: VIDEO on top -> URL/Load -> History + Q. Nothing is placed over the video. */
+/* URL box moved off the video: sits in the gap between the top bar and the seat row. */
 #ytRoomUrlBar{display:none;}
 #prRoom.party-youtube-layout #ytRoomUrlBar{
   display:block;
+  position:absolute;
+  left:8px;right:8px;
+  top:58px;
+  z-index:45;
+  box-sizing:border-box;
   padding:6px 8px;
   border-radius:12px;
   background:rgba(8,12,28,.96);
@@ -10394,26 +9871,9 @@ listenRoomShare();
 #prRoom.party-youtube-layout #ytRoomUrlBar .yt-room-input-label{margin:0 0 3px 2px;}
 #prRoom.party-youtube-layout #ytRoomUrlBar .yt-room-input-hint{margin-top:2px;}
 @media(max-width:430px){
-  #prRoom.party-youtube-layout #partyYoutubeStage{top:72px!important;bottom:116px!important;padding:5px!important;gap:5px!important;}
-  #prRoom.party-youtube-layout #partyYoutubeStage .yt-room-url-bar{padding:5px 7px;}
+  #prRoom.party-youtube-layout #ytRoomUrlBar{top:54px;padding:5px 7px;}
 }
 </style>
-<script id="partyRoomYouTubeLayoutOrder">
-(function(){
-  function arrange(){
-    var stage=document.getElementById('partyYoutubeStage');
-    var card=stage&&stage.querySelector('.yt-room-card');
-    var url=document.getElementById('ytRoomUrlBar');
-    var tools=document.getElementById('ytRoomInputTools');
-    if(!stage||!card)return;
-    if(url && url.parentElement!==stage) stage.appendChild(url);
-    if(tools && tools.parentElement!==stage) stage.appendChild(tools);
-    if(url && tools && url.nextElementSibling!==tools) stage.insertBefore(tools,url.nextElementSibling);
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',arrange); else arrange();
-  setTimeout(arrange,250); setTimeout(arrange,1000); window.addEventListener('resize',arrange);
-})();
-</script>
 <script id="partyRoomYouTubeRoomInputFinal">
 (function(){
   function cleanLegacy(){
@@ -10444,768 +9904,10 @@ listenRoomShare();
 })();
 </script>
 
-<script id="partyRoomLegacyHighCleanup">(function(){function clean(){var root=document.getElementById('prRoom');if(!root)return;root.querySelectorAll('*').forEach(function(el){if(el.id==='prSeatQuickPanel')return;var t=String(el.textContent||'').trim().toLowerCase();if((t==='high'||t==='hi'||t==='हाई')&&el.children.length===0){el.style.display='none';el.setAttribute('aria-hidden','true');}});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',clean);else clean();var r=document.getElementById('prRoom');if(r&&window.MutationObserver)new MutationObserver(clean).observe(r,{childList:true,subtree:true});document.addEventListener('click',function(e){var p=document.getElementById('prSeatQuickPanel'),b=document.getElementById('prSeatQuickBtn');if(p&&p.classList.contains('open')&&e.target!==p&&!p.contains(e.target)&&e.target!==b&&!b?.contains(e.target)){p.classList.remove('open');p.setAttribute('aria-hidden','true');}},true);})();
+<script id="partyRoomLegacyHighCleanup">(function(){function clean(){var root=document.getElementById('prRoom');if(!root)return;root.querySelectorAll('*').forEach(function(el){if(el.id==='prSeatQuickPanel')return;var t=String(el.textContent||'').trim().toLowerCase();if((t==='high'||t==='hi'||t==='हाई')&&el.children.length===0){el.style.display='none';el.setAttribute('aria-hidden','true');}});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',clean);else clean();var r=document.getElementById('prRoom');if(r&&window.MutationObserver)new MutationObserver(clean).observe(r,{childList:true,subtree:true});document.addEventListener('click',function(e){var p=document.getElementById('prSeatQuickPanel'),b=document.getElementById('prSeatQuickBtn');if(p&&p.classList.contains('open')&&e.target!==p&&!p.contains(e.target)&&e.target!==b&&!b?.contains(e.target)){p.classList.remove('open');p.setAttribute('aria-hidden','true');}},true);})();</script>
+</body>
+</html>
 
-/* ===== Watch Together system ===== */
-(function() {
-  'use strict';
-
-  /* ═══════════════════════════════════════════════
-     ⚙️ CONFIG — अपने existing code के हिसाब से बदलें
-     ═══════════════════════════════════════════════ */
-  const WT_CONFIG = {
-    getPeerConnections: function() {
-      const list = Array.isArray(window.activePeerConnections) ? window.activePeerConnections : [];
-      return list.filter(pc => pc && pc.connectionState !== 'closed');
-    },
-    getLocalStream: function() {
-      return window.localStream || window.__cinemaLocalStream || null;
-    },
-    isHost: function() {
-      try {
-        if (typeof cinemaIsHost !== 'undefined') return !!cinemaIsHost;
-      } catch (e) {}
-      return !!window.__cinemaHostKey &&
-        !!window.currentUserKey &&
-        String(window.currentUserKey) === String(window.__cinemaHostKey);
-    },
-    sendSignal: function(payload) {
-      try {
-        if (typeof db === 'undefined' || !db || typeof cinemaRoomId === 'undefined' || !cinemaRoomId) return;
-        const data = Object.assign({}, payload || {}, {
-          from: String(window.currentUserKey || ''),
-          updatedAt: Date.now()
-        });
-        return db.collection('cinemaRooms').doc(cinemaRoomId).set({
-          watchTogether: data,
-          updatedAt: Date.now()
-        }, {merge:true});
-      } catch (e) {
-        console.warn('[WT] sendSignal error:', e);
-      }
-    },
-    onSignal: function(handler) {
-      let unsub = null;
-      let roomSeen = '';
-      let lastSeen = 0;
-      let timer = null;
-
-      const stop = function() {
-        if (timer) { clearInterval(timer); timer = null; }
-        try { if (unsub) unsub(); } catch (e) {}
-        unsub = null;
-        roomSeen = '';
-      };
-
-      const watch = function() {
-        try {
-          if (typeof db === 'undefined' || !db || typeof cinemaRoomId === 'undefined' || !cinemaRoomId) return;
-          const roomId = String(cinemaRoomId);
-          if (roomId === roomSeen && unsub) return;
-          if (unsub) { try { unsub(); } catch (e) {} }
-          unsub = null;
-          roomSeen = roomId;
-          unsub = db.collection('cinemaRooms').doc(roomId).onSnapshot(function(snap) {
-            const d = snap.exists ? (snap.data() || {}) : {};
-            const wt = d.watchTogether;
-            if (!wt || !wt.type) return;
-            const ts = Number(wt.updatedAt || 0);
-            if (ts && ts <= lastSeen) return;
-            if (ts) lastSeen = ts;
-            try { handler(wt); } catch (e) { console.warn('[WT] onSignal handler error:', e); }
-          }, function(err) {
-            console.warn('[WT] signal listener error:', err);
-          });
-        } catch (e) {
-          console.warn('[WT] onSignal setup error:', e);
-        }
-      };
-
-      watch();
-      timer = setInterval(watch, 1000);
-      return stop;
-    }
-  };
-
-  /* ═══════════════════════════════════════════════
-     🎬 STATE
-     ═══════════════════════════════════════════════ */
-  const WT = {
-    isMoviePlaying: false,
-    hostMovieEl: null,
-    movieVideoTrack: null,
-    movieAudioTrack: null,
-    originalCameraTrack: null,
-    viewerAudioEl: null
-  };
-
-  /* ═══════════════════════════════════════════════
-     🖥️ DOM refs
-     ═══════════════════════════════════════════════ */
-  const els = {
-    movieBtn:       document.getElementById('movieBtn'),
-    fileInput:      document.getElementById('movieFileInput'),
-    hostPlayer:     document.getElementById('hostMoviePlayer'),
-    modeBar:        document.getElementById('movieModeBar'),
-    movieTitle:     document.getElementById('movieTitle'),
-    exitBtn:        document.getElementById('exitMovieBtn'),
-    movieViewer:    document.getElementById('movieViewer'),
-    remotePlayer:   document.getElementById('remoteMoviePlayer'),
-    closeViewerBtn: document.getElementById('closeMovieViewer')
-  };
-
-  function wtToast(msg) {
-    const t = document.createElement('div');
-    t.className = 'pr-movie-toast';
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 2600);
-  }
-
-  /* ═══════════════════════════════════════════════
-     🎯 HOST: Movie button
-     ═══════════════════════════════════════════════ */
-  if (els.movieBtn) {
-    els.movieBtn.addEventListener('click', async function() {
-      if (!WT_CONFIG.isHost()) { wtToast('सिर्फ़ होस्ट मूवी चला सकता है'); return; }
-      if (WT.isMoviePlaying) { wtToast('मूवी पहले से चल रही है'); return; }
-      try { if (window.setPartyRoomMode) await window.setPartyRoomMode('cinema'); } catch(e) {}
-      els.fileInput.click();
-    });
-  }
-
-  /* ═══════════════════════════════════════════════
-     🎯 HOST: File select → movie शुरू
-     ═══════════════════════════════════════════════ */
-  if (els.fileInput) {
-    els.fileInput.addEventListener('change', async function(e) {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      const sizeMB = file.size / (1024 * 1024);
-      if (sizeMB > 2000) {
-        wtToast('⚠️ फ़ाइल बहुत बड़ी है (2GB+). छोटी try करें।');
-        return;
-      }
-      await startMovieAsHost(file);
-      e.target.value = '';
-    });
-  }
-
-  /* ═══════════════════════════════════════════════
-     🎬 HOST: Movie शुरू
-     ═══════════════════════════════════════════════ */
-  async function startMovieAsHost(file) {
-    try {
-      wtToast('🎬 मूवी लोड हो रही है...');
-      const player = els.hostPlayer;
-      player.src = URL.createObjectURL(file);
-      player.playsInline = true;
-      player.muted = false;
-      player.controls = true;
-      player.loop = false;
-      player.dataset.title = file.name;
-      player.classList.add('movie-active');
-
-      try { await player.play(); }
-      catch (err) { wtToast('▶️ Play करने के लिए screen पर tap करें'); }
-
-      const movieStream = player.captureStream
-        ? player.captureStream()
-        : (player.mozCaptureStream ? player.mozCaptureStream() : null);
-
-      /* Some Android WebView builds do not expose captureStream().
-         The selected movie must still play locally in Cinema Mode; only the
-         WebRTC sharing path is skipped when captureStream is unavailable. */
-      let videoTracks = [];
-      let audioTracks = [];
-      if (movieStream) {
-        videoTracks = movieStream.getVideoTracks();
-        audioTracks = movieStream.getAudioTracks();
-      }
-
-      WT.movieVideoTrack = videoTracks[0] || null;
-      WT.movieAudioTrack = audioTracks[0] || null;
-
-      const localStream = WT_CONFIG.getLocalStream();
-      if (localStream) {
-        WT.originalCameraTrack = localStream.getVideoTracks()[0] || null;
-        if (WT.originalCameraTrack) WT.originalCameraTrack.enabled = false;
-      }
-
-      const pcs = WT_CONFIG.getPeerConnections();
-      if (WT.movieVideoTrack || WT.movieAudioTrack) {
-        for (const pc of pcs) await attachMovieToPeer(pc);
-      }
-
-      WT_CONFIG.sendSignal({
-        type: 'movie-started',
-        title: file.name,
-        timestamp: Date.now()
-      });
-
-      WT.isMoviePlaying = true;
-      WT.hostMovieEl = player;
-      if (els.modeBar) { els.modeBar.style.display = 'flex'; els.movieTitle.textContent = file.name; }
-      player.addEventListener('ended', stopMovieAsHost, { once: true });
-      wtToast(WT.movieVideoTrack ? '✅ मूवी चालू — सभी देख सकेंगे' : '✅ मूवी चालू');
-    } catch (err) {
-      console.error('[WT] startMovieAsHost error:', err);
-      wtToast('❌ मूवी शुरू नहीं हो सकी');
-    }
-  }
-
-  /* ═══════════════════════════════════════════════
-     🔗 HOST: एक peer में movie attach करें
-     ═══════════════════════════════════════════════ */
-  async function attachMovieToPeer(pc) {
-    if (!pc || pc.connectionState === 'closed') return;
-    try {
-      const senders = pc.getSenders();
-      const videoSender = senders.find(s => s.track && s.track.kind === 'video');
-
-      if (videoSender && WT.movieVideoTrack) {
-        await videoSender.replaceTrack(WT.movieVideoTrack);
-      } else if (WT.movieVideoTrack) {
-        pc.addTrack(WT.movieVideoTrack, new MediaStream([WT.movieVideoTrack]));
-      }
-
-      if (WT.movieAudioTrack) {
-        pc.addTrack(WT.movieAudioTrack, new MediaStream([WT.movieAudioTrack]));
-      }
-    } catch (err) {
-      console.error('[WT] attachMovieToPeer error:', err);
-    }
-  }
-
-  /* ═══════════════════════════════════════════════
-     🛑 HOST: Movie बंद
-     ═══════════════════════════════════════════════ */
-  async function stopMovieAsHost() {
-    if (!WT.isMoviePlaying) return;
-    try {
-      if (WT.hostMovieEl) {
-        try { WT.hostMovieEl.pause(); } catch(e) {}
-        try { WT.hostMovieEl.src = ''; } catch(e) {}
-        WT.hostMovieEl.classList.remove('movie-active');
-        WT.hostMovieEl = null;
-      }
-      if (WT.originalCameraTrack) WT.originalCameraTrack.enabled = true;
-
-      const pcs = WT_CONFIG.getPeerConnections();
-      for (const pc of pcs) {
-        try {
-          const senders = pc.getSenders();
-          const videoSender = senders.find(s => s.track && s.track.kind === 'video');
-          if (videoSender) {
-            if (WT.originalCameraTrack) {
-              await videoSender.replaceTrack(WT.originalCameraTrack);
-            } else if (videoSender.track === WT.movieVideoTrack) {
-              try { await videoSender.replaceTrack(null); } catch(e) { try { pc.removeTrack(videoSender); } catch(_) {} }
-            }
-          }
-          for (const sender of senders) {
-            if (sender.track && sender.track === WT.movieAudioTrack) {
-              try { pc.removeTrack(sender); } catch(e) {}
-            }
-          }
-        } catch (err) { console.warn('[WT] peer stop error:', err); }
-      }
-
-      WT.movieVideoTrack = null;
-      WT.movieAudioTrack = null;
-      WT.originalCameraTrack = null;
-      WT_CONFIG.sendSignal({ type: 'movie-stopped', timestamp: Date.now() });
-      WT.isMoviePlaying = false;
-      if (els.modeBar) els.modeBar.style.display = 'none';
-      wtToast('🛑 मूवी बंद — camera वापस चालू');
-    } catch (err) { console.error('[WT] stopMovieAsHost error:', err); }
-  }
-
-  if (els.exitBtn) els.exitBtn.addEventListener('click', stopMovieAsHost);
-
-  /* ═══════════════════════════════════════════════
-     👀 VIEWER: Room signals
-     ═══════════════════════════════════════════════ */
-  WT_CONFIG.onSignal(function(data) {
-    if (!data || !data.type) return;
-    if (data.type === 'movie-started' && !WT_CONFIG.isHost()) {
-      if (els.movieViewer) els.movieViewer.style.display = 'flex';
-      wtToast('🎬 होस्ट ने मूवी शुरू की');
-    }
-    if (data.type === 'movie-stopped' && !WT_CONFIG.isHost()) {
-      if (els.movieViewer) els.movieViewer.style.display = 'none';
-      if (els.remotePlayer) try { els.remotePlayer.srcObject = null; } catch(e) {}
-      if (WT.viewerAudioEl) {
-        try { WT.viewerAudioEl.pause(); WT.viewerAudioEl.srcObject = null; } catch(e) {}
-        WT.viewerAudioEl = null;
-      }
-      wtToast('🛑 होस्ट ने मूवी बंद की');
-    }
-  });
-
-  if (els.closeViewerBtn) {
-    els.closeViewerBtn.addEventListener('click', function() {
-      if (els.movieViewer) els.movieViewer.style.display = 'none';
-      if (els.remotePlayer) try { els.remotePlayer.srcObject = null; } catch(e) {}
-    });
-  }
-
-  /* ═══════════════════════════════════════════════
-     🔌 PUBLIC API — अपने ontrack handler में use करें
-     ═══════════════════════════════════════════════ */
-  window.WatchTogether = {
-    handleIncomingTrack: function(event) {
-      const track = event.track;
-      const stream = event.streams && event.streams[0];
-      if (!track || !stream) return;
-
-      if (track.kind === 'video') {
-        if (els.movieViewer && els.movieViewer.style.display === 'flex') {
-          els.remotePlayer.srcObject = stream;
-        }
-      }
-      if (track.kind === 'audio') {
-        if (!WT.viewerAudioEl) {
-          const a = new Audio();
-          a.srcObject = new MediaStream([track]);
-          a.autoplay = true;
-          a.volume = 1.0;
-          a.play().catch(() => {});
-          WT.viewerAudioEl = a;
-        } else {
-          const a = new Audio();
-          a.srcObject = new MediaStream([track]);
-          a.autoplay = true;
-          a.volume = 1.0;
-          a.play().catch(() => {});
-        }
-      }
-    },
-    isActive: function() { return WT.isMoviePlaying; },
-    attachToPeer: function(pc) { return attachMovieToPeer(pc); },
-    stop: stopMovieAsHost
-  };
-
-  console.log('[WT] Watch Together system loaded ✅');
-})();
-/* ===== End Watch Together system ===== */
-</script>
-
-<!-- Hidden file input -->
-<input type="file" id="movieFileInput" accept="video/*" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;">
-
-<!-- Host का local movie player (screen पर fullscreen दिखेगा) -->
-<video id="hostMoviePlayer" playsinline muted="false" style="display:none;"></video>
-
-<!-- Movie Mode Banner — top पर दिखेगा जब movie चल रही हो -->
-<div id="movieModeBar" style="display:none;">
-  <span>🎬 <span id="movieTitle">Movie playing</span></span>
-  <button id="exitMovieBtn" type="button">✕</button>
-</div>
-
-<!-- Viewer का fullscreen movie viewer -->
-<div id="movieViewer" style="display:none;">
-  <video id="remoteMoviePlayer" playsinline autoplay controls></video>
-  <button id="closeMovieViewer" type="button">✕</button>
-</div>
-
-<script id="partyCinemaFilePickerFinalFix">
-(function(){
-  function openMoviePickerDirect(){
-    try{ var inp=document.getElementById('movieFileInput'); if(inp){ inp.value=''; inp.click(); return true; } }catch(e){ console.warn('[Cinema] picker',e); }
-    return false;
-  }
-  window.openPartyCinemaMoviePicker=openMoviePickerDirect;
-  document.addEventListener('click',function(e){
-    var b=e.target && e.target.closest ? e.target.closest('#partyCinemaChooseBtn') : null;
-    if(b){ e.preventDefault(); e.stopPropagation(); openMoviePickerDirect(); }
-  },true);
-})();
-</script>
-
-<style id="partyRoomNewChatPanelFinal">
-/* नया Chat panel: हमेशा स्क्रीन के नीचे fixed रहेगा, room के ऊपर/नीचे नहीं भटकेगा। */
-#prChatSheetBackdrop{position:fixed!important;inset:0!important;background:rgba(0,0,0,.18)!important;z-index:2147483640!important;display:none!important;}
-#prChatSheetBackdrop.on{display:block!important;}
-#prRoom #cinemaChatComposer.pr-new-chat-sheet{position:fixed!important;left:10px!important;right:10px!important;bottom:calc(env(safe-area-inset-bottom,0px) + 10px)!important;top:auto!important;width:auto!important;height:60px!important;z-index:2147483641!important;margin:0!important;padding:7px!important;border-radius:20px!important;background:rgba(255,255,255,.98)!important;border:1px solid rgba(0,0,0,.10)!important;box-shadow:0 12px 35px rgba(0,0,0,.28)!important;display:flex!important;align-items:center!important;gap:7px!important;}
-#prRoom #cinemaChatComposer.pr-new-chat-sheet input#cinemaChatInput{height:44px!important;border-radius:16px!important;background:#f4f5f7!important;color:#111!important;border:1px solid #e2e5ea!important;padding:0 14px!important;font-size:16px!important;}
-#prRoom #cinemaChatComposer.pr-new-chat-sheet button{height:44px!important;width:44px!important;flex:0 0 44px!important;border-radius:15px!important;background:linear-gradient(135deg,#7c3aed,#db2777)!important;color:#fff!important;border:0!important;font-size:18px!important;}
-#prChatSheetClose{width:30px!important;height:30px!important;flex:0 0 30px!important;border:0!important;border-radius:50%!important;background:#eef0f3!important;color:#333!important;font-size:18px!important;line-height:30px!important;padding:0!important;}
-#prChatSheetTitle{position:absolute!important;left:14px!important;top:-23px!important;font-size:10px!important;font-weight:800!important;color:#fff!important;text-shadow:0 1px 3px rgba(0,0,0,.55)!important;pointer-events:none!important;}
-</style>
-<script id="partyRoomNewChatPanelFinalScript">
-(function(){
-  'use strict';
-  var historyArmed=false;
-  function els(){return {c:document.getElementById('cinemaChatComposer'),p:document.getElementById('cinemaChatPanel'),i:document.getElementById('cinemaChatInput')}}
-  function ensureSheet(){
-    var x=els(); if(!x.c||!x.p)return x;
-    x.c.classList.add('pr-new-chat-sheet');
-    if(!document.getElementById('prChatSheetBackdrop')){
-      var b=document.createElement('div');b.id='prChatSheetBackdrop';document.body.appendChild(b);
-      b.addEventListener('click',function(){closeSheet(true);});
-    }
-    /* Clean composer: only input + send button. No extra Exit/Minimize controls. */
-    var oldClose=document.getElementById('prChatSheetClose'); if(oldClose) oldClose.remove();
-    var oldTitle=document.getElementById('prChatSheetTitle'); if(oldTitle) oldTitle.remove();
-    return x;
-  }
-  function closeSheet(back){
-    var x=ensureSheet();if(!x.c)return;
-    x.c.classList.remove('party-composer-open');x.c.style.display='none';x.c.style.visibility='hidden';x.c.style.opacity='0';x.c.style.pointerEvents='none';
-    var b=document.getElementById('prChatSheetBackdrop');if(b)b.classList.remove('on');
-    if(x.p)x.p.classList.remove('chat-input-open');
-    var r=document.getElementById('prRoom');if(r)r.classList.remove('party-keyboard-open');
-    try{x.i&&x.i.blur();}catch(e){}
-    if(historyArmed){historyArmed=false;if(back!==false){try{history.back();}catch(e){}}}
-  }
-  function openSheet(){
-    var x=ensureSheet();if(!x.c||!x.i)return;
-    x.c.classList.add('party-composer-open');x.c.style.display='flex';x.c.style.visibility='visible';x.c.style.opacity='1';x.c.style.pointerEvents='auto';
-    x.c.style.position='fixed';x.c.style.top='auto';x.c.style.bottom='calc(env(safe-area-inset-bottom,0px) + 10px)';x.c.style.left='10px';x.c.style.right='10px';x.c.style.zIndex='2147483641';
-    if(x.p)x.p.classList.add('chat-input-open');
-    var b=document.getElementById('prChatSheetBackdrop');if(b)b.classList.add('on');
-    if(!historyArmed){historyArmed=true;try{history.pushState({prChatSheet:true},'',location.href);}catch(e){}}
-    setTimeout(function(){try{x.i.focus({preventScroll:true});}catch(e){try{x.i.focus();}catch(_){}}},80);
-  }
-  window.partyRoomFocusChat=openSheet;
-  window.partyRoomCloseChat=function(back){closeSheet(back!==false);};
-  window.addEventListener('popstate',function(){if(historyArmed){historyArmed=false;closeSheet(false);}});
-  document.addEventListener('click',function(e){
-    if(e.target&&e.target.id==='partyRoomFocusChatBtn')setTimeout(ensureSheet,0);
-  },true);
-  setInterval(function(){
-    var x=els();if(!x.c)return;ensureSheet();
-    /* पुराने layout scripts अगर position बदलें, नया panel फिर से fixed कर दें। */
-    if(x.c.classList.contains('party-composer-open')){x.c.style.position='fixed';x.c.style.top='auto';x.c.style.left='10px';x.c.style.right='10px';x.c.style.bottom='calc(env(safe-area-inset-bottom,0px) + 10px)';x.c.style.zIndex='2147483641';}
-  },250);
-})();
-</script>
-
-<style id="cinemaPickerFinalFix2026">
-/* Cinema Mode: keep the native Android video picker usable from a direct tap. */
-#movieFileInput{position:fixed!important;left:-10000px!important;top:0!important;width:2px!important;height:2px!important;opacity:.01!important;display:block!important;pointer-events:auto!important;z-index:-1!important;}
-</style>
-<script id="cinemaPickerFinalScript2026">
-(function(){
-  function $(id){return document.getElementById(id);}
-  function isHost(){try{return !!window.cinemaIsHost;}catch(e){return false;}}
-  function directPicker(){
-    var inp=$('movieFileInput');
-    if(!inp){try{if(typeof window.pkRoomToast==='function')window.pkRoomToast('Video picker नहीं मिला');}catch(e){}return false;}
-    try{inp.value='';}catch(e){}
-    try{inp.click();return true;}catch(e){console.warn('[Cinema] picker failed',e);return false;}
-  }
-  window.openPartyCinemaMoviePicker=directPicker;
-
-  /* Final Cinema selector: open Android file picker FIRST, while the tap gesture
-     is still active; only then change the room mode asynchronously. */
-  window.selectPartyRoomMode=function(mode){
-    mode=String(mode||'');
-    if(mode!=='cinema'){
-      try{
-        var old=window.__previousPartyRoomModeSelector;
-        if(typeof old==='function') return old(mode);
-      }catch(e){}
-      return;
-    }
-    if(!isHost()){
-      try{if(typeof window.pkRoomToast==='function')window.pkRoomToast('Mode बदलने का अधिकार केवल Host के पास है।');}catch(e){}
-      return;
-    }
-    try{var menu=$('prModeMenu');if(menu)menu.classList.remove('open');}catch(e){}
-    /* This MUST happen synchronously from the user's tap. */
-    directPicker();
-    try{
-      if(typeof window.setPartyRoomMode==='function'){
-        Promise.resolve(window.setPartyRoomMode('cinema')).catch(function(e){console.warn('[Cinema] mode',e);});
-      }
-    }catch(e){console.warn('[Cinema] mode',e);}
-  };
-
-  /* Also make the Cinema Hall button open the same native picker directly. */
-  document.addEventListener('click',function(e){
-    var b=e.target&&e.target.closest?e.target.closest('#partyCinemaChooseBtn'):null;
-    if(!b)return;
-    e.preventDefault();e.stopPropagation();
-    if(!isHost()){
-      try{if(typeof window.pkRoomToast==='function')window.pkRoomToast('सिर्फ Host video चला सकता है');}catch(x){}
-      return;
-    }
-    directPicker();
-  },true);
-})();
-</script>
-
-
-<style id="partyRoomCleanComposerFinal2026">
-/* Final Party Room message bar: simple input + send only. */
-#prChatSheetClose,#prChatSheetTitle{display:none!important;}
-#prChatSheetBackdrop{display:none!important;}
-#cinemaChatComposer.pr-new-chat-sheet{
-  height:58px!important; min-height:58px!important; padding:6px 8px 6px 14px!important;
-  gap:8px!important; border-radius:30px!important;
-  background:#fff!important; border:1px solid rgba(0,0,0,.10)!important;
-  box-shadow:0 6px 24px rgba(0,0,0,.22)!important;
-}
-#cinemaChatComposer.pr-new-chat-sheet input#cinemaChatInput{
-  height:44px!important; min-height:44px!important; padding:0 10px!important;
-  background:#fff!important; color:#111!important; border:0!important;
-  font-size:18px!important; outline:none!important; box-shadow:none!important;
-}
-#cinemaChatComposer.pr-new-chat-sheet button{
-  width:46px!important; height:46px!important; min-width:46px!important;
-  flex:0 0 46px!important; border:0!important; border-radius:50%!important;
-  background:linear-gradient(135deg,#7c3aed,#db2777)!important; color:#fff!important;
-  font-size:22px!important; box-shadow:none!important;
-}
-</style>
-
-
-<style id="partyRoomYoutubeInlinePanelFix">
-/* YouTube Q/History open inside the same screen; never open the old full-page modal. */
-#prRoom.party-youtube-layout #ytRoomInlinePanel{display:none!important;width:100%;max-width:900px;box-sizing:border-box;padding:8px;border-radius:12px;background:rgba(7,12,27,.97);border:1px solid rgba(139,92,246,.42);box-shadow:0 10px 26px rgba(0,0,0,.4);}
-#prRoom.party-youtube-layout #ytRoomInlinePanel.open{display:block!important;}
-#prRoom.party-youtube-layout .yt-room-inline-pane{display:none;}
-#prRoom.party-youtube-layout .yt-room-inline-title{font-size:12px;font-weight:900;color:#ddd6fe;margin:0 0 7px 2px;}
-#prRoom.party-youtube-layout .yt-room-inline-row{display:flex;gap:7px;}
-#prRoom.party-youtube-layout .yt-room-inline-row input{flex:1;min-width:0;height:38px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:#111827;color:#fff;padding:0 10px;font-size:12px;outline:none;box-sizing:border-box;}
-#prRoom.party-youtube-layout .yt-room-inline-row button{width:64px;height:38px;border:0;border-radius:9px;background:linear-gradient(135deg,#ff0000,#c4302b);color:#fff;font-weight:900;}
-#prRoom.party-youtube-layout .yt-room-inline-list{max-height:125px;overflow-y:auto;margin-top:7px;display:flex;flex-direction:column;gap:5px;}
-#prRoom.party-youtube-layout .yt-room-inline-item{width:100%;display:flex;align-items:center;gap:8px;text-align:left;border:1px solid rgba(255,255,255,.09);border-radius:9px;background:rgba(255,255,255,.05);color:#fff;padding:6px;cursor:pointer;}
-#prRoom.party-youtube-layout .yt-room-inline-thumb{width:32px;height:32px;flex:0 0 32px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#7c3aed,#ec4899);font-size:10px;font-weight:900;}
-#prRoom.party-youtube-layout .yt-room-inline-meta{min-width:0;display:flex;flex-direction:column;gap:2px;overflow:hidden;}
-#prRoom.party-youtube-layout .yt-room-inline-meta b{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#prRoom.party-youtube-layout .yt-room-inline-meta small{font-size:9px;color:#94a3b8;}
-#prRoom.party-youtube-layout .yt-room-inline-empty{font-size:10px;color:#94a3b8;text-align:center;padding:8px;}
-#prRoom.party-youtube-layout .yt-room-hostbar button[onclick*="ytRoomOpenPanel"]{display:none!important;}
-</style>
-<style id="partyRoomYoutubeSameScreenFinal">
-/* Q + History are strictly inline in the Party Room. Never show the legacy full-screen sheet. */
-#prRoom.party-youtube-layout ~ #ytModal,
-#ytModal.open.party-room-youtube-legacy{display:none!important;}
-#prRoom.party-youtube-layout #ytRoomInlinePanel{position:relative!important;display:none!important;width:100%!important;max-width:900px!important;margin-top:6px!important;z-index:60!important;}
-#prRoom.party-youtube-layout #ytRoomInlinePanel.open{display:block!important;}
-#prRoom.party-youtube-layout #ytRoomInlineQueue,
-#prRoom.party-youtube-layout #ytRoomInlineHistory{display:none!important;}
-#prRoom.party-youtube-layout #ytRoomInlinePanel[data-open="queue"] #ytRoomInlineQueue{display:block!important;}
-#prRoom.party-youtube-layout #ytRoomInlinePanel[data-open="history"] #ytRoomInlineHistory{display:block!important;}
-</style>
-<style id="partyRoomYoutubeExactLayoutFix">
-/* Exact YouTube Mode order: VIDEO -> URL -> History/Q */
-#prRoom.party-youtube-layout #partyYoutubeStage{
-  position:absolute!important; top:184px!important; left:0!important; right:0!important; bottom:118px!important;
-  display:flex!important; flex-direction:column!important; align-items:center!important; justify-content:flex-start!important;
-  gap:7px!important; padding:7px 8px!important; box-sizing:border-box!important; overflow-y:auto!important; overflow-x:hidden!important;
-}
-#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-card{
-  order:1!important; position:relative!important; width:min(100%,900px)!important; height:auto!important; aspect-ratio:16/9!important;
-  flex:0 0 auto!important; align-self:center!important; margin:0!important;
-}
-#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomUrlBar{
-  order:2!important; position:relative!important; inset:auto!important; display:block!important; width:min(100%,900px)!important;
-  flex:0 0 auto!important; margin:0!important; padding:6px 7px!important; box-sizing:border-box!important;
-}
-#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomInputTools{
-  order:3!important; position:relative!important; inset:auto!important; display:block!important; width:min(100%,900px)!important;
-  flex:0 0 auto!important; margin:0!important; padding:0!important; box-sizing:border-box!important;
-}
-#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomInputTools .yt-room-tools-top{display:flex!important; gap:8px!important; width:100%!important;}
-#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomInputTools .yt-room-tools-top button{flex:1 1 0!important; min-height:42px!important;}
-#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-queue{display:none!important;}
-#prRoom.party-youtube-layout ~ #ytModal .yt-bottom-sheet-tools{display:none!important;}
-#prRoom.party-youtube-layout #ytRoomInputTools{overflow:visible!important;}
-
-#prRoom.party-youtube-layout #partyYoutubeStage iframe,
-#prRoom.party-youtube-layout #partyYoutubeStage #ytRoomPlayerDiv{position:absolute!important; inset:0!important; width:100%!important; height:100%!important; display:block!important;}
-@media(max-width:430px){
-  #prRoom.party-youtube-layout #partyYoutubeStage{top:184px!important; bottom:116px!important;}
-  #prRoom.party-youtube-layout #partyYoutubeStage .yt-room-card{width:100%!important;}
-}
-</style>
-
-<style id="partyRoomYoutubeHideExtrasFinal">
-/* YouTube Mode: video हमेशा दिखेगा; URL + History/Q को हर user/host अपनी screen पर छुपा/दिखा सकता है. */
-#prRoom.party-youtube-layout #ytRoomUiHideBtn{
-  position:absolute!important;
-  z-index:55!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:4px!important;
-  min-width:72px!important;
-  height:30px!important;
-  padding:0 9px!important;
-  border:1px solid rgba(255,255,255,.18)!important;
-  border-radius:10px!important;
-  background:rgba(7,12,27,.86)!important;
-  color:#fff!important;
-  font-size:10px!important;
-  font-weight:900!important;
-  box-shadow:0 5px 16px rgba(0,0,0,.28)!important;
-  cursor:pointer!important;
-}
-#prRoom.party-youtube-layout #ytRoomUiHideBtn{
-  top:193px!important;
-  right:9px!important;
-}
-#prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomUiHideBtn{
-  top:243px!important;
-}
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomUrlBar,
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomInputTools{
-  display:none!important;
-}
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomUiHideBtn{
-  min-width:36px!important; width:36px!important; padding:0!important;
-}
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden #partyYoutubeStage{
-  overflow:hidden!important;
-}
-#prRoom.party-youtube-layout #ytRoomUrlBar,
-#prRoom.party-youtube-layout #ytRoomInputTools{
-  transition:opacity .18s ease,transform .18s ease!important;
-}
-@media(max-width:430px){
-  #prRoom.party-youtube-layout #ytRoomUiHideBtn{
-    top:191px!important; right:7px!important;
-  }
-  #prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomUiHideBtn{
-    top:241px!important;
-  }
-}
-</style>
-<style id="partyRoomYoutubeExactOrderFinal">
-/* FINAL YouTube layout: VIDEO -> URL/LOAD -> HISTORY + Q. */
-#prRoom.party-youtube-layout #partyYoutubeStage{position:absolute!important;top:184px!important;left:0!important;right:0!important;bottom:116px!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:6px!important;padding:6px 8px!important;box-sizing:border-box!important;overflow-y:auto!important;overflow-x:hidden!important;z-index:30!important;}
-#prRoom.party-youtube-layout #partyYoutubeStage > .yt-room-card{order:1!important;position:relative!important;width:100%!important;max-width:900px!important;height:auto!important;aspect-ratio:16/9!important;min-height:0!important;flex:0 0 auto!important;align-self:center!important;margin:0!important;}
-#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomUrlBar{order:2!important;position:relative!important;inset:auto!important;display:block!important;width:100%!important;max-width:900px!important;height:auto!important;flex:0 0 auto!important;align-self:center!important;margin:0!important;padding:6px 8px!important;box-sizing:border-box!important;z-index:40!important;}
-#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomInputTools{order:3!important;position:relative!important;inset:auto!important;display:block!important;width:100%!important;max-width:900px!important;height:auto!important;flex:0 0 auto!important;align-self:center!important;margin:0!important;padding:0!important;box-sizing:border-box!important;z-index:40!important;}
-#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomInputTools .yt-room-tools-top{display:flex!important;width:100%!important;gap:8px!important;margin:0!important;}
-#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomInputTools .yt-room-tools-top button{flex:1 1 0!important;min-width:0!important;min-height:42px!important;}
-#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-queue{display:none!important;}
-#prRoom.party-youtube-layout #partyYoutubeStage iframe,#prRoom.party-youtube-layout #partyYoutubeStage #ytRoomPlayerDiv{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;border:0!important;}
-@media(max-width:430px){#prRoom.party-youtube-layout #partyYoutubeStage{top:184px!important;bottom:116px!important;padding:5px 6px!important;gap:5px!important;}#prRoom.party-youtube-layout #partyYoutubeStage > .yt-room-card{width:100%!important;}}
-</style>
-
-<style id="partyRoomYoutubeTrueCleanHideFinal">
-/* YouTube clean view: keep ONLY room header, seats, video, viewers/top-gifter and chat. */
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden #prModeMenuWrap,
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden #prSeatQuickBtn,
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden #partyRoomBottomDock,
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden #prChatYoutubeMusicBtn,
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomUrlBar,
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomInputTools,
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomInlinePanel,
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden .yt-room-hostbar,
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden .yt-room-queue,
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden #movieModeBar{
-  display:none!important;
-  visibility:hidden!important;
-  pointer-events:none!important;
-}
-/* Keep the video clean and leave the chat below it. */
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden #partyYoutubeStage{
-  top:184px!important;
-  bottom:116px!important;
-  overflow:visible!important;
-  padding:0 8px!important;
-  gap:0!important;
-  z-index:30!important;
-}
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden #partyYoutubeStage > .yt-room-card{
-  width:100%!important;
-  max-width:900px!important;
-  margin:0 auto!important;
-  aspect-ratio:16/9!important;
-}
-/* The hide/show control stays as the small eye so it can be tapped again. */
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomUiHideBtn{
-  display:flex!important;
-  visibility:visible!important;
-  pointer-events:auto!important;
-  position:absolute!important;
-  top:190px!important;
-  right:10px!important;
-  z-index:80!important;
-  min-width:34px!important;
-  width:34px!important;
-  height:30px!important;
-  padding:0!important;
-  font-size:15px!important;
-  opacity:.78!important;
-}
-/* Chat starts immediately after the video and uses all remaining space. */
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden #cinemaChatPanel{
-  z-index:46!important;
-  overflow-y:auto!important;
-}
-@media(max-width:430px){
-  #prRoom.party-youtube-layout.pr-youtube-extras-hidden #partyYoutubeStage{
-    top:184px!important;
-    bottom:116px!important;
-    padding:0 6px!important;
-  }
-  #prRoom.party-youtube-layout.pr-youtube-extras-hidden #ytRoomUiHideBtn{
-    top:190px!important;
-    right:7px!important;
-  }
-}
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden:has(#cinemaSeats.pr-twelve-seat-mode) #partyYoutubeStage{
-  top:234px!important;
-}
-#prRoom.party-youtube-layout.pr-youtube-extras-hidden:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomUiHideBtn{
-  top:240px!important;
-}
-</style>
-
-
-
-<script id="partyRoomYoutubeHideExtrasScript">
-(function(){
-  function $(id){return document.getElementById(id);}
-  function isYT(){var r=$('prRoom');return !!(r&&r.classList.contains('party-youtube-layout'));}
-  function setHidden(hidden){
-    var r=$('prRoom'), b=$('ytRoomUiHideBtn'); if(!r||!b)return;
-    r.classList.toggle('pr-youtube-extras-hidden',!!hidden);
-    b.innerHTML=hidden?'👁️ दिखाएँ':'👁️ छुपाएँ';
-    b.title=hidden?'URL और Q/History दिखाएँ':'URL और Q/History छुपाएँ';
-    b.setAttribute('aria-label',b.title);
-    setTimeout(positionChat,30);
-  }
-  function toggle(){if(!isYT())return;var r=$('prRoom');setHidden(!r.classList.contains('pr-youtube-extras-hidden'));}
-  function positionChat(){
-    var r=$('prRoom'), p=$('cinemaChatPanel'), card=r&&r.querySelector('#partyYoutubeStage .yt-room-card');
-    if(!r||!p||!isYT()||!r.classList.contains('pr-youtube-extras-hidden')||!card)return;
-    var rr=r.getBoundingClientRect(), cr=card.getBoundingClientRect();
-    var top=Math.max(184,cr.bottom-rr.top+8);
-    if(r.querySelector('#cinemaSeats.pr-twelve-seat-mode')) top=Math.max(234,cr.bottom-rr.top+8);
-    p.style.setProperty('top',top+'px','important');
-    p.style.setProperty('bottom','calc(env(safe-area-inset-bottom,0px) + 68px)','important');
-  }
-  function resetChat(){
-    var p=$('cinemaChatPanel');if(p){p.style.removeProperty('top');p.style.removeProperty('bottom');}
-    positionChat();
-  }
-  function ensure(){
-    var r=$('prRoom'), b=$('ytRoomUiHideBtn'); if(!r||!b)return;
-    if(!b.__wired){
-      b.__wired=true; b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();toggle();});
-      var bar=$('ytRoomUrlBar'); if(bar)bar.addEventListener('dblclick',function(e){e.preventDefault();toggle();});
-    }
-    if(!isYT()){r.classList.remove('pr-youtube-extras-hidden');resetChat();return;}
-    if(!r.dataset.ytHideReady){r.dataset.ytHideReady='1';setHidden(false);}
-    if(r.classList.contains('pr-youtube-extras-hidden'))positionChat();
-  }
-  setInterval(ensure,700);
-  window.addEventListener('resize',function(){if(isYT())setTimeout(positionChat,40);});
-  window.addEventListener('orientationchange',function(){setTimeout(positionChat,100);});
-  document.addEventListener('dblclick',function(e){
-    var r=$('prRoom'); if(!r||!isYT())return;
-    if(e.target&&e.target.closest&&e.target.closest('#ytRoomUrlBar')){toggle();}
-  },true);
-})();
-</script>
 <style id="partyRoomYoutubeBottomHideFinal">
 /* YouTube is opened from Mode in the room header, not from the bottom dock. */
 #prRoom #partyRoomBottomDock #partyRoomYouTubeBtn,
@@ -11246,296 +9948,3 @@ listenRoomShare();
   #prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #partyYoutubeStage.yt-shorts-mode .yt-room-card{height:min(calc(100dvh - 306px),747px)!important;}
 }
 </style>
-
-<style id="partyChatYoutubeMusicRemoved">
-/* Chatting Room YouTube Music has been removed. */
-#prChatYoutubeMusicBtn,#prChatYoutubeMusicPanel,#prChatYoutubeMusicMini,#prChatYoutubeMusicFrame{display:none!important;visibility:hidden!important;pointer-events:none!important;}
-</style>
-
-<style id="partyCinemaHallFinal">
-#prRoom.party-cinema-layout #partyCinemaHall{display:flex!important;}
-#partyCinemaHall{display:none;position:absolute;left:8px;right:8px;top:72px;bottom:112px;z-index:28;border-radius:18px;overflow:hidden;background:radial-gradient(circle at 50% 20%,rgba(124,58,237,.28),transparent 42%),linear-gradient(160deg,#120d25,#050712 72%);border:1px solid rgba(167,139,250,.35);box-shadow:inset 0 0 50px rgba(0,0,0,.55),0 12px 30px rgba(0,0,0,.3);align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:18px;box-sizing:border-box;color:#fff;text-align:center;}
-#partyCinemaHall .pch-screen{width:min(92%,560px);aspect-ratio:16/8.8;border-radius:16px;background:#000;border:2px solid rgba(255,255,255,.12);box-shadow:0 0 0 5px rgba(124,58,237,.10),0 18px 45px rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
-#partyCinemaHall .pch-screen::before{content:"🎬";font-size:46px;opacity:.55;}
-#partyCinemaHall .pch-title{font-size:20px;font-weight:1000;letter-spacing:.2px;}
-#partyCinemaHall .pch-sub{font-size:12px;color:#cbd5e1;max-width:300px;line-height:1.5;}
-#partyCinemaHall .pch-btn{border:0;border-radius:999px;padding:11px 20px;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;font-weight:900;font-size:13px;box-shadow:0 8px 20px rgba(79,70,229,.35);}
-#partyCinemaHall .pch-btn:active{transform:scale(.97);}
-#partyCinemaHall .pch-host{font-size:10px;color:#a78bfa;}
-#prRoom.party-cinema-layout #cinemaSeats{z-index:40;top:auto!important;bottom:116px!important;}
-#prRoom.party-cinema-layout #cinemaChatPanel{z-index:45;}
-#prRoom.party-cinema-layout #partyCinemaHall .pch-screen video{width:100%;height:100%;object-fit:contain;background:#000;}
-</style>
-<script id="partyCinemaHallFinalScript">
-(function(){
-  function $(id){return document.getElementById(id);}
-  function ensureHall(){
-    var room=$('prRoom');if(!room)return null;
-    var h=$('partyCinemaHall');
-    if(!h){
-      h=document.createElement('div');h.id='partyCinemaHall';
-      h.innerHTML='<div class="pch-screen" id="partyCinemaScreen"></div><div class="pch-title">🎬 Cinema Hall</div><div class="pch-sub">Host यहाँ movie file चुनकर सबके साथ Cinema Hall में चला सकता है।</div><button type="button" class="pch-btn" id="partyCinemaChooseBtn">🎞️ Movie चुनें</button><div class="pch-host">👑 सिर्फ Host movie चला सकता है</div>';
-      room.appendChild(h);
-      $('partyCinemaChooseBtn').addEventListener('click',function(){
-        var inp=$('movieFileInput');if(inp)inp.click();
-      });
-    }
-    return h;
-  }
-  function showCinema(){
-    var room=$('prRoom');if(!room)return;
-    ensureHall();
-    room.classList.add('party-cinema-layout');
-    room.classList.remove('party-youtube-layout','party-gaming-layout');
-    var gc=$('partyGamingCenter');if(gc)gc.style.display='none';
-    var stage=$('partyYoutubeStage');if(stage)stage.style.display='none';
-    var seats=$('cinemaSeats');if(seats){window.PR_SEATS=6;seats.innerHTML='';seats.__sigs=[];try{cinemaRenderSeats(window.__cinemaPeople||[]);}catch(e){}}
-  }
-  function hideCinema(){
-    var room=$('prRoom');if(room)room.classList.remove('party-cinema-layout');
-    var h=$('partyCinemaHall');if(h)h.style.display='none';
-  }
-  var oldSet=window.setPartyRoomMode;
-  window.setPartyRoomMode=async function(mode){
-    if(mode!=='cinema') return oldSet?oldSet(mode):undefined;
-    try{
-      if(!cinemaRoomId||!cinemaIsHost)return;
-      window.__partyRoomMode='cinema';
-      showCinema();
-      try{await db.collection('cinemaRooms').doc(cinemaRoomId).set({roomMode:'cinema',updatedAt:Date.now()},{merge:true});}catch(e){}
-      try{window.paintPartyRoomModeMenu&&window.paintPartyRoomModeMenu();}catch(e){}
-      try{renderPartySeatQuickSettings();}catch(e){}
-    }catch(e){console.error('Cinema mode error',e);}
-  };
-  var oldApply=window.cinemaApplyRoomMode;
-  window.cinemaApplyRoomMode=function(mode){
-    if(mode==='cinema'){showCinema();return;}
-    hideCinema();
-    return oldApply?oldApply(mode):undefined;
-  };
-  var oldSelect=window.selectPartyRoomMode;
-  window.selectPartyRoomMode=function(mode){
-    if(mode==='cinema'){
-      try{var m=$('prModeMenu');if(m)m.classList.remove('open');}catch(e){}
-      if(window.setPartyRoomMode)return window.setPartyRoomMode('cinema');
-    }
-    return oldSelect?oldSelect(mode):undefined;
-  };
-  function hookMovie(){
-    var inp=$('movieFileInput');if(!inp||inp.__cinemaHook)return;
-    inp.__cinemaHook=true;
-    inp.addEventListener('change',function(){
-      setTimeout(function(){
-        var p=$('hostMoviePlayer'),screen=$('partyCinemaScreen');
-        if(p&&screen&&p.src){
-          screen.innerHTML='';
-          p.style.position='absolute';p.style.inset='0';p.style.width='100%';p.style.height='100%';p.style.zIndex='1';p.style.display='block';p.style.objectFit='contain';
-          screen.appendChild(p);
-          var h=$('partyCinemaHall');if(h)h.style.display='flex';
-        }
-      },250);
-    });
-  }
-  hookMovie();setTimeout(hookMovie,500);setTimeout(hookMovie,1500);
-})();
-</script>
-
-<style id="partyRoomBottomGiftMicMusicRemoveFinal">
-/* Clean bottom dock: keep chat/reaction/inbox only. */
-/* Gift, Mic and Music buttons must stay visible. */
-/* Remove the old room-settings / more button from the bottom dock. */
-#prRoom #partyRoomBottomDock button[onclick*="openPartyRoomSettings"]{display:none!important;visibility:hidden!important;pointer-events:none!important;}
-/* Seat Settings was empty/unused; remove it from the top-right controls too. */
-#prRoom #prSeatQuickBtn{display:none!important;visibility:hidden!important;pointer-events:none!important;}
-</style>
-
-<style id="removeYoutubeHideButtonFinal">
-/* YouTube Mode: Hide/Clean View button is removed. */
-#prRoom #ytRoomUiHideBtn,
-#ytRoomUiHideBtn,
-.yt-room-ui-hide-btn{display:none!important;visibility:hidden!important;pointer-events:none!important;}
-</style>
-
-<style id="ytRoomClearButtonFinal">
-.yt-room-url-row #ytRoomClearBtn{width:52px!important;background:#475569!important;border:1px solid rgba(255,255,255,.18)!important;color:#fff!important;font-size:11px!important;font-weight:800!important;}
-.yt-room-url-row #ytRoomClearBtn:active{transform:scale(.96);}
-</style>
-
-<style id="pkPublicProfileSimpleViewFinal">
-/* Public profile: clean visitor view — avatar/frame + identity + Tag/Follow only. */
-#pkPublicProfileOverlay:not(.own-view) .pp-info-row,
-#pkPublicProfileOverlay:not(.own-view) .pp-badges,
-#pkPublicProfileOverlay:not(.own-view) .pp-call-row,
-#pkPublicProfileOverlay:not(.own-view) .pp-stats,
-#pkPublicProfileOverlay:not(.own-view) .pp-space{display:none!important;}
-#pkPublicProfileOverlay:not(.own-view) .pp-main{min-height:0!important;padding-top:0!important;padding-bottom:30px!important;background:linear-gradient(180deg,#fff 0%,#fbf9ff 100%)!important;}
-#pkPublicProfileOverlay:not(.own-view) .pp-avatar-wrap{margin:-71px auto 10px!important;}
-#pkPublicProfileOverlay:not(.own-view) .pp-name{margin-top:4px!important;font-size:25px!important;}
-#pkPublicProfileOverlay:not(.own-view) .pp-sub{margin-top:6px!important;max-height:42px;overflow:hidden;}
-#pkPublicProfileOverlay:not(.own-view) .pp-idline{margin-top:7px!important;}
-#pkPublicProfileOverlay:not(.own-view) .pp-actions{gap:10px!important;}
-#pkPublicProfileOverlay:not(.own-view) .pp-tag{background:#f1edff;color:#6842c7;border:1px solid #d8c9ff;box-shadow:0 8px 18px rgba(104,66,199,.14);}
-#pkPublicProfileOverlay:not(.own-view) .pp-follow{background:#10aef0;color:#fff;}
-#pkPublicProfileOverlay:not(.own-view) .pp-dm{display:none!important;}
-</style>
-<script>
-(function(){var b=document.getElementById('pkPPtagBtn');if(b)b.onclick=function(){if(typeof pkTagProfile==='function')pkTagProfile();};})();
-</script>
-<style id="partyHostManageCompactFinal">
-#pkHostManageSheet button{font-family:inherit;touch-action:manipulation;}
-#pkHostManageSheet button:active{transform:scale(.98);}
-</style>
-
-<style id="partyRoomStableChatModeFinal2026">
-/* Final stability patch: chat input is a simple bottom composer; mode switching is single-flight. */
-#prChatSheetBackdrop{display:none!important;pointer-events:none!important;background:transparent!important;}
-#prChatSheetBackdrop.on{display:none!important;pointer-events:none!important;}
-#prRoom #cinemaChatComposer.pr-new-chat-sheet{
-  position:fixed!important;left:10px!important;right:10px!important;bottom:calc(env(safe-area-inset-bottom,0px) + 10px)!important;
-  top:auto!important;width:auto!important;height:60px!important;z-index:2147483641!important;
-}
-#prRoom #cinemaChatComposer.pr-new-chat-sheet input#cinemaChatInput{font-size:16px!important;}
-</style>
-<script id="partyRoomStableChatModeFinal2026Script">
-(function(){
-  'use strict';
-  var $=function(id){return document.getElementById(id);};
-
-  /* ---------- CHAT: no fake browser history / no Exit / no Minimize ---------- */
-  function chatEls(){return {c:$('cinemaChatComposer'),p:$('cinemaChatPanel'),i:$('cinemaChatInput')};}
-  function closeChat(){
-    var x=chatEls(); if(!x.c)return;
-    x.c.classList.remove('party-composer-open');
-    x.c.style.display='none'; x.c.style.visibility='hidden'; x.c.style.opacity='0'; x.c.style.pointerEvents='none';
-    x.c.style.position='absolute'; x.c.style.top='auto'; x.c.style.bottom='68px'; x.c.style.left='7px'; x.c.style.right='7px';
-    if(x.p)x.p.classList.remove('chat-input-open');
-    var r=$('prRoom'); if(r)r.classList.remove('party-keyboard-open');
-    try{if(x.i)x.i.blur();}catch(e){}
-  }
-  function openChat(prefill){
-    var x=chatEls(); if(!x.c||!x.i)return;
-    /* Never add history entries. Android Back therefore closes the composer,
-       instead of showing an Exit/Minimize-like navigation state. */
-    x.c.classList.add('party-composer-open');
-    x.c.style.display='flex'; x.c.style.visibility='visible'; x.c.style.opacity='1'; x.c.style.pointerEvents='auto';
-    x.c.style.position='fixed'; x.c.style.top='auto';
-    x.c.style.bottom='calc(env(safe-area-inset-bottom,0px) + 10px)';
-    x.c.style.left='10px'; x.c.style.right='10px'; x.c.style.zIndex='2147483641';
-    if(x.p)x.p.classList.add('chat-input-open');
-    if(prefill!=null)x.i.value=String(prefill);
-    setTimeout(function(){try{x.i.focus({preventScroll:true});}catch(e){try{x.i.focus();}catch(_){} }},60);
-  }
-  window.partyRoomFocusChat=openChat;
-  window.partyRoomCloseChat=closeChat;
-  window.prOpenComposer=function(prefill){openChat(prefill);};
-  window.prTagUserToComment=function(key,name){openChat('@'+String(name||'User')+' ');};
-
-  /* Back = close the message box only. It must never leave Party Room. */
-  window.addEventListener('popstate',function(){
-    /* Older patches may have left one history entry behind. Do not navigate again. */
-    closeChat();
-  },true);
-  document.addEventListener('keydown',function(e){
-    if(e.key==='Escape'){
-      var x=chatEls(); if(x.c&&x.c.classList.contains('party-composer-open')){e.preventDefault();closeChat();}
-    }
-  },true);
-  document.addEventListener('focusout',function(e){
-    if(e.target&&e.target.id==='cinemaChatInput'){
-      setTimeout(function(){
-        var x=chatEls();
-        /* If keyboard really closed, close composer. Do not close it merely because
-           Send temporarily moves focus. */
-        if(!x.i||document.activeElement===x.i)return;
-        var vv=window.visualViewport;
-        var kb=vv?Math.max(0,window.innerHeight-(vv.height+vv.offsetTop)):0;
-        if(kb<60)closeChat();
-      },180);
-    }
-  },true);
-
-  /* ---------- MODE: one controller, no recursive overrides ---------- */
-  var baseSet=window.setPartyRoomMode;
-  var modeBusy=false;
-  async function stableSetMode(mode){
-    mode=String(mode||'chat');
-    if(['chat','gaming','youtube','cinema'].indexOf(mode)<0)mode='chat';
-    if(modeBusy)return false;
-    var host=false; try{host=!!window.cinemaIsHost;}catch(e){}
-    if(!host){try{window.pkRoomToast&&window.pkRoomToast('Mode बदलने का अधिकार केवल Host के पास है।');}catch(e){}return false;}
-    modeBusy=true;
-    try{
-      /* Close transient UI before changing layout. */
-      closeChat();
-      var menu=$('prModeMenu'); if(menu)menu.classList.remove('open');
-      var reaction=$('partyRoomReactionTray'); if(reaction)reaction.style.display='none';
-      var gift=$('partyRoomGiftTray'); if(gift)gift.style.display='none';
-
-      /* Call the already-built room-mode implementation exactly once. */
-      if(typeof baseSet==='function') await baseSet(mode);
-      window.__partyRoomMode=mode;
-
-      var room=$('prRoom'), game=$('partyGamingCenter'), yt=$('partyYoutubeStage'), hall=$('partyCinemaHall');
-      if(room){
-        room.classList.toggle('party-gaming-layout',mode==='gaming');
-        room.classList.toggle('party-youtube-layout',mode==='youtube');
-        room.classList.toggle('party-cinema-layout',mode==='cinema');
-      }
-      if(game)game.style.display=mode==='gaming'?'flex':'none';
-      if(yt && mode!=='youtube')yt.style.display='none';
-      if(hall)hall.style.display=mode==='cinema'?'flex':'none';
-      if(mode!=='cinema'){
-        var screen=$('partyCinemaScreen'); if(screen)screen.innerHTML='';
-      }
-      try{window.paintPartyRoomModeMenu&&window.paintPartyRoomModeMenu();}catch(e){}
-      try{window.renderPartySeatQuickSettings&&window.renderPartySeatQuickSettings();}catch(e){}
-      return true;
-    }catch(e){
-      console.error('[PartyRoom] mode switch failed',e);
-      try{window.pkRoomToast&&window.pkRoomToast('Mode बदलने में समस्या हुई।');}catch(_){}
-      return false;
-    }finally{modeBusy=false;}
-  }
-  window.setPartyRoomMode=stableSetMode;
-  window.selectPartyRoomMode=function(mode){
-    mode=String(mode||'chat');
-    var menu=$('prModeMenu'); if(menu)menu.classList.remove('open');
-    /* Cinema picker must happen from the tap before any await. */
-    if(mode==='cinema'){
-      var host=false;try{host=!!window.cinemaIsHost;}catch(e){}
-      if(!host){try{window.pkRoomToast&&window.pkRoomToast('Mode बदलने का अधिकार केवल Host के पास है।');}catch(e){}return;}
-      try{var inp=$('movieFileInput');if(inp){inp.value='';inp.click();}}catch(e){console.warn('[Cinema] picker',e);}
-    }
-    stableSetMode(mode);
-  };
-  window.__partyRoomStableModeController=true;
-
-  /* Keep the mode button responsive while preventing double taps during transition. */
-  document.addEventListener('click',function(e){
-    var opt=e.target&&e.target.closest?e.target.closest('#prModeMenu .pr-mode-option'):null;
-    if(!opt)return;
-    e.preventDefault();e.stopPropagation();
-    window.selectPartyRoomMode(opt.getAttribute('data-mode')||'chat');
-  },true);
-
-  /* Periodically enforce only the currently selected mode's stage. */
-  setInterval(function(){
-    var mode=String(window.__partyRoomMode||'chat'),room=$('prRoom');if(!room)return;
-    if(mode==='chat'){
-      room.classList.remove('party-gaming-layout','party-youtube-layout','party-cinema-layout');
-      var h=$('partyCinemaHall');if(h)h.style.display='none';
-    }else if(mode==='gaming'){
-      room.classList.add('party-gaming-layout');room.classList.remove('party-youtube-layout','party-cinema-layout');
-      var h=$('partyCinemaHall');if(h)h.style.display='none';
-    }else if(mode==='youtube'){
-      room.classList.add('party-youtube-layout');room.classList.remove('party-gaming-layout','party-cinema-layout');
-      var h=$('partyCinemaHall');if(h)h.style.display='none';
-    }else if(mode==='cinema'){
-      room.classList.add('party-cinema-layout');room.classList.remove('party-gaming-layout','party-youtube-layout');
-      var h=$('partyCinemaHall');if(h)h.style.display='flex';
-    }
-  },500);
-})();
-</script>
-</body>
-</html>
