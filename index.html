@@ -4700,9 +4700,7 @@ st.textContent=
 '#pmList button{display:block;width:100%;text-align:left;padding:7px 9px;margin-top:4px;border-radius:9px;background:rgba(255,255,255,.07);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
 '#pmList button.pm-cur{background:rgba(255,95,162,.35);font-weight:800}'+
 '#pmNote{margin-top:7px;font-size:11px;color:#b9a8e6}'+
-'#partyMusicPill{position:fixed;top:calc(env(safe-area-inset-top,0px) + 70px);left:50%;transform:translateX(-50%);z-index:2147483000;display:none;align-items:center;gap:8px;max-width:88%;padding:6px 8px 6px 12px;border-radius:999px;background:rgba(20,10,48,.9);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:12px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.4)}'+
-'#pmPillText{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60vw}'+
-'#pmPillBtn{border:0;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:14px;cursor:pointer}'+
+'#partyMusicPill{display:none!important}'+
 '#pmToast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 140px);transform:translateX(-50%);z-index:2147483001;display:none;padding:8px 14px;border-radius:12px;background:rgba(0,0,0,.85);color:#fff;font-size:12px}';
 document.head.appendChild(st);
 
@@ -4718,9 +4716,8 @@ function buildUI(){
     '<div id="pmNote">आप जो गाना चलाएँगे वो रूम में सबको सुनाई देगा। एक समय में एक ही व्यक्ति गाना चला सकता है।</div>'+
     '<input type="file" id="pmFile" accept="audio/*" multiple style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">';
   document.body.appendChild(p);
-  var pill=document.createElement('div'); pill.id='partyMusicPill';
-  pill.innerHTML='<span id="pmPillText"></span><button type="button" id="pmPillBtn">🔊</button>';
-  document.body.appendChild(pill);
+  // Listener music status/mute pill intentionally removed: music remains audio-only for listeners.
+  var pill=document.createElement('div'); pill.id='partyMusicPill'; pill.style.display='none'; document.body.appendChild(pill);
   var t=document.createElement('div'); t.id='pmToast'; document.body.appendChild(t);
 
   $('pmClose').onclick=function(){ p.style.display='none'; };
@@ -4743,7 +4740,6 @@ function buildUI(){
   $('pmPrev').onclick=function(){ var H=S.host; if(!H.audio||H.idx<0) return; if(H.audio.currentTime>3||H.idx===0){H.audio.currentTime=0;} else playIndex(H.idx-1); };
   $('pmStop').onclick=function(){ hostStop(); toast('म्यूज़िक बंद किया'); };
   $('pmVol').oninput=function(e){ if(S.host.gain) S.host.gain.gain.value=Number(e.target.value)/100; };
-  $('pmPillBtn').onclick=function(){ var a=S.lis.audio; if(!a) return; if(a.paused){ a.muted=false; a.play().catch(function(){}); } else { a.muted=!a.muted; } syncPillBtn(); };
 }
 function toast(msg){ var t=$('pmToast'); if(!t) return; t.textContent=msg; t.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(function(){t.style.display='none';},2200); }
 
@@ -4828,7 +4824,7 @@ function startSession(){
 function publish(){
   var H=S.host; if(!S.roomId||!H.sid) return;
   var f=H.files[H.idx];
-  srcCol().doc(me()).set({on:true,key:me(),name:cinemaUserName(),sid:H.sid,title:f?niceName(f):'',paused:H.audio?!!H.audio.paused:true,beat:Date.now(),updatedAt:Date.now()}).catch(function(){});
+  srcCol().doc(me()).set({on:true,key:me(),sid:H.sid,paused:H.audio?!!H.audio.paused:true,beat:Date.now(),updatedAt:Date.now()}).catch(function(){});
 }
 async function hostAccept(id,d){
   var H=S.host; var pc=new RTCPeerConnection(ICE); window.activePeerConnections=window.activePeerConnections||[]; window.activePeerConnections.push(pc); H.peers[id]=pc;
@@ -4873,13 +4869,8 @@ function tune(sdp){
     return sdp.replace(re,function(x,a,b){ return b.indexOf('stereo=')>-1?x:a+b+';stereo=1;sprop-stereo=1;maxaveragebitrate=128000'; });
   }catch(e){ return sdp; }
 }
-function showPill(on,m){
-  var p=$('partyMusicPill'); if(!p) return;
-  p.style.display=on?'flex':'none';
-  if(on&&m) $('pmPillText').textContent=(m.paused?'⏸ ':'🎵 ')+(m.name?m.name+': ':'')+(m.title||'पार्टी म्यूज़िक');
-  syncPillBtn();
-}
-function syncPillBtn(){ var b=$('pmPillBtn'),a=S.lis.audio; if(b) b.textContent=(!a||a.paused||a.muted)?'🔇':'🔊'; }
+function showPill(on,m){ var p=$('partyMusicPill'); if(p) p.style.display='none'; }
+function syncPillBtn(){}
 function evalSources(){
   var L=S.lis, H=S.host, o=freshOthers();
   // दो लोग एक साथ शुरू करें तो जिसका सेशन पहले शुरू हुआ वही चलता है
@@ -4888,7 +4879,7 @@ function evalSources(){
   o.sort(function(a,b){ return (b.updatedAt||0)-(a.updatedAt||0); });
   var m=o[0]; m.hostKey=m.key;
   if(L.dead===m.sid){ showPill(false); return; }
-  showPill(true,m);
+  showPill(false);
   if(L.sid!==m.sid||!L.pc){ L.retries=0; listen(m); } else L.want=m;
 }
 async function listen(m){
