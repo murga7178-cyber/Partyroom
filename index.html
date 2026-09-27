@@ -372,6 +372,16 @@ html, body { overscroll-behavior-y: none; }
 @keyframes psfTw{0%,100%{opacity:.15;transform:scale(.6) rotate(0deg);}50%{opacity:1;transform:scale(1.15) rotate(20deg);}}
 @media (prefers-reduced-motion:reduce){.psf-ring,.psf-ring2,.psf-dash,.psf-sp{animation:none!important;}}
 </style>
+<style id="pkManageUiStyle">
+/* Small "Manage" control beside an occupied seat's avatar — host/admin only. Not a bottom sheet. */
+.psf-manage-btn{position:absolute;top:-3px;right:-3px;width:19px;height:19px;border-radius:50%;background:rgba(15,10,35,.85);border:1.5px solid rgba(255,255,255,.55);color:#fff;font-size:10px;line-height:1;display:flex;align-items:center;justify-content:center;z-index:30;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.psf-manage-btn:active{transform:scale(.9);}
+.pk-manage-menu{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);transform:translateX(-50%);z-index:100050;background:#1c1030;border:1px solid rgba(255,255,255,.14);border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.45);padding:8px;display:flex;flex-direction:column;gap:5px;min-width:200px;max-width:88vw;}
+.pk-mg-title{font-size:11px;font-weight:900;color:rgba(255,255,255,.62);padding:5px 8px 3px;}
+.pk-manage-menu button{border:0;border-radius:11px;padding:11px 12px;font-size:13.5px;font-weight:800;color:#fff;background:rgba(255,255,255,.08);text-align:left;cursor:pointer;touch-action:manipulation;}
+.pk-manage-menu button:active{background:rgba(255,255,255,.16);}
+.pk-manage-menu button[data-mg="kick"]{color:#fca5a5;}
+</style>
 <style id="hostEmblemStyle">
 .hse-btn{position:relative;background:none;border:0;padding:0;margin:0;display:block;line-height:0;cursor:default;touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-family:inherit;}
 .hse-btn.hse-canSit{cursor:pointer;}
@@ -2465,6 +2475,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         <div id="cinemaChatPanel">
           <div id="cinemaChatMessages"><div style="text-align:center;color:rgba(255,255,255,.6);font-size:12px;padding:16px 6px;">चैट लोड हो रही है…</div></div>
           <div id="cinemaChatComposer" style="display:none;position:absolute;left:7px;right:7px;bottom:68px;z-index:150;height:48px;gap:6px;margin:0;padding:5px;background:rgba(8,15,31,.98);border:1px solid rgba(255,255,255,.28);border-radius:15px;box-shadow:0 8px 24px rgba(0,0,0,.45);box-sizing:border-box;">
+            <button type="button" onmousedown="event.preventDefault()" onclick="window.prOpenTagPicker&&window.prOpenTagPicker()" aria-label="Tag someone" title="किसी को टैग करें" style="width:34px;height:34px;flex:0 0 34px;border:1px solid #334155;border-radius:11px;background:#070d18;color:#a78bfa;font-size:15px;font-weight:900;cursor:pointer;">@</button>
             <input id="cinemaChatInput" maxlength="300" placeholder="मैसेज लिखें…" autocomplete="off" enterkeyhint="send" autocapitalize="sentences" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();cinemaSendChat();}" style="flex:1;min-width:0;height:34px;padding:6px 10px;border-radius:11px;border:1px solid #334155;background:#070d18;color:#fff;outline:none;font-size:13px;box-sizing:border-box;">
             <button type="button" onmousedown="event.preventDefault()" onclick="cinemaSendChat()" aria-label="Send message" style="width:44px;height:34px;flex:0 0 44px;border:0;border-radius:11px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:18px;font-weight:900;cursor:pointer;">➤</button>
           </div>
@@ -2736,6 +2747,9 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     cinemaIsHost=!!currentUserKey && host===String(currentUserKey);
     window.__cinemaHostKey=host;
     window.__prLockedSeats=Array.isArray(d?.lockedSeats)?d.lockedSeats.map(Number):[];
+    window.__cinemaAdmins=Array.isArray(d?.admins)?d.admins.map(String):[];
+    window.pkIsAdmin=function(k){ return (window.__cinemaAdmins||[]).indexOf(String(k||'')) >=0; };
+    window.pkCanManage=function(){ return !!cinemaIsHost || window.pkIsAdmin(String(currentUserKey||'')); };
     try{ if(window.pkRoomGuard) window.pkRoomGuard(d); }catch(e){}
     window.__cinemaHostName=d?.hostName || (cinemaIsHost ? cinemaUserName() : 'Host');
     const hn=document.getElementById('cinemaHostName'); if(hn)hn.textContent=window.__cinemaHostName||'Host';
@@ -2768,6 +2782,17 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       const now=Date.now(), people=[]; let mineDoc=null;
       snap.forEach(doc=>{const d=doc.data()||{}; if(doc.id===String(currentUserKey||'')) mineDoc=d; if(d.lastActive && now-d.lastActive<15000){ const nm=String(d.name||'').trim(); if(nm){ (window.__prUserNameCache||(window.__prUserNameCache={}))[String(doc.id)]=nm; } people.push({key:doc.id,name:nm||'User',seat:Number.isInteger(d.seat)?d.seat:null,seatSince:Number.isInteger(d.seat)?(Number(d.seatSince)||0):0,muted:d.muted===true,hostSeated:d.hostSeated===true}); }});
       try{ if(window.pkRoomPresenceGuard && window.pkRoomPresenceGuard(mineDoc,ref)) return; }catch(e){}
+      try{
+        if(mineDoc){
+          const remoteMuted=mineDoc.muted===true;
+          if(typeof cinemaMuted!=='undefined' && remoteMuted!==cinemaMuted){
+            cinemaMuted=remoteMuted;
+            if(typeof cinemaLocalStream!=='undefined' && cinemaLocalStream){ cinemaLocalStream.getAudioTracks().forEach(t=>t.enabled=!cinemaMuted); }
+            if(typeof syncPartyRoomMuteButtons==='function') syncPartyRoomMuteButtons();
+            if(remoteMuted && mineDoc.mutedByHost===true){ try{ window.pkRoomToast&&window.pkRoomToast('🔇 आपको म्यूट कर दिया गया है'); }catch(e){} }
+          }
+        }
+      }catch(e){}
       window.__cinemaPeople=people;
       const count=document.getElementById('cinemaViewerCount');
       if(count) count.textContent=people.length;
@@ -2885,7 +2910,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       // सिर्फ बदली हुई सीट दोबारा बनती है, ताकि घूमता हुआ frame हर 5 सेकंड में रीस्टार्ट न हो।
       const photo=occupied?cinemaPhotoFor(p.key):'';
       const frame=occupied?partyFrameFor(p.key):'none';
-      const sig=[occupied?1:0,mineSeat?1:0,isMuted?1:0,(!occupied&&lockedSet.has(i)?1:0),occupied?p.name:'',style,gv,frame,photo?(photo.length+':'+photo.slice(-16)):''].join('|');
+      const iCanManage=!!(occupied && !mineSeat && typeof window.pkCanManage==='function' && window.pkCanManage());
+      const sig=[occupied?1:0,mineSeat?1:0,isMuted?1:0,(!occupied&&lockedSet.has(i)?1:0),occupied?p.name:'',style,gv,frame,photo?(photo.length+':'+photo.slice(-16)):'',iCanManage?1:0].join('|');
       if(box.children[i] && box.__sigs[i]===sig) continue;
       const theme=cinemaSeatTheme(style,mineSeat,occupied);
       const b=document.createElement('button'); b.type='button';
@@ -2909,9 +2935,13 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         : '<span class="psf-nm">'+(lockedSet.has(i)?'Locked':'Mic '+(i+1))+'</span>';
       const frameArt=(frame && frame!=='none' && typeof partyFrameArt==='function')?partyFrameArt(frame):'';
       b.innerHTML='<div class="psf-frame-wrap" data-frame="'+cinemaEsc(frame)+'"><div class="psf-avatar"><span class="psf-glow"></span><span class="psf-dash"></span><span class="psf-ring"></span><span class="psf-ring2"></span><span class="psf-voice-meter"></span><span class="psf-voice-pct">0%</span><span class="psf-core">'+cinemaEsc(letter)+'</span>'
-        +'<i class="psf-sp psf-sp1">✦</i><i class="psf-sp psf-sp2">✦</i><i class="psf-sp psf-sp3">✦</i><i class="psf-sp psf-sp4">✦</i>'+badge+'</div>'+(frameArt?'<img class="psf-frame-art" alt="" src="'+frameArt+'">':'')+'</div></div>'
+        +'<i class="psf-sp psf-sp1">✦</i><i class="psf-sp psf-sp2">✦</i><i class="psf-sp psf-sp3">✦</i><i class="psf-sp psf-sp4">✦</i>'+badge+'</div>'+(frameArt?'<img class="psf-frame-art" alt="" src="'+frameArt+'">':'')+(iCanManage?'<span class="psf-manage-btn" title="Manage" aria-label="Manage">⚙️</span>':'')+'</div></div>'
         +'<div class="psf-label" style="color:'+theme.text+';">'+labelHtml+'</div>'
         +(occupied?'<div class="pr-giftpill">🎁 '+(typeof prFmt==='function'?prFmt(gv):gv)+'</div>':'');
+      if(iCanManage){
+        const mgEl=b.querySelector('.psf-manage-btn');
+        if(mgEl) mgEl.onclick=function(ev){ ev.stopPropagation(); if(typeof window.pkOpenManageMenu==='function') window.pkOpenManageMenu(p.key,p.name); };
+      }
       if(occupied && photo && cinemaOkPhoto(photo)){
         const core=b.querySelector('.psf-core');
         if(core){
@@ -3986,6 +4016,38 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     var nm=String(name||nameOf(String(key||''))||'User');
     window.prOpenComposer('@'+nm+' ');
   };
+  window.prOpenTagPicker=function(){
+    try{ var old=document.getElementById('pkTagMenu'); if(old) old.remove(); }catch(e){}
+    var meK=myKey();
+    var arr=(window.__cinemaPeople||[]).filter(function(x){ return (Number.isInteger(x.seat)||x.hostSeated===true) && String(x.key)!==meK; });
+    var list=arr.map(function(x){ return {key:String(x.key),name:x.name||nameOf(x.key)||'User'}; });
+    var hk=String(window.__cinemaHostKey||''), hn=window.__cinemaHostName||'Host';
+    if(hk && hk!==meK && !list.some(function(x){return x.key===hk;})) list.unshift({key:hk,name:hn});
+    if(!list.length){ try{ toast('टैग करने के लिए अभी कोई मौजूद नहीं है'); }catch(e){} return; }
+    var el=document.createElement('div'); el.id='pkTagMenu'; el.className='pk-manage-menu';
+    el.innerHTML='<div class="pk-mg-title">किसे टैग करें?</div>'+list.map(function(x){ return '<button type="button" data-tag-name="'+esc(x.name)+'">@'+esc(x.name)+'</button>'; }).join('');
+    document.body.appendChild(el);
+    el.querySelectorAll('[data-tag-name]').forEach(function(btn){
+      btn.onclick=function(){
+        var nm=btn.getAttribute('data-tag-name');
+        el.remove();
+        var composer=$('cinemaChatComposer'), input=$('cinemaChatInput');
+        if(composer && composer.style.display!=='flex' && typeof window.partyRoomFocusChat==='function') window.partyRoomFocusChat();
+        setTimeout(function(){
+          try{
+            var cur=(input&&input.value)||''; var sep=(cur && !/\s$/.test(cur))?' ':'';
+            if(input){ input.value=cur+sep+'@'+nm+' '; input.focus(); }
+          }catch(e){}
+        },90);
+      };
+    });
+    setTimeout(function(){
+      document.addEventListener('click',function h(ev){
+        if(!el.isConnected){ document.removeEventListener('click',h); return; }
+        if(!el.contains(ev.target)){ el.remove(); document.removeEventListener('click',h); }
+      });
+    },0);
+  };
   window.prCopyText=function(val){
     val=String(val||''); if(!val) return;
     function ok(){ try{ toast('✔ कॉपी हो गया'); }catch(e){} }
@@ -4490,22 +4552,11 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   window.prOpenUserCard=async function(key){
     key=String(key||''); var card=$('prUserCard'); if(!card) return;
     var p=findPerson(key), name=nameOf(key)||'User';
-    var isHost=key===String(window.__cinemaHostKey||'');
     var seatNo=p&&Number.isInteger(p.seat)?Number(p.seat)+1:null;
-    var tag=isHost?'👑 Host':(seatNo!==null?'🎙 माइक '+seatNo:'रूम में');
-    var total=Number((window.__prGiftTotals||{})[key]||0);
     var me=key===myKey(), profile={};
     try{ if(db){var ps=await db.collection('users').doc(key).get(); if(ps.exists) profile=ps.data()||{};}}catch(e){}
     var vip=!!(profile.vip===true||profile.isVip===true||profile.vipActive===true||String(profile.vipStatus||'').toLowerCase()==='active'||String(profile.membership||'').toLowerCase()==='vip');
     var publicId=String(profile.publicUserId||profile.userId||profile.uid||'').trim();
-    var genderRaw2=String(profile.gender||'').trim().toLowerCase();
-    var genderTxt=genderRaw2==='male'?'👨 Male':genderRaw2==='female'?'👩 Female':'';
-    function nval(){
-      for(var i=0;i<arguments.length;i++){var v=profile[arguments[i]];if(v!==undefined&&v!==null&&v!=='')return Number(v)||0;}
-      return 0;
-    }
-    var followers=nval('followersCount','followers'), following=nval('followingCount','following'), likes=nval('likesCount','likes');
-    var coins=Math.max(0,Math.floor(Number(profile.gamePoints)||0));
     var isFollowing=false;
     try{
       if(!me && db && currentUserKey){
@@ -4516,33 +4567,16 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         isFollowing=ff.indexOf(key)>=0 || rr.indexOf(String(currentUserKey))>=0;
       }
     }catch(e){}
-    var bio=String(profile.bio||profile.about||profile.description||'').trim();
     try{if(!me&&db&&currentUserKey){await db.collection('users').doc(key).collection('profileVisitors').doc(String(currentUserKey)).set({visitorKey:String(currentUserKey),visitorName:String(cinemaUserName()||'User'),visitedAt:Date.now()},{merge:true});}}catch(e){}
-    var label=(typeof window.pkGamingLabelInfo==='function')?window.pkGamingLabelInfo(coins):null;
     var seatAction=(me&&seatNo!==null)
       ? '<button type="button" class="uc-leave" data-pr-act="leaveSeat">🚪 Leave Seat <span>सीट से नीचे उतरें</span></button>'
       : '';
     card.innerHTML=
       '<div class="uc-av">'+avatarHTML(key,name)+'</div>'+
       '<div class="uc-nm">'+esc(name)+(vip?' <span class="pk-vip-badge">👑 VIP</span>':'')+(me?' <span class="uc-you">आप</span>':'')+'</div>'+
-      '<div class="uc-tg">'+tag+' · 🎁 '+window.prFmt(total)+' मिले</div>'+
-      (genderTxt?'<div class="uc-idline">'+genderTxt+'</div>':'')+
       '<div class="uc-idline">User ID: <b>'+esc(publicId||key)+'</b> <button type="button" class="uc-copy-id" data-pr-act="copyid" data-copy="'+esc(publicId||key)+'" aria-label="ID कॉपी करें" title="ID कॉपी करें">📋</button></div>'+
-      '<div class="uc-stats"><div><b>'+followers.toLocaleString('en-IN')+'</b><span>Followers</span></div><div><b>'+following.toLocaleString('en-IN')+'</b><span>Following</span></div><div><b>'+likes.toLocaleString('en-IN')+'</b><span>Likes</span></div></div>'+
-      '<div class="uc-details">'+
-        (bio?'<div class="uc-detail"><strong>📝 Bio</strong><span>'+esc(bio)+'</span></div>':'')+
-        '<div class="uc-detail"><strong>🎙 Room Status</strong><span>'+esc(tag)+(seatNo!==null?' · Seat '+seatNo:'')+'</span></div>'+
-        '<div class="uc-detail"><strong>🪙 Gaming</strong><span>'+coins.toLocaleString('en-IN')+' Game Coins'+(label&&label.level?' · '+esc(label.name)+' Lv.'+label.level:'')+'</span></div>'+
-        '<div class="uc-detail"><strong>🎁 Room Gifts</strong><span>'+window.prFmt(total)+' received</span></div>'+
-      '</div>'+
-      ((cinemaIsHost && !isHost && seatNo!==null)?'<button type="button" class="uc-host-remove" data-pr-act="removeSeat" data-key="'+esc(key)+'">🪑 सीट से Remove करें</button>':'')+
       '<div class="uc-row">'+
         (me?'':'<button type="button" data-pr-act="follow" data-key="'+esc(key)+'" style="background:'+(isFollowing?'rgba(34,197,94,.22)':'linear-gradient(135deg,#7c3aed,#db2777)')+';">'+(isFollowing?'✓ Following':'＋ Follow')+'</button>')+
-        (me?'':'<button type="button" data-pr-act="msgto" data-key="'+esc(key)+'" data-name="'+esc(name)+'">💬 मैसेज</button>')+
-        (me?'':'<button type="button" data-pr-act="tagcomment" data-key="'+esc(key)+'" data-name="'+esc(name)+'">🏷️ टैग करें</button>')+
-        (me?'':'<button type="button" data-pr-act="callto" data-key="'+esc(key)+'" data-name="'+esc(name)+'" data-mode="audio">📞 ऑडियो कॉल</button>')+
-        (me?'':'<button type="button" data-pr-act="callto" data-key="'+esc(key)+'" data-name="'+esc(name)+'" data-mode="video">📹 वीडियो कॉल</button>')+
-        '<button type="button" class="pri" data-pr-act="giftto" data-key="'+esc(key)+'">🎁 '+(me?'खुद को गिफ्ट':'गिफ्ट भेजें')+'</button>'+
         '<button type="button" data-pr-act="close">बंद करें</button></div>'+
       seatAction;
     openSheet('prUserCard');
@@ -6827,7 +6861,7 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
   window.pkSeatTapEmpty=function(i){
     i=Number(i);
     var locked=(window.__prLockedSeats||[]).map(Number).indexOf(i)>=0;
-    if(!cinemaIsHost){
+    if(!window.pkCanManage()){
       if(locked){ window.pkRoomToast('🔒 यह सीट होस्ट ने लॉक की है।'); return; }
       cinemaTakeSeat(i); return;
     }
@@ -6843,7 +6877,7 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     catch(e){ window.pkRoomToast('सीट लॉक सेव नहीं हो पाई, दोबारा कोशिश करें।'); }
   }
   window.pkToggleSeatLock=function(i){
-    if(!cinemaIsHost||!cinemaRoomId) return;
+    if(!window.pkCanManage()||!cinemaRoomId) return;
     i=Number(i);
     var set=new Set((window.__prLockedSeats||[]).map(Number)), locking=!set.has(i);
     if(locking) set.add(i); else set.delete(i);
@@ -6851,7 +6885,7 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     return saveLocks(Array.from(set).sort(function(a,b){return a-b;}));
   };
   window.pkLockAllSeats=function(lock){
-    if(!cinemaIsHost||!cinemaRoomId) return;
+    if(!window.pkCanManage()||!cinemaRoomId) return;
     var n=window.PR_SEATS||12, arr=[]; if(lock){ for(var i=0;i<n;i++) arr.push(i); }
     window.pkRoomToast(lock?'🔒 सभी सीटें लॉक हो गईं':'🔓 सभी सीटें अनलॉक हो गईं');
     return saveLocks(arr);
@@ -6877,22 +6911,77 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
   window.pkRoomFollowUser=pkRoomFollowUser;
   function personName(key){ var p=(window.__cinemaPeople||[]).find(function(x){return String(x.key)===String(key);}); return (p&&p.name)||(window.__prUserNameCache&&window.__prUserNameCache[key])||'User'; }
   window.pkHostRemoveFromSeat=async function(key){
-    if(!cinemaIsHost||!cinemaRoomId||!key||key===me()) return;
+    if(!window.pkCanManage()||!cinemaRoomId||!key||key===me()) return;
     try{
       await roomRef().collection('viewers').doc(String(key)).set({seat:null,hostSeated:false,muted:false,removedAt:Date.now()},{merge:true});
       window.pkRoomToast('🪑 '+personName(key)+' को सीट से उतार दिया');
       try{ pkClosePublicProfile(); }catch(e){}
+      try{ window.prCloseSheets&&window.prCloseSheets(); }catch(e){}
     }catch(e){ window.pkRoomToast('सीट से उतारा नहीं जा सका।'); }
   };
   window.pkHostKick=async function(key){
-    if(!cinemaIsHost||!cinemaRoomId||!key||key===me()) return;
+    if(!window.pkCanManage()||!cinemaRoomId||!key||key===me()) return;
     var nm=personName(key);
     if(!(await ask('रूम से निकालें?',nm+' को रूम से बाहर किया जाएगा। वह चाहे तो दोबारा जुड़ सकता है।','निकालें'))) return;
     try{
       await roomRef().collection('viewers').doc(String(key)).set({kicked:true,kickedAt:Date.now(),kickReason:'kick',seat:null,hostSeated:false,muted:false},{merge:true});
       window.pkRoomToast('🚪 '+nm+' को रूम से निकाल दिया');
       try{ pkClosePublicProfile(); }catch(e){}
+      try{ window.prCloseSheets&&window.prCloseSheets(); }catch(e){}
     }catch(e){ window.pkRoomToast('रूम से निकाला नहीं जा सका।'); }
+  };
+  window.pkHostMuteUser=async function(key,forceMute){
+    if(!window.pkCanManage()||!cinemaRoomId||!key||key===me()) return;
+    var p=(window.__cinemaPeople||[]).find(function(x){return String(x.key)===String(key);});
+    var next=(typeof forceMute==='boolean')?forceMute:!(p&&p.muted===true);
+    try{
+      await roomRef().collection('viewers').doc(String(key)).set({muted:next,mutedByHost:next,lastActive:Date.now()},{merge:true});
+      window.pkRoomToast(next?('🔇 '+personName(key)+' को म्यूट कर दिया'):('🔊 '+personName(key)+' को अनम्यूट कर दिया'));
+      try{ window.prCloseSheets&&window.prCloseSheets(); }catch(e){}
+    }catch(e){ window.pkRoomToast('म्यूट नहीं हो सका।'); }
+  };
+  window.pkHostMakeAdmin=async function(key,makeAdmin){
+    if(!cinemaIsHost||!cinemaRoomId||!key||key===me()) return;
+    try{
+      var fv=(typeof FV==='function')?FV():firebase.firestore.FieldValue;
+      await roomRef().set({admins:makeAdmin?fv.arrayUnion(String(key)):fv.arrayRemove(String(key)),updatedAt:Date.now()},{merge:true});
+      window.pkRoomToast(makeAdmin?('👑 '+personName(key)+' अब Admin है'):('👑 '+personName(key)+' अब Admin नहीं है'));
+      try{ window.prCloseSheets&&window.prCloseSheets(); }catch(e){}
+    }catch(e){ window.pkRoomToast('Admin सेट नहीं हो सका।'); }
+  };
+  /* ---------- compact Manage menu: opened from the small pill beside a seat's avatar ---------- */
+  window.pkOpenManageMenu=function(key,name){
+    key=String(key||''); if(!key||!window.pkCanManage||!window.pkCanManage()) return;
+    try{ var old=document.getElementById('pkManageMenu'); if(old) old.remove(); }catch(e){}
+    var isFullHost=!!cinemaIsHost;
+    var isAdminNow=!!(window.pkIsAdmin&&window.pkIsAdmin(key));
+    var p=(window.__cinemaPeople||[]).find(function(x){return String(x.key)===key;});
+    var seated=!!p&&Number.isInteger(p.seat);
+    var nm=name||personName(key);
+    var rows='';
+    if(isFullHost) rows+='<button type="button" data-mg="admin">'+(isAdminNow?'👑 Admin हटाएं':'👑 Admin बनाएं')+'</button>';
+    rows+='<button type="button" data-mg="mute">🔇 म्यूट करें</button>';
+    if(seated) rows+='<button type="button" data-mg="seat">🪑 सीट से हटाएं</button>';
+    rows+='<button type="button" data-mg="kick">🚪 रूम से हटाएं</button>';
+    var el=document.createElement('div'); el.id='pkManageMenu'; el.className='pk-manage-menu';
+    el.innerHTML='<div class="pk-mg-title">'+cinemaEsc(nm)+'</div>'+rows;
+    document.body.appendChild(el);
+    el.querySelectorAll('[data-mg]').forEach(function(btn){
+      btn.onclick=function(){
+        var act=btn.getAttribute('data-mg');
+        el.remove();
+        if(act==='admin') window.pkHostMakeAdmin(key,!isAdminNow);
+        else if(act==='mute') window.pkHostMuteUser(key);
+        else if(act==='seat') window.pkHostRemoveFromSeat(key);
+        else if(act==='kick') window.pkHostKick(key);
+      };
+    });
+    setTimeout(function(){
+      document.addEventListener('click',function h(ev){
+        if(!el.isConnected){ document.removeEventListener('click',h); return; }
+        if(!el.contains(ev.target)){ el.remove(); document.removeEventListener('click',h); }
+      });
+    },0);
   };
   window.pkHostBlock=async function(key){
     if(!cinemaIsHost||!cinemaRoomId||!key||key===me()) return;
