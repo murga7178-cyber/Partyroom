@@ -2435,17 +2435,9 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
           <div class="yt-room-input-tools" id="ytRoomInputTools">
             
             <div id="ytRoomInlinePanel" class="yt-room-inline-panel" aria-live="polite">
-              <div id="ytRoomInlineQueue" class="yt-room-inline-pane">
-                <div class="yt-room-inline-title">📺 Q में YouTube लिंक डालें</div>
-                <div class="yt-room-inline-row"><input id="ytRoomInlineQueueInput" type="text" autocomplete="off" placeholder="YouTube link यहाँ paste करें..."><button type="button" id="ytRoomInlineQueueLoad">Load</button></div>
-                <div id="ytRoomInlineQueueList" class="yt-room-inline-list"></div>
-              </div>
-              <div id="ytRoomInlineHistory" class="yt-room-inline-pane">
-                <div class="yt-room-inline-title">💾 History</div>
-                <div id="ytRoomInlineHistoryList" class="yt-room-inline-list"></div>
-              </div>
-            </div>
-          </div>
+<div id="ytRoomInlineQueue" class="yt-room-inline-pane">
+<div id="ytRoomInlineQueueList" class="yt-room-inline-list"></div>
+              </div></div>
         </div>
         <div id="partyGamingCenter" aria-label="Gaming area">
           <div class="pgc-head">
@@ -11374,36 +11366,5 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
     document.addEventListener('DOMContentLoaded',init);
   else
     init();
-})();
-</script>
-
-
-<style id="Q_NO_DUPLICATE_URL_FINAL">
-/* Q panel uses the main YouTube URL + Load row only.
-   The inline queue keeps the list, but its second URL/input row is hidden. */
-#prRoom.party-youtube-layout #ytRoomInlineQueue > .yt-room-inline-title,
-#prRoom.party-youtube-layout #ytRoomInlineQueue > .yt-room-inline-row{
-  display:none!important;
-}
-#prRoom.party-youtube-layout #ytRoomInlineQueueList{
-  display:block!important;
-  visibility:visible!important;
-}
-</style>
-<script id="Q_NO_DUPLICATE_URL_FINAL_SCRIPT">
-(function(){
-  function cleanQ(){
-    var r=document.getElementById('prRoom');
-    if(!r || !r.classList.contains('party-youtube-layout')) return;
-    var q=document.getElementById('ytRoomInlineQueue');
-    if(!q) return;
-    var title=q.querySelector('.yt-room-inline-title');
-    var row=q.querySelector('.yt-room-inline-row');
-    if(title) title.style.setProperty('display','none','important');
-    if(row) row.style.setProperty('display','none','important');
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',cleanQ);
-  else cleanQ();
-  new MutationObserver(cleanQ).observe(document.documentElement,{subtree:true,childList:true});
 })();
 </script>
