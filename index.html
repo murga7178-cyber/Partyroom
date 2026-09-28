@@ -2709,7 +2709,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
           <div class="prd-group">
             <button type="button" class="prd-gift" onclick="togglePartyRoomGiftTray()" aria-label="Gifts">🎁</button>
             <button type="button" class="prd-youtube" id="partyRoomYouTubeBtn" onclick="if(window.openPartyRoomYouTube)window.openPartyRoomYouTube();return false;" aria-label="YouTube" title="YouTube">▶️<span class="yt-mini-label">YT</span><span id="partyRoomYoutubeBadge" class="prd-badge">0</span></button>
-            <button type="button" class="prd-mic prd-mic-indicator" id="partyRoomMuteDockBtn" onclick="cinemaToggleMute()" aria-label="Mute audio" title="Mute"><span class="party-mic-indicator-ring"></span><span class="party-mic-indicator-icon">🎙️</span><span class="party-mic-indicator-dot"></span></button>
+            <button type="button" class="prd-mic prd-mic-indicator" id="partyRoomMuteDockBtn" onclick="cinemaToggleMute()" aria-label="Mute audio" title="Mute"><svg class="pm-mic-svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 11.5v0.5a6.5 6.5 0 0 0 13 0v-0.5"/><path d="M12 18.5V21.5"/><path d="M8.5 21.5h7"/><path class="pm-mic-slash" d="M4 4L20 20" stroke="#e11d48" stroke-width="2.2"/></svg></button>
             <button type="button" onclick="openPartyRoomSettings()" aria-label="More">⋮⋮</button>
           </div>
         </div>
@@ -3836,12 +3836,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       const mutedPeople=Array.isArray(window.__cinemaPeople)?window.__cinemaPeople:[];
       const mp=mutedPeople.find(x=>String(x&&x.key||'')===id);
       if(mp && mp.muted===true) level=0;
-    }catch(e){}
-    try{
-      if(id===String((typeof currentUserKey!=='undefined'&&currentUserKey)||'')){
-        const mb=document.getElementById('partyRoomMuteDockBtn');
-        if(mb) mb.classList.toggle('prd-speaking', level>1.5 && !(typeof cinemaMuted!=='undefined'&&cinemaMuted));
-      }
     }catch(e){}
     const hostKey=String(window.__cinemaHostKey||'');
     if(id===hostKey){
@@ -12393,27 +12387,16 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 }
 </style>
 <style id="partyRoomMicSeatSpeakOnly">
-/* Mic button: normal by default; green glow only while the seated user is speaking. */
-#partyRoomBottomDock .prd-mic-indicator:not(.prd-speaking){
-  background:rgba(30,12,70,.62)!important;
-  border:1px solid rgba(255,255,255,.2)!important;
-  box-shadow:none!important;
+/* Plain line-art mic button next to Gift. No glow, ring or dot. Shown only when seated. */
+#partyRoomBottomDock #partyRoomMuteDockBtn{
+  display:flex!important;align-items:center;justify-content:center;visibility:visible!important;pointer-events:auto!important;
+  background:transparent!important;border:0!important;box-shadow:none!important;
+  width:40px!important;height:40px!important;border-radius:12px!important;padding:0!important;
 }
-#partyRoomBottomDock .prd-mic-indicator:not(.prd-speaking) .party-mic-indicator-ring{display:none!important;}
-#partyRoomBottomDock .prd-mic-indicator:not(.prd-speaking) .party-mic-indicator-icon{filter:none!important;}
-#partyRoomBottomDock .prd-mic-indicator:not(.prd-speaking):not(.prd-muted) .party-mic-indicator-dot{display:none!important;}
-#partyRoomBottomDock .prd-mic-indicator.prd-muted .party-mic-indicator-dot{display:block!important;}
-#partyRoomBottomDock .prd-mic-indicator.prd-speaking{
-  background:rgba(12,18,38,.78)!important;
-  border:1px solid rgba(57,255,114,.6)!important;
-  box-shadow:0 0 0 1px rgba(57,255,114,.14),0 0 12px rgba(34,197,94,.45)!important;
-}
-#partyRoomBottomDock .prd-mic-indicator.prd-speaking .party-mic-indicator-ring{display:block!important;}
-#partyRoomBottomDock .prd-mic-indicator.prd-speaking .party-mic-indicator-dot{display:block!important;}
-/* Only show the mic once the user has taken a seat. */
-#partyRoomBottomDock .prd-mic-indicator.prd-unseated{display:none!important;}
-/* Mic button hidden completely. */
-#partyRoomBottomDock #partyRoomMuteDockBtn,#partyRoomBottomDock .prd-mic,#partyRoomBottomDock .prd-mic-indicator{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+#partyRoomBottomDock #partyRoomMuteDockBtn .pm-mic-svg{display:block;width:24px;height:24px;}
+#partyRoomBottomDock #partyRoomMuteDockBtn .pm-mic-slash{display:none;}
+#partyRoomBottomDock #partyRoomMuteDockBtn.prd-muted .pm-mic-slash{display:block;}
+#partyRoomBottomDock #partyRoomMuteDockBtn.prd-unseated{display:none!important;}
 </style>
 <script id="partyRoomMicSeatSpeakOnlyScript">
 (function(){
@@ -12428,5 +12411,31 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
     }catch(e){}
   }
   refresh(); setInterval(refresh,500);
+
+  /* Mic follows the seat: seated -> mic on automatically; not seated -> mic off automatically. */
+  var unseatedSince=0, seatedSince=0, lastSig='', triedSig='';
+  setInterval(function(){
+    try{
+      if(typeof cinemaRoomId==='undefined'||!cinemaRoomId){unseatedSince=0;seatedSince=0;return;}
+      var me=String((typeof currentUserKey!=='undefined'&&currentUserKey)||'');
+      var p=(window.__cinemaPeople||[]).find(function(x){return x&&String(x.key)===me;});
+      if(!p)return;
+      var seated=Number.isInteger(p.seat)||p.hostSeated===true;
+      var sig=seated?(Number.isInteger(p.seat)?'s'+p.seat:'host'):'';
+      var stream=(typeof cinemaLocalStream!=='undefined')?cinemaLocalStream:null;
+      var now=Date.now();
+      if(!seated){
+        seatedSince=0; triedSig='';
+        if(!unseatedSince)unseatedSince=now;
+        if(stream&&now-unseatedSince>800&&typeof cinemaStopGroupCall==='function'){ unseatedSince=0; cinemaStopGroupCall(); }
+      }else{
+        unseatedSince=0;
+        if(!seatedSince||sig!==lastSig)seatedSince=now;
+        /* if the normal seat-tap flow has not opened the mic within a few seconds, open it once per seat */
+        if(!stream&&now-seatedSince>2500&&triedSig!==sig&&typeof cinemaStartGroupCall==='function'){ triedSig=sig; cinemaStartGroupCall('audio'); }
+      }
+      lastSig=sig;
+    }catch(e){}
+  },400);
 })();
 </script>
