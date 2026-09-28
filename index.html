@@ -11259,156 +11259,122 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 
 
 
-<style id="partyRoomYouTubeSingleQController">
-/* SINGLE Q CONTROLLER
-   Closed: only Q is visible.
-   Open: URL + Load (+ Upload for Host) + Queue list are visible.
-*/
+
+
+<style id="partyRoomQDefinitiveFix">
+/* Q CLOSED = only Q. Q OPEN = the whole control panel. */
+#prRoom.party-youtube-layout:not(.yt-q-open) #partyYoutubeStage > #ytRoomUrlBar,
+#prRoom.party-youtube-layout:not(.yt-q-open) #partyYoutubeStage > #ytRoomInputTools,
+#prRoom.party-youtube-layout:not(.yt-q-open) #ytRoomInlinePanel,
+#prRoom.party-youtube-layout:not(.yt-q-open) #ytRoomInlineQueue{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+#prRoom.party-youtube-layout.yt-q-open #partyYoutubeStage > #ytRoomUrlBar,
+#prRoom.party-youtube-layout.yt-q-open #partyYoutubeStage > #ytRoomInputTools,
+#prRoom.party-youtube-layout.yt-q-open #ytRoomInlinePanel,
+#prRoom.party-youtube-layout.yt-q-open #ytRoomInlineQueue{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+}
 #prRoom.party-youtube-layout #ytRoomUiHideBtn{
   display:flex!important;
   visibility:visible!important;
   opacity:1!important;
   pointer-events:auto!important;
   touch-action:manipulation!important;
-  cursor:pointer!important;
-  z-index:100000!important;
-}
-#prRoom.party-youtube-layout:not(.yt-q-open) #ytRoomUrlBar,
-#prRoom.party-youtube-layout:not(.yt-q-open) #ytRoomInputTools,
-#prRoom.party-youtube-layout:not(.yt-q-open) #ytRoomInlinePanel{
-  display:none!important;
-  visibility:hidden!important;
-  opacity:0!important;
-  pointer-events:none!important;
-}
-#prRoom.party-youtube-layout.yt-q-open #ytRoomUrlBar,
-#prRoom.party-youtube-layout.yt-q-open #ytRoomInputTools,
-#prRoom.party-youtube-layout.yt-q-open #ytRoomInlinePanel{
-  display:block!important;
-  visibility:visible!important;
-  opacity:1!important;
-  pointer-events:auto!important;
-}
-#prRoom.party-youtube-layout #ytRoomInputTools .yt-room-tools-top{
-  display:none!important;
-}
-#prRoom.party-youtube-layout #ytRoomInlineQueue{
-  display:block!important;
-}
-#prRoom.party-youtube-layout #ytRoomInlineQueueList{
-  display:block!important;
-}
-#prRoom.party-youtube-layout #ytRoomQueueBtn{
-  display:none!important;
-}
-/* The video-screen volume control stays hidden as requested. */
-#prRoom.party-youtube-layout #ytRoomVolume{
-  display:none!important;
-  pointer-events:none!important;
+  z-index:2147483647!important;
 }
 </style>
-
-<script id="partyRoomYouTubeSingleQControllerScript">
+<script id="partyRoomQDefinitiveFixScript">
 (function(){
   'use strict';
+  var lastMode=false;
 
-  var lastYT = false;
-  var initialized = false;
-
-  function byId(id){ return document.getElementById(id); }
-  function root(){ return byId('prRoom'); }
-  function isYT(){
-    var r=root();
+  function el(id){ return document.getElementById(id); }
+  function room(){ return el('prRoom'); }
+  function inYouTube(){
+    var r=room();
     return !!(r && r.classList.contains('party-youtube-layout'));
   }
+
   function host(){
     try{
-      if(typeof window.ytRoomHost === 'function') return !!window.ytRoomHost();
-    }catch(e){}
-    return false;
+      return typeof window.ytRoomHost === 'function' && !!window.ytRoomHost();
+    }catch(e){ return false; }
   }
 
-  function setPanel(open){
-    var r=root(), q=byId('ytRoomUiHideBtn');
+  function apply(open){
+    var r=room(), q=el('ytRoomUiHideBtn');
     if(!r || !q) return;
 
     open=!!open;
     r.classList.toggle('yt-q-open', open);
 
-    var url=byId('ytRoomUrlBar');
-    var tools=byId('ytRoomInputTools');
-    var panel=byId('ytRoomInlinePanel');
-    var queue=byId('ytRoomInlineQueue');
-    var upload=byId('ytRoomUploadBtn');
+    var url=el('ytRoomUrlBar');
+    var tools=el('ytRoomInputTools');
+    var panel=el('ytRoomInlinePanel');
+    var queue=el('ytRoomInlineQueue');
+    var upload=el('ytRoomUploadBtn');
 
-    [url,tools,panel].forEach(function(el){
-      if(!el) return;
-      el.style.display=open?'block':'none';
-      el.style.visibility=open?'visible':'hidden';
-      el.style.opacity=open?'1':'0';
-      el.style.pointerEvents=open?'auto':'none';
+    [url,tools,panel,queue].forEach(function(x){
+      if(!x) return;
+      x.style.setProperty('display', open ? 'block' : 'none', 'important');
+      x.style.setProperty('visibility', open ? 'visible' : 'hidden', 'important');
+      x.style.setProperty('opacity', open ? '1' : '0', 'important');
+      x.style.setProperty('pointer-events', open ? 'auto' : 'none', 'important');
     });
 
-    if(queue) queue.style.display=open?'block':'none';
-
-    /* Host gets Upload; Viewer does not. */
     if(upload){
-      upload.style.display=(open && host())?'inline-flex':'none';
+      upload.style.setProperty(
+        'display',
+        (open && host()) ? 'inline-flex' : 'none',
+        'important'
+      );
     }
 
     q.textContent='Q';
     q.setAttribute('aria-expanded', open ? 'true' : 'false');
-    q.setAttribute('aria-label', open ? 'Q बंद करें' : 'Q खोलें');
-    q.title=q.getAttribute('aria-label');
-
-    if(open){
-      if(typeof window.renderInlineRoomPanel === 'function'){
-        try{ window.renderInlineRoomPanel('queue'); }catch(e){}
-      }
-    }
   }
 
   function bind(){
-    var r=root(), q=byId('ytRoomUiHideBtn');
+    var r=room(), q=el('ytRoomUiHideBtn');
     if(!r || !q) return;
 
-    /* When YouTube mode is entered, start CLOSED exactly once. */
-    var nowYT=isYT();
-    if(nowYT && !lastYT){
-      setPanel(false);
-      initialized=true;
-    }
-    if(!nowYT){
-      setPanel(false);
-    }
-    lastYT=nowYT;
+    var mode=inYouTube();
 
-    if(q.__singleQBound) return;
-    q.__singleQBound=true;
+    /* Entering YouTube always starts CLOSED for Host and Viewer. */
+    if(mode && !lastMode) apply(false);
+    if(!mode) apply(false);
+    lastMode=mode;
 
-    q.addEventListener('click', function(e){
+    if(q.__qDefinitiveBound) return;
+    q.__qDefinitiveBound=true;
+
+    /* One event only: pointerup works for mouse, touch and stylus.
+       No touchend preventDefault, so mobile browsers cannot cancel the click. */
+    q.addEventListener('pointerup', function(e){
+      if(e.button !== undefined && e.button !== 0) return;
       e.preventDefault();
       e.stopPropagation();
-      if(!isYT()) return;
-      setPanel(!r.classList.contains('yt-q-open'));
-    }, false);
-
-    q.addEventListener('touchend', function(e){
-      e.preventDefault();
-      e.stopPropagation();
+      if(!inYouTube()) return;
+      apply(!r.classList.contains('yt-q-open'));
     }, {passive:false});
   }
 
-  window.ytRoomOpenQ=function(){ setPanel(true); };
-  window.ytRoomCloseQ=function(){ setPanel(false); };
-  window.ytRoomCollapseControls=function(){ setPanel(false); };
+  window.ytRoomOpenQ=function(){ apply(true); };
+  window.ytRoomCloseQ=function(){ apply(false); };
 
-  if(document.readyState === 'loading'){
+  if(document.readyState==='loading'){
     document.addEventListener('DOMContentLoaded', bind);
   }else{
     bind();
   }
 
-  setInterval(bind, 250);
+  setInterval(bind, 300);
 })();
 </script>
