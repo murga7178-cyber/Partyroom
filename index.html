@@ -330,6 +330,26 @@ html, body { overscroll-behavior-y: none; }
   #cinemaChatInput{font-size:11px!important;}
 }
 </style>
+<style id="partyAdvancedChatStyle">
+/* Advanced message: normal chat + temporary room-wide scrolling overlay. */
+#cinemaChatComposer{gap:6px!important;}
+#partyAdvancedToggle{position:relative!important;width:48px!important;height:36px!important;min-width:48px!important;flex:0 0 48px!important;padding:0!important;border:0!important;border-radius:12px!important;background:transparent!important;color:#64748b!important;box-shadow:none!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:2px!important;cursor:pointer!important;}
+#partyAdvancedToggle .pat-track{position:relative;display:block;width:31px;height:18px;border-radius:999px;background:#475569;border:1px solid rgba(255,255,255,.2);box-shadow:inset 0 1px 3px rgba(0,0,0,.35);transition:.18s ease;}
+#partyAdvancedToggle .pat-knob{position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.35);transition:.18s ease;}
+#partyAdvancedToggle .pat-label{position:absolute;left:0;right:0;bottom:-1px;font-size:7px;line-height:9px;font-weight:950;letter-spacing:.35px;opacity:.8;}
+#partyAdvancedToggle.on .pat-track{background:linear-gradient(135deg,#22c55e,#06b6d4);box-shadow:0 0 9px rgba(34,197,94,.32);}
+#partyAdvancedToggle.on .pat-knob{left:16px;}
+#partyAdvancedToggle.on{color:#22c55e;}
+#partyAdvancedOverlayLayer{position:absolute;inset:0;z-index:31;pointer-events:none;overflow:hidden;}
+.party-advanced-fly{position:absolute;left:0;top:var(--pat-y,50%);display:flex;align-items:center;gap:8px;max-width:min(78vw,360px);padding:8px 13px 8px 9px;border-radius:999px;background:rgba(255,255,255,.96);border:1px solid rgba(124,58,237,.28);box-shadow:0 8px 24px rgba(0,0,0,.28),0 0 18px rgba(124,58,237,.16);color:#111827;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transform:translateX(-120%);animation:partyAdvancedFlyAcross var(--pat-duration,6s) linear forwards;}
+.party-advanced-fly .pat-av{width:30px;height:30px;flex:0 0 30px;border-radius:50%;overflow:hidden;background:linear-gradient(145deg,#312e81,#7c3aed);display:grid;place-items:center;color:#fff;font-weight:900;font-size:12px;border:2px solid rgba(255,255,255,.9);}
+.party-advanced-fly .pat-av img{width:100%;height:100%;object-fit:cover;display:block;}
+.party-advanced-fly .pat-name{font-size:10px;color:#7c3aed;display:block;line-height:1.1;margin-bottom:1px;}
+.party-advanced-fly .pat-text{display:block;max-width:260px;overflow:hidden;text-overflow:ellipsis;}
+@keyframes partyAdvancedFlyAcross{0%{transform:translateX(-120%);opacity:0}6%{opacity:1}94%{opacity:1}100%{transform:translateX(calc(100vw + 30px));opacity:0}}
+@media(max-width:430px){#partyAdvancedToggle{width:42px!important;min-width:42px!important;}#partyAdvancedToggle .pat-label{font-size:6px}.party-advanced-fly{font-size:12px;padding:7px 10px 7px 8px}.party-advanced-fly .pat-text{max-width:190px;}}
+</style>
+
 <style id="partyChatComposerFix">
 #cinemaChatPanel{position:relative!important;overflow:visible!important;}
 #cinemaChatPanel #cinemaChatMessages{padding-bottom:8px!important;}
@@ -1638,6 +1658,16 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{
 #prRoom.yt-sound-only #ytRoomUrlBar{display:none!important;}
 .yt-bottom-sheet-buttons #ytBottomSoundBtn{font-size:11px!important;padding:7px 10px!important;min-width:58px!important;}
 </style>
+
+<style id="partyAdvancedChatFinalCss">
+#cinemaChatComposer #partyAdvancedToggle{width:48px!important;min-width:48px!important;height:36px!important;flex:0 0 48px!important;padding:0!important;border:0!important;border-radius:12px!important;background:transparent!important;color:#64748b!important;box-shadow:none!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:2px!important;}
+#cinemaChatComposer #partyAdvancedToggle .pat-track{width:31px!important;height:18px!important;flex:none!important;border-radius:999px!important;background:#475569!important;border:1px solid rgba(255,255,255,.2)!important;box-shadow:inset 0 1px 3px rgba(0,0,0,.35)!important;}
+#cinemaChatComposer #partyAdvancedToggle.on .pat-track{background:linear-gradient(135deg,#22c55e,#06b6d4)!important;}
+#cinemaChatComposer #partyAdvancedToggle .pat-knob{position:absolute!important;left:2px!important;top:2px!important;width:12px!important;height:12px!important;flex:none!important;border:0!important;border-radius:50%!important;background:#fff!important;box-shadow:0 1px 4px rgba(0,0,0,.35)!important;}
+#cinemaChatComposer #partyAdvancedToggle.on .pat-knob{left:16px!important;}
+#cinemaChatComposer #partyAdvancedToggle .pat-label{position:absolute!important;left:0!important;right:0!important;bottom:-1px!important;font-size:7px!important;line-height:9px!important;font-weight:950!important;letter-spacing:.35px!important;color:inherit!important;}
+</style>
+
 </head>
 
 <body>
@@ -2477,12 +2507,14 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         </div>
         <div id="cinemaCallGrid" style="display:none;"></div>
 
+        <div id="partyAdvancedOverlayLayer" aria-hidden="true"></div>
         <div id="cinemaChatPanel">
           <div id="cinemaChatMessages"><div style="text-align:center;color:rgba(255,255,255,.6);font-size:12px;padding:16px 6px;">चैट लोड हो रही है…</div></div>
-          <div id="cinemaChatComposer" style="display:none;position:absolute;left:7px;right:7px;bottom:68px;z-index:150;height:48px;gap:6px;margin:0;padding:5px;background:rgba(8,15,31,.98);border:1px solid rgba(255,255,255,.28);border-radius:15px;box-shadow:0 8px 24px rgba(0,0,0,.45);box-sizing:border-box;">
+          <div id="cinemaChatComposer" style="display:none;position:absolute;left:7px;right:7px;bottom:68px;z-index:150;height:52px;gap:6px;margin:0;padding:5px;background:rgba(8,15,31,.98);border:1px solid rgba(255,255,255,.28);border-radius:15px;box-shadow:0 8px 24px rgba(0,0,0,.45);box-sizing:border-box;">
             <button type="button" onmousedown="event.preventDefault()" onclick="window.prOpenTagPicker&&window.prOpenTagPicker()" aria-label="Tag someone" title="किसी को टैग करें" style="width:34px;height:34px;flex:0 0 34px;border:1px solid #334155;border-radius:11px;background:#070d18;color:#a78bfa;font-size:15px;font-weight:900;cursor:pointer;">@</button>
             <input id="cinemaChatInput" maxlength="300" placeholder="मैसेज लिखें…" autocomplete="off" enterkeyhint="send" autocapitalize="sentences" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();cinemaSendChat();}" style="flex:1;min-width:0;height:34px;padding:6px 10px;border-radius:11px;border:1px solid #334155;background:#070d18;color:#fff;outline:none;font-size:13px;box-sizing:border-box;">
-            <button type="button" onmousedown="event.preventDefault()" onclick="cinemaSendChat()" aria-label="Send message" style="width:44px;height:34px;flex:0 0 44px;border:0;border-radius:11px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:18px;font-weight:900;cursor:pointer;">➤</button>
+            <button type="button" onmousedown="event.preventDefault()" onclick="cinemaSendChat()" aria-label="Send message" title="Send" style="width:44px;height:34px;flex:0 0 44px;border:0;border-radius:11px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:18px;font-weight:900;cursor:pointer;">➤</button>
+            <button type="button" id="partyAdvancedToggle" class="party-advanced-toggle" onclick="window.togglePartyAdvancedChat&&window.togglePartyAdvancedChat()" aria-label="Advanced message OFF" aria-pressed="false" title="Advanced message OFF"><span class="pat-track"><span class="pat-knob"></span></span><span class="pat-label">ADV</span></button>
           </div>
         </div>
 
@@ -3309,6 +3341,39 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       if(el){el.__ready=false;el.innerHTML='<div style="text-align:center;color:#fca5a5;font-size:12px;padding:28px 10px;">Chat permission/connection की जाँच करें।</div>';}
     });
   }
+  function partyAdvancedChatEnabled(){
+    try{return localStorage.getItem('partyRoomAdvancedChat')==='1';}catch(e){return false;}
+  }
+  function updatePartyAdvancedToggle(){
+    const b=document.getElementById('partyAdvancedToggle'); if(!b)return;
+    const on=partyAdvancedChatEnabled();
+    b.classList.toggle('on',on); b.setAttribute('aria-pressed',on?'true':'false');
+    b.setAttribute('aria-label','Advanced message '+(on?'ON':'OFF'));
+    b.title='Advanced message '+(on?'ON':'OFF');
+  }
+  window.togglePartyAdvancedChat=function(){
+    const on=!partyAdvancedChatEnabled();
+    try{localStorage.setItem('partyRoomAdvancedChat',on?'1':'0');}catch(e){}
+    updatePartyAdvancedToggle();
+  };
+  function partyAdvancedOverlayMessage(text,name,photo){
+    const layer=document.getElementById('partyAdvancedOverlayLayer'); if(!layer)return;
+    const el=document.createElement('div'); el.className='party-advanced-fly';
+    const room=document.getElementById('prRoom');
+    const roomH=room?room.clientHeight:window.innerHeight;
+    const y=Math.max(70,Math.min(Math.max(90,roomH-150),Math.round(90+Math.random()*Math.max(40,roomH-240))));
+    el.style.setProperty('--pat-y',y+'px');
+    el.style.setProperty('--pat-duration',(5.5+Math.random()*1.5).toFixed(2)+'s');
+    const av=document.createElement('span'); av.className='pat-av';
+    if(photo && /^https:\/\//i.test(photo)){const img=document.createElement('img');img.src=photo;img.alt='';av.appendChild(img);}else{av.textContent=String(name||'U').trim().charAt(0).toUpperCase()||'U';}
+    const body=document.createElement('span');
+    const n=document.createElement('span');n.className='pat-name';n.textContent=String(name||'User');
+    const t=document.createElement('span');t.className='pat-text';t.textContent=String(text||'');
+    body.appendChild(n);body.appendChild(t); el.appendChild(av);el.appendChild(body);layer.appendChild(el);
+    el.addEventListener('animationend',()=>el.remove(),{once:true});
+  }
+  updatePartyAdvancedToggle();
+
   async function cinemaSendChat(){
     const input=document.getElementById('cinemaChatInput'); if(!input||!db||!cinemaRoomId)return;
     const text=String(input.value||'').trim(); if(!text)return;
@@ -3321,7 +3386,10 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     // स्थिर id और local pending row से comment acknowledgement का इंतज़ार किए
     // बिना दिखता है; वही id listener में duplicate बनने से भी बचाती है।
     const ref=db.collection('cinemaRooms').doc(sendRoomId).collection('chat').doc();
-    const data={text:text.slice(0,300),name:cinemaUserName(),userKey:String(currentUserKey||'guest'),photoURL:photo,createdAt:Date.now()};
+    const advanced=partyAdvancedChatEnabled();
+    const senderName=cinemaUserName();
+    const data={text:text.slice(0,300),name:senderName,userKey:String(currentUserKey||'guest'),photoURL:photo,createdAt:Date.now()};
+    if(advanced) partyAdvancedOverlayMessage(data.text,senderName,photo);
     partyRoomChatPending[ref.id]=Object.assign({},data,{__roomId:sendRoomId});
     const chatBox=document.getElementById('cinemaChatMessages');
     if(chatBox && chatBox.__ready){
