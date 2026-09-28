@@ -330,26 +330,6 @@ html, body { overscroll-behavior-y: none; }
   #cinemaChatInput{font-size:11px!important;}
 }
 </style>
-<style id="partyAdvancedChatStyle">
-/* Advanced message: normal chat + temporary room-wide scrolling overlay. */
-#cinemaChatComposer{gap:6px!important;}
-#partyAdvancedToggle{position:relative!important;width:48px!important;height:36px!important;min-width:48px!important;flex:0 0 48px!important;padding:0!important;border:0!important;border-radius:12px!important;background:transparent!important;color:#64748b!important;box-shadow:none!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:2px!important;cursor:pointer!important;}
-#partyAdvancedToggle .pat-track{position:relative;display:block;width:31px;height:18px;border-radius:999px;background:#475569;border:1px solid rgba(255,255,255,.2);box-shadow:inset 0 1px 3px rgba(0,0,0,.35);transition:.18s ease;}
-#partyAdvancedToggle .pat-knob{position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.35);transition:.18s ease;}
-#partyAdvancedToggle .pat-label{position:absolute;left:0;right:0;bottom:-1px;font-size:7px;line-height:9px;font-weight:950;letter-spacing:.35px;opacity:.8;}
-#partyAdvancedToggle.on .pat-track{background:linear-gradient(135deg,#22c55e,#06b6d4);box-shadow:0 0 9px rgba(34,197,94,.32);}
-#partyAdvancedToggle.on .pat-knob{left:16px;}
-#partyAdvancedToggle.on{color:#22c55e;}
-#partyAdvancedOverlayLayer{position:absolute;inset:0;z-index:31;pointer-events:none;overflow:hidden;}
-.party-advanced-fly{position:absolute;left:0;top:var(--pat-y,50%);display:flex;align-items:center;gap:8px;max-width:min(78vw,360px);padding:8px 13px 8px 9px;border-radius:999px;background:rgba(255,255,255,.96);border:1px solid rgba(124,58,237,.28);box-shadow:0 8px 24px rgba(0,0,0,.28),0 0 18px rgba(124,58,237,.16);color:#111827;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transform:translateX(-120%);animation:partyAdvancedFlyAcross var(--pat-duration,6s) linear forwards;}
-.party-advanced-fly .pat-av{width:30px;height:30px;flex:0 0 30px;border-radius:50%;overflow:hidden;background:linear-gradient(145deg,#312e81,#7c3aed);display:grid;place-items:center;color:#fff;font-weight:900;font-size:12px;border:2px solid rgba(255,255,255,.9);}
-.party-advanced-fly .pat-av img{width:100%;height:100%;object-fit:cover;display:block;}
-.party-advanced-fly .pat-name{font-size:10px;color:#7c3aed;display:block;line-height:1.1;margin-bottom:1px;}
-.party-advanced-fly .pat-text{display:block;max-width:260px;overflow:hidden;text-overflow:ellipsis;}
-@keyframes partyAdvancedFlyAcross{0%{transform:translateX(-120%);opacity:0}6%{opacity:1}94%{opacity:1}100%{transform:translateX(calc(100vw + 30px));opacity:0}}
-@media(max-width:430px){#partyAdvancedToggle{width:42px!important;min-width:42px!important;}#partyAdvancedToggle .pat-label{font-size:6px}.party-advanced-fly{font-size:12px;padding:7px 10px 7px 8px}.party-advanced-fly .pat-text{max-width:190px;}}
-</style>
-
 <style id="partyChatComposerFix">
 #cinemaChatPanel{position:relative!important;overflow:visible!important;}
 #cinemaChatPanel #cinemaChatMessages{padding-bottom:8px!important;}
@@ -1658,92 +1638,6 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{
 #prRoom.yt-sound-only #ytRoomUrlBar{display:none!important;}
 .yt-bottom-sheet-buttons #ytBottomSoundBtn{font-size:11px!important;padding:7px 10px!important;min-width:58px!important;}
 </style>
-
-<style id="partyAdvancedChatFinalCss">
-#cinemaChatComposer #partyAdvancedToggle{width:48px!important;min-width:48px!important;height:36px!important;flex:0 0 48px!important;padding:0!important;border:0!important;border-radius:12px!important;background:transparent!important;color:#64748b!important;box-shadow:none!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:2px!important;}
-#cinemaChatComposer #partyAdvancedToggle .pat-track{width:31px!important;height:18px!important;flex:none!important;border-radius:999px!important;background:#475569!important;border:1px solid rgba(255,255,255,.2)!important;box-shadow:inset 0 1px 3px rgba(0,0,0,.35)!important;}
-#cinemaChatComposer #partyAdvancedToggle.on .pat-track{background:linear-gradient(135deg,#22c55e,#06b6d4)!important;}
-#cinemaChatComposer #partyAdvancedToggle .pat-knob{position:absolute!important;left:2px!important;top:2px!important;width:12px!important;height:12px!important;flex:none!important;border:0!important;border-radius:50%!important;background:#fff!important;box-shadow:0 1px 4px rgba(0,0,0,.35)!important;}
-#cinemaChatComposer #partyAdvancedToggle.on .pat-knob{left:16px!important;}
-#cinemaChatComposer #partyAdvancedToggle .pat-label{position:absolute!important;left:0!important;right:0!important;bottom:-1px!important;font-size:7px!important;line-height:9px!important;font-weight:950!important;letter-spacing:.35px!important;color:inherit!important;}
-</style>
-
-
-<style id="partyPinkChatComposerFinal">
-/* Party Room: screenshot-style pink/white chat composer. The ADV switch is intentionally removed. */
-#cinemaChatPanel #cinemaChatComposer.party-pink-composer{
-  left:0!important;right:0!important;bottom:68px!important;
-  height:104px!important;display:none;flex-direction:column!important;
-  gap:0!important;padding:0!important;margin:0!important;
-  background:rgba(255,255,255,.96)!important;
-  border:0!important;border-radius:0!important;
-  box-shadow:0 -5px 18px rgba(0,0,0,.12)!important;
-  overflow:hidden!important;backdrop-filter:blur(8px)!important;
-  -webkit-backdrop-filter:blur(8px)!important;
-}
-#cinemaChatPanel.chat-input-open #cinemaChatComposer.party-pink-composer,
-#cinemaChatComposer.party-pink-composer.party-composer-open{
-  display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
-}
-#cinemaChatComposer .party-pink-gifts{
-  height:42px!important;min-height:42px!important;display:flex!important;align-items:center!important;
-  gap:7px!important;padding:4px 14px!important;overflow-x:auto!important;overflow-y:hidden!important;
-  white-space:nowrap!important;border-bottom:1px solid rgba(0,0,0,.06)!important;
-  box-sizing:border-box!important;
-}
-#cinemaChatComposer .party-pink-gifts::-webkit-scrollbar{display:none!important}
-#cinemaChatComposer .party-pink-gifts button{
-  width:34px!important;height:34px!important;min-width:34px!important;flex:0 0 34px!important;
-  border:1px solid rgba(0,0,0,.08)!important;border-radius:9px!important;background:#fff!important;
-  box-shadow:0 1px 4px rgba(0,0,0,.08)!important;font-size:21px!important;line-height:1!important;
-  padding:0!important;display:grid!important;place-items:center!important;cursor:pointer!important;
-}
-#cinemaChatComposer .party-pink-compose-row{
-  height:62px!important;min-height:62px!important;display:flex!important;align-items:center!important;
-  gap:7px!important;padding:8px 10px!important;box-sizing:border-box!important;background:#fff!important;
-}
-#cinemaChatComposer .party-pink-left{
-  width:52px!important;height:52px!important;min-width:52px!important;flex:0 0 52px!important;
-  border:0!important;border-radius:50%!important;background:linear-gradient(145deg,#ff5b73,#ff3d67)!important;
-  color:#fff!important;font-size:25px!important;box-shadow:0 4px 10px rgba(255,61,103,.28)!important;
-  display:grid!important;place-items:center!important;padding:0!important;cursor:pointer!important;
-}
-#cinemaChatComposer textarea#cinemaChatInput{
-  flex:1 1 auto!important;min-width:0!important;width:auto!important;height:48px!important;min-height:48px!important;
-  max-height:48px!important;resize:none!important;overflow:hidden!important;padding:10px 12px!important;
-  border:1px solid rgba(0,0,0,.08)!important;border-radius:25px!important;background:#fff!important;
-  color:#222!important;-webkit-text-fill-color:#222!important;outline:none!important;
-  box-shadow:0 1px 5px rgba(0,0,0,.08)!important;font-size:17px!important;line-height:25px!important;
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Devanagari",Arial,sans-serif!important;
-  -webkit-appearance:none!important;appearance:none!important;
-}
-#cinemaChatComposer textarea#cinemaChatInput::placeholder{color:#a5a5aa!important;opacity:1!important}
-#cinemaChatComposer .party-pink-tool{
-  width:39px!important;height:48px!important;min-width:39px!important;flex:0 0 39px!important;
-  border:0!important;background:transparent!important;color:#a5a5aa!important;font-size:25px!important;font-weight:500!important;
-  padding:0!important;display:grid!important;place-items:center!important;cursor:pointer!important;
-}
-#cinemaChatComposer .party-pink-tool sup{font-size:12px!important;top:-.5em!important;position:relative!important}
-#cinemaChatComposer .party-pink-emoji{font-size:30px!important;color:#b2b2b5!important}
-#cinemaChatComposer .party-pink-send{
-  width:64px!important;height:48px!important;min-width:64px!important;flex:0 0 64px!important;
-  border:0!important;border-radius:14px!important;background:transparent!important;color:#f34f69!important;
-  font-size:17px!important;font-weight:500!important;padding:0!important;cursor:pointer!important;
-}
-#cinemaChatComposer .party-pink-left:active,
-#cinemaChatComposer .party-pink-send:active,
-#cinemaChatComposer .party-pink-gifts button:active{transform:scale(.94)!important}
-@media(max-width:430px){
-  #cinemaChatPanel #cinemaChatComposer.party-pink-composer{height:102px!important}
-  #cinemaChatComposer .party-pink-compose-row{gap:5px!important;padding-left:10px!important;padding-right:7px!important}
-  #cinemaChatComposer .party-pink-left{width:50px!important;height:50px!important;min-width:50px!important;flex-basis:50px!important}
-  #cinemaChatComposer .party-pink-tool{width:34px!important;min-width:34px!important;flex-basis:34px!important}
-  #cinemaChatComposer .party-pink-send{width:55px!important;min-width:55px!important;flex-basis:55px!important;font-size:16px!important}
-  #cinemaChatComposer textarea#cinemaChatInput{font-size:16px!important}
-}
-/* Do not show the previous ADV control even if an old cached DOM/style is present. */
-#partyAdvancedToggle{display:none!important}
-</style>
 </head>
 
 <body>
@@ -2583,10 +2477,14 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         </div>
         <div id="cinemaCallGrid" style="display:none;"></div>
 
-        <div id="partyAdvancedOverlayLayer" aria-hidden="true"></div>
         <div id="cinemaChatPanel">
           <div id="cinemaChatMessages"><div style="text-align:center;color:rgba(255,255,255,.6);font-size:12px;padding:16px 6px;">चैट लोड हो रही है…</div></div>
-                  </div>
+          <div id="cinemaChatComposer" style="display:none;position:absolute;left:7px;right:7px;bottom:68px;z-index:150;height:48px;gap:6px;margin:0;padding:5px;background:rgba(8,15,31,.98);border:1px solid rgba(255,255,255,.28);border-radius:15px;box-shadow:0 8px 24px rgba(0,0,0,.45);box-sizing:border-box;">
+            <button type="button" onmousedown="event.preventDefault()" onclick="window.prOpenTagPicker&&window.prOpenTagPicker()" aria-label="Tag someone" title="किसी को टैग करें" style="width:34px;height:34px;flex:0 0 34px;border:1px solid #334155;border-radius:11px;background:#070d18;color:#a78bfa;font-size:15px;font-weight:900;cursor:pointer;">@</button>
+            <input id="cinemaChatInput" maxlength="300" placeholder="मैसेज लिखें…" autocomplete="off" enterkeyhint="send" autocapitalize="sentences" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();cinemaSendChat();}" style="flex:1;min-width:0;height:34px;padding:6px 10px;border-radius:11px;border:1px solid #334155;background:#070d18;color:#fff;outline:none;font-size:13px;box-sizing:border-box;">
+            <button type="button" onmousedown="event.preventDefault()" onclick="cinemaSendChat()" aria-label="Send message" style="width:44px;height:34px;flex:0 0 44px;border:0;border-radius:11px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:18px;font-weight:900;cursor:pointer;">➤</button>
+          </div>
+        </div>
 
         <div id="partyRoomReactionTray">
           <div style="font-size:11px;color:#cbd5e1;font-weight:900;margin:0 3px 7px;">Reaction भेजें (माइक पर बैठे हों तब)</div>
@@ -3411,39 +3309,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       if(el){el.__ready=false;el.innerHTML='<div style="text-align:center;color:#fca5a5;font-size:12px;padding:28px 10px;">Chat permission/connection की जाँच करें।</div>';}
     });
   }
-  function partyAdvancedChatEnabled(){
-    try{return localStorage.getItem('partyRoomAdvancedChat')==='1';}catch(e){return false;}
-  }
-  function updatePartyAdvancedToggle(){
-    const b=document.getElementById('partyAdvancedToggle'); if(!b)return;
-    const on=partyAdvancedChatEnabled();
-    b.classList.toggle('on',on); b.setAttribute('aria-pressed',on?'true':'false');
-    b.setAttribute('aria-label','Advanced message '+(on?'ON':'OFF'));
-    b.title='Advanced message '+(on?'ON':'OFF');
-  }
-  window.togglePartyAdvancedChat=function(){
-    const on=!partyAdvancedChatEnabled();
-    try{localStorage.setItem('partyRoomAdvancedChat',on?'1':'0');}catch(e){}
-    updatePartyAdvancedToggle();
-  };
-  function partyAdvancedOverlayMessage(text,name,photo){
-    const layer=document.getElementById('partyAdvancedOverlayLayer'); if(!layer)return;
-    const el=document.createElement('div'); el.className='party-advanced-fly';
-    const room=document.getElementById('prRoom');
-    const roomH=room?room.clientHeight:window.innerHeight;
-    const y=Math.max(70,Math.min(Math.max(90,roomH-150),Math.round(90+Math.random()*Math.max(40,roomH-240))));
-    el.style.setProperty('--pat-y',y+'px');
-    el.style.setProperty('--pat-duration',(5.5+Math.random()*1.5).toFixed(2)+'s');
-    const av=document.createElement('span'); av.className='pat-av';
-    if(photo && /^https:\/\//i.test(photo)){const img=document.createElement('img');img.src=photo;img.alt='';av.appendChild(img);}else{av.textContent=String(name||'U').trim().charAt(0).toUpperCase()||'U';}
-    const body=document.createElement('span');
-    const n=document.createElement('span');n.className='pat-name';n.textContent=String(name||'User');
-    const t=document.createElement('span');t.className='pat-text';t.textContent=String(text||'');
-    body.appendChild(n);body.appendChild(t); el.appendChild(av);el.appendChild(body);layer.appendChild(el);
-    el.addEventListener('animationend',()=>el.remove(),{once:true});
-  }
-  updatePartyAdvancedToggle();
-
   async function cinemaSendChat(){
     const input=document.getElementById('cinemaChatInput'); if(!input||!db||!cinemaRoomId)return;
     const text=String(input.value||'').trim(); if(!text)return;
@@ -3456,8 +3321,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     // स्थिर id और local pending row से comment acknowledgement का इंतज़ार किए
     // बिना दिखता है; वही id listener में duplicate बनने से भी बचाती है।
     const ref=db.collection('cinemaRooms').doc(sendRoomId).collection('chat').doc();
-    const senderName=cinemaUserName();
-    const data={text:text.slice(0,300),name:senderName,userKey:String(currentUserKey||'guest'),photoURL:photo,createdAt:Date.now()};
+    const data={text:text.slice(0,300),name:cinemaUserName(),userKey:String(currentUserKey||'guest'),photoURL:photo,createdAt:Date.now()};
     partyRoomChatPending[ref.id]=Object.assign({},data,{__roomId:sendRoomId});
     const chatBox=document.getElementById('cinemaChatMessages');
     if(chatBox && chatBox.__ready){
@@ -3468,26 +3332,22 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     ref.set(data)
       .then(()=>{
         delete partyRoomChatPending[ref.id];
-        /* Send के बाद Party Room में typing panel तुरंत पूरी तरह हटे; केवल छोटा 💬 icon रहे। */
-        const composer=document.getElementById('cinemaChatComposer');
-        const panel=document.getElementById('cinemaChatPanel');
-        if(composer){
-          composer.classList.remove('party-composer-open');
-          composer.style.display='none';
-          composer.style.visibility='hidden';
-          composer.style.opacity='0';
-          composer.style.pointerEvents='none';
-          composer.style.position='absolute';
-          composer.style.top='auto';
-          composer.style.bottom='68px';
-          composer.style.left='7px';
-          composer.style.right='7px';
+        /* Send के बाद keyboard और comment note दोनों खुले रहें।
+           Note केवल keyboard के बंद होने पर visualViewport guard से हटेगा. */
+        try{input.focus({preventScroll:true});}catch(e){}
+        if(partyRoomKeyboardIsVisible()){
+          const composer=document.getElementById('cinemaChatComposer');
+          const panel=document.getElementById('cinemaChatPanel');
+          if(composer){
+            composer.classList.add('party-composer-open');
+            composer.style.display='flex';
+            composer.style.visibility='visible';
+            composer.style.opacity='1';
+            composer.style.pointerEvents='auto';
+          }
+          if(panel) panel.classList.add('chat-input-open');
+          partyRoomPositionComposerToKeyboard();
         }
-        if(panel) panel.classList.remove('chat-input-open');
-        const room=document.getElementById('prRoom'); if(room) room.classList.remove('party-keyboard-open');
-        try{input.blur();}catch(e){}
-        const dock=document.getElementById('partyRoomBottomDock');
-        if(dock) dock.style.transform='';
       })
       .catch(()=>{
         delete partyRoomChatPending[ref.id];
@@ -3890,7 +3750,23 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       const gift=document.getElementById('partyRoomGiftTray'); if(gift) gift.style.display='none';
       partyRoomMarkChatRead();
       input.value='';
-      setTimeout(()=>{try{input.focus({preventScroll:true});}catch(e){try{input.focus();}catch(_){}} window.scrollTo(0,0); document.documentElement.scrollTop=0; document.body.scrollTop=0;},50);
+      /* Remember the viewport before Gboard changes it. The note must live exactly as long as the keyboard. */
+      try{
+        const vv0=window.visualViewport;
+        window.__partyCommentBaseViewportHeight=Math.max(
+          Number(window.innerHeight||0),
+          Number(vv0&&vv0.height||0)
+        );
+      }catch(e){}
+      setTimeout(()=>{
+        try{input.focus({preventScroll:true});}catch(e){try{input.focus();}catch(_){}}
+        window.scrollTo(0,0); document.documentElement.scrollTop=0; document.body.scrollTop=0;
+        /* Give Gboard a moment to open before the keyboard-visibility guard checks it. */
+        setTimeout(()=>{
+          if(!partyRoomKeyboardIsVisible()) partyRoomHideCommentNote();
+          else partyRoomPositionComposerToKeyboard();
+        },450);
+      },50);
     }else{
       composer.classList.remove('party-composer-open');
       const room=document.getElementById('prRoom'); if(room) room.classList.remove('party-keyboard-open');
@@ -3914,6 +3790,62 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     }
     return false;
   }
+  /* Comment note behavior: the typing note exists only while the Android keyboard is visible.
+     Tapping 💬 opens it; sending keeps it open; dismissing the keyboard hides it too. */
+  function partyRoomHideCommentNote(){
+    const composer=document.getElementById('cinemaChatComposer');
+    const panel=document.getElementById('cinemaChatPanel');
+    const input=document.getElementById('cinemaChatInput');
+    const room=document.getElementById('prRoom');
+    if(composer){
+      composer.classList.remove('party-composer-open');
+      composer.style.display='none';
+      composer.style.visibility='hidden';
+      composer.style.opacity='0';
+      composer.style.pointerEvents='none';
+      composer.style.position='absolute';
+      composer.style.top='auto';
+      composer.style.bottom='68px';
+      composer.style.left='7px';
+      composer.style.right='7px';
+    }
+    if(panel) panel.classList.remove('chat-input-open');
+    if(room) room.classList.remove('party-keyboard-open');
+    if(input){ try{input.blur();}catch(e){} }
+    const dock=document.getElementById('partyRoomBottomDock');
+    if(dock) dock.style.transform='';
+  }
+
+  function partyRoomKeyboardIsVisible(){
+    const vv=window.visualViewport;
+    if(!vv) return false;
+    const currentH=Number(vv.height||0);
+    const base=Number(window.__partyCommentBaseViewportHeight||0);
+    const fallback=Number(window.innerHeight||document.documentElement.clientHeight||0);
+    const fullH=base>0?base:fallback;
+    /* Android keyboard normally removes several hundred px from visualViewport.
+       Keep a generous threshold so browser UI bars do not count as the keyboard. */
+    return (fullH-currentH)>120 || (vv.offsetTop>40 && currentH<fullH-80);
+  }
+
+  function partyRoomWatchCommentKeyboard(){
+    if(window.__partyCommentKeyboardWatch) return;
+    window.__partyCommentKeyboardWatch=true;
+    const check=()=>{
+      const composer=document.getElementById('cinemaChatComposer');
+      if(!composer || composer.style.display==='none') return;
+      if(!partyRoomKeyboardIsVisible()){
+        partyRoomHideCommentNote();
+      }else{
+        partyRoomPositionComposerToKeyboard();
+      }
+    };
+    const vv=window.visualViewport;
+    if(vv){ vv.addEventListener('resize',check); vv.addEventListener('scroll',check); }
+    window.addEventListener('resize',check);
+  }
+  partyRoomWatchCommentKeyboard();
+  window.partyRoomHideCommentNote=partyRoomHideCommentNote;
   window.partyRoomFocusChat=partyRoomFocusChat;
   function togglePartyRoomGiftTray(){
     const tray=document.getElementById('partyRoomGiftTray'); if(!tray)return; tray.style.display=getComputedStyle(tray).display==='none'?'block':'none';
@@ -11921,3 +11853,41 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   setInterval(wire,1000);
 })();
 </script>
+
+<style id="partyRoomCommentNoteFinal">
+/* 💬 Comment button -> small note-like typing panel. Visible only with the keyboard. */
+#cinemaChatPanel #cinemaChatComposer.party-composer-open,
+#cinemaChatComposer.party-composer-open{
+  height:58px!important;
+  min-height:58px!important;
+  padding:7px 8px!important;
+  gap:7px!important;
+  align-items:center!important;
+  background:#fffdf2!important;
+  color:#111827!important;
+  border:1px solid rgba(245,158,11,.34)!important;
+  border-radius:16px!important;
+  box-shadow:0 8px 24px rgba(0,0,0,.24), 0 1px 0 rgba(255,255,255,.9) inset!important;
+}
+#cinemaChatPanel #cinemaChatComposer.party-composer-open input#cinemaChatInput,
+#cinemaChatComposer.party-composer-open input#cinemaChatInput{
+  height:42px!important;
+  background:#fff!important;
+  color:#111!important;
+  -webkit-text-fill-color:#111!important;
+  border:1px solid rgba(0,0,0,.12)!important;
+  border-radius:12px!important;
+  box-shadow:none!important;
+  font-size:15px!important;
+}
+#cinemaChatPanel #cinemaChatComposer.party-composer-open input#cinemaChatInput::placeholder,
+#cinemaChatComposer.party-composer-open input#cinemaChatInput::placeholder{
+  color:#777!important;
+  -webkit-text-fill-color:#777!important;
+}
+#cinemaChatPanel #cinemaChatComposer.party-composer-open button,
+#cinemaChatComposer.party-composer-open button{
+  height:42px!important;
+  border-radius:12px!important;
+}
+</style>
