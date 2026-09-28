@@ -2606,7 +2606,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
               <div id="ytRoomUploadProgress" style="flex:1;height:6px;border-radius:4px;background:rgba(255,255,255,.18);overflow:hidden;display:none;"><div id="ytRoomUploadProgressFill" style="height:100%;width:0%;background:linear-gradient(90deg,#22c55e,#16a34a);"></div></div>
             </div>
             <div id="ytRoomBlock" class="yt-room-block"></div>
-            <div class="yt-room-hostbar"><label style="display:flex;align-items:center;gap:5px;background:rgba(15,23,42,.82);border-radius:10px;padding:5px 8px;color:#fff;font-size:11px;">🔊<input id="ytRoomVolume" type="range" min="0" max="100" value="80" style="width:82px;"></label><button type="button" id="ytRoomCloseVideoBtn" class="yt-room-close-video" onclick="window.ytRoomCloseShared&&window.ytRoomCloseShared()" title="सभी के लिए YouTube बंद करें">✕ बंद करें</button></div>
+            <div class="yt-room-hostbar"><label style="display:flex;align-items:center;gap:5px;background:rgba(15,23,42,.82);border-radius:10px;padding:5px 8px;color:#fff;font-size:11px;">🔊<input id="ytRoomVolume" type="range" min="0" max="100" value="80" style="width:82px;"></label><button type="button" id="ytRoomCloseVideoBtn" class="yt-room-close-video" onclick="window.ytRoomCloseShared&&window.ytRoomCloseShared()" title="सभी के लिए YouTube बंद करें" aria-label="बंद करें">✕</button></div>
           </div>
           <button type="button" id="ytRoomUiHideBtn" class="yt-room-ui-hide-btn" aria-label="YouTube Queue और controls" title="Queue और YouTube controls">Q <span id="ytRoomUiHideBadge"></span></button>
           <div id="ytRoomUrlBar" class="yt-room-url-bar">
@@ -3812,6 +3812,12 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       const mutedPeople=Array.isArray(window.__cinemaPeople)?window.__cinemaPeople:[];
       const mp=mutedPeople.find(x=>String(x&&x.key||'')===id);
       if(mp && mp.muted===true) level=0;
+    }catch(e){}
+    try{
+      if(id===String((typeof currentUserKey!=='undefined'&&currentUserKey)||'')){
+        const mb=document.getElementById('partyRoomMuteDockBtn');
+        if(mb) mb.classList.toggle('prd-speaking', level>1.5 && !(typeof cinemaMuted!=='undefined'&&cinemaMuted));
+      }
     }catch(e){}
     const hostKey=String(window.__cinemaHostKey||'');
     if(id===hostKey){
@@ -9939,17 +9945,23 @@ function ytRoomSyncNow(force){
     if(force||playing) ytRoomWriteState({type:'youtube',playing:playing,currentTime:ct,dur:(current&&current.__maxDur)||0,videoId:current&&current.id||'',listId:current&&current.list||'',title:current&&current.title||'',shorts:!!(current&&current.shorts)});
   }catch(e){}
 }
+function ytRoomLiveTime(d){
+  var t=Math.max(0,Number(d.currentTime)||0);
+  if(d.playing===true){var el=(Date.now()-(Number(d.updatedAt)||0))/1000; if(el>0&&el<15)t+=el;}
+  return t;
+}
 function ytRoomApplyState(d){
   if(!ytRoomIsActive()||!d)return;
+  window.__ytLastState=d;
   ytRemoteApplying=true;
   try{
     if(d.type==='upload'&&d.videoUrl){
       var sameU=!!(current&&current.upload&&current.url===d.videoUrl);
-      if(!sameU){ ytRoomSuppressNextSync=true; playUploadedVideo(d.videoUrl,d.title||'Video',{start:Number(d.currentTime)||0,playing:d.playing!==false,addedBy:d.updatedBy||'Host',remote:true}); }
+      if(!sameU){ ytRoomSuppressNextSync=true; playUploadedVideo(d.videoUrl,d.title||'Video',{start:ytRoomLiveTime(d),playing:d.playing!==false,addedBy:d.updatedBy||'Host',remote:true}); }
       else{
         var lv=$('ytRoomLocalVideo');
         if(lv){
-          var targetU=Math.max(0,Number(d.currentTime)||0), nowU=lv.currentTime||0;
+          var targetU=ytRoomLiveTime(d), nowU=lv.currentTime||0;
           if(Math.abs(nowU-targetU)>2){ try{lv.currentTime=targetU;}catch(e){} }
           if(d.playing===true){ var pr=lv.play(); if(pr&&pr.catch)pr.catch(function(){}); } else if(d.playing===false){ try{lv.pause();}catch(e){} }
         }
@@ -9959,12 +9971,12 @@ function ytRoomApplyState(d){
     if(d.stopped&&current&&current.upload){ stopVideo(); ytRemoteApplying=false; return; }
     var info=d.videoId?{type:'video',id:String(d.videoId),list:d.listId||'',shorts:!!d.shorts}:null;
     var same=!!(info&&current&&!current.upload&&String(current.id)===String(info.id)&&String(current.list||'')===String(info.list||''));
-    if(info&&!same){ ytRoomSuppressNextSync=true; playInfo(info,d.title||('YouTube • '+info.id),{addedBy:d.updatedBy||'Host',share:false,start:Number(d.currentTime)||0}); }
+    if(info&&!same){ ytRoomSuppressNextSync=true; playInfo(info,d.title||('YouTube • '+info.id),{addedBy:d.updatedBy||'Host',share:false,start:ytRoomLiveTime(d)}); }
     else if(info&&ytPlayer&&ytReady){
       try{ var vdB=ytPlayer.getVideoData&&ytPlayer.getVideoData(); if(vdB&&current&&current.id&&!current.list&&vdB.video_id&&String(vdB.video_id)!==String(current.id)){ ytRemoteApplying=false; return; } }catch(e){}
       /* If this viewer's own ad is playing (duration shorter than the host's video), leave it alone so Skip works. */
       try{ var myDur=ytPlayer.getDuration()||0, hostDur=Number(d.dur)||0; if(hostDur>0&&myDur>0&&myDur<hostDur-1.5){ ytRemoteApplying=false; return; } }catch(e){}
-      var target=Math.max(0,Number(d.currentTime)||0), now=ytPlayer.getCurrentTime()||0;
+      var target=ytRoomLiveTime(d), now=ytPlayer.getCurrentTime()||0;
       if(Math.abs(now-target)>2) ytPlayer.seekTo(target,true);
       if(d.playing===true) ytPlayer.playVideo(); else if(d.playing===false) ytPlayer.pauseVideo();
       if(d.muted===true) ytPlayer.mute(); else {ytPlayer.unMute(); if(Number.isFinite(Number(d.volume))){ytPlayer.setVolume(Number(d.volume));var rv=$('ytRoomVolume');if(rv)rv.value=Number(d.volume);volume=Number(d.volume);}}
@@ -10228,6 +10240,7 @@ function destroyPlayer(){
   try{if(ytPlayer&&ytPlayer.destroy)ytPlayer.destroy();}catch(e){}
   ytPlayer=null;ytReady=false;
   var d=$('ytPlayerDiv');if(d)d.remove();
+  var d2=$('ytRoomPlayerDiv');if(d2)d2.remove();
   if(frameHost){frameHost.style.display='block';frameHost.removeAttribute('src');}
   var rf=$('ytRoomFrame');if(rf){rf.style.display='block';rf.removeAttribute('src');}
   var lv=$('ytRoomLocalVideo');if(lv){try{lv.pause();}catch(e){}lv.removeAttribute('src');lv.load&&lv.load();lv.style.display='none';lv.removeAttribute('controls');}
@@ -10261,11 +10274,12 @@ function createPlayer(info,startSeconds){
       var div=document.createElement('div');
       div.id=roomMode?'ytRoomPlayerDiv':'ytPlayerDiv';
       div.style.cssText='position:absolute;inset:0;width:100%;height:100%;';
-      parent.insertBefore(div,frameHost);
+      var oldDiv=document.getElementById(div.id); if(oldDiv&&oldDiv.parentNode)oldDiv.parentNode.removeChild(oldDiv);
+      parent.insertBefore(div,targetFrame);
       targetFrame.style.display='none';
       var vars={autoplay:1,rel:0,modestbranding:1,playsinline:1,controls:1,start:start,enablejsapi:1};
       if(info.list)vars.list=info.list;
-      ytPlayer=new YT.Player('ytPlayerDiv',{
+      ytPlayer=new YT.Player(div.id,{
         height:'100%',width:'100%',videoId:info.id,playerVars:vars,
         events:{
           onReady:function(e){
@@ -10273,7 +10287,7 @@ function createPlayer(info,startSeconds){
             e.target.setVolume(muted?0:volume);
             startProgress();
             updatePlayPause();
-            if(roomMode){ytRoomUpdateUI(); if(ytRoomSuppressNextSync){ytRoomSuppressNextSync=false;} else if(!ytRemoteApplying)ytRoomSyncNow(true);}
+            if(roomMode){ytRoomUpdateUI(); if(ytRoomSuppressNextSync){ytRoomSuppressNextSync=false;} else if(!ytRemoteApplying)ytRoomSyncNow(true); if(!ytRoomHost()&&window.__ytLastState){setTimeout(function(){try{ytRoomApplyState(window.__ytLastState);}catch(x){}},700);}}
           },
           onStateChange:function(e){
             updatePlayPause();
@@ -10679,6 +10693,7 @@ listenRoomShare();
 #partyYoutubeStage .yt-room-hostbar button{border:0;border-radius:10px;padding:7px 10px;background:rgba(15,23,42,.82);color:#fff;font-weight:800;}
 #partyYoutubeStage .yt-room-hostbar .yt-room-close-video{background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;border:1px solid rgba(255,255,255,.22);box-shadow:0 5px 14px rgba(239,68,68,.28);white-space:nowrap;}
 #partyYoutubeStage .yt-room-hostbar .yt-room-close-video:active{transform:scale(.96);}
+#partyYoutubeStage .yt-room-hostbar .yt-room-close-video{width:30px;height:30px;min-width:30px;padding:0 !important;border-radius:50%;font-size:15px;line-height:1;justify-content:center;align-items:center;}
 #prRoom.party-youtube-layout #prModeBtnG[data-host="1"]{display:flex!important;}
 <style id="partyRoomYouTubeSeatFrameFinal">
 /* YouTube Mode: keep equipped frame attached to the seat exactly like Gaming Mode. */
@@ -12352,3 +12367,39 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   #partyRoomBottomDock .prd-mic-indicator .party-mic-indicator-dot{animation:none!important}
 }
 </style>
+<style id="partyRoomMicSeatSpeakOnly">
+/* Mic button: normal by default; green glow only while the seated user is speaking. */
+#partyRoomBottomDock .prd-mic-indicator:not(.prd-speaking){
+  background:rgba(30,12,70,.62)!important;
+  border:1px solid rgba(255,255,255,.2)!important;
+  box-shadow:none!important;
+}
+#partyRoomBottomDock .prd-mic-indicator:not(.prd-speaking) .party-mic-indicator-ring{display:none!important;}
+#partyRoomBottomDock .prd-mic-indicator:not(.prd-speaking) .party-mic-indicator-icon{filter:none!important;}
+#partyRoomBottomDock .prd-mic-indicator:not(.prd-speaking):not(.prd-muted) .party-mic-indicator-dot{display:none!important;}
+#partyRoomBottomDock .prd-mic-indicator.prd-muted .party-mic-indicator-dot{display:block!important;}
+#partyRoomBottomDock .prd-mic-indicator.prd-speaking{
+  background:rgba(12,18,38,.78)!important;
+  border:1px solid rgba(57,255,114,.6)!important;
+  box-shadow:0 0 0 1px rgba(57,255,114,.14),0 0 12px rgba(34,197,94,.45)!important;
+}
+#partyRoomBottomDock .prd-mic-indicator.prd-speaking .party-mic-indicator-ring{display:block!important;}
+#partyRoomBottomDock .prd-mic-indicator.prd-speaking .party-mic-indicator-dot{display:block!important;}
+/* Only show the mic once the user has taken a seat. */
+#partyRoomBottomDock .prd-mic-indicator.prd-unseated{display:none!important;}
+</style>
+<script id="partyRoomMicSeatSpeakOnlyScript">
+(function(){
+  function refresh(){
+    try{
+      var b=document.getElementById('partyRoomMuteDockBtn'); if(!b)return;
+      var me=String((typeof currentUserKey!=='undefined'&&currentUserKey)||'');
+      var p=(window.__cinemaPeople||[]).find(function(x){return x&&String(x.key)===me;});
+      var seated=!!p&&(Number.isInteger(p.seat)||p.hostSeated===true);
+      b.classList.toggle('prd-unseated',!seated);
+      if(!seated) b.classList.remove('prd-speaking');
+    }catch(e){}
+  }
+  refresh(); setInterval(refresh,500);
+})();
+</script>
