@@ -11310,6 +11310,68 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   #prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomUiHideBtn{top:227px!important;}
 }
 </style>
+<style id="partyRoomYoutubeChatBelowVideo">
+/* YouTube Mode: chat uses all the space BELOW the video (top set by script), never over the video. */
+#prRoom.party-youtube-layout #cinemaChatPanel{
+  top:var(--yt-chat-top,auto)!important;
+  bottom:64px!important;
+  height:auto!important;
+  min-height:60px!important;
+  display:flex!important;
+  flex-direction:column!important;
+}
+#prRoom.party-youtube-layout #cinemaChatPanel #cinemaChatMessages{
+  flex:1 1 auto!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow-y:auto!important;
+}
+</style>
+<script id="partyRoomYoutubeChatBelowVideoScript">
+(function(){
+  'use strict';
+  var last=null;
+  function room(){return document.getElementById('prRoom');}
+  function apply(){
+    try{
+      var r=room(); if(!r) return;
+      if(!r.classList.contains('party-youtube-layout')){
+        if(last!==null){ r.style.removeProperty('--yt-chat-top'); last=null; }
+        return;
+      }
+      var stage=document.getElementById('partyYoutubeStage');
+      if(!stage || stage.offsetHeight<20){ if(last!==null){ r.style.removeProperty('--yt-chat-top'); last=null; } return; }
+      var rr=r.getBoundingClientRect(), bottom=0;
+      for(var i=0;i<stage.children.length;i++){
+        var c=stage.children[i];
+        if(!c.offsetHeight) continue;
+        var cs=getComputedStyle(c);
+        if(cs.position==='absolute'||cs.position==='fixed'||cs.display==='none'||cs.visibility==='hidden') continue;
+        var b=c.getBoundingClientRect().bottom; if(b>bottom) bottom=b;
+      }
+      if(!bottom){ if(last!==null){ r.style.removeProperty('--yt-chat-top'); last=null; } return; }
+      var top=Math.round(bottom-rr.top+6);
+      var maxTop=Math.round(rr.height-64-60);
+      if(top>maxTop) top=maxTop;
+      if(top<0) top=0;
+      if(top!==last){ r.style.setProperty('--yt-chat-top',top+'px'); last=top; }
+    }catch(e){}
+  }
+  function init(){
+    var r=room(), stage=document.getElementById('partyYoutubeStage');
+    if(!r||!stage){ setTimeout(init,500); return; }
+    try{ new MutationObserver(apply).observe(r,{attributes:true,attributeFilter:['class']}); }catch(e){}
+    try{ new MutationObserver(apply).observe(stage,{attributes:true,childList:true,subtree:true,attributeFilter:['class','style']}); }catch(e){}
+    try{ if(window.ResizeObserver){ var ro=new ResizeObserver(apply); ro.observe(stage); ro.observe(r); } }catch(e){}
+    window.addEventListener('resize',apply);
+    window.addEventListener('orientationchange',apply);
+    setInterval(apply,600);
+    apply();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
 <script id="partyRoomYoutubeQueueOnlyFinalScript">
 (function(){
   function $(id){return document.getElementById(id);}
