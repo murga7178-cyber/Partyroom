@@ -3099,22 +3099,54 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(page && page.style.display!=='none'){ cinemaBackFromCreatePage(); return; }
     closeCinemaGhar();
   }
+  function cinemaShowActionLoading(text){
+    let x=document.getElementById('cinemaActionLoading');
+    if(!x){
+      x=document.createElement('div'); x.id='cinemaActionLoading';
+      x.innerHTML='<style>#cinemaActionLoading{position:fixed;inset:0;z-index:2147483646;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;background:rgba(2,6,23,.60);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font-family:Segoe UI,Arial,sans-serif}#cinemaActionLoading .cal-box{width:min(300px,100%);padding:25px 20px;border-radius:24px;text-align:center;background:linear-gradient(145deg,#ffffff,#f4edff);box-shadow:0 24px 70px rgba(0,0,0,.45);color:#24143a}#cinemaActionLoading .cal-spinner{width:38px;height:38px;margin:0 auto 12px;border:4px solid #ddd0ef;border-top-color:#7c3aed;border-radius:50%;animation:calspin .8s linear infinite}@keyframes calspin{to{transform:rotate(360deg)}}#cinemaActionLoading .cal-title{font-size:17px;font-weight:900;color:#4a148c}.cal-text{margin-top:6px;font-size:11px;color:#766987}</style><div class="cal-box"><div class="cal-spinner"></div><div class="cal-title">लोडिंग हो रही है…</div><div class="cal-text"></div></div>';
+      document.body.appendChild(x);
+    }
+    const t=x.querySelector('.cal-text'); if(t)t.textContent=String(text||'कृपया थोड़ी देर प्रतीक्षा करें…');
+    x.style.display='flex';
+  }
+  function cinemaHideActionLoading(){ const x=document.getElementById('cinemaActionLoading'); if(x)x.style.display='none'; }
+  window.cinemaShowActionLoading=cinemaShowActionLoading;
+  window.cinemaHideActionLoading=cinemaHideActionLoading;
   async function cinemaCreateRoom(){
+    const btn=document.querySelector('#cinemaCreateCard button[onclick*="cinemaCreateRoom"]');
+    if(window.__cinemaCreatingRoom)return;
     if(window.__myRoomId){ alert('आपका रूम पहले से बना हुआ है, उसी में जाइए।'); return; }
     const name=(document.getElementById('cinemaNewRoomName')?.value||'').trim();
     const msg=document.getElementById('cinemaCreateMsg');
     if(!name){ if(msg)msg.textContent='रूम का नाम लिखें।'; return; }
     if(!window.__newRoomPhoto){ if(msg)msg.textContent='रूम की फ़ोटो चुनें।'; return; }
     if(!db){ if(msg)msg.textContent='Firebase उपलब्ध नहीं है।'; return; }
+    window.__cinemaCreatingRoom=true;
+    if(btn){btn.disabled=true;btn.dataset.oldText=btn.textContent;btn.textContent='⏳ रूम बनाया जा रहा है…';btn.style.opacity='.72';}
+    cinemaShowActionLoading('रूम तैयार किया जा रहा है…');
     try{
       const id=await cinemaRandomId();
       const data={roomId:id,roomName:name,ownerKey:currentUserKey||'guest',createdAt:Date.now(),updatedAt:Date.now(),roomMode:'chat',videoUrl:'',videoName:'',hostKey:currentUserKey||'guest',hostName:cinemaUserName(),playing:false,currentTime:0,passwordProtected:false,backgroundKey:'bloom',topic:name.slice(0,60),roomPhoto:window.__newRoomPhoto,controls:{chat:true,audio:true,seats:true,hostArea:true}};
       await db.collection('cinemaRooms').doc(id).set(data);
-      document.getElementById('cinemaNewRoomName').value='';
+      window.__myRoomId=id;
       try{ window.__newRoomPhoto=''; const pv=document.getElementById('cinemaNewRoomPhotoPrev'); if(pv){pv.style.backgroundImage='';pv.textContent='📷';} }catch(e){}
+      if(msg)msg.textContent='';
+      // Create page को आधा lobby दिखाने से पहले साफ करके सीधे बने हुए room में जाएँ।
+      const page=document.getElementById('cinemaCreatePage'); if(page)page.style.display='none';
+      const lobby=document.getElementById('cinemaLobby'); if(lobby)lobby.style.display='none';
+      const stage=document.getElementById('cinemaRoomStage'); if(stage)stage.style.display='block';
       await cinemaEnterRoom(id,name,true);
-    }catch(e){ if(msg)msg.textContent='रूम नहीं बन पाया।'; }
+    }catch(e){
+      console.error('cinemaCreateRoom',e);
+      if(msg)msg.textContent='रूम नहीं बन पाया। कृपया फिर कोशिश करें।';
+      window.__myRoomId='';
+    }finally{
+      window.__cinemaCreatingRoom=false;
+      cinemaHideActionLoading();
+      if(btn){btn.disabled=false;btn.textContent=btn.dataset.oldText||'रूम बनाएं';btn.style.opacity='';}
+    }
   }
+
   window.__cinemaLobbyRoomMode='chat';
   function cinemaSetLobbyRoomMode(mode){
     mode=(mode==='gaming')?'gaming':'chat'; window.__cinemaLobbyRoomMode=mode;
@@ -3167,16 +3199,22 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     document.body.appendChild(overlay);
     const close=()=>cinemaCloseRoomPasswordPopup(); overlay.querySelector('.crpp-close').onclick=close; overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
     const inp=overlay.querySelector('#cinemaRoomPasswordInput'),err=overlay.querySelector('#cinemaRoomPasswordError'),enter=overlay.querySelector('#cinemaRoomPasswordEnter');
-    const go=async()=>{ const pass=String(inp.value||'').trim(); if(!/^\d{4}(?:\d{2})?$/.test(pass)){err.textContent='पासवर्ड 4 या 6 अंकों का होना चाहिए।';inp.focus();return;} enter.disabled=true;enter.textContent='जाँच हो रही है…';err.textContent=''; try{const hash=await cinemaHashPassword(pass);if(hash!==String(d.passwordHash||'')){err.textContent='❌ पासवर्ड गलत है।';enter.disabled=false;enter.textContent='रूम में जाएँ';inp.select();return;}close();await cinemaEnterRoom(id,d.roomName||name,d.ownerKey===currentUserKey);}catch(e){err.textContent='रूम में प्रवेश नहीं हो पाया।';enter.disabled=false;enter.textContent='रूम में जाएँ';}};
-    enter.onclick=go; inp.addEventListener('input',()=>{inp.value=inp.value.replace(/\D/g,'').slice(0,6);err.textContent='';}); inp.addEventListener('keydown',e=>{if(e.key==='Enter')go();if(e.key==='Escape')close();}); setTimeout(()=>inp.focus(),80);
+    const go=async()=>{ const pass=String(inp.value||'').trim(); if(!/^\d{4}(?:\d{2})?$/.test(pass)){err.textContent='पासवर्ड 4 या 6 अंकों का होना चाहिए।';return;} enter.disabled=true;enter.textContent='जाँच हो रही है…';err.textContent=''; try{const hash=await cinemaHashPassword(pass);if(hash!==String(d.passwordHash||'')){err.textContent='❌ पासवर्ड गलत है।';enter.disabled=false;enter.textContent='रूम में जाएँ';try{inp.blur();}catch(_e){}inp.value='';return;}close();cinemaShowActionLoading('पासवर्ड सही है, रूम खोला जा रहा है…');await cinemaEnterRoom(id,d.roomName||name,d.ownerKey===currentUserKey);cinemaHideActionLoading();}catch(e){cinemaHideActionLoading();err.textContent='रूम में प्रवेश नहीं हो पाया।';enter.disabled=false;enter.textContent='रूम में जाएँ';}};
+    enter.onclick=go;
+    inp.addEventListener('input',()=>{inp.value=inp.value.replace(/\D/g,'').slice(0,6);err.textContent='';});
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();try{inp.blur();}catch(_e){}go();}if(e.key==='Escape')close();});
+    ['copy','cut','contextmenu','selectstart','dragstart'].forEach(ev=>inp.addEventListener(ev,e=>e.preventDefault()));
+    // Popup खुले तो keyboard अपने-आप नहीं खुलेगा; user खुद field पर tap करेगा।
   }
   async function cinemaJoinRoom(id,name){
     if(!db)return;
+    cinemaShowActionLoading('रूम की जानकारी लोड हो रही है…');
     try{ const doc=await db.collection('cinemaRooms').doc(id).get(); if(!doc.exists){alert('रूम उपलब्ध नहीं है।');cinemaLoadRooms();return;} const d=doc.data()||{};
       if(Array.isArray(d.blockedUsers)&&d.blockedUsers.map(String).includes(String(currentUserKey||''))&&String(d.ownerKey||d.hostKey||'')!==String(currentUserKey||'')){alert('⛔ होस्ट ने आपको इस रूम से ब्लॉक किया है।');return;}
       const locked=!!(d.passwordProtected||d.passwordHash); if(locked&&String(d.ownerKey||d.hostKey||'')!==String(currentUserKey||'')){cinemaShowRoomPasswordPopup(id,name,d);return;}
       await cinemaEnterRoom(id,d.roomName||name,d.ownerKey===currentUserKey);
-    }catch(e){alert('रूम में प्रवेश नहीं हो पाया।');}
+    }catch(e){console.error('cinemaJoinRoom',e);alert('रूम में प्रवेश नहीं हो पाया।');}
+    finally{cinemaHideActionLoading();}
   }
   async function cinemaLoadCurrentUserIdentity(){
     if(!db || !currentUserKey) return '';
@@ -6263,6 +6301,7 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
   };
   window.pkHomeMyRoom=async function(){
     if(!db||!currentUserKey)return;
+    cinemaShowActionLoading('आपका Party Room चेक हो रहा है…');
     var mine=S.myRoom;
     if(!mine){
       try{
@@ -6274,6 +6313,7 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     pkOpenParty();
     if(mine){ try{ await cinemaEnterRoom(mine.id,mine.roomName,true); }catch(e){ toastMsg('आपका रूम नहीं खुल पाया।'); } }
     else { try{ cinemaOpenCreatePage(); }catch(e){} }
+    cinemaHideActionLoading();
   };
   window.pkHomeOpenJump=function(){try{window.pkOpenJumpGameHome&&window.pkOpenJumpGameHome();}catch(e){}};
   window.pkHomeSoon=function(){toastMsg('यह गेम जल्द आ रहा है');};
