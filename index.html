@@ -1668,6 +1668,82 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{
 #cinemaChatComposer #partyAdvancedToggle .pat-label{position:absolute!important;left:0!important;right:0!important;bottom:-1px!important;font-size:7px!important;line-height:9px!important;font-weight:950!important;letter-spacing:.35px!important;color:inherit!important;}
 </style>
 
+
+<style id="partyPinkChatComposerFinal">
+/* Party Room: screenshot-style pink/white chat composer. The ADV switch is intentionally removed. */
+#cinemaChatPanel #cinemaChatComposer.party-pink-composer{
+  left:0!important;right:0!important;bottom:68px!important;
+  height:104px!important;display:none;flex-direction:column!important;
+  gap:0!important;padding:0!important;margin:0!important;
+  background:rgba(255,255,255,.96)!important;
+  border:0!important;border-radius:0!important;
+  box-shadow:0 -5px 18px rgba(0,0,0,.12)!important;
+  overflow:hidden!important;backdrop-filter:blur(8px)!important;
+  -webkit-backdrop-filter:blur(8px)!important;
+}
+#cinemaChatPanel.chat-input-open #cinemaChatComposer.party-pink-composer,
+#cinemaChatComposer.party-pink-composer.party-composer-open{
+  display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+}
+#cinemaChatComposer .party-pink-gifts{
+  height:42px!important;min-height:42px!important;display:flex!important;align-items:center!important;
+  gap:7px!important;padding:4px 14px!important;overflow-x:auto!important;overflow-y:hidden!important;
+  white-space:nowrap!important;border-bottom:1px solid rgba(0,0,0,.06)!important;
+  box-sizing:border-box!important;
+}
+#cinemaChatComposer .party-pink-gifts::-webkit-scrollbar{display:none!important}
+#cinemaChatComposer .party-pink-gifts button{
+  width:34px!important;height:34px!important;min-width:34px!important;flex:0 0 34px!important;
+  border:1px solid rgba(0,0,0,.08)!important;border-radius:9px!important;background:#fff!important;
+  box-shadow:0 1px 4px rgba(0,0,0,.08)!important;font-size:21px!important;line-height:1!important;
+  padding:0!important;display:grid!important;place-items:center!important;cursor:pointer!important;
+}
+#cinemaChatComposer .party-pink-compose-row{
+  height:62px!important;min-height:62px!important;display:flex!important;align-items:center!important;
+  gap:7px!important;padding:8px 10px!important;box-sizing:border-box!important;background:#fff!important;
+}
+#cinemaChatComposer .party-pink-left{
+  width:52px!important;height:52px!important;min-width:52px!important;flex:0 0 52px!important;
+  border:0!important;border-radius:50%!important;background:linear-gradient(145deg,#ff5b73,#ff3d67)!important;
+  color:#fff!important;font-size:25px!important;box-shadow:0 4px 10px rgba(255,61,103,.28)!important;
+  display:grid!important;place-items:center!important;padding:0!important;cursor:pointer!important;
+}
+#cinemaChatComposer textarea#cinemaChatInput{
+  flex:1 1 auto!important;min-width:0!important;width:auto!important;height:48px!important;min-height:48px!important;
+  max-height:48px!important;resize:none!important;overflow:hidden!important;padding:10px 12px!important;
+  border:1px solid rgba(0,0,0,.08)!important;border-radius:25px!important;background:#fff!important;
+  color:#222!important;-webkit-text-fill-color:#222!important;outline:none!important;
+  box-shadow:0 1px 5px rgba(0,0,0,.08)!important;font-size:17px!important;line-height:25px!important;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Devanagari",Arial,sans-serif!important;
+  -webkit-appearance:none!important;appearance:none!important;
+}
+#cinemaChatComposer textarea#cinemaChatInput::placeholder{color:#a5a5aa!important;opacity:1!important}
+#cinemaChatComposer .party-pink-tool{
+  width:39px!important;height:48px!important;min-width:39px!important;flex:0 0 39px!important;
+  border:0!important;background:transparent!important;color:#a5a5aa!important;font-size:25px!important;font-weight:500!important;
+  padding:0!important;display:grid!important;place-items:center!important;cursor:pointer!important;
+}
+#cinemaChatComposer .party-pink-tool sup{font-size:12px!important;top:-.5em!important;position:relative!important}
+#cinemaChatComposer .party-pink-emoji{font-size:30px!important;color:#b2b2b5!important}
+#cinemaChatComposer .party-pink-send{
+  width:64px!important;height:48px!important;min-width:64px!important;flex:0 0 64px!important;
+  border:0!important;border-radius:14px!important;background:transparent!important;color:#f34f69!important;
+  font-size:17px!important;font-weight:500!important;padding:0!important;cursor:pointer!important;
+}
+#cinemaChatComposer .party-pink-left:active,
+#cinemaChatComposer .party-pink-send:active,
+#cinemaChatComposer .party-pink-gifts button:active{transform:scale(.94)!important}
+@media(max-width:430px){
+  #cinemaChatPanel #cinemaChatComposer.party-pink-composer{height:102px!important}
+  #cinemaChatComposer .party-pink-compose-row{gap:5px!important;padding-left:10px!important;padding-right:7px!important}
+  #cinemaChatComposer .party-pink-left{width:50px!important;height:50px!important;min-width:50px!important;flex-basis:50px!important}
+  #cinemaChatComposer .party-pink-tool{width:34px!important;min-width:34px!important;flex-basis:34px!important}
+  #cinemaChatComposer .party-pink-send{width:55px!important;min-width:55px!important;flex-basis:55px!important;font-size:16px!important}
+  #cinemaChatComposer textarea#cinemaChatInput{font-size:16px!important}
+}
+/* Do not show the previous ADV control even if an old cached DOM/style is present. */
+#partyAdvancedToggle{display:none!important}
+</style>
 </head>
 
 <body>
@@ -2510,11 +2586,22 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         <div id="partyAdvancedOverlayLayer" aria-hidden="true"></div>
         <div id="cinemaChatPanel">
           <div id="cinemaChatMessages"><div style="text-align:center;color:rgba(255,255,255,.6);font-size:12px;padding:16px 6px;">चैट लोड हो रही है…</div></div>
-          <div id="cinemaChatComposer" style="display:none;position:absolute;left:7px;right:7px;bottom:68px;z-index:150;height:52px;gap:6px;margin:0;padding:5px;background:rgba(8,15,31,.98);border:1px solid rgba(255,255,255,.28);border-radius:15px;box-shadow:0 8px 24px rgba(0,0,0,.45);box-sizing:border-box;">
-            <button type="button" onmousedown="event.preventDefault()" onclick="window.prOpenTagPicker&&window.prOpenTagPicker()" aria-label="Tag someone" title="किसी को टैग करें" style="width:34px;height:34px;flex:0 0 34px;border:1px solid #334155;border-radius:11px;background:#070d18;color:#a78bfa;font-size:15px;font-weight:900;cursor:pointer;">@</button>
-            <input id="cinemaChatInput" maxlength="300" placeholder="मैसेज लिखें…" autocomplete="off" enterkeyhint="send" autocapitalize="sentences" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();cinemaSendChat();}" style="flex:1;min-width:0;height:34px;padding:6px 10px;border-radius:11px;border:1px solid #334155;background:#070d18;color:#fff;outline:none;font-size:13px;box-sizing:border-box;">
-            <button type="button" onmousedown="event.preventDefault()" onclick="cinemaSendChat()" aria-label="Send message" title="Send" style="width:44px;height:34px;flex:0 0 44px;border:0;border-radius:11px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:18px;font-weight:900;cursor:pointer;">➤</button>
-            <button type="button" id="partyAdvancedToggle" class="party-advanced-toggle" onclick="window.togglePartyAdvancedChat&&window.togglePartyAdvancedChat()" aria-label="Advanced message OFF" aria-pressed="false" title="Advanced message OFF"><span class="pat-track"><span class="pat-knob"></span></span><span class="pat-label">ADV</span></button>
+          <div id="cinemaChatComposer" class="party-pink-composer" style="display:none;position:absolute;left:0;right:0;bottom:68px;z-index:150;margin:0;box-sizing:border-box;">
+            <div class="party-pink-gifts" aria-label="Quick gifts">
+              <button type="button" onclick="window.partyRoomSendGift&&window.partyRoomSendGift('💎')" aria-label="Diamond">💎</button>
+              <button type="button" onclick="window.partyRoomSendGift&&window.partyRoomSendGift('🌹')" aria-label="Rose">🌹</button>
+              <button type="button" onclick="window.partyRoomSendGift&&window.partyRoomSendGift('🐑')" aria-label="Sheep">🐑</button>
+              <button type="button" onclick="window.partyRoomSendGift&&window.partyRoomSendGift('🌸')" aria-label="Flower">🌸</button>
+              <button type="button" onclick="window.partyRoomSendGift&&window.partyRoomSendGift('🏎️')" aria-label="Car">🏎️</button>
+              <button type="button" onclick="window.partyRoomSendGift&&window.partyRoomSendGift('🚀')" aria-label="Rocket">🚀</button>
+            </div>
+            <div class="party-pink-compose-row">
+              <button type="button" class="party-pink-left" onmousedown="event.preventDefault()" onclick="window.prOpenTagPicker&&window.prOpenTagPicker()" aria-label="Tag someone" title="किसी को टैग करें">💬</button>
+              <textarea id="cinemaChatInput" maxlength="300" rows="1" placeholder="मैसेज लिखें…" autocomplete="off" enterkeyhint="enter" autocapitalize="sentences" spellcheck="false" aria-label="Message"></textarea>
+              <button type="button" class="party-pink-tool" aria-label="Text style">A<sup>✦</sup></button>
+              <button type="button" class="party-pink-tool party-pink-emoji" aria-label="Emoji">☺</button>
+              <button type="button" class="party-pink-send" onmousedown="event.preventDefault()" onclick="cinemaSendChat()" aria-label="Send message" title="Send">Send</button>
+            </div>
           </div>
         </div>
 
@@ -3386,10 +3473,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     // स्थिर id और local pending row से comment acknowledgement का इंतज़ार किए
     // बिना दिखता है; वही id listener में duplicate बनने से भी बचाती है।
     const ref=db.collection('cinemaRooms').doc(sendRoomId).collection('chat').doc();
-    const advanced=partyAdvancedChatEnabled();
     const senderName=cinemaUserName();
     const data={text:text.slice(0,300),name:senderName,userKey:String(currentUserKey||'guest'),photoURL:photo,createdAt:Date.now()};
-    if(advanced) partyAdvancedOverlayMessage(data.text,senderName,photo);
     partyRoomChatPending[ref.id]=Object.assign({},data,{__roomId:sendRoomId});
     const chatBox=document.getElementById('cinemaChatMessages');
     if(chatBox && chatBox.__ready){
