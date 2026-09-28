@@ -685,9 +685,6 @@ html, body { overscroll-behavior-y: none; }
 #prSendBtn{flex:none;border:0;border-radius:999px;padding:11px 30px;background:linear-gradient(135deg,#ffb347,#ff5fa2);color:#fff;font-size:15px;font-weight:900;cursor:pointer;touch-action:manipulation;box-shadow:0 6px 16px rgba(255,95,162,.35);}
 #prSendBtn:active{transform:scale(.95);}
 #prUserCard{align-items:center;text-align:center;gap:8px;}
-
-#prUserCard .uc-tag-btn{position:absolute;right:52px;top:10px;width:32px;height:32px;border:1px solid rgba(124,58,237,.35);border-radius:10px;background:rgba(124,58,237,.12);color:#7c3aed;font-size:16px;font-weight:950;line-height:30px;text-align:center;padding:0;cursor:pointer;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,.10);}
-#prUserCard .uc-tag-btn:active{transform:scale(.92);}
 #prUserCard .uc-manage-btn{position:absolute;top:12px;right:12px;width:30px;height:30px;padding:0;border-radius:50%;background:rgba(15,10,35,.85);border:1.5px solid rgba(255,255,255,.55);color:#fff;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;z-index:5;}
 #prUserCard .uc-manage-btn:active{transform:scale(.9);}
 #prUserCard .uc-av{width:76px;height:76px;border-radius:50%;overflow:visible;display:grid;place-items:center;background:#3b1a7a;font-size:30px;font-weight:900;box-shadow:0 0 0 3px rgba(255,179,71,.7);margin-top:18px;}
@@ -2483,6 +2480,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         <div id="cinemaChatPanel">
           <div id="cinemaChatMessages"><div style="text-align:center;color:rgba(255,255,255,.6);font-size:12px;padding:16px 6px;">चैट लोड हो रही है…</div></div>
           <div id="cinemaChatComposer" style="display:none;position:absolute;left:7px;right:7px;bottom:68px;z-index:150;height:48px;gap:6px;margin:0;padding:5px;background:rgba(8,15,31,.98);border:1px solid rgba(255,255,255,.28);border-radius:15px;box-shadow:0 8px 24px rgba(0,0,0,.45);box-sizing:border-box;">
+            <button type="button" onmousedown="event.preventDefault()" onclick="window.prOpenTagPicker&&window.prOpenTagPicker()" aria-label="Tag someone" title="किसी को टैग करें" style="width:34px;height:34px;flex:0 0 34px;border:1px solid #334155;border-radius:11px;background:#070d18;color:#a78bfa;font-size:15px;font-weight:900;cursor:pointer;">@</button>
             <input id="cinemaChatInput" maxlength="300" placeholder="मैसेज लिखें…" autocomplete="off" enterkeyhint="send" autocapitalize="sentences" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();cinemaSendChat();}" style="flex:1;min-width:0;height:34px;padding:6px 10px;border-radius:11px;border:1px solid #334155;background:#070d18;color:#fff;outline:none;font-size:13px;box-sizing:border-box;">
             <button type="button" onmousedown="event.preventDefault()" onclick="cinemaSendChat()" aria-label="Send message" style="width:44px;height:34px;flex:0 0 44px;border:0;border-radius:11px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:18px;font-weight:900;cursor:pointer;">➤</button>
           </div>
@@ -2550,11 +2548,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <button type="button" onclick="closePartyRoomSettings()" style="width:42px;height:42px;border:1px solid #334155;border-radius:13px;background:#172033;color:#fff;font-size:25px;font-weight:900;cursor:pointer;">‹</button>
             <div><div style="font-size:19px;font-weight:950;">⚙️ Room Settings</div><div style="font-size:11px;color:#94a3b8;">🪑 Mode के हिसाब से सीट सेट करें • 🧳 Frames अब Gift के Baggage में</div></div>
           </div>
-<div id="prSimpleRoomManage">
-            <div class="pr-simple-setting"><div class="t">🚪 रूम से हटाए गए यूज़र</div><div class="s">Host ने जिन यूज़र्स को रूम से Remove किया है, वे यहाँ दिखाई देंगे।</div><div id="prRemovedUsersList" class="pr-user-list"></div></div>
-            <div class="pr-simple-setting"><div class="t">⛔ ब्लॉक किए गए यूज़र</div><div class="s">Host ने जिन यूज़र्स को Block किया है, वे यहाँ दिखाई देंगे।</div><div id="prSettingsBlockedUsersList" class="pr-user-list"></div></div>
-          </div>
-<div id="prLegacyRoomSettingsOptions"><div style="background:#111827;border:1px solid #26354d;border-radius:18px;padding:14px;margin-bottom:12px;">
+<div style="background:#111827;border:1px solid #26354d;border-radius:18px;padding:14px;margin-bottom:12px;">
             <div style="font-size:15px;font-weight:950;margin-bottom:6px;">🪑 सीटों की संख्या</div>
             <div style="font-size:11px;color:#94a3b8;margin-bottom:10px;">यहाँ चुने गए Mode की सीटें बदलें। Chatting/YouTube में 2, 4, 8 या 12 और Gaming में 2 या 4 सीटें रख सकते हैं।</div>
             <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;">
@@ -2572,7 +2566,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
               <button type="button" id="partyModeGameBtn" onclick="setPartyRoomMode('gaming')" style="padding:13px 8px;border-radius:14px;border:1px solid #7c3aed;background:#241044;color:#fff;font-weight:950;cursor:pointer;">🎮 Gaming<br><span style="font-size:10px;opacity:.75;">Games • Play Together</span></button>
               <button type="button" id="partyModeYoutubeBtn" onclick="setPartyRoomMode('youtube')" style="padding:13px 8px;border-radius:14px;border:1px solid #ef4444;background:#3b1010;color:#fff;font-weight:950;cursor:pointer;">▶️ YouTube<br><span style="font-size:10px;opacity:.75;">Watch Together</span></button>
             </div>
-          </div>
           </div>
         </div>
       </div>
@@ -3275,11 +3268,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       snap.docChanges().forEach(ch=>{
         if(ch.type!=='added')return;
         const d=ch.doc.data()||{}, mine=String(d.userKey||'')===String(currentUserKey||'');
-        // Safety cleanup: text comments expire quickly even if the sender leaves.
-        if((!d.type || d.type==='text') && Date.now()-(Number(d.createdAt)||0)>12000){
-          try{ ch.doc.ref.delete().catch(()=>{}); }catch(e){}
-          return;
-        }
         if(partyRoomChatReady && !partyRoomChatSeenIds.has(ch.doc.id) && !mine) incoming.push(ch.doc.id);
         partyRoomChatSeenIds.add(ch.doc.id);
       });
@@ -3344,27 +3332,32 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     ref.set(data)
       .then(()=>{
         delete partyRoomChatPending[ref.id];
-        // Text comments are temporary/live-only, not permanent room history.
-        setTimeout(()=>{
-          try{ if(db && ref && typeof ref.delete==='function') ref.delete().catch(()=>{}); }catch(e){}
-        },10000);
-        /* Send के बाद composer खुला और keyboard के साथ जुड़ा रहे।
-           सिर्फ भेजा हुआ text खाली हो; keyboard Back होने पर composer खुद बंद होगा। */
-        try{ input.value=''; }catch(e){}
-        const room=document.getElementById('prRoom'); if(room) room.classList.add('party-keyboard-open');
-        try{ input.focus({preventScroll:true}); }catch(e){}
+        /* Send के बाद Party Room में typing panel तुरंत पूरी तरह हटे; केवल छोटा 💬 icon रहे। */
+        const composer=document.getElementById('cinemaChatComposer');
+        const panel=document.getElementById('cinemaChatPanel');
+        if(composer){
+          composer.classList.remove('party-composer-open');
+          composer.style.display='none';
+          composer.style.visibility='hidden';
+          composer.style.opacity='0';
+          composer.style.pointerEvents='none';
+          composer.style.position='absolute';
+          composer.style.top='auto';
+          composer.style.bottom='68px';
+          composer.style.left='7px';
+          composer.style.right='7px';
+        }
+        if(panel) panel.classList.remove('chat-input-open');
+        const room=document.getElementById('prRoom'); if(room) room.classList.remove('party-keyboard-open');
+        try{input.blur();}catch(e){}
         const dock=document.getElementById('partyRoomBottomDock');
         if(dock) dock.style.transform='';
       })
       .catch(()=>{
-        /* The message is already cleared from the composer before sending.
-           Never put the old text back here: that caused the same message to be
-           sent repeatedly on the next tap. Also avoid the misleading failure
-           popup when the live comment has already appeared for the room. */
         delete partyRoomChatPending[ref.id];
-        const row=chatBox&&chatBox.querySelector('[data-chat-doc-id="'+ref.id+'"]');
-        if(row) row.classList.remove('pr-pending');
-        try{ input.value=''; }catch(e){}
+        const row=chatBox&&chatBox.querySelector('[data-chat-doc-id="'+ref.id+'"]'); if(row)row.remove();
+        if(String(cinemaRoomId)===sendRoomId && !input.value) input.value=text;
+        (window.pkRoomToast||alert)('मैसेज भेजा नहीं जा सका।');
       });
   }
   window.cinemaTakeSeat=cinemaTakeSeat;
@@ -3756,7 +3749,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       composer.style.height='54px';
       composer.style.zIndex='2147483647';
       // Pin the composer directly to the visible viewport/keyboard edge.
-      partyRoomKeyboardOpeningUntil=Date.now()+900;
       partyRoomPositionComposerToKeyboard();
       const reactionTray=document.getElementById('partyRoomReactionTray'); if(reactionTray) reactionTray.style.display='none';
       const gift=document.getElementById('partyRoomGiftTray'); if(gift) gift.style.display='none';
@@ -4594,16 +4586,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         '<button type="button" data-pr-act="close">बंद करें</button></div>'+
       seatAction;
     try{
-      if(!me){
-        var tagBtn=document.createElement('button'); tagBtn.type='button'; tagBtn.className='uc-tag-btn';
-        tagBtn.setAttribute('aria-label','Tag this user'); tagBtn.title='टैग करें'; tagBtn.textContent='@';
-        tagBtn.onclick=function(ev){
-          ev.stopPropagation();
-          try{ window.prTagUserToComment(key,name); }catch(e){}
-          try{ window.prCloseSheets(); }catch(e){}
-        };
-        card.appendChild(tagBtn);
-      }
       var canMg=!me && typeof window.pkCanManage==='function' && window.pkCanManage() && key!==String(window.__cinemaHostKey||'');
       if(canMg){
         var mg=document.createElement('button'); mg.type='button'; mg.className='uc-manage-btn';
@@ -4898,14 +4880,12 @@ function tune(sdp){
   }catch(e){ return sdp; }
 }
 function showPill(on,m){
-  /* Listener devices should only receive/play the shared song audio.
-     Do not show the host name, song title, or a mute/unmute control. */
-  var p=$('partyMusicPill'); if(p) p.style.display='none';
+  var p=$('partyMusicPill'); if(!p) return;
+  p.style.display=on?'flex':'none';
+  if(on&&m) $('pmPillText').textContent=(m.paused?'⏸ ':'🎵 ')+(m.name?m.name+': ':'')+(m.title||'पार्टी म्यूज़िक');
+  syncPillBtn();
 }
-function syncPillBtn(){
-  /* Kept as a harmless compatibility hook; the listener pill is intentionally hidden. */
-  return;
-}
+function syncPillBtn(){ var b=$('pmPillBtn'),a=S.lis.audio; if(b) b.textContent=(!a||a.paused||a.muted)?'🔇':'🔊'; }
 function evalSources(){
   var L=S.lis, H=S.host, o=freshOthers();
   // दो लोग एक साथ शुरू करें तो जिसका सेशन पहले शुरू हुआ वही चलता है
@@ -5132,16 +5112,7 @@ setInterval(function(){try{
     +'#prDpEdit .pde-sw button{flex:1 1 0;min-width:0;height:46px;padding:0;border-radius:12px;border:2px solid transparent;color:#fff;font-size:10px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.8);display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px}'
     +'#prDpEdit .pde-sw button.on{border-color:#22c55e}'
     +'#prDpEdit .pde-gal{width:100%;margin-top:10px;background:#f0eaf9;color:#4a148c;flex:none}'
-    +'#prDpEdit .pde-bgh{font-size:11px;color:#8a7fa3;margin-top:6px}'
-    +'#prDpEdit .pde-settings-btn{position:absolute;top:12px;right:12px;width:38px;height:38px;padding:0!important;display:grid;place-items:center;border:1px solid #e0d4f5!important;border-radius:12px!important;background:#f8f4ff!important;color:#4a148c;font-size:18px!important;box-shadow:0 3px 10px rgba(80,40,130,.12);z-index:2}'
-    +'#prDpEdit .pde-settings-btn:active{transform:scale(.95)}'
-    +'#partyRoomSettingsPage .pr-simple-setting{background:#111827;border:1px solid #26354d;border-radius:18px;padding:14px;margin-bottom:12px}'
-    +'#partyRoomSettingsPage .pr-simple-setting .t{font-size:15px;font-weight:950;margin-bottom:6px}'
-    +'#partyRoomSettingsPage .pr-simple-setting .s{font-size:11px;color:#94a3b8;margin-bottom:10px}'
-    +'#partyRoomSettingsPage .pr-user-list{display:flex;flex-direction:column;gap:7px}'
-    +'#partyRoomSettingsPage .pr-user-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 11px;border-radius:12px;background:#172033;border:1px solid #26354d;font-size:12px}'
-    +'#partyRoomSettingsPage .pr-user-row button{padding:7px 10px;border-radius:10px;border:1px solid #475569;background:#0b1220;color:#fff;font-weight:800;cursor:pointer}'
-    +'#partyRoomSettingsPage .pr-empty{font-size:12px;color:#94a3b8;padding:4px 2px}';
+    +'#prDpEdit .pde-bgh{font-size:11px;color:#8a7fa3;margin-top:6px}';
     document.head.appendChild(st);
 
     // keep header name in sync for everyone in the room when the host renames
@@ -5161,7 +5132,7 @@ setInterval(function(){try{
       closeDlg();
       var newPhoto='';
       var o=document.createElement('div'); o.id='prDpEdit';
-      o.innerHTML='<div class="pde-box"><button type="button" id="pdeRoomSettingsBtn" class="pde-settings-btn" aria-label="Room Settings" title="Room Settings">⚙️</button><div class="pde-ph" id="pdePh"></div><div class="pde-hint">फोटो बदलने के लिए गोले पर टैप करें</div>'
+      o.innerHTML='<div class="pde-box"><div class="pde-ph" id="pdePh"></div><div class="pde-hint">फोटो बदलने के लिए गोले पर टैप करें</div>'
         +'<input type="text" id="pdeName" maxlength="30" placeholder="रूम का नाम">'
         +'<div class="pde-bgt">🖼️ रूम की बैकग्राउंड (थीम)</div><div class="pde-sw" id="pdeSw"></div>'
         +'<button type="button" class="pde-gal" id="pdeGal">📷 गैलरी से फोटो लगाएँ</button><div class="pde-bgh">बैकग्राउंड चुनते ही रूम में सबको दिखने लगती है</div>'
@@ -5170,8 +5141,6 @@ setInterval(function(){try{
         +'<div class="pde-row"><button type="button" class="pde-cancel">रद्द करें</button><button type="button" class="pde-save">सेव करें</button></div>'
         +'<input type="file" id="pdeFile" accept="image/*" style="display:none"></div>';
       document.body.appendChild(o);
-      var roomSetBtn=$('pdeRoomSettingsBtn');
-      if(roomSetBtn) roomSetBtn.onclick=function(ev){ ev.preventDefault(); ev.stopPropagation(); closeDlg(); setTimeout(function(){ try{ window.openPartyRoomSettings&&window.openPartyRoomSettings(); }catch(e){} },40); };
       var ph=$('pdePh'),nameI=$('pdeName'),msg=$('pdeMsg'),file=$('pdeFile');
       nameI.value=cinemaRoomName||'';
       if(PH.test(window.__prRoomPhoto||'')) ph.style.backgroundImage='url('+window.__prRoomPhoto+')';
@@ -6942,9 +6911,6 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     d=d||{};
     window.__prBlockedList=Array.isArray(d.blockedUsers)?d.blockedUsers.map(String):[];
     window.__prBlockedNames=(d.blockedNames&&typeof d.blockedNames==='object')?d.blockedNames:{};
-    window.__prRemovedList=Array.isArray(d.removedUsers)?d.removedUsers.map(String):[];
-    window.__prRemovedNames=(d.removedNames&&typeof d.removedNames==='object')?d.removedNames:{};
-    renderSimpleRoomUserLists();
     var host=String(d.hostKey||d.ownerKey||'');
     if(host===me()) { renderBlockedList(); return; }
     if(window.__prBlockedList.indexOf(me())>=0) forceExit('⛔ होस्ट ने आपको इस रूम से ब्लॉक किया है।');
@@ -7033,9 +6999,6 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     var nm=personName(key);
     if(!(await ask('रूम से निकालें?',nm+' को रूम से बाहर किया जाएगा। वह चाहे तो दोबारा जुड़ सकता है।','निकालें'))) return;
     try{
-      var fv=(typeof FV==='function')?FV():firebase.firestore.FieldValue;
-      var kickUpd={removedUsers:fv.arrayUnion(String(key)),removedNames:{},updatedAt:Date.now()}; kickUpd.removedNames[String(key)]=nm;
-      await roomRef().set(kickUpd,{merge:true});
       await roomRef().collection('viewers').doc(String(key)).set({kicked:true,kickedAt:Date.now(),kickReason:'kick',seat:null,hostSeated:false,muted:false},{merge:true});
       window.pkRoomToast('🚪 '+nm+' को रूम से निकाल दिया');
       try{ pkClosePublicProfile(); }catch(e){}
@@ -7141,14 +7104,6 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
   };
 
   /* ---------- host cards in Room Settings (seat lock + blocked users) ---------- */
-  function renderSimpleRoomUserLists(){
-    var removed=$('prRemovedUsersList'), blocked=$('prSettingsBlockedUsersList');
-    var rArr=Array.isArray(window.__prRemovedList)?window.__prRemovedList.map(String):[], rNames=window.__prRemovedNames||{};
-    var bArr=Array.isArray(window.__prBlockedList)?window.__prBlockedList.map(String):[], bNames=window.__prBlockedNames||{};
-    if(removed) removed.innerHTML=rArr.length?rArr.map(function(k){return '<div class="pr-user-row"><span>'+esc(rNames[k]||('User '+k))+'</span></div>';}).join(''):'<div class="pr-empty">अभी कोई Remove किया हुआ यूज़र नहीं है।</div>';
-    if(blocked) blocked.innerHTML=bArr.length?bArr.map(function(k){return '<div class="pr-user-row"><span>'+esc(bNames[k]||('User '+k))+'</span><button type="button" data-unblock="'+esc(k)+'">Unblock</button></div>';}).join(''):'<div class="pr-empty">अभी कोई Block किया हुआ यूज़र नहीं है।</div>';
-    if(blocked) blocked.querySelectorAll('[data-unblock]').forEach(function(btn){ btn.onclick=function(){ window.pkHostUnblock(btn.getAttribute('data-unblock')); }; });
-  }
   function renderBlockedList(){
     var l=$('pkBlockedList'); if(!l) return;
     var arr=window.__prBlockedList||[], names=window.__prBlockedNames||{};
@@ -7171,7 +7126,7 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     renderBlockedList();
   }
   var _open=window.openPartyRoomSettings;
-  window.openPartyRoomSettings=function(){ var r=_open?_open.apply(this,arguments):undefined; try{ renderSimpleRoomUserLists(); ensureHostCards(); }catch(e){} return r; };
+  window.openPartyRoomSettings=function(){ var r=_open?_open.apply(this,arguments):undefined; try{ ensureHostCards(); }catch(e){} return r; };
 })();
 
 </script>
@@ -7655,8 +7610,6 @@ body.pk-game-open #pkUniversalNav{display:none!important}
     paintModeMenu();
   }
   var wasKb=0;
-  var partyRoomKeyboardWasVisible=false;
-  var partyRoomKeyboardOpeningUntil=0;
   function closeComposer(){
     var c=$('cinemaChatComposer'), panel=$('cinemaChatPanel'), room=$('prRoom'), input=$('cinemaChatInput');
     if(!c) return;
@@ -7686,14 +7639,7 @@ body.pk-game-open #pkUniversalNav{display:none!important}
     var open=room.classList.contains('party-keyboard-open');
     var vv=window.visualViewport, vh=vv?vv.height:window.innerHeight;
     var kb=vv?Math.max(0,Math.round(window.innerHeight-(vv.height+vv.offsetTop))):0;
-    if(open && kb>60) partyRoomKeyboardWasVisible=true;
-    if(open && partyRoomKeyboardWasVisible && kb<60){
-      partyRoomKeyboardWasVisible=false;
-      setTimeout(function(){
-        var c=$('cinemaChatComposer');
-        if(c && c.classList.contains('party-composer-open')) closeComposer();
-      },80);
-    }
+    if(open && wasKb>120 && kb<60){ setTimeout(closeComposer,200); }
     wasKb=kb;
     if(room.classList.contains('party-gaming-layout')) return;
     var seatsBottom=seats.offsetTop+seats.offsetHeight, lift=0;
@@ -7710,37 +7656,24 @@ body.pk-game-open #pkUniversalNav{display:none!important}
   setInterval(tick,200);
   var vv=window.visualViewport; if(vv){ vv.addEventListener('resize',tick); vv.addEventListener('scroll',tick); }
   window.addEventListener('resize',tick);
-  // Android keyboard Back: composer is visible only while the keyboard is visible.
+  // Android keyboard Back: when the visual viewport returns to full height, close the composer immediately.
   (function installKeyboardCloseDetector(){
-    var v=window.visualViewport;
-    function check(){
-      var c=$('cinemaChatComposer');
-      if(!c || !c.classList.contains('party-composer-open')) return;
-      var vh=v?v.height:window.innerHeight;
-      var base=window.innerHeight;
-      var kb=Math.max(0,Math.round(base-(vh+(v?v.offsetTop:0))));
-      if(kb>60){ partyRoomKeyboardWasVisible=true; return; }
-      // Ignore the short moment while Android is opening the keyboard.
-      if(Date.now()<partyRoomKeyboardOpeningUntil) return;
-      if(partyRoomKeyboardWasVisible || document.activeElement!==$('cinemaChatInput')){
-        partyRoomKeyboardWasVisible=false;
-        closeComposer();
-      }
-    }
-    if(v) v.addEventListener('resize',function(){ setTimeout(check,60); setTimeout(check,220); });
-    window.addEventListener('resize',function(){ setTimeout(check,60); setTimeout(check,220); });
-    setInterval(check,250);
+    var v=window.visualViewport, lastH=v?v.height:window.innerHeight;
+    if(!v) return;
+    v.addEventListener('resize',function(){
+      var now=v.height, delta=now-lastH;
+      lastH=now;
+      if(delta>80){ setTimeout(function(){
+        var c=$('cinemaChatComposer'), inp=$('cinemaChatInput');
+        var kb=Math.max(0,Math.round(window.innerHeight-(v.height+v.offsetTop)));
+        if(kb<60 && c && c.classList.contains('party-composer-open') && document.activeElement!==inp) closeComposer();
+      },40); }
+    });
   })();
   // tapping outside / dismissing the keyboard closes the composer (like WhatsApp)
   document.addEventListener('focusout',function(e){
     if(e.target && e.target.id==='cinemaChatInput'){
-      setTimeout(function(){
-        var c=$('cinemaChatComposer');
-        if(partyRoomKeyboardWasVisible && c && c.classList.contains('party-composer-open')){
-          var v=window.visualViewport, kb=v?Math.max(0,Math.round(window.innerHeight-(v.height+v.offsetTop))):0;
-          if(kb<60){ partyRoomKeyboardWasVisible=false; closeComposer(); }
-        }
-      },120);
+      setTimeout(function(){ if(document.activeElement!==$('cinemaChatInput')) closeComposer(); },200);
     }
   });
 })();
@@ -9505,7 +9438,11 @@ function ytRoomSyncNow(force){
   try{
     var st=window.YT&&ytPlayer.getPlayerState(), playing=st===YT.PlayerState.PLAYING;
     var ct=ytPlayer.getCurrentTime()||0;
-    if(force||playing) ytRoomWriteState({type:'youtube',playing:playing,currentTime:ct,videoId:current&&current.id||'',listId:current&&current.list||'',title:current&&current.title||'',shorts:!!(current&&current.shorts)});
+    /* Ads are shorter than the video: remember the longest duration seen; a shorter one means an ad is playing on the host's phone, so do not send its time to viewers. */
+    var dur=0; try{dur=ytPlayer.getDuration()||0;}catch(e){}
+    if(current&&dur>0&&(!current.__maxDur||dur>current.__maxDur)) current.__maxDur=dur;
+    if(current&&current.__maxDur&&dur>0&&dur<current.__maxDur-1.5) return;
+    if(force||playing) ytRoomWriteState({type:'youtube',playing:playing,currentTime:ct,dur:(current&&current.__maxDur)||0,videoId:current&&current.id||'',listId:current&&current.list||'',title:current&&current.title||'',shorts:!!(current&&current.shorts)});
   }catch(e){}
 }
 function ytRoomApplyState(d){
@@ -9531,6 +9468,8 @@ function ytRoomApplyState(d){
     if(info&&!same){ ytRoomSuppressNextSync=true; playInfo(info,d.title||('YouTube • '+info.id),{addedBy:d.updatedBy||'Host',share:false,start:Number(d.currentTime)||0}); }
     else if(info&&ytPlayer&&ytReady){
       try{ var vdB=ytPlayer.getVideoData&&ytPlayer.getVideoData(); if(vdB&&current&&current.id&&!current.list&&vdB.video_id&&String(vdB.video_id)!==String(current.id)){ ytRemoteApplying=false; return; } }catch(e){}
+      /* If this viewer's own ad is playing (duration shorter than the host's video), leave it alone so Skip works. */
+      try{ var myDur=ytPlayer.getDuration()||0, hostDur=Number(d.dur)||0; if(hostDur>0&&myDur>0&&myDur<hostDur-1.5){ ytRemoteApplying=false; return; } }catch(e){}
       var target=Math.max(0,Number(d.currentTime)||0), now=ytPlayer.getCurrentTime()||0;
       if(Math.abs(now-target)>2) ytPlayer.seekTo(target,true);
       if(d.playing===true) ytPlayer.playVideo(); else if(d.playing===false) ytPlayer.pauseVideo();
@@ -9684,6 +9623,18 @@ function partyRoomYoutubeExit(keepSound){
 }
 window.partyRoomYoutubeEnter=partyRoomYoutubeEnter;window.partyRoomYoutubeExit=partyRoomYoutubeExit;
 /* Leaving the room: stop YouTube/Sound-mode audio on THIS device only (does not stop it for other people in the room). */
+/* Host seek / pause / play: send to everyone right away (also works while paused). */
+setInterval(function(){
+  try{
+    if(!ytPlayer||!ytReady||!ytRoomIsActive()||!ytRoomHost()||ytRemoteApplying) return;
+    if(!current||current.upload) return;
+    var t=ytPlayer.getCurrentTime()||0, st=ytPlayer.getPlayerState(), now=Date.now();
+    var L=window.__ytSeekWatch||(window.__ytSeekWatch={t:t,at:now,st:st});
+    var expected=L.t+((L.st===1)?(now-L.at)/1000:0);
+    if(Math.abs(t-expected)>1.5||st!==L.st) ytRoomSyncNow(true);
+    L.t=t;L.at=now;L.st=st;
+  }catch(e){}
+},500);
 window.partyRoomYoutubeLocalStop=function(){
   try{destroyPlayer();}catch(e){}
   try{current=null;}catch(e){}
@@ -10930,6 +10881,13 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 <style id="pkYtSkipAdWindow">
 /* Non-host viewers stay blocked from seek/play/pause, but the right-middle area of the player (where "Skip Ad" appears) receives taps. */
 #partyYoutubeStage.yt-nonhost .yt-room-block{clip-path:polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,52% 42%,100% 42%,100% 80%,52% 80%,52% 42%);}
+</style>
+<style id="pkYtTouchFix">
+/* The seat grid stretches over the player area; let taps pass through its empty space (seats stay tappable). */
+#prRoom.party-youtube-layout #cinemaSeats{pointer-events:none!important;}
+#prRoom.party-youtube-layout #cinemaSeats > *{pointer-events:auto!important;}
+/* Non-host: blocked everywhere except the right side where "Skip ad" appears (keeps the centre play button and the bottom bar blocked). */
+#partyYoutubeStage.yt-nonhost .yt-room-block{clip-path:polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,56% 30%,100% 30%,100% 84%,56% 84%,56% 30%)!important;}
 </style>
 <style id="pkStatusBarBlend">
 /* Blend the room's top edge into the phone's top bar (bar colour set to #1b1740 in WebToApk). Works with any room background photo. */
