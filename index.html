@@ -2421,7 +2421,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <div id="ytRoomBlock" class="yt-room-block"></div>
             <div class="yt-room-hostbar"><label style="display:flex;align-items:center;gap:5px;background:rgba(15,23,42,.82);border-radius:10px;padding:5px 8px;color:#fff;font-size:11px;">🔊<input id="ytRoomVolume" type="range" min="0" max="100" value="80" style="width:82px;"></label><button type="button" id="ytRoomCloseVideoBtn" class="yt-room-close-video" onclick="window.ytRoomCloseShared&&window.ytRoomCloseShared()" title="सभी के लिए YouTube बंद करें">✕ बंद करें</button></div>
           </div>
-          <button type="button" id="ytRoomUiHideBtn" class="yt-room-ui-hide-btn" aria-label="YouTube Queue और controls" title="Queue और YouTube controls" onclick="return PR_Q_TOGGLE(event);">Q <span id="ytRoomUiHideBadge"></span></button>
+          <button type="button" id="ytRoomUiHideBtn" class="yt-room-ui-hide-btn" aria-label="YouTube Queue और controls" title="Queue और YouTube controls">Q <span id="ytRoomUiHideBadge"></span></button>
           <div id="ytRoomUrlBar" class="yt-room-url-bar">
             <div class="yt-room-input-label">YouTube URL यहाँ डालें</div>
             <div class="yt-room-url-row">
@@ -2433,11 +2433,21 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <div class="yt-room-input-hint">Host: Load • Viewer: Queue में जोड़ेगा</div>
           </div>
           <div class="yt-room-input-tools" id="ytRoomInputTools">
-            
+            <div class="yt-room-tools-top">
+              <button type="button" id="ytRoomQueueBtn" onclick="window.ytRoomTogglePanel&&window.ytRoomTogglePanel('queue')">Q <span id="ytRoomQueueBadge">0</span></button>
+            </div>
             <div id="ytRoomInlinePanel" class="yt-room-inline-panel" aria-live="polite">
-<div id="ytRoomInlineQueue" class="yt-room-inline-pane">
-<div id="ytRoomInlineQueueList" class="yt-room-inline-list"></div>
-              </div></div>
+              <div id="ytRoomInlineQueue" class="yt-room-inline-pane">
+                <div class="yt-room-inline-title">📺 Q में YouTube लिंक डालें</div>
+                <div class="yt-room-inline-row"><input id="ytRoomInlineQueueInput" type="text" autocomplete="off" placeholder="YouTube link यहाँ paste करें..."><button type="button" id="ytRoomInlineQueueLoad">Load</button></div>
+                <div id="ytRoomInlineQueueList" class="yt-room-inline-list"></div>
+              </div>
+              <div id="ytRoomInlineHistory" class="yt-room-inline-pane">
+                <div class="yt-room-inline-title">💾 History</div>
+                <div id="ytRoomInlineHistoryList" class="yt-room-inline-list"></div>
+              </div>
+            </div>
+          </div>
         </div>
         <div id="partyGamingCenter" aria-label="Gaming area">
           <div class="pgc-head">
@@ -11235,136 +11245,335 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 </style>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<style id="PR_Q_ONE_FINAL">
+<style id="partyRoomYoutubeQueueOnlyFinal">
+/* Final requested YouTube room controls: Q replaces Hide; History/Paste are gone. */
 #prRoom.party-youtube-layout #ytRoomUiHideBtn{
-  display:flex!important;
-  visibility:visible!important;
-  opacity:1!important;
-  pointer-events:auto!important;
-  touch-action:manipulation!important;
-  cursor:pointer!important;
-  z-index:2147483647!important;
+  position:absolute!important; top:193px!important; right:9px!important;
+  pointer-events:auto!important; touch-action:manipulation!important; cursor:pointer!important;
+  min-width:38px!important; width:38px!important; height:30px!important;
+  padding:0!important; display:flex!important; align-items:center!important; justify-content:center!important;
+  border-radius:10px!important; z-index:90!important; font-size:12px!important; font-weight:900!important;
 }
-#prRoom.party-youtube-layout.pr-q-closed #ytRoomUrlBar,
-#prRoom.party-youtube-layout.pr-q-closed #ytRoomInputTools,
-#prRoom.party-youtube-layout.pr-q-closed #ytRoomInlinePanel,
-#prRoom.party-youtube-layout.pr-q-closed #ytRoomInlineQueue{
-  display:none!important;
-  visibility:hidden!important;
-  opacity:0!important;
-  pointer-events:none!important;
-}
-#prRoom.party-youtube-layout.pr-q-open #ytRoomUrlBar,
-#prRoom.party-youtube-layout.pr-q-open #ytRoomInputTools,
-#prRoom.party-youtube-layout.pr-q-open #ytRoomInlinePanel,
-#prRoom.party-youtube-layout.pr-q-open #ytRoomInlineQueue{
-  display:block!important;
-  visibility:visible!important;
-  opacity:1!important;
-  pointer-events:auto!important;
+#prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomUiHideBtn{top:243px!important;}
+#prRoom.party-youtube-layout #ytRoomUrlBar,
+#prRoom.party-youtube-layout #ytRoomInputTools{display:none!important;}
+#prRoom.party-youtube-layout.yt-q-open #ytRoomUrlBar,
+#prRoom.party-youtube-layout.yt-q-open #ytRoomInputTools{display:block!important;}
+#prRoom.party-youtube-layout #ytRoomInputTools .yt-room-tools-top{display:none!important;}
+#prRoom.party-youtube-layout #ytRoomInlinePanel{display:none!important;}
+#prRoom.party-youtube-layout.yt-q-open #ytRoomInlinePanel{display:block!important;}
+#prRoom.party-youtube-layout #ytRoomInlineQueue{display:block!important;}
+#prRoom.party-youtube-layout #ytRoomInlineQueueInput,
+#prRoom.party-youtube-layout #ytRoomInlineQueueLoad,
+#prRoom.party-youtube-layout #ytRoomInlineQueue .yt-room-inline-title{display:none!important;}
+#prRoom.party-youtube-layout #ytRoomInlineQueueList{display:block!important;}
+#prRoom.party-youtube-layout #ytRoomPasteBtn,
+#prRoom.party-youtube-layout #ytRoomHistoryBtn{display:none!important;}
+#prRoom.party-youtube-layout .yt-room-inline-item{position:relative!important;min-height:58px!important;width:100%!important;padding:10px 46px 10px 12px!important;box-sizing:border-box!important;border-radius:12px!important;}
+#prRoom.party-youtube-layout .yt-room-inline-meta b{font-size:13px!important;line-height:1.25!important;}
+#prRoom.party-youtube-layout .yt-room-inline-delete{position:absolute!important;right:10px!important;top:50%!important;transform:translateY(-50%)!important;width:30px!important;height:30px!important;border:0!important;border-radius:50%!important;background:rgba(239,68,68,.9)!important;color:#fff!important;font-weight:1000!important;font-size:15px!important;cursor:pointer!important;}
+@media(max-width:430px){
+  #prRoom.party-youtube-layout #ytRoomUiHideBtn{top:191px!important;right:7px!important;}
+  #prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomUiHideBtn{top:241px!important;}
 }
 </style>
+<script id="partyRoomYoutubeQueueOnlyFinalScript">
+(function(){
+  function $(id){return document.getElementById(id);}
+  function isYT(){var r=$('prRoom');return !!(r&&r.classList.contains('party-youtube-layout'));}
+  function setOpen(open){
+    var r=$('prRoom'),b=$('ytRoomUiHideBtn'); if(!r||!b)return;
+    r.classList.toggle('yt-q-open',!!open);
+    b.innerHTML='Q'+((($('ytRoomQueueBadge')&&$('ytRoomQueueBadge').textContent)||'').trim()?'<span style="font-size:8px;margin-left:2px;">'+(($('ytRoomQueueBadge')||{}).textContent||'')+'</span>':'');
+    b.setAttribute('aria-label',open?'Queue और YouTube controls बंद करें':'Queue और YouTube controls खोलें');
+    b.title=b.getAttribute('aria-label');
+    if(open && window.ytRoomTogglePanel) window.ytRoomTogglePanel('queue');
+    if(!open){var p=$('ytRoomInlinePanel');if(p){p.classList.remove('open');p.setAttribute('data-open','');}}
+  }
+  window.ytRoomCollapseControls=function(){setOpen(false);};
+  function wire(){
+    var r=$('prRoom'),b=$('ytRoomUiHideBtn'); if(!r||!b)return;
+    if(!b.__qWired){
+      b.__qWired=true;
+      b.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();if(!isYT())return;var open=!r.classList.contains('yt-q-open');setOpen(open);if(open){var p=$('ytRoomInlinePanel');if(p){p.setAttribute('data-open','queue');p.classList.add('open');}renderInlineRoomPanel('queue');}else{var p2=$('ytRoomInlinePanel');if(p2){p2.setAttribute('data-open','');p2.classList.remove('open');}renderInlineRoomPanel('');}},true);
+    }
+    if(!isYT()){r.classList.remove('yt-q-open');return;}
+    setOpen(r.classList.contains('yt-q-open'));
+  }
+  setInterval(wire,700);
+  document.addEventListener('DOMContentLoaded',wire);
+})();
+</script>
 
-<script id="PR_Q_ONE_FINAL_SCRIPT">
+<script>
+/* Q-panel fallback: Host and Viewer share the same Q open/close UI.
+   Host-only queue deletion remains controlled by existing permission logic. */
+(function(){
+  function wireQ(){
+    if (document.documentElement.dataset.qToggleFallback === "1") return;
+    const qs = Array.from(document.querySelectorAll(
+      '[id*="QBtn" i],[id*="QueueBtn" i],[data-q-button],[data-q-toggle]'
+    ));
+    if (!qs.length) return;
+    document.documentElement.dataset.qToggleFallback = "1";
+    qs.forEach(function(btn){
+      if (btn.dataset.qToggleFallback === "1") return;
+      btn.dataset.qToggleFallback = "1";
+      btn.addEventListener("click", function(){
+        const panels = Array.from(document.querySelectorAll(
+          '[id*="Queue" i],[id*="queue" i],[id*="Youtube" i][id*="Panel" i]'
+        )).filter(function(el){ return el !== btn && el.offsetParent !== null || el.hidden; });
+        /* Existing application handlers own the exact state; this fallback
+           only toggles explicit Q panels marked by the app. */
+        document.querySelectorAll('[data-q-panel]').forEach(function(panel){
+          panel.hidden = !panel.hidden;
+        });
+      });
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wireQ);
+  else wireQ();
+})();
+</script>
+
+<style id="partyRoomYoutubeQWorkingFix">
+/* Q working fix: one Q only, same open controls for Host and Viewer. */
+#prRoom.party-youtube-layout #ytRoomUiHideBtn{
+  display:flex!important; visibility:visible!important; opacity:1!important;
+  pointer-events:auto!important; touch-action:manipulation!important; cursor:pointer!important;
+  z-index:9999!important;
+}
+#prRoom.party-youtube-layout #ytRoomQueueBtn{display:none!important;}
+#prRoom.party-youtube-layout #ytRoomUrlBar,
+#prRoom.party-youtube-layout #ytRoomInputTools{display:none!important;}
+#prRoom.party-youtube-layout.yt-q-open #ytRoomUrlBar{display:block!important;}
+#prRoom.party-youtube-layout.yt-q-open #ytRoomInputTools{display:block!important;}
+#prRoom.party-youtube-layout #ytRoomInlinePanel{display:none!important;}
+#prRoom.party-youtube-layout.yt-q-open #ytRoomInlinePanel{display:block!important;}
+#prRoom.party-youtube-layout.yt-q-open #ytRoomInlineQueue{display:block!important;}
+#prRoom.party-youtube-layout #ytRoomInlineQueueInput,
+#prRoom.party-youtube-layout #ytRoomInlineQueueLoad,
+#prRoom.party-youtube-layout #ytRoomInlineQueue .yt-room-inline-title{display:none!important;}
+#prRoom.party-youtube-layout #ytRoomInlineQueueList{display:block!important;}
+/* Requested: remove the video-screen sound control. */
+#prRoom.party-youtube-layout #ytRoomVolume{display:none!important;}
+#prRoom.party-youtube-layout #ytRoomVolume{pointer-events:none!important;}
+</style>
+<script id="partyRoomYoutubeQWorkingFixScript">
+(function(){
+  function byId(id){return document.getElementById(id);}
+  function room(){return byId('prRoom');}
+  function qbtn(){return byId('ytRoomUiHideBtn');}
+  function setQ(open){
+    var r=room(), b=qbtn();
+    if(!r||!b)return;
+    r.classList.toggle('yt-q-open',!!open);
+    b.innerHTML='Q <span id="ytRoomUiHideBadge"></span>';
+    b.setAttribute('aria-label',open?'Queue और YouTube controls बंद करें':'Queue और YouTube controls खोलें');
+    b.title=b.getAttribute('aria-label');
+    var p=byId('ytRoomInlinePanel');
+    if(p){
+      p.setAttribute('data-open',open?'queue':'');
+      p.classList.toggle('open',!!open);
+    }
+    var q=byId('ytRoomInlineQueue');
+    if(q)q.style.display=open?'block':'none';
+    if(typeof renderInlineRoomPanel==='function')renderInlineRoomPanel(open?'queue':'');
+  }
+  function wire(){
+    var r=room(), b=qbtn();
+    if(!r||!b)return;
+    if(b.__workingQ!==true){
+      b.__workingQ=true;
+      b.onclick=function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        setQ(!r.classList.contains('yt-q-open'));
+        return false;
+      };
+      b.addEventListener('pointerdown',function(e){e.stopPropagation();},true);
+      b.addEventListener('touchstart',function(e){e.stopPropagation();},true);
+    }
+  }
+  window.ytRoomCollapseControls=function(){setQ(false);};
+  window.ytRoomOpenQ=function(){setQ(true);};
+  window.ytRoomCloseQ=function(){setQ(false);};
+  wire();
+  document.addEventListener('DOMContentLoaded',wire);
+  setInterval(wire,500);
+})();
+</script>
+
+<style id="partyRoomQFinalAtomicFix">
+/* Q FINAL: Q controls one atomic panel. Closed = only Q. Open = URL/Load/Upload panel + queue. */
+#prRoom.party-youtube-layout #ytRoomUrlBar,
+#prRoom.party-youtube-layout #ytRoomInputTools{
+  display:none !important;
+  visibility:hidden !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+}
+#prRoom.party-youtube-layout.yt-q-open #ytRoomUrlBar,
+#prRoom.party-youtube-layout.yt-q-open #ytRoomInputTools{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  pointer-events:auto !important;
+}
+#prRoom.party-youtube-layout.yt-q-open #ytRoomUrlBar .yt-room-url-row,
+#prRoom.party-youtube-layout.yt-q-open #ytRoomInputTools #ytRoomInlinePanel,
+#prRoom.party-youtube-layout.yt-q-open #ytRoomInlineQueue{
+  visibility:visible !important;
+  opacity:1 !important;
+  pointer-events:auto !important;
+}
+#prRoom.party-youtube-layout #ytRoomUiHideBtn{
+  display:flex !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  pointer-events:auto !important;
+  touch-action:manipulation !important;
+  z-index:99999 !important;
+}
+/* Viewer gets URL + Load, but not the local Upload control. */
+#prRoom.party-youtube-layout.yt-viewer #ytRoomUploadBtn,
+#prRoom.party-youtube-layout.yt-nonhost #ytRoomUploadBtn,
+#prRoom.party-youtube-layout.viewer #ytRoomUploadBtn{
+  display:none !important;
+}
+/* Keep only the main URL row in the Q panel; the old duplicate Q/history controls stay hidden. */
+#prRoom.party-youtube-layout #ytRoomInputTools .yt-room-tools-top,
+#prRoom.party-youtube-layout #ytRoomQueueBtn,
+#prRoom.party-youtube-layout #ytRoomInlineHistory{
+  display:none !important;
+}
+#prRoom.party-youtube-layout #ytRoomInlineQueueInput,
+#prRoom.party-youtube-layout #ytRoomInlineQueueLoad,
+#prRoom.party-youtube-layout #ytRoomInlineQueue .yt-room-inline-title{
+  display:none !important;
+}
+#prRoom.party-youtube-layout #ytRoomInlineQueueList{display:block !important;}
+</style>
+<script id="partyRoomQFinalAtomicFixScript">
+(function(){
+  function el(id){return document.getElementById(id);}
+  function root(){return el('prRoom');}
+  function isYT(){var r=root();return !!(r&&r.classList.contains('party-youtube-layout'));}
+  function isHost(){try{return typeof ytRoomHost==='function'&&!!ytRoomHost();}catch(e){try{return !!window.cinemaIsHost;}catch(x){return false;}}}
+  function setOpen(open){
+    var r=root(), q=el('ytRoomUiHideBtn'), url=el('ytRoomUrlBar'), tools=el('ytRoomInputTools'), panel=el('ytRoomInlinePanel'), queue=el('ytRoomInlineQueue');
+    if(!r||!q)return;
+    open=!!open;
+    r.classList.toggle('yt-q-open',open);
+    q.innerHTML='Q <span id="ytRoomUiHideBadge"></span>';
+    q.setAttribute('aria-label',open?'Queue और YouTube controls बंद करें':'Queue और YouTube controls खोलें');
+    q.title=q.getAttribute('aria-label');
+    [url,tools].forEach(function(x){if(!x)return;x.style.display=open?'block':'none';x.style.visibility=open?'visible':'hidden';x.style.opacity=open?'1':'0';x.style.pointerEvents=open?'auto':'none';});
+    if(panel){panel.style.display=open?'block':'none';panel.classList.toggle('open',open);panel.setAttribute('data-open',open?'queue':'');}
+    if(queue)queue.style.display=open?'block':'none';
+    if(!open && typeof renderInlineRoomPanel==='function')renderInlineRoomPanel('');
+    if(open && typeof renderInlineRoomPanel==='function')renderInlineRoomPanel('queue');
+    var upload=el('ytRoomUploadBtn');
+    if(upload)upload.style.display=(open&&isHost())?'inline-flex':'none';
+  }
+  function wire(){
+    var r=root(), q=el('ytRoomUiHideBtn'); if(!r||!q)return;
+    q.style.pointerEvents='auto'; q.style.touchAction='manipulation';
+    if(!q.__atomicQ){
+      q.__atomicQ=true;
+      q.addEventListener('click',function(e){
+        e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();
+        if(!isYT())return false;
+        setOpen(!r.classList.contains('yt-q-open'));
+        return false;
+      },true);
+      q.addEventListener('pointerup',function(e){e.stopPropagation();},true);
+      q.addEventListener('touchend',function(e){e.stopPropagation();},true);
+    }
+    if(!isYT()) setOpen(false);
+    else {
+      var open=r.classList.contains('yt-q-open');
+      setOpen(open);
+    }
+  }
+  window.ytRoomAtomicQSet=function(open){setOpen(!!open);};
+  window.ytRoomCollapseControls=function(){setOpen(false);};
+  window.ytRoomOpenQ=function(){setOpen(true);};
+  window.ytRoomCloseQ=function(){setOpen(false);};
+  document.addEventListener('DOMContentLoaded',wire);
+  setTimeout(wire,100);setTimeout(wire,500);setTimeout(wire,1200);
+  setInterval(wire,1000);
+})();
+</script>
+
+<script id="master-q-controller">
 (function(){
   'use strict';
 
-  window.PR_Q_SET=function(open){
-    var r=document.getElementById('prRoom');
-    if(!r || !r.classList.contains('party-youtube-layout')) return false;
-
-    open=!!open;
-    r.classList.toggle('pr-q-open',open);
-    r.classList.toggle('pr-q-closed',!open);
-
-    var ids=['ytRoomUrlBar','ytRoomInputTools','ytRoomInlinePanel','ytRoomInlineQueue'];
-    ids.forEach(function(id){
-      var e=document.getElementById(id);
-      if(!e) return;
-      e.style.setProperty('display',open?'block':'none','important');
-      e.style.setProperty('visibility',open?'visible':'hidden','important');
-      e.style.setProperty('opacity',open?'1':'0','important');
-      e.style.setProperty('pointer-events',open?'auto':'none','important');
+  function visible(el){ return !!el && !el.hidden && getComputedStyle(el).display !== 'none'; }
+  function qButtons(){
+    return Array.from(document.querySelectorAll(
+      'button,[role="button"],.btn'
+    )).filter(function(el){
+      return (el.textContent || '').trim() === 'Q' ||
+             /^(yt|youtube).*q/i.test(el.id || '');
     });
-
-    var q=document.getElementById('ytRoomUiHideBtn');
-    if(q){
-      q.setAttribute('aria-expanded',open?'true':'false');
-      q.setAttribute('aria-label',open?'Q बंद करें':'Q खोलें');
-    }
-
-    var panel=document.getElementById('ytRoomInlinePanel');
-    if(panel){
-      panel.setAttribute('data-open', open ? 'queue' : '');
-      panel.classList.toggle('open', open);
-    }
-
-    var qpane=document.getElementById('ytRoomInlineQueue');
-    if(qpane){
-      qpane.style.setProperty('display',open?'block':'none','important');
-      qpane.style.setProperty('visibility',open?'visible':'hidden','important');
-    }
-
-    if(open && typeof window.renderInlineRoomPanel==='function'){
-      try{ window.renderInlineRoomPanel('queue'); }catch(e){}
-    }
-    return false;
-  };
-
-  window.PR_Q_TOGGLE=function(ev){
-    if(ev){
-      ev.preventDefault();
-      ev.stopPropagation();
-    }
-    var r=document.getElementById('prRoom');
-    if(!r || !r.classList.contains('party-youtube-layout')) return false;
-    return window.PR_Q_SET(!r.classList.contains('pr-q-open'));
-  };
-
-  function init(){
-    var r=document.getElementById('prRoom');
-    if(!r) return;
-    if(r.classList.contains('party-youtube-layout') &&
-       !r.classList.contains('pr-q-open') &&
-       !r.classList.contains('pr-q-closed')){
-      window.PR_Q_SET(false);
-    }
+  }
+  function controls(){
+    return Array.from(document.querySelectorAll(
+      'input,button,[role="button"],label'
+    )).filter(function(el){
+      var t=(el.textContent||'').trim().toLowerCase();
+      var ph=(el.getAttribute('placeholder')||'').toLowerCase();
+      var id=(el.id||'').toLowerCase();
+      return /youtube|yt|queue|url/.test(id) ||
+             /load|upload|paste url|youtube url/.test(t) ||
+             /youtube|url|link/.test(ph);
+    });
   }
 
-  if(document.readyState==='loading')
-    document.addEventListener('DOMContentLoaded',init);
-  else
-    init();
+  var open=false;
+
+  function apply(){
+    var qs=qButtons();
+    if(qs.length){
+      qs.slice(1).forEach(function(el){ el.style.display='none'; });
+      var q=qs[0];
+      q.style.display=open?'none':'';
+      q.setAttribute('aria-expanded', String(open));
+    }
+
+    /* Only collapse elements explicitly marked by the existing YouTube UI.
+       Avoid hiding the actual video or chat. */
+    document.querySelectorAll(
+      '[data-q-panel],[data-youtube-q-panel],[data-youtube-controls]'
+    ).forEach(function(p){
+      p.hidden=!open;
+    });
+
+    document.documentElement.classList.toggle('q-panel-open', open);
+  }
+
+  function bind(){
+    var qs=qButtons();
+    if(!qs.length) return;
+    qs.forEach(function(q,i){
+      if(i>0) q.style.display='none';
+      if(q.dataset.masterQBound==='1') return;
+      q.dataset.masterQBound='1';
+      q.addEventListener('click', function(ev){
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        open=!open;
+        apply();
+      }, true);
+    });
+    apply();
+  }
+
+  document.addEventListener('DOMContentLoaded', bind);
+  new MutationObserver(function(){ bind(); }).observe(document.documentElement,{
+    childList:true, subtree:true
+  });
 })();
 </script>
