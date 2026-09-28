@@ -10815,6 +10815,10 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   document.addEventListener('click',function(e){if(e.target.closest('#pkDirectInput,.pk-direct-compose,.pk-direct-compose-trigger'))full();},true);
 })();
 </script>
+<style id="pkStatusBarBlend">
+/* Blend the room's top edge into the phone's top bar (bar colour set to #1b1740 in WebToApk). Works with any room background photo. */
+#cinemaGharModal::before{content:"";position:absolute;top:0;left:0;right:0;height:26px;background:linear-gradient(180deg,#1b1740 0,rgba(27,23,64,.55) 45%,rgba(27,23,64,0) 100%);pointer-events:none;z-index:0}
+</style>
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
