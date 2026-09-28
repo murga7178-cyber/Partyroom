@@ -1638,25 +1638,6 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{
 #prRoom.yt-sound-only #ytRoomUrlBar{display:none!important;}
 .yt-bottom-sheet-buttons #ytBottomSoundBtn{font-size:11px!important;padding:7px 10px!important;min-width:58px!important;}
 </style>
-<style id="cinemaRoomPasswordPromptStyle">
-#cinemaRoomPasswordPrompt{position:fixed;inset:0;z-index:2147483646;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;font-family:Segoe UI,Arial,sans-serif;}
-#cinemaRoomPasswordPrompt .crpp-backdrop{position:absolute;inset:0;background:rgba(4,7,18,.58);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);}
-#cinemaRoomPasswordPrompt .crpp-card{position:relative;width:min(360px,100%);box-sizing:border-box;padding:22px 20px 18px;border:1px solid rgba(255,255,255,.18);border-radius:26px;background:linear-gradient(155deg,rgba(31,25,70,.98),rgba(8,15,31,.98));box-shadow:0 25px 80px rgba(0,0,0,.58),inset 0 1px 0 rgba(255,255,255,.08);color:#fff;text-align:center;animation:crppIn .18s ease-out;}
-#cinemaRoomPasswordPrompt .crpp-close{position:absolute;right:11px;top:10px;width:34px;height:34px;border:1px solid rgba(255,255,255,.13);border-radius:50%;background:rgba(255,255,255,.08);color:#fff;font-size:24px;line-height:30px;cursor:pointer;}
-#cinemaRoomPasswordPrompt .crpp-lock{width:52px;height:52px;margin:0 auto 8px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(135deg,#8b5cf6,#ec4899);font-size:25px;box-shadow:0 10px 28px rgba(139,92,246,.32);}
-#cinemaRoomPasswordPrompt .crpp-photo{width:62px;height:62px;margin:0 auto 10px;border-radius:19px;background:#15112f center/cover no-repeat;display:grid;place-items:center;font-size:25px;border:2px solid rgba(255,255,255,.13);box-shadow:0 8px 22px rgba(0,0,0,.25);}
-#cinemaRoomPasswordPrompt .crpp-title{font-size:20px;font-weight:950;letter-spacing:.1px;}
-#cinemaRoomPasswordPrompt .crpp-room{margin-top:4px;font-size:13px;color:#ddd6fe;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#cinemaRoomPasswordPrompt .crpp-help{margin:10px auto 15px;max-width:290px;font-size:11px;line-height:1.55;color:#aeb8d1;}
-#cinemaRoomPasswordPrompt .crpp-input{width:100%;height:50px;box-sizing:border-box;border:1px solid rgba(255,255,255,.17);border-radius:15px;background:rgba(255,255,255,.07);color:#fff;outline:none;text-align:center;font-size:20px;font-weight:900;letter-spacing:7px;padding:8px 14px;}
-#cinemaRoomPasswordPrompt .crpp-input:focus{border-color:#a78bfa;box-shadow:0 0 0 3px rgba(167,139,250,.13);}
-#cinemaRoomPasswordPrompt .crpp-input::placeholder{color:#7f8aa4;letter-spacing:2px;font-size:13px;}
-#cinemaRoomPasswordPrompt .crpp-error{min-height:18px;margin:7px 2px 2px;color:#fca5a5;font-size:11px;font-weight:700;}
-#cinemaRoomPasswordPrompt .crpp-enter{width:100%;height:48px;border:0;border-radius:14px;background:linear-gradient(135deg,#8b5cf6,#ec4899);color:#fff;font-size:14px;font-weight:950;box-shadow:0 9px 24px rgba(139,92,246,.28);cursor:pointer;}
-#cinemaRoomPasswordPrompt .crpp-enter span{font-size:22px;vertical-align:-2px;margin-left:4px;}
-#cinemaRoomPasswordPrompt .crpp-cancel{margin-top:11px;color:#94a3b8;font-size:11px;font-weight:700;cursor:pointer;padding:4px;}
-@keyframes crppIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
-</style>
 </head>
 
 <body>
@@ -2333,17 +2314,27 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     m.style.cssText='display:none;position:fixed;inset:0;z-index:2147483647;background:radial-gradient(circle at 50% 0%,#1e293b 0,#07101d 38%,#030712 100%);color:#fff;overflow:hidden;font-family:Segoe UI,Arial,sans-serif;';
     m.innerHTML=`<div id="cinemaTopHeader" style="height:62px;display:flex;align-items:center;gap:9px;padding:8px 11px;background:linear-gradient(135deg,#111827,#312e81 58%,#7c2d12);box-sizing:border-box;position:relative;box-shadow:0 8px 28px rgba(0,0,0,.28);">
       <button type="button" onclick="cinemaLobbyBack()" aria-label="Back" style="width:42px;height:42px;border:1px solid rgba(255,255,255,.15);border-radius:14px;background:rgba(255,255,255,.12);color:#fff;font-size:25px;font-weight:900;">‹</button>
-      <div style="flex:1;min-width:0;"><div id="cinemaHeaderTitle" style="font-size:16px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🎉 पार्टी रूम</div></div>
+      <div style="flex:1;min-width:0;"><div id="cinemaHeaderTitle" style="font-size:16px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🎉 पार्टी रूम</div></div><div id="cinemaLobbyViewerCount" aria-label="रूम में लोग" style="position:absolute;right:9px;top:6px;min-width:28px;height:20px;padding:0 6px;display:flex;align-items:center;justify-content:center;gap:3px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(0,0,0,.22);font-size:9px;line-height:1;font-weight:900;opacity:.9;">👁 0</div>
+      <div style="width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.12);font-size:18px;">🎙️</div>
     </div>
     <div id="cinemaLobby" style="height:calc(100% - 62px);overflow:auto;padding:14px;box-sizing:border-box;">
       <div style="max-width:720px;margin:0 auto;">
+        <div id="cinemaMyRoomCard" style="display:none;background:linear-gradient(145deg,#111827,#0b1220);border:1px solid #26354d;border-radius:22px;padding:15px;margin-bottom:12px;box-shadow:0 14px 40px rgba(0,0,0,.2);">
+          <div style="font-size:14px;font-weight:900;margin-bottom:10px;">🏠 आपका पार्टी रूम</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div id="cinemaMyRoomPhoto" style="flex:none;width:76px;height:76px;border-radius:20px;background:#070d18 center/cover no-repeat;display:grid;place-items:center;font-size:30px;font-weight:900;color:#fff;"></div>
+            <div style="flex:1;min-width:0;"><div id="cinemaMyRoomTitle" style="font-weight:900;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div><div id="cinemaMyRoomName" style="font-size:11px;color:#94a3b8;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div></div>
+          </div>
+          <button type="button" id="cinemaMyRoomBtn" style="width:100%;margin-top:12px;border:0;border-radius:14px;padding:13px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;font-weight:900;font-size:15px;cursor:pointer;">🚪 अपने रूम में जाएँ</button>
+          <div style="font-size:11px;color:#94a3b8;margin-top:8px;">डीपी और टाइटल बदलने के लिए रूम के अंदर ⋮⋮ दबाइए।</div>
+        </div>
         <div id="cinemaCreateCard" style="position:relative;background:linear-gradient(145deg,#141b2e,#0b1220);border:1px solid #33415c;border-radius:24px;padding:20px 18px;margin-bottom:12px;box-shadow:0 16px 44px rgba(0,0,0,.28);overflow:hidden;">
           <div style="position:absolute;inset:0;background:radial-gradient(circle at 88% -10%,rgba(249,115,22,.20),transparent 55%);pointer-events:none;"></div>
           <div style="position:relative;display:flex;align-items:center;gap:11px;margin-bottom:4px;">
             <div style="flex:none;width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#fb923c,#ea580c);display:grid;place-items:center;font-size:20px;box-shadow:0 6px 16px rgba(234,88,12,.35);">🎉</div>
             <div style="font-size:19px;font-weight:900;">अपना पार्टी रूम बनाइए</div>
           </div>
-          <div style="position:relative;font-size:12px;color:#aebbd0;margin:2px 0 16px;">रूम का नाम, फोटो और चाहें तो पासवर्ड लगाकर रूम बनाइए।</div>
+          <div style="position:relative;font-size:12px;color:#aebbd0;margin:2px 0 16px;">नीचे Public seating, ऊपर Host और live chat के साथ बातचीत वाला रूम।</div>
           <input id="cinemaNewRoomName" maxlength="40" placeholder="रूम का नाम" style="position:relative;width:100%;box-sizing:border-box;padding:14px 15px;border-radius:14px;border:1px solid #33415c;background:#0a111f;color:#fff;font-size:14px;margin-bottom:12px;outline:none;">
           <div style="position:relative;display:flex;align-items:center;gap:12px;margin:2px 0 14px;"><div id="cinemaNewRoomPhotoPrev" style="flex:none;width:64px;height:64px;border-radius:50%;background:#0a111f center/cover no-repeat;border:2px dashed #46557a;display:grid;place-items:center;font-size:24px;">📷</div><button type="button" onclick="document.getElementById('cinemaNewRoomPhotoFile').click()" style="flex:1;border:1px solid #33415c;border-radius:14px;padding:13px;background:#111b2e;color:#fff;font-weight:800;font-size:13px;cursor:pointer;">🖼 रूम की फ़ोटो चुनें</button><input id="cinemaNewRoomPhotoFile" type="file" accept="image/*" style="display:none" onchange="cinemaPickRoomPhoto(this)"></div>
           <label style="position:relative;display:flex;align-items:center;gap:9px;margin:4px 0 10px;color:#fff;font-weight:800;font-size:13px;cursor:pointer;"><input id="cinemaUsePassword" type="checkbox" onchange="cinemaPasswordToggle(this.checked)" style="width:18px;height:18px;accent-color:#f97316;"> 🔐 इस रूम पर पासवर्ड लगाना है</label>
@@ -2351,25 +2342,15 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
           <button type="button" onclick="cinemaCreateRoom()" style="position:relative;width:100%;border:0;border-radius:15px;padding:14px;background:linear-gradient(135deg,#fb923c,#ea580c);color:#fff;font-weight:900;font-size:15px;box-shadow:0 10px 24px rgba(234,88,12,.32);letter-spacing:.2px;">➕ नया रूम बनाएं</button>
           <div id="cinemaCreateMsg" style="position:relative;font-size:12px;margin-top:8px;color:#fca5a5;"></div>
         </div>
-
-        <div id="cinemaMyRoomCard" style="display:none;position:relative;background:linear-gradient(145deg,#141b2e,#0b1220);border:1px solid #33415c;border-radius:22px;padding:16px;margin-bottom:14px;box-shadow:0 12px 34px rgba(0,0,0,.24);">
-          <div style="display:flex;align-items:center;gap:12px;">
-            <div id="cinemaMyRoomPhoto" style="width:58px;height:58px;flex:none;border-radius:16px;background:#312e81 center/cover no-repeat;display:grid;place-items:center;color:#fff;font-size:25px;font-weight:900;overflow:hidden;">🎉</div>
-            <div style="min-width:0;flex:1;"><div style="font-size:12px;color:#aebbd0;">आपका पार्टी रूम</div><div id="cinemaMyRoomTitle" style="font-size:17px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div><div id="cinemaMyRoomName" style="font-size:11px;color:#94a3b8;margin-top:2px;"></div></div>
-            <button id="cinemaMyRoomBtn" type="button" style="border:0;border-radius:12px;padding:10px 13px;background:linear-gradient(135deg,#fb923c,#ea580c);color:#fff;font-weight:900;white-space:nowrap;">खोलें</button>
+        <div style="background:linear-gradient(145deg,#111827,#0b1220);border:1px solid #26354d;border-radius:22px;padding:16px;">
+          <div style="font-size:18px;font-weight:900;margin-bottom:10px;">🎉 उपलब्ध पार्टी रूम</div>
+          <div id="cinemaLobbyModeTabs" style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:0 0 12px;">
+            <button type="button" id="cinemaLobbyChatTab" onclick="cinemaSetLobbyRoomMode('chat')" style="padding:11px 8px;border-radius:13px;border:1px solid #22c55e;background:linear-gradient(145deg,#14532d,#166534);color:#fff;font-weight:900;cursor:pointer;">💬 Chatting Rooms</button>
+            <button type="button" id="cinemaLobbyGameTab" onclick="cinemaSetLobbyRoomMode('gaming')" style="padding:11px 8px;border-radius:13px;border:1px solid #7c3aed;background:#241044;color:#fff;font-weight:900;cursor:pointer;">🎮 Gaming Rooms</button>
           </div>
-        </div>
-
-        <div id="cinemaAvailableRooms" style="margin-top:4px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 2px 10px;">
-            <div><div style="font-size:18px;font-weight:900;">उपलब्ध Party Room</div><div id="cinemaLobbyModeHint" style="font-size:11px;color:#94a3b8;margin-top:3px;">💬 अभी Chatting Rooms दिख रहे हैं।</div></div>
-            <button type="button" onclick="cinemaLoadRooms()" aria-label="Refresh rooms" style="width:38px;height:38px;border:1px solid #33415c;border-radius:12px;background:#111b2e;color:#fff;font-size:17px;">↻</button>
-          </div>
-          <div style="display:flex;gap:8px;margin-bottom:12px;">
-            <button id="cinemaLobbyChatTab" type="button" onclick="cinemaSetLobbyRoomMode('chat')" style="flex:1;border:1px solid #22c55e;border-radius:12px;padding:10px;background:linear-gradient(145deg,#14532d,#166534);color:#fff;font-weight:900;">💬 Chatting</button>
-            <button id="cinemaLobbyGameTab" type="button" onclick="cinemaSetLobbyRoomMode('gaming')" style="flex:1;border:1px solid #7c3aed;border-radius:12px;padding:10px;background:#241044;color:#fff;font-weight:900;">🎮 Gaming</button>
-          </div>
-          <div id="cinemaRoomList" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;"><div style="grid-column:1/-1;padding:22px 14px;text-align:center;color:#94a3b8;">रूम लोड हो रहे हैं…</div></div>
+          <div id="cinemaLobbyModeHint" style="font-size:11px;color:#94a3b8;margin:-3px 0 10px;">💬 अभी Chatting Rooms दिख रहे हैं।</div>
+          <div id="cinemaRoomList" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 12px;color:#dbe4ef;"><div style="grid-column:1/-1;">रूम लोड हो रहे हैं…</div></div>
+          <button type="button" onclick="cinemaLoadRooms()" style="margin-top:12px;width:100%;border:1px solid #334155;border-radius:12px;padding:10px;background:#0b1220;color:#fff;font-weight:800;">🔄 रूम Refresh करें</button>
         </div>
       </div>
     </div>
@@ -2520,6 +2501,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <button type="button" class="prd-gift" onclick="togglePartyRoomGiftTray()" aria-label="Gifts">🎁</button>
             <button type="button" class="prd-youtube" id="partyRoomYouTubeBtn" onclick="if(window.openPartyRoomYouTube)window.openPartyRoomYouTube();return false;" aria-label="YouTube" title="YouTube">▶️<span class="yt-mini-label">YT</span><span id="partyRoomYoutubeBadge" class="prd-badge">0</span></button>
             <button type="button" class="prd-mic" id="partyRoomMuteDockBtn" onclick="cinemaToggleMute()" aria-label="Mute audio">🎙️</button>
+            <button type="button" id="partyRoomPasswordDockBtn" onclick="window.openPartyRoomPasswordPanel&&window.openPartyRoomPasswordPanel()" aria-label="Room password" title="Room Password">🔐</button>
             <button type="button" onclick="openPartyRoomSettings()" aria-label="More">⋮⋮</button>
           </div>
         </div>
@@ -2794,6 +2776,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     const side=document.getElementById('partyRoomSideControls'); if(side) side.style.display='none';
     try{ prApplyRoomMeta(d); }catch(e){}
     const sideMute=document.getElementById('partyRoomMuteSideBtn'); if(sideMute) sideMute.textContent=(typeof cinemaMuted!=='undefined'&&cinemaMuted)?'🔊':'🔇';
+    const passDock=document.getElementById('partyRoomPasswordDockBtn'); if(passDock){ const host=!!cinemaIsHost; const locked=!!(d?.passwordProtected||d?.passwordHash); passDock.style.display=host?'inline-flex':'none'; passDock.textContent=locked?'🔒':'🔐'; passDock.title=locked?'रूम पासवर्ड चालू — बदलें/हटाएँ':'रूम पासवर्ड लगाएँ'; passDock.setAttribute('aria-label',locked?'रूम पासवर्ड चालू':'रूम पासवर्ड लगाएँ'); }
   }
   function cinemaStartPresence(){
     if(!currentUserKey || !cinemaRoomId) return;
@@ -3147,42 +3130,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       }).join('');
     }catch(e){box.innerHTML='<div style="grid-column:1/-1;color:#fca5a5;">रूम लोड नहीं हो पाए।</div>';}
   }
-  function cinemaAskRoomPassword(roomName,roomPhoto){
-    return new Promise(function(resolve){
-      var old=document.getElementById('cinemaRoomPasswordPrompt'); if(old) old.remove();
-      var safeName=cinemaEsc(roomName||'पार्टी रूम');
-      var safePhoto=/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/\=]+$/.test(String(roomPhoto||'')) ? String(roomPhoto) : '';
-      var o=document.createElement('div'); o.id='cinemaRoomPasswordPrompt';
-      o.innerHTML='<div class="crpp-backdrop"></div>'+
-        '<div class="crpp-card" role="dialog" aria-modal="true" aria-label="रूम पासवर्ड">'+
-          '<button type="button" class="crpp-close" aria-label="बंद करें">×</button>'+
-          '<div class="crpp-lock">🔐</div>'+
-          '<div class="crpp-photo" '+(safePhoto?'style="background-image:url('+safePhoto+')"':'')+'>'+(!safePhoto?'🎉':'')+'</div>'+
-          '<div class="crpp-title">पासवर्ड डालें</div>'+
-          '<div class="crpp-room">'+safeName+'</div>'+
-          '<div class="crpp-help">यह Party Room पासवर्ड से सुरक्षित है। अंदर जाने के लिए 4 या 6 अंकों का पासवर्ड डालें।</div>'+
-          '<input class="crpp-input" id="crppInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="4 या 6 अंक">'+
-          '<div class="crpp-error" id="crppError"></div>'+
-          '<button type="button" class="crpp-enter" id="crppEnter">रूम में जाएँ <span>›</span></button>'+
-          '<div class="crpp-cancel">बाहर रहें</div>'+
-        '</div>';
-      document.body.appendChild(o);
-      var inp=o.querySelector('#crppInput'), err=o.querySelector('#crppError');
-      var done=false;
-      function finish(v){ if(done)return; done=true; try{o.remove();}catch(e){} resolve(v); }
-      o.querySelector('.crpp-close').onclick=function(){finish(null);};
-      o.querySelector('.crpp-cancel').onclick=function(){finish(null);};
-      o.querySelector('.crpp-backdrop').onclick=function(){finish(null);};
-      inp.addEventListener('input',function(){this.value=String(this.value||'').replace(/\D/g,'').slice(0,6); if(err)err.textContent='';});
-      o.querySelector('#crppEnter').onclick=function(){
-        var v=String(inp.value||'').replace(/\D/g,'');
-        if(v.length!==4&&v.length!==6){if(err)err.textContent='कृपया 4 या 6 अंकों का पासवर्ड डालें।'; inp.focus(); return;}
-        finish(v);
-      };
-      inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();o.querySelector('#crppEnter').click();}else if(e.key==='Escape'){finish(null);}});
-      setTimeout(function(){try{inp.focus();}catch(e){}},120);
-    });
-  }
   async function cinemaJoinRoom(id,name){
     if(!db)return;
     try{
@@ -3191,12 +3138,9 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       if(Array.isArray(d.blockedUsers) && d.blockedUsers.map(String).includes(String(currentUserKey||'')) && String(d.ownerKey||d.hostKey||'')!==String(currentUserKey||'')){ alert('⛔ होस्ट ने आपको इस रूम से ब्लॉक किया है।'); return; }
       const locked=!!(d.passwordProtected||d.passwordHash);
       if(locked){
-        const pass=await cinemaAskRoomPassword(d.roomName||name,d.roomPhoto||'');
-        if(pass===null)return;
+        const pass=prompt('🔒 '+(d.roomName||name)+' का पासवर्ड डालें:'); if(pass===null)return;
         const hash=await cinemaHashPassword(pass);
-        if(hash!==String(d.passwordHash||'')){
-          return;
-        }
+        if(hash!==String(d.passwordHash||'')){alert('❌ पासवर्ड गलत है।');return;}
       }
       await cinemaEnterRoom(id,d.roomName||name,d.ownerKey===currentUserKey);
     }catch(e){alert('रूम में प्रवेश नहीं हो पाया।');}
@@ -6303,29 +6247,10 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
   }
 
   /* ---------- actions ---------- */
-  window.pkHomeJoin=async function(id,name){
+  window.pkHomeJoin=function(id,name){
     window.__pkFromHome=true;
-    try{
-      if(!db){return;}
-      const doc=await db.collection('cinemaRooms').doc(String(id)).get();
-      if(!doc.exists){try{window.pkRoomToast&&window.pkRoomToast('रूम उपलब्ध नहीं है।');}catch(e){} return;}
-      const d=doc.data()||{};
-      if(Array.isArray(d.blockedUsers) && d.blockedUsers.map(String).includes(String(currentUserKey||'')) && String(d.ownerKey||d.hostKey||'')!==String(currentUserKey||'')){
-        try{window.pkRoomToast?window.pkRoomToast('⛔ होस्ट ने आपको इस रूम से ब्लॉक किया है।'):alert('⛔ होस्ट ने आपको इस रूम से ब्लॉक किया है।');}catch(e){}
-        return;
-      }
-      const locked=!!(d.passwordProtected||d.passwordHash);
-      if(locked){
-        const pass=await cinemaAskRoomPassword(d.roomName||name,d.roomPhoto||'');
-        if(pass===null)return;
-        const hash=await cinemaHashPassword(pass);
-        if(hash!==String(d.passwordHash||'')) return;
-      }
-      try{pkOpenParty();}catch(e){}
-      await cinemaEnterRoom(String(id),d.roomName||name,d.ownerKey===currentUserKey);
-    }catch(e){
-      try{window.pkRoomToast?window.pkRoomToast('रूम में प्रवेश नहीं हो पाया।'):alert('रूम में प्रवेश नहीं हो पाया।');}catch(_e){}
-    }
+    try{pkOpenParty();}catch(e){}
+    try{cinemaJoinRoom(id,name);}catch(e){}
   };
   window.pkHomeMyRoom=async function(){
     if(!db||!currentUserKey)return;
@@ -9366,7 +9291,7 @@ input,textarea,select{font-size:16px}
   #partyRoomBottomDock .prd-youtube{width:38px!important;height:38px!important;}
   #partyRoomBottomDock .prd-gift{width:44px!important;height:44px!important;}
   #partyRoomBottomDock .prd-mic{width:38px!important;height:38px!important;}
-#partyRoomBottomDock #partyRoomPasswordDockBtn{display:none!important;}
+#partyRoomBottomDock #partyRoomPasswordDockBtn{width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;border-radius:11px!important;font-size:16px!important;padding:0!important;display:inline-flex;align-items:center;justify-content:center;}
 
 }
 
