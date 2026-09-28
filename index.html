@@ -2338,7 +2338,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
           <input id="cinemaNewRoomName" maxlength="40" placeholder="रूम का नाम" style="position:relative;width:100%;box-sizing:border-box;padding:14px 15px;border-radius:14px;border:1px solid #33415c;background:#0a111f;color:#fff;font-size:14px;margin-bottom:12px;outline:none;">
           <div style="position:relative;display:flex;align-items:center;gap:12px;margin:2px 0 14px;"><div id="cinemaNewRoomPhotoPrev" style="flex:none;width:64px;height:64px;border-radius:50%;background:#0a111f center/cover no-repeat;border:2px dashed #46557a;display:grid;place-items:center;font-size:24px;">📷</div><button type="button" onclick="document.getElementById('cinemaNewRoomPhotoFile').click()" style="flex:1;border:1px solid #33415c;border-radius:14px;padding:13px;background:#111b2e;color:#fff;font-weight:800;font-size:13px;cursor:pointer;">🖼 रूम की फ़ोटो चुनें</button><input id="cinemaNewRoomPhotoFile" type="file" accept="image/*" style="display:none" onchange="cinemaPickRoomPhoto(this)"></div>
           <label style="position:relative;display:flex;align-items:center;gap:9px;margin:4px 0 10px;color:#fff;font-weight:800;font-size:13px;cursor:pointer;"><input id="cinemaUsePassword" type="checkbox" onchange="cinemaPasswordToggle(this.checked)" style="width:18px;height:18px;accent-color:#f97316;"> 🔐 इस रूम पर पासवर्ड लगाना है</label>
-          <input id="cinemaNewRoomPass" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="पासवर्ड (4 या 6 अंक)" disabled style="position:relative;width:100%;box-sizing:border-box;padding:14px 15px;border-radius:14px;border:1px solid #33415c;background:#0a111f;color:#fff;font-size:14px;margin-bottom:14px;opacity:.6;outline:none;">
+          <input id="cinemaNewRoomPass" type="password" maxlength="40" placeholder="पासवर्ड (कम से कम 4 अक्षर)" disabled style="position:relative;width:100%;box-sizing:border-box;padding:14px 15px;border-radius:14px;border:1px solid #33415c;background:#0a111f;color:#fff;font-size:14px;margin-bottom:14px;opacity:.6;outline:none;">
           <button type="button" onclick="cinemaCreateRoom()" style="position:relative;width:100%;border:0;border-radius:15px;padding:14px;background:linear-gradient(135deg,#fb923c,#ea580c);color:#fff;font-weight:900;font-size:15px;box-shadow:0 10px 24px rgba(234,88,12,.32);letter-spacing:.2px;">➕ नया रूम बनाएं</button>
           <div id="cinemaCreateMsg" style="position:relative;font-size:12px;margin-top:8px;color:#fca5a5;"></div>
         </div>
@@ -2501,7 +2501,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <button type="button" class="prd-gift" onclick="togglePartyRoomGiftTray()" aria-label="Gifts">🎁</button>
             <button type="button" class="prd-youtube" id="partyRoomYouTubeBtn" onclick="if(window.openPartyRoomYouTube)window.openPartyRoomYouTube();return false;" aria-label="YouTube" title="YouTube">▶️<span class="yt-mini-label">YT</span><span id="partyRoomYoutubeBadge" class="prd-badge">0</span></button>
             <button type="button" class="prd-mic" id="partyRoomMuteDockBtn" onclick="cinemaToggleMute()" aria-label="Mute audio">🎙️</button>
-            <button type="button" id="partyRoomPasswordDockBtn" onclick="window.openPartyRoomPasswordPanel&&window.openPartyRoomPasswordPanel()" aria-label="Room password" title="Room Password">🔐</button>
             <button type="button" onclick="openPartyRoomSettings()" aria-label="More">⋮⋮</button>
           </div>
         </div>
@@ -2688,8 +2687,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   function cinemaApplyPartyBackground(modal,key,image){
     if(!modal) return;
     modal.style.backgroundImage=image ? 'url("'+String(image).replace(/"/g,'&quot;')+'")' : (PARTY_BG[key]||PARTY_BG.midnight);
-    modal.style.backgroundSize='auto auto';
-    modal.style.backgroundColor='#000';
+    modal.style.backgroundSize='cover';
     modal.style.backgroundPosition='center center';
     modal.style.backgroundRepeat='no-repeat';
   }
@@ -2776,7 +2774,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     const side=document.getElementById('partyRoomSideControls'); if(side) side.style.display='none';
     try{ prApplyRoomMeta(d); }catch(e){}
     const sideMute=document.getElementById('partyRoomMuteSideBtn'); if(sideMute) sideMute.textContent=(typeof cinemaMuted!=='undefined'&&cinemaMuted)?'🔊':'🔇';
-    const passDock=document.getElementById('partyRoomPasswordDockBtn'); if(passDock){ const host=!!cinemaIsHost; const locked=!!(d?.passwordProtected||d?.passwordHash); passDock.style.display=host?'inline-flex':'none'; passDock.textContent=locked?'🔒':'🔐'; passDock.title=locked?'रूम पासवर्ड चालू — बदलें/हटाएँ':'रूम पासवर्ड लगाएँ'; passDock.setAttribute('aria-label',locked?'रूम पासवर्ड चालू':'रूम पासवर्ड लगाएँ'); }
   }
   function cinemaStartPresence(){
     if(!currentUserKey || !cinemaRoomId) return;
@@ -3061,10 +3058,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     input.style.opacity=on?'1':'.6';
     if(!on) input.value='';
   }
-  if(!window.__cinemaNewRoomPassNumeric){
-    window.__cinemaNewRoomPassNumeric=true;
-    document.addEventListener('input',function(e){if(e.target&&e.target.id==='cinemaNewRoomPass')e.target.value=String(e.target.value||'').replace(/\D/g,'').slice(0,6);});
-  }
   async function cinemaCreateRoom(){
     if(window.__myRoomId){ alert('आपका रूम पहले से बना हुआ है, उसी में जाइए।'); return; }
     const name=(document.getElementById('cinemaNewRoomName')?.value||'').trim();
@@ -3073,7 +3066,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     const msg=document.getElementById('cinemaCreateMsg');
     if(!name){ if(msg)msg.textContent='रूम का नाम लिखें।'; return; }
     if(!window.__newRoomPhoto){ if(msg)msg.textContent='रूम की फ़ोटो चुनें।'; return; }
-    if(usePass && pass.length!==4 && pass.length!==6){ if(msg)msg.textContent='पासवर्ड ठीक 4 या 6 अंकों का रखें।'; return; }
+    if(usePass && pass.length<4){ if(msg)msg.textContent='पासवर्ड कम से कम 4 अक्षर का रखें।'; return; }
     if(!db){ if(msg)msg.textContent='Firebase उपलब्ध नहीं है।'; return; }
     try{
       const id=await cinemaRandomId();
@@ -5119,17 +5112,7 @@ setInterval(function(){try{
     +'#prDpEdit .pde-sw button{flex:1 1 0;min-width:0;height:46px;padding:0;border-radius:12px;border:2px solid transparent;color:#fff;font-size:10px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.8);display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px}'
     +'#prDpEdit .pde-sw button.on{border-color:#22c55e}'
     +'#prDpEdit .pde-gal{width:100%;margin-top:10px;background:#f0eaf9;color:#4a148c;flex:none}'
-    +'#prDpEdit .pde-bgh{font-size:11px;color:#8a7fa3;margin-top:6px}'
-    +'#prDpEdit .pde-pass{margin-top:12px;padding:11px;border-radius:14px;background:#f7f3ff;border:1px solid #e3d8f5;text-align:left}'
-    +'#prDpEdit .pde-pass-title{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:900;color:#4a148c}'
-    +'#prDpEdit .pde-pass-status{font-size:10px;font-weight:900;padding:4px 7px;border-radius:999px;background:#fee2e2;color:#b91c1c;white-space:nowrap}'
-    +'#prDpEdit .pde-pass-status.on{background:#dcfce7;color:#15803d}'
-    +'#prDpEdit .pde-pass-row{display:flex;gap:7px;margin-top:8px}'
-    +'#prDpEdit .pde-pass-row input{flex:1;min-width:0;padding:10px 11px;border:1.5px solid #ddd2ef;border-radius:11px;font-size:14px;letter-spacing:3px;text-align:center;outline:none;background:#fff;color:#312e49;box-sizing:border-box}'
-    +'#prDpEdit .pde-pass-row button{flex:0 0 auto;padding:10px 11px;border-radius:11px;font-size:11px;font-weight:900}'
-    +'#prDpEdit .pde-pass-set{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff}'
-    +'#prDpEdit .pde-pass-remove{background:#fff;color:#b91c1c;border:1px solid #fecaca}'
-    +'#prDpEdit .pde-pass-help{font-size:10px;color:#8a7fa3;margin-top:6px;line-height:1.35}';
+    +'#prDpEdit .pde-bgh{font-size:11px;color:#8a7fa3;margin-top:6px}';
     document.head.appendChild(st);
 
     // keep header name in sync for everyone in the room when the host renames
@@ -5154,30 +5137,12 @@ setInterval(function(){try{
         +'<div class="pde-bgt">🖼️ रूम की बैकग्राउंड (थीम)</div><div class="pde-sw" id="pdeSw"></div>'
         +'<button type="button" class="pde-gal" id="pdeGal">📷 गैलरी से फोटो लगाएँ</button><div class="pde-bgh">बैकग्राउंड चुनते ही रूम में सबको दिखने लगती है</div>'
         +'<input type="file" id="pdeBgFile" accept="image/*" style="display:none">'
-        +'<div class="pde-pass"><div class="pde-pass-title"><span>🔐 रूम पासवर्ड</span><span class="pde-pass-status" id="pdePassStatus">बंद</span></div>'
-        +'<div class="pde-pass-row"><input id="pdePassInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="4 या 6 अंक"><button type="button" class="pde-pass-set" id="pdePassSet">लगाएँ</button><button type="button" class="pde-pass-remove" id="pdePassRemove">हटाएँ</button></div>'
-        +'<div class="pde-pass-help">पासवर्ड केवल 4 या 6 अंकों का होगा। लगने के बाद रूम में आने वाले लोगों से पासवर्ड माँगा जाएगा।</div></div>'
         +'<div class="pde-msg" id="pdeMsg"></div>'
         +'<div class="pde-row"><button type="button" class="pde-cancel">रद्द करें</button><button type="button" class="pde-save">सेव करें</button></div>'
         +'<input type="file" id="pdeFile" accept="image/*" style="display:none"></div>';
       document.body.appendChild(o);
       var ph=$('pdePh'),nameI=$('pdeName'),msg=$('pdeMsg'),file=$('pdeFile');
-      var passInput=$('pdePassInput'), passSet=$('pdePassSet'), passRemove=$('pdePassRemove'), passStatus=$('pdePassStatus');
       nameI.value=cinemaRoomName||'';
-      async function refreshRoomPasswordUI(){
-        if(!passStatus || !db || !cinemaRoomId) return;
-        try{
-          var snap=await db.collection('cinemaRooms').doc(cinemaRoomId).get();
-          var d=snap.exists?(snap.data()||{}):{};
-          var locked=!!(d.passwordProtected||d.passwordHash);
-          passStatus.textContent=locked?'🔒 चालू':'बंद';
-          passStatus.classList.toggle('on',locked);
-          if(passInput) passInput.value='';
-          if(passRemove) passRemove.style.display=locked?'block':'none';
-          if(passSet) passSet.textContent=locked?'बदलें':'लगाएँ';
-        }catch(e){}
-      }
-      refreshRoomPasswordUI();
       if(PH.test(window.__prRoomPhoto||'')) ph.style.backgroundImage='url('+window.__prRoomPhoto+')';
       else ph.textContent=Array.from(String(cinemaRoomName||'🎉'))[0]||'🎉';
       ph.onclick=function(){ file.click(); };
@@ -5201,37 +5166,6 @@ setInterval(function(){try{
           bgf.value='';
         };
       }catch(e){}
-      if(passSet){
-        passSet.onclick=async function(){
-          if(!cinemaIsHost||!cinemaRoomId||!db) return;
-          var pass=String(passInput&&passInput.value||'').replace(/\D/g,'');
-          if(pass.length!==4 && pass.length!==6){ msg.style.color='#dc2626'; msg.textContent='पासवर्ड ठीक 4 या 6 अंकों का रखें।'; return; }
-          passSet.disabled=true;
-          try{
-            var hash=await cinemaHashPassword(pass);
-            await db.collection('cinemaRooms').doc(cinemaRoomId).set({passwordProtected:true,passwordHash:hash,updatedAt:Date.now()},{merge:true});
-            msg.style.color='#16a34a'; msg.textContent='✅ रूम पासवर्ड सेव हो गया।';
-            await refreshRoomPasswordUI();
-          }catch(e){ msg.style.color='#dc2626'; msg.textContent='पासवर्ड सेव नहीं हो पाया।'; }
-          finally{ passSet.disabled=false; }
-        };
-      }
-      if(passRemove){
-        passRemove.onclick=async function(){
-          if(!cinemaIsHost||!cinemaRoomId||!db) return;
-          if(!confirm('रूम का पासवर्ड हटाना है?')) return;
-          passRemove.disabled=true;
-          try{
-            await db.collection('cinemaRooms').doc(cinemaRoomId).set({passwordProtected:false,passwordHash:firebase.firestore.FieldValue.delete(),updatedAt:Date.now()},{merge:true});
-            msg.style.color='#16a34a'; msg.textContent='✅ रूम अब बिना पासवर्ड है।';
-            await refreshRoomPasswordUI();
-          }catch(e){ msg.style.color='#dc2626'; msg.textContent='पासवर्ड हटाया नहीं जा सका।'; }
-          finally{ passRemove.disabled=false; }
-        };
-      }
-      if(passInput){
-        passInput.addEventListener('input',function(){ this.value=this.value.replace(/\D/g,'').slice(0,6); });
-      }
       file.onchange=async function(){
         var f=file.files&&file.files[0]; if(!f) return;
         try{ newPhoto=await squarePhoto(f,320); ph.textContent=''; ph.style.backgroundImage='url('+newPhoto+')'; msg.textContent=''; }
@@ -5254,11 +5188,6 @@ setInterval(function(){try{
         }catch(e){ msg.textContent='सेव नहीं हो पाया, फिर कोशिश करें।'; }
       };
     }
-    window.openPartyRoomPasswordPanel=function(){
-      if(!cinemaRoomId) return;
-      if(!cinemaIsHost){ try{ (window.pkRoomToast||alert)('🔐 पासवर्ड केवल Host सेट या हटा सकता है।'); }catch(e){} return; }
-      openDlg();
-    };
     document.addEventListener('click',function(e){
       var a=e.target.closest&&e.target.closest('#prRoomAvatar');
       if(a&&cinemaIsHost){ e.stopPropagation(); openDlg(); }
@@ -7207,9 +7136,8 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
 #cinemaGharModal{
   background-repeat:no-repeat!important;
   background-position:center center!important;
-  background-size:auto auto!important;
-  background-color:#000!important;
-  background-attachment:scroll!important;
+  background-size:100% 100%!important;
+  background-attachment:fixed!important;
 }
 #cinemaRoomStage{background:transparent!important;}
 #prRoom{background:transparent!important;}
@@ -9291,8 +9219,6 @@ input,textarea,select{font-size:16px}
   #partyRoomBottomDock .prd-youtube{width:38px!important;height:38px!important;}
   #partyRoomBottomDock .prd-gift{width:44px!important;height:44px!important;}
   #partyRoomBottomDock .prd-mic{width:38px!important;height:38px!important;}
-#partyRoomBottomDock #partyRoomPasswordDockBtn{width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;border-radius:11px!important;font-size:16px!important;padding:0!important;display:inline-flex;align-items:center;justify-content:center;}
-
 }
 
 /* Keep the YouTube sheet above the Party Room dock and safe around the phone notch. */
