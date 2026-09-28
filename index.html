@@ -3290,7 +3290,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       }
       // अधिकतम 100 messages की छोटी सूची हर snapshot में बनती है। इससे
       // added/modified/removed और re-order होने पर कोई row गलत जगह नहीं अटकती।
-      el.innerHTML=''; el.appendChild(prNoticeRow());
+      el.innerHTML='';
       const frag=document.createDocumentFragment();
       docs.forEach(doc=>{ frag.appendChild(prChatRow(Object.assign({},doc.data()||{},{__docId:doc.id}))); });
       el.appendChild(frag); el.__ready=true;
@@ -11327,6 +11327,13 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   max-height:none!important;
   overflow-y:auto!important;
 }
+</style>
+<style id="partyRoomYoutubeCleanBackFix">
+/* YouTube Mode: chat area must not paint a dark box over the room background (looked like an empty page behind). */
+#prRoom.party-youtube-layout #cinemaChatPanel,
+#prRoom.party-youtube-layout #cinemaChatPanel #cinemaChatMessages{background:transparent!important;box-shadow:none!important;}
+/* 4-seat rooms (default) had an invisible box stretched down over the video; keep it exactly one seat row tall. */
+#prRoom.party-youtube-layout #cinemaSeats:not(.pr-two-seat-mode):not(.pr-six-seat-mode):not(.pr-eight-seat-mode):not(.pr-twelve-seat-mode){bottom:auto!important;height:44px!important;}
 </style>
 <script id="partyRoomYoutubeChatBelowVideoScript">
 (function(){
