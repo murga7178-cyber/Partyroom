@@ -507,6 +507,31 @@ html, body { overscroll-behavior-y: none; }
 #prTicker.pr-canedit{cursor:pointer;}
 #prTicker.pr-canedit .pr-edit{display:inline;}
 
+/* ===== Party Room shared browser ===== */
+#prBrowserBtn{margin-left:auto!important;display:inline-flex!important;align-items:center;justify-content:center;gap:5px;height:34px;min-width:40px;padding:0 10px!important;border:1px solid rgba(125,211,252,.45)!important;border-radius:999px!important;background:linear-gradient(135deg,rgba(14,116,144,.42),rgba(30,64,175,.38))!important;color:#fff!important;font-size:13px!important;font-weight:900!important;box-shadow:0 5px 16px rgba(8,47,73,.22),inset 0 0 0 1px rgba(255,255,255,.05);cursor:pointer;touch-action:manipulation;}
+#prBrowserBtn:active{transform:scale(.94);}
+#prBrowserBtn .pr-browser-label{font-size:10px;line-height:1;}
+#prBrowserOverlay{position:absolute;inset:0;z-index:5000;display:none;flex-direction:column;background:#050816;color:#fff;box-sizing:border-box;font-family:Segoe UI,Arial,sans-serif;}
+#prBrowserOverlay.open{display:flex;}
+#prBrowserTop{flex:0 0 auto;padding:8px 8px 7px;background:linear-gradient(135deg,#0f172a,#172554 60%,#312e81);border-bottom:1px solid rgba(255,255,255,.12);box-shadow:0 7px 24px rgba(0,0,0,.25);}
+#prBrowserTopRow{display:flex;align-items:center;gap:6px;}
+#prBrowserClose{flex:none;width:38px;height:38px;border:1px solid rgba(255,255,255,.16);border-radius:12px;background:rgba(255,255,255,.10);color:#fff;font-size:22px;font-weight:900;cursor:pointer;}
+#prBrowserUrl{min-width:0;flex:1;height:38px;padding:0 12px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(255,255,255,.10);color:#fff;outline:none;font-size:13px;box-sizing:border-box;}
+#prBrowserUrl::placeholder{color:rgba(255,255,255,.56);}
+#prBrowserGo{flex:none;height:38px;padding:0 13px;border:0;border-radius:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:900;font-size:12px;cursor:pointer;}
+#prBrowserHint{font-size:10px;color:#cbd5e1;margin:6px 2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#prBrowserFrameWrap{position:relative;flex:1;min-height:0;background:#fff;overflow:hidden;}
+#prBrowserFrame{display:block;width:100%;height:100%;border:0;background:#fff;}
+#prBrowserLoading{position:absolute;left:0;right:0;top:0;height:3px;background:rgba(148,163,184,.25);overflow:hidden;display:none;z-index:4;}
+#prBrowserLoading.show{display:block;}
+#prBrowserLoading::after{content:'';display:block;width:42%;height:100%;background:linear-gradient(90deg,#38bdf8,#6366f1,#22c55e);animation:prBrowserLoad 1s linear infinite;}
+@keyframes prBrowserLoad{from{transform:translateX(-120%)}to{transform:translateX(280%)}}
+#prBrowserBottom{flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:7px 8px calc(7px + env(safe-area-inset-bottom,0px));background:#0f172a;border-top:1px solid rgba(255,255,255,.10);}
+#prBrowserBottom button{flex:1;height:36px;border:1px solid rgba(255,255,255,.10);border-radius:11px;background:#172033;color:#fff;font-size:16px;font-weight:900;cursor:pointer;}
+#prBrowserBottom button:active{transform:scale(.95);}
+#prBrowserBottom button:disabled{opacity:.35;cursor:default;}
+@media(max-width:380px){#prBrowserGo{padding:0 10px;}#prBrowserUrl{font-size:12px;}#prBrowserBottom{gap:5px;}#prBrowserBottom button{font-size:15px;}}
+
 /* host seat */
 #prHostRow{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;margin-top:2px;}
 #prHostRow .hse-btn{margin-bottom:0;}
@@ -2361,6 +2386,26 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       </div>
     </div>
     <div id="cinemaRoomStage" style="display:none;height:calc(100% - 62px);overflow:hidden;box-sizing:border-box;background:transparent;">
+      <div id="prBrowserOverlay" aria-label="Party Room Browser">
+        <div id="prBrowserTop">
+          <div id="prBrowserTopRow">
+            <button type="button" id="prBrowserClose" onclick="prBrowserClose()" aria-label="Browser बंद करें">‹</button>
+            <input id="prBrowserUrl" type="text" inputmode="url" autocomplete="off" placeholder="Search या website URL…">
+            <button type="button" id="prBrowserGo" onclick="prBrowserGo()">Go</button>
+          </div>
+          <div id="prBrowserHint">🌐 Shared Browser · Host की browsing room में sync होगी</div>
+        </div>
+        <div id="prBrowserFrameWrap">
+          <div id="prBrowserLoading"></div>
+          <iframe id="prBrowserFrame" title="Party Room Browser" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-presentation" allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-read; clipboard-write" allowfullscreen></iframe>
+        </div>
+        <div id="prBrowserBottom">
+          <button type="button" id="prBrowserBack" onclick="prBrowserBack()" aria-label="Back">◀</button>
+          <button type="button" id="prBrowserForward" onclick="prBrowserForward()" aria-label="Forward">▶</button>
+          <button type="button" onclick="prBrowserReload()" aria-label="Refresh">⟳</button>
+          <button type="button" onclick="prBrowserHome()" aria-label="Home">🏠</button>
+        </div>
+      </div>
       <div id="partyGamingModePage" style="display:none;height:100%;overflow:auto;box-sizing:border-box;background:linear-gradient(180deg,#07111f,#111827);color:#fff;padding:18px;">
         <div style="max-width:720px;margin:0 auto;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
@@ -2395,7 +2440,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         </div>
         <div id="prSubRow">
           <button id="cinemaViewerBtn" type="button" onclick="openPartyRoomViewers()" aria-label="Active viewers">👁 <span id="cinemaViewerCount">0</span></button>
-          
+          <button id="prBrowserBtn" type="button" onclick="prBrowserOpen()" aria-label="Browser खोलें" title="Shared Browser">🌐 <span class="pr-browser-label">Browser</span></button>
         </div>
 
         <div id="prHostRow">
@@ -3237,6 +3282,84 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     }catch(e){}
     return '';
   }
+  /* ===== Party Room Shared Browser — isolated namespace to avoid collisions ===== */
+  let prBrowserUnsub=null;
+  let prBrowserOpenState=false;
+  let prBrowserCurrentUrl='https://www.google.com';
+  let prBrowserHistory=[];
+  let prBrowserHistoryIndex=-1;
+  let prBrowserLastSync=0;
+  let prBrowserApplyingRemote=false;
+  function prBrowserProcessInput(input){
+    input=String(input||'').trim();
+    if(!input) return 'https://www.google.com';
+    if(/^https?:\/\//i.test(input)) return input;
+    if(input.includes('.') && !input.includes(' ')) return 'https://'+input;
+    return 'https://www.google.com/search?q='+encodeURIComponent(input);
+  }
+  function prBrowserSetLoading(on){ const e=document.getElementById('prBrowserLoading'); if(e)e.classList.toggle('show',!!on); }
+  function prBrowserUpdateButtons(){
+    const b=document.getElementById('prBrowserBack'),f=document.getElementById('prBrowserForward');
+    if(b)b.disabled=prBrowserHistoryIndex<=0;
+    if(f)f.disabled=prBrowserHistoryIndex>=prBrowserHistory.length-1;
+  }
+  function prBrowserApplyUrl(url,push=true,broadcast=false){
+    if(!url)return;
+    url=String(url);
+    prBrowserCurrentUrl=url;
+    const frame=document.getElementById('prBrowserFrame'),input=document.getElementById('prBrowserUrl');
+    if(input)input.value=url;
+    if(push){
+      prBrowserHistory=prBrowserHistory.slice(0,prBrowserHistoryIndex+1);
+      prBrowserHistory.push(url);
+      prBrowserHistoryIndex=prBrowserHistory.length-1;
+    }
+    prBrowserUpdateButtons();
+    prBrowserSetLoading(true);
+    if(frame){
+      try{frame.src=url;}catch(e){}
+      clearTimeout(frame._prLoadTimer); frame._prLoadTimer=setTimeout(()=>prBrowserSetLoading(false),3500);
+    }
+    if(broadcast && !prBrowserApplyingRemote && cinemaRoomId && db && cinemaIsHost){
+      prBrowserLastSync=Date.now();
+      db.collection('cinemaRooms').doc(cinemaRoomId).collection('browser').doc('shared').set({url:url,by:String(currentUserKey||''),time:prBrowserLastSync},{merge:true}).catch(()=>{});
+    }
+  }
+  function prBrowserGo(){
+    if(!cinemaIsHost){ if(window.pkRoomToast)pkRoomToast('🌐 Browser Host के control में है।'); return; }
+    const input=document.getElementById('prBrowserUrl');
+    prBrowserApplyUrl(prBrowserProcessInput(input?input.value:''),true,true);
+  }
+  function prBrowserOpen(){
+    const overlay=document.getElementById('prBrowserOverlay'); if(!overlay)return;
+    prBrowserOpenState=true; overlay.classList.add('open');
+    const input=document.getElementById('prBrowserUrl'),hint=document.getElementById('prBrowserHint'),go=document.getElementById('prBrowserGo');
+    if(input)input.value=prBrowserCurrentUrl;
+    if(cinemaIsHost){ if(go)go.disabled=false; if(input){input.readOnly=false;input.placeholder='Search या website URL…';} if(hint)hint.textContent='🌐 Shared Browser · आपकी browsing room में sync होगी'; }
+    else { if(go)go.disabled=true; if(input){input.readOnly=true;input.placeholder='Host browsing control कर रहे हैं…';} if(hint)hint.textContent='🌐 Shared Browser · अभी Host की browsing दिखाई जा रही है'; }
+    prBrowserUpdateButtons();
+    if(!prBrowserHistory.length) prBrowserApplyUrl(prBrowserCurrentUrl,true,false);
+  }
+  function prBrowserClose(){ const overlay=document.getElementById('prBrowserOverlay'); if(overlay)overlay.classList.remove('open'); prBrowserOpenState=false; prBrowserSetLoading(false); }
+  function prBrowserBack(){ if(!cinemaIsHost)return; if(prBrowserHistoryIndex>0){prBrowserHistoryIndex--; prBrowserApplyUrl(prBrowserHistory[prBrowserHistoryIndex],false,true);} prBrowserUpdateButtons(); }
+  function prBrowserForward(){ if(!cinemaIsHost)return; if(prBrowserHistoryIndex<prBrowserHistory.length-1){prBrowserHistoryIndex++; prBrowserApplyUrl(prBrowserHistory[prBrowserHistoryIndex],false,true);} prBrowserUpdateButtons(); }
+  function prBrowserReload(){ if(!cinemaIsHost)return; prBrowserApplyUrl(prBrowserCurrentUrl,false,true); }
+  function prBrowserHome(){ if(!cinemaIsHost)return; prBrowserApplyUrl('https://www.google.com',true,true); }
+  function prBrowserStartSync(){
+    if(prBrowserUnsub){prBrowserUnsub();prBrowserUnsub=null;}
+    if(!db||!cinemaRoomId)return;
+    prBrowserUnsub=db.collection('cinemaRooms').doc(cinemaRoomId).collection('browser').doc('shared').onSnapshot(s=>{
+      if(!s.exists)return; const d=s.data()||{}, url=String(d.url||'').trim(), t=Number(d.time||0);
+      if(!url || t<=prBrowserLastSync || String(d.by||'')===String(currentUserKey||''))return;
+      prBrowserLastSync=t; prBrowserApplyingRemote=true;
+      try{prBrowserApplyUrl(url,true,false);}finally{setTimeout(()=>{prBrowserApplyingRemote=false;},0);}
+      if(prBrowserOpenState) prBrowserSetLoading(true);
+    },()=>{});
+  }
+  function prBrowserStopSync(){ if(prBrowserUnsub){prBrowserUnsub();prBrowserUnsub=null;} prBrowserOpenState=false; const o=document.getElementById('prBrowserOverlay'); if(o)o.classList.remove('open'); }
+  document.addEventListener('keydown',e=>{ const o=document.getElementById('prBrowserOverlay'); if(!o||!o.classList.contains('open'))return; if(e.key==='Enter' && document.activeElement?.id==='prBrowserUrl'){e.preventDefault();prBrowserGo();} if(e.key==='Escape'){e.preventDefault();prBrowserClose();} });
+  window.prBrowserOpen=prBrowserOpen; window.prBrowserClose=prBrowserClose; window.prBrowserGo=prBrowserGo; window.prBrowserBack=prBrowserBack; window.prBrowserForward=prBrowserForward; window.prBrowserReload=prBrowserReload; window.prBrowserHome=prBrowserHome;
+
   async function cinemaEnterRoom(id,name,isOwner){
     await cinemaLoadCurrentUserIdentity();
     cinemaRoomId=id; cinemaRoomName=name||'पार्टी रूम'; cinemaIsHost=!!isOwner; closePartyRoomSettings();
@@ -3250,6 +3373,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     cinemaRoomUnsub=db.collection('cinemaRooms').doc(cinemaRoomId).onSnapshot(s=>{ if(s.exists) cinemaApplyRoom(s.data()||{}); });
     cinemaStartChat();
     cinemaStartReactions();
+    prBrowserStartSync();
     try{ prStartGifts(); prAnnounceJoin(); }catch(e){}
   }
   let cinemaChatUnsub=null;
@@ -3458,6 +3582,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(cinemaPresenceUnsub){cinemaPresenceUnsub();cinemaPresenceUnsub=null;}
     if(cinemaChatUnsub){cinemaChatUnsub();cinemaChatUnsub=null;}
     if(cinemaReactionUnsub){cinemaReactionUnsub();cinemaReactionUnsub=null;}
+    prBrowserStopSync();
     if(cinemaRoomId && currentUserKey && db){
       db.collection('cinemaRooms').doc(cinemaRoomId).collection('viewers').doc(currentUserKey).delete().catch(()=>{});
       // यूज़र के room छोड़ते ही उसके अपने text comments हटें।
