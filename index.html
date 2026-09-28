@@ -3348,24 +3348,11 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         setTimeout(()=>{
           try{ if(db && ref && typeof ref.delete==='function') ref.delete().catch(()=>{}); }catch(e){}
         },10000);
-        /* Send के बाद Party Room में typing panel तुरंत पूरी तरह हटे; केवल छोटा 💬 icon रहे। */
-        const composer=document.getElementById('cinemaChatComposer');
-        const panel=document.getElementById('cinemaChatPanel');
-        if(composer){
-          composer.classList.remove('party-composer-open');
-          composer.style.display='none';
-          composer.style.visibility='hidden';
-          composer.style.opacity='0';
-          composer.style.pointerEvents='none';
-          composer.style.position='absolute';
-          composer.style.top='auto';
-          composer.style.bottom='68px';
-          composer.style.left='7px';
-          composer.style.right='7px';
-        }
-        if(panel) panel.classList.remove('chat-input-open');
-        const room=document.getElementById('prRoom'); if(room) room.classList.remove('party-keyboard-open');
-        try{input.blur();}catch(e){}
+        /* Send के बाद composer खुला और keyboard के साथ जुड़ा रहे।
+           सिर्फ भेजा हुआ text खाली हो; keyboard Back होने पर composer खुद बंद होगा। */
+        try{ input.value=''; }catch(e){}
+        const room=document.getElementById('prRoom'); if(room) room.classList.add('party-keyboard-open');
+        try{ input.focus({preventScroll:true}); }catch(e){}
         const dock=document.getElementById('partyRoomBottomDock');
         if(dock) dock.style.transform='';
       })
@@ -3769,6 +3756,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       composer.style.height='54px';
       composer.style.zIndex='2147483647';
       // Pin the composer directly to the visible viewport/keyboard edge.
+      partyRoomKeyboardOpeningUntil=Date.now()+900;
       partyRoomPositionComposerToKeyboard();
       const reactionTray=document.getElementById('partyRoomReactionTray'); if(reactionTray) reactionTray.style.display='none';
       const gift=document.getElementById('partyRoomGiftTray'); if(gift) gift.style.display='none';
@@ -7667,6 +7655,8 @@ body.pk-game-open #pkUniversalNav{display:none!important}
     paintModeMenu();
   }
   var wasKb=0;
+  var partyRoomKeyboardWasVisible=false;
+  var partyRoomKeyboardOpeningUntil=0;
   function closeComposer(){
     var c=$('cinemaChatComposer'), panel=$('cinemaChatPanel'), room=$('prRoom'), input=$('cinemaChatInput');
     if(!c) return;
@@ -7696,7 +7686,14 @@ body.pk-game-open #pkUniversalNav{display:none!important}
     var open=room.classList.contains('party-keyboard-open');
     var vv=window.visualViewport, vh=vv?vv.height:window.innerHeight;
     var kb=vv?Math.max(0,Math.round(window.innerHeight-(vv.height+vv.offsetTop))):0;
-    if(open && wasKb>120 && kb<60){ setTimeout(closeComposer,200); }
+    if(open && kb>60) partyRoomKeyboardWasVisible=true;
+    if(open && partyRoomKeyboardWasVisible && kb<60){
+      partyRoomKeyboardWasVisible=false;
+      setTimeout(function(){
+        var c=$('cinemaChatComposer');
+        if(c && c.classList.contains('party-composer-open')) closeComposer();
+      },80);
+    }
     wasKb=kb;
     if(room.classList.contains('party-gaming-layout')) return;
     var seatsBottom=seats.offsetTop+seats.offsetHeight, lift=0;
@@ -7713,24 +7710,37 @@ body.pk-game-open #pkUniversalNav{display:none!important}
   setInterval(tick,200);
   var vv=window.visualViewport; if(vv){ vv.addEventListener('resize',tick); vv.addEventListener('scroll',tick); }
   window.addEventListener('resize',tick);
-  // Android keyboard Back: when the visual viewport returns to full height, close the composer immediately.
+  // Android keyboard Back: composer is visible only while the keyboard is visible.
   (function installKeyboardCloseDetector(){
-    var v=window.visualViewport, lastH=v?v.height:window.innerHeight;
-    if(!v) return;
-    v.addEventListener('resize',function(){
-      var now=v.height, delta=now-lastH;
-      lastH=now;
-      if(delta>80){ setTimeout(function(){
-        var c=$('cinemaChatComposer'), inp=$('cinemaChatInput');
-        var kb=Math.max(0,Math.round(window.innerHeight-(v.height+v.offsetTop)));
-        if(kb<60 && c && c.classList.contains('party-composer-open') && document.activeElement!==inp) closeComposer();
-      },40); }
-    });
+    var v=window.visualViewport;
+    function check(){
+      var c=$('cinemaChatComposer');
+      if(!c || !c.classList.contains('party-composer-open')) return;
+      var vh=v?v.height:window.innerHeight;
+      var base=window.innerHeight;
+      var kb=Math.max(0,Math.round(base-(vh+(v?v.offsetTop:0))));
+      if(kb>60){ partyRoomKeyboardWasVisible=true; return; }
+      // Ignore the short moment while Android is opening the keyboard.
+      if(Date.now()<partyRoomKeyboardOpeningUntil) return;
+      if(partyRoomKeyboardWasVisible || document.activeElement!==$('cinemaChatInput')){
+        partyRoomKeyboardWasVisible=false;
+        closeComposer();
+      }
+    }
+    if(v) v.addEventListener('resize',function(){ setTimeout(check,60); setTimeout(check,220); });
+    window.addEventListener('resize',function(){ setTimeout(check,60); setTimeout(check,220); });
+    setInterval(check,250);
   })();
   // tapping outside / dismissing the keyboard closes the composer (like WhatsApp)
   document.addEventListener('focusout',function(e){
     if(e.target && e.target.id==='cinemaChatInput'){
-      setTimeout(function(){ if(document.activeElement!==$('cinemaChatInput')) closeComposer(); },200);
+      setTimeout(function(){
+        var c=$('cinemaChatComposer');
+        if(partyRoomKeyboardWasVisible && c && c.classList.contains('party-composer-open')){
+          var v=window.visualViewport, kb=v?Math.max(0,Math.round(window.innerHeight-(v.height+v.offsetTop))):0;
+          if(kb<60){ partyRoomKeyboardWasVisible=false; closeComposer(); }
+        }
+      },120);
     }
   });
 })();
