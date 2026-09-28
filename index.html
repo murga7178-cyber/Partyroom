@@ -1216,6 +1216,31 @@ html, body { overscroll-behavior-y: none; }
 #partyMusicPanel{z-index:2147483003!important;pointer-events:auto!important;}
 #pmPick{touch-action:manipulation!important;pointer-events:auto!important;}
 </style>
+<style id="partyMusicPlayingIndicator">
+/* Song playing: glowing pulse ring + small live equalizer bars on the music button. */
+#partyRoomBottomDock #partyMusicBtn{overflow:visible!important;}
+#partyRoomBottomDock #partyMusicBtn .pm-eq{display:none;position:absolute;right:3px;bottom:4px;height:13px;gap:2px;align-items:flex-end;pointer-events:none;z-index:5;}
+#partyRoomBottomDock #partyMusicBtn.music-playing .pm-eq{display:flex;}
+#partyRoomBottomDock #partyMusicBtn .pm-eq i{display:block;width:3px;height:100%;border-radius:2px;background:#fff;box-shadow:0 0 4px rgba(255,255,255,.8);transform-origin:bottom;transform:scaleY(.3);}
+#partyRoomBottomDock #partyMusicBtn.music-playing .pm-eq i{animation:pmEqBar .7s ease-in-out infinite;}
+#partyRoomBottomDock #partyMusicBtn.music-playing .pm-eq i:nth-child(1){animation-duration:.62s;animation-delay:-.1s;}
+#partyRoomBottomDock #partyMusicBtn.music-playing .pm-eq i:nth-child(2){animation-duration:.85s;animation-delay:-.4s;}
+#partyRoomBottomDock #partyMusicBtn.music-playing .pm-eq i:nth-child(3){animation-duration:.7s;animation-delay:-.25s;}
+#partyRoomBottomDock #partyMusicBtn.music-playing .pm-eq i:nth-child(4){animation-duration:.95s;animation-delay:-.55s;}
+@keyframes pmEqBar{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}
+#partyRoomBottomDock #partyMusicBtn.music-playing{
+  background:linear-gradient(145deg,#a855f7,#ec4899)!important;
+  border:1px solid rgba(255,255,255,.55)!important;
+  box-shadow:0 0 0 1px rgba(236,72,153,.25),0 0 12px rgba(217,70,239,.65)!important;
+}
+#partyRoomBottomDock #partyMusicBtn.music-playing::before{
+  content:"";position:absolute;inset:-4px;border-radius:inherit;border:2px solid rgba(217,70,239,.9);
+  box-shadow:0 0 8px rgba(217,70,239,.9);pointer-events:none;animation:pmRingPulse 1.1s ease-in-out infinite;
+}
+#partyRoomBottomDock #partyMusicBtn.music-playing::after{content:none!important;}
+@keyframes pmRingPulse{0%,100%{transform:scale(.96);opacity:.65}50%{transform:scale(1.06);opacity:1}}
+@media (prefers-reduced-motion:reduce){#partyRoomBottomDock #partyMusicBtn.music-playing .pm-eq i,#partyRoomBottomDock #partyMusicBtn.music-playing::before{animation:none!important}}
+</style>
 
 
 <style id="pkGamingRankingStyle">
@@ -2472,7 +2497,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     m.innerHTML=`<div id="cinemaTopHeader" style="height:62px;display:flex;align-items:center;gap:9px;padding:8px 11px;background:linear-gradient(135deg,#111827,#312e81 58%,#7c2d12);box-sizing:border-box;position:relative;box-shadow:0 8px 28px rgba(0,0,0,.28);">
       <button type="button" onclick="cinemaLobbyBack()" aria-label="Back" style="width:42px;height:42px;border:1px solid rgba(255,255,255,.15);border-radius:14px;background:rgba(255,255,255,.12);color:#fff;font-size:25px;font-weight:900;">‹</button>
       <div style="flex:1;min-width:0;"><div id="cinemaHeaderTitle" style="font-size:16px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🎉 पार्टी रूम</div></div><div id="cinemaLobbyViewerCount" aria-label="रूम में लोग" style="position:absolute;right:9px;top:6px;min-width:28px;height:20px;padding:0 6px;display:flex;align-items:center;justify-content:center;gap:3px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(0,0,0,.22);font-size:9px;line-height:1;font-weight:900;opacity:.9;">👁 0</div>
-      <div id="cinemaLobbyMicIcon" style="width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.12);font-size:18px;">🎙️</div>
     </div>
     <div id="cinemaLobby" style="height:calc(100% - 62px);overflow:auto;padding:14px;box-sizing:border-box;">
       <div style="max-width:720px;margin:0 auto;">
@@ -5193,6 +5217,7 @@ function toast(msg){ var t=$('pmToast'); if(!t) return; t.textContent=msg; t.sty
 
 function syncPartyMusicIndicator(){
   var b=$('partyMusicBtn'); if(!b) return;
+  if(!b.querySelector('.pm-eq')){ var eq=document.createElement('span'); eq.className='pm-eq'; eq.innerHTML='<i></i><i></i><i></i><i></i>'; b.appendChild(eq); }
   var H=S.host,L=S.lis;
   var hp=!!(H.audio&&!H.audio.paused&&!H.audio.ended&&H.sid);
   var lp=!!(L.audio&&!L.audio.paused&&!L.audio.ended&&L.sid);
@@ -12387,6 +12412,8 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 #partyRoomBottomDock .prd-mic-indicator.prd-speaking .party-mic-indicator-dot{display:block!important;}
 /* Only show the mic once the user has taken a seat. */
 #partyRoomBottomDock .prd-mic-indicator.prd-unseated{display:none!important;}
+/* Mic button hidden completely. */
+#partyRoomBottomDock #partyRoomMuteDockBtn,#partyRoomBottomDock .prd-mic,#partyRoomBottomDock .prd-mic-indicator{display:none!important;visibility:hidden!important;pointer-events:none!important;}
 </style>
 <script id="partyRoomMicSeatSpeakOnlyScript">
 (function(){
