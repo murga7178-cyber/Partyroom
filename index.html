@@ -2421,7 +2421,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <div id="ytRoomBlock" class="yt-room-block"></div>
             <div class="yt-room-hostbar"><label style="display:flex;align-items:center;gap:5px;background:rgba(15,23,42,.82);border-radius:10px;padding:5px 8px;color:#fff;font-size:11px;">🔊<input id="ytRoomVolume" type="range" min="0" max="100" value="80" style="width:82px;"></label><button type="button" id="ytRoomCloseVideoBtn" class="yt-room-close-video" onclick="window.ytRoomCloseShared&&window.ytRoomCloseShared()" title="सभी के लिए YouTube बंद करें">✕ बंद करें</button></div>
           </div>
-          <button type="button" id="ytRoomUiHideBtn" class="yt-room-ui-hide-btn" aria-label="YouTube Queue और controls" title="Queue और YouTube controls">Q <span id="ytRoomUiHideBadge"></span></button>
+          <button type="button" id="ytRoomUiHideBtn" class="yt-room-ui-hide-btn" aria-label="YouTube Queue और controls" title="Queue और YouTube controls" onclick="return PR_Q_TOGGLE(event);">Q <span id="ytRoomUiHideBadge"></span></button>
           <div id="ytRoomUrlBar" class="yt-room-url-bar">
             <div class="yt-room-input-label">YouTube URL यहाँ डालें</div>
             <div class="yt-room-url-row">
@@ -2433,9 +2433,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <div class="yt-room-input-hint">Host: Load • Viewer: Queue में जोड़ेगा</div>
           </div>
           <div class="yt-room-input-tools" id="ytRoomInputTools">
-            <div class="yt-room-tools-top">
-              <button type="button" id="ytRoomQueueBtn" onclick="window.ytRoomTogglePanel&&window.ytRoomTogglePanel('queue')">Q <span id="ytRoomQueueBadge">0</span></button>
-            </div>
+            
             <div id="ytRoomInlinePanel" class="yt-room-inline-panel" aria-live="polite">
               <div id="ytRoomInlineQueue" class="yt-room-inline-pane">
                 <div class="yt-room-inline-title">📺 Q में YouTube लिंक डालें</div>
@@ -11261,120 +11259,108 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 
 
 
-<style id="partyRoomQDefinitiveFix">
-/* Q CLOSED = only Q. Q OPEN = the whole control panel. */
-#prRoom.party-youtube-layout:not(.yt-q-open) #partyYoutubeStage > #ytRoomUrlBar,
-#prRoom.party-youtube-layout:not(.yt-q-open) #partyYoutubeStage > #ytRoomInputTools,
-#prRoom.party-youtube-layout:not(.yt-q-open) #ytRoomInlinePanel,
-#prRoom.party-youtube-layout:not(.yt-q-open) #ytRoomInlineQueue{
-  display:none!important;
-  visibility:hidden!important;
-  opacity:0!important;
-  pointer-events:none!important;
-}
-#prRoom.party-youtube-layout.yt-q-open #partyYoutubeStage > #ytRoomUrlBar,
-#prRoom.party-youtube-layout.yt-q-open #partyYoutubeStage > #ytRoomInputTools,
-#prRoom.party-youtube-layout.yt-q-open #ytRoomInlinePanel,
-#prRoom.party-youtube-layout.yt-q-open #ytRoomInlineQueue{
-  display:block!important;
-  visibility:visible!important;
-  opacity:1!important;
-  pointer-events:auto!important;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<style id="PR_Q_ONE_FINAL">
 #prRoom.party-youtube-layout #ytRoomUiHideBtn{
   display:flex!important;
   visibility:visible!important;
   opacity:1!important;
   pointer-events:auto!important;
   touch-action:manipulation!important;
+  cursor:pointer!important;
   z-index:2147483647!important;
 }
+#prRoom.party-youtube-layout.pr-q-closed #ytRoomUrlBar,
+#prRoom.party-youtube-layout.pr-q-closed #ytRoomInputTools,
+#prRoom.party-youtube-layout.pr-q-closed #ytRoomInlinePanel,
+#prRoom.party-youtube-layout.pr-q-closed #ytRoomInlineQueue{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+#prRoom.party-youtube-layout.pr-q-open #ytRoomUrlBar,
+#prRoom.party-youtube-layout.pr-q-open #ytRoomInputTools,
+#prRoom.party-youtube-layout.pr-q-open #ytRoomInlinePanel,
+#prRoom.party-youtube-layout.pr-q-open #ytRoomInlineQueue{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+}
 </style>
-<script id="partyRoomQDefinitiveFixScript">
+
+<script id="PR_Q_ONE_FINAL_SCRIPT">
 (function(){
   'use strict';
-  var lastMode=false;
 
-  function el(id){ return document.getElementById(id); }
-  function room(){ return el('prRoom'); }
-  function inYouTube(){
-    var r=room();
-    return !!(r && r.classList.contains('party-youtube-layout'));
-  }
-
-  function host(){
-    try{
-      return typeof window.ytRoomHost === 'function' && !!window.ytRoomHost();
-    }catch(e){ return false; }
-  }
-
-  function apply(open){
-    var r=room(), q=el('ytRoomUiHideBtn');
-    if(!r || !q) return;
+  window.PR_Q_SET=function(open){
+    var r=document.getElementById('prRoom');
+    if(!r || !r.classList.contains('party-youtube-layout')) return false;
 
     open=!!open;
-    r.classList.toggle('yt-q-open', open);
+    r.classList.toggle('pr-q-open',open);
+    r.classList.toggle('pr-q-closed',!open);
 
-    var url=el('ytRoomUrlBar');
-    var tools=el('ytRoomInputTools');
-    var panel=el('ytRoomInlinePanel');
-    var queue=el('ytRoomInlineQueue');
-    var upload=el('ytRoomUploadBtn');
-
-    [url,tools,panel,queue].forEach(function(x){
-      if(!x) return;
-      x.style.setProperty('display', open ? 'block' : 'none', 'important');
-      x.style.setProperty('visibility', open ? 'visible' : 'hidden', 'important');
-      x.style.setProperty('opacity', open ? '1' : '0', 'important');
-      x.style.setProperty('pointer-events', open ? 'auto' : 'none', 'important');
+    var ids=['ytRoomUrlBar','ytRoomInputTools','ytRoomInlinePanel','ytRoomInlineQueue'];
+    ids.forEach(function(id){
+      var e=document.getElementById(id);
+      if(!e) return;
+      e.style.setProperty('display',open?'block':'none','important');
+      e.style.setProperty('visibility',open?'visible':'hidden','important');
+      e.style.setProperty('opacity',open?'1':'0','important');
+      e.style.setProperty('pointer-events',open?'auto':'none','important');
     });
 
-    if(upload){
-      upload.style.setProperty(
-        'display',
-        (open && host()) ? 'inline-flex' : 'none',
-        'important'
-      );
+    var q=document.getElementById('ytRoomUiHideBtn');
+    if(q){
+      q.setAttribute('aria-expanded',open?'true':'false');
+      q.setAttribute('aria-label',open?'Q बंद करें':'Q खोलें');
     }
 
-    q.textContent='Q';
-    q.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if(open && typeof window.renderInlineRoomPanel==='function'){
+      try{ window.renderInlineRoomPanel('queue'); }catch(e){}
+    }
+    return false;
+  };
+
+  window.PR_Q_TOGGLE=function(ev){
+    if(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+    }
+    var r=document.getElementById('prRoom');
+    if(!r || !r.classList.contains('party-youtube-layout')) return false;
+    return window.PR_Q_SET(!r.classList.contains('pr-q-open'));
+  };
+
+  function init(){
+    var r=document.getElementById('prRoom');
+    if(!r) return;
+    if(r.classList.contains('party-youtube-layout') &&
+       !r.classList.contains('pr-q-open') &&
+       !r.classList.contains('pr-q-closed')){
+      window.PR_Q_SET(false);
+    }
   }
 
-  function bind(){
-    var r=room(), q=el('ytRoomUiHideBtn');
-    if(!r || !q) return;
-
-    var mode=inYouTube();
-
-    /* Entering YouTube always starts CLOSED for Host and Viewer. */
-    if(mode && !lastMode) apply(false);
-    if(!mode) apply(false);
-    lastMode=mode;
-
-    if(q.__qDefinitiveBound) return;
-    q.__qDefinitiveBound=true;
-
-    /* One event only: pointerup works for mouse, touch and stylus.
-       No touchend preventDefault, so mobile browsers cannot cancel the click. */
-    q.addEventListener('pointerup', function(e){
-      if(e.button !== undefined && e.button !== 0) return;
-      e.preventDefault();
-      e.stopPropagation();
-      if(!inYouTube()) return;
-      apply(!r.classList.contains('yt-q-open'));
-    }, {passive:false});
-  }
-
-  window.ytRoomOpenQ=function(){ apply(true); };
-  window.ytRoomCloseQ=function(){ apply(false); };
-
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded', bind);
-  }else{
-    bind();
-  }
-
-  setInterval(bind, 300);
+  if(document.readyState==='loading')
+    document.addEventListener('DOMContentLoaded',init);
+  else
+    init();
 })();
 </script>
