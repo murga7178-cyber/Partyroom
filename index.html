@@ -5075,7 +5075,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     else if(a==='pick'){ window.__prTo=key; renderRecipients(); renderSendInfo(); }
     else if(a==='giftpick'){ window.__prGiftId=t.getAttribute('data-gid'); renderGiftGrid(); renderSendInfo(); }
     else if(a==='giftto'){ window.prOpenGift(key); }
-    else if(a==='follow'){ window.pkRoomFollowUser(key).then(function(){ window.prOpenUserCard(key); }); }
+    else if(a==='follow'){ if(t.__pkBusy) return; var _stop=window.pkMiniBusy?window.pkMiniBusy(t):function(){}; window.pkRoomFollowUser(key).then(function(){ _stop(); window.prOpenUserCard(key); }); }
     else if(a==='removeSeat'){ window.pkHostRemoveFromSeat(key); }
     else if(a==='leaveSeat'){
       if(String(currentUserKey||'')!==myKey()) return;
@@ -6459,8 +6459,27 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
   window.pkPublicProfileShare=function(){try{var n=document.getElementById('pkPPname')?.textContent||'Profile';var id=document.getElementById('pkPPid')?.textContent||'';var txt=n+' '+id;if(navigator.share){navigator.share({title:n,text:txt}).catch(function(){});}else if(navigator.clipboard){navigator.clipboard.writeText(txt).then(function(){if(typeof toast==='function')toast('Profile details copied');}).catch(function(){if(typeof toast==='function')toast('Share उपलब्ध नहीं है');});}else if(typeof toast==='function')toast('Share उपलब्ध नहीं है');}catch(e){}};
   async function toggleFollow(target){
     if(!db||!currentUserKey||String(target)===String(currentUserKey))return;
+    var btn=document.getElementById('pkPPfollowBtn'); if(btn&&btn.__pkBusy)return;
+    var stop=(window.pkMiniBusy&&btn)?window.pkMiniBusy(btn):function(){};
     var meRef=db.collection('users').doc(String(currentUserKey)),tRef=db.collection('users').doc(String(target));
-    try{await db.runTransaction(async function(tx){var rs=await Promise.all([tx.get(meRef),tx.get(tRef)]),md=rs[0].exists?(rs[0].data()||{}):{},td=rs[1].exists?(rs[1].data()||{}):{};var f=Array.isArray(md.following)?md.following.map(String):[],r=Array.isArray(td.followers)?td.followers.map(String):[];var on=r.indexOf(String(currentUserKey))>=0||f.indexOf(String(target))>=0;var nf=on?f.filter(function(x){return x!==String(target);}):Array.from(new Set(f.concat(String(target))));var nr=on?r.filter(function(x){return x!==String(currentUserKey);}):Array.from(new Set(r.concat(String(currentUserKey))));tx.set(meRef,{following:nf,followingCount:nf.length,updatedAt:Date.now()},{merge:true});tx.set(tRef,{followers:nr,followersCount:nr.length,updatedAt:Date.now()},{merge:true});});await render(currentKey);}catch(err){alert('Follow/Unfollow नहीं हो पाया।');}}
+    var want=null; /* decided once (follow or unfollow) so a retry can never flip it back */
+    for(var i=0;i<20;i++){
+      try{
+        await db.runTransaction(async function(tx){
+          var rs=await Promise.all([tx.get(meRef),tx.get(tRef)]),md=rs[0].exists?(rs[0].data()||{}):{},td=rs[1].exists?(rs[1].data()||{}):{};
+          var f=Array.isArray(md.following)?md.following.map(String):[],r=Array.isArray(td.followers)?td.followers.map(String):[];
+          if(want===null) want=!(r.indexOf(String(currentUserKey))>=0||f.indexOf(String(target))>=0);
+          var nf=want?Array.from(new Set(f.concat(String(target)))):f.filter(function(x){return x!==String(target);});
+          var nr=want?Array.from(new Set(r.concat(String(currentUserKey)))):r.filter(function(x){return x!==String(currentUserKey);});
+          tx.set(meRef,{following:nf,followingCount:nf.length,updatedAt:Date.now()},{merge:true});
+          tx.set(tRef,{followers:nr,followersCount:nr.length,updatedAt:Date.now()},{merge:true});
+        });
+        try{await render(currentKey);}catch(_){}
+        stop(); return;
+      }catch(err){ await new Promise(function(res){setTimeout(res,1500);}); }
+    }
+    stop();
+  }
   async function render(key){
     currentKey=String(key||'');if(!currentKey||!db)return;
     try{var _po=document.getElementById('pkPublicProfileOverlay');if(_po){var _nm=(window.__prUserNameCache&&window.__prUserNameCache[currentKey])||'';var _n=document.getElementById('pkPPname');if(_n)_n.textContent=_nm||'…';['pkPPavatar','pkPPsub','pkPPid','pkPPinfo','pkPPbadges','pkPPcalls','pkPPstats'].forEach(function(id){var x=document.getElementById(id);if(x)x.innerHTML='';});var _rb=document.getElementById('pkPPRoomActions');if(_rb)_rb.style.display='none';_po.classList.add('open');_po.setAttribute('aria-hidden','false');}}catch(_){}
@@ -7231,6 +7250,7 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
   }
   function go(action){
     var now=Date.now();if(now-last<220)return;last=now;
+    try{ var _cur=document.querySelector('#pkUniversalNav [data-nav="'+action+'"]'); if(!(_cur&&_cur.classList.contains('active'))&&window.pkPageLoader){ var _lt=window.pkPageLoader.show(); setTimeout(function(){ try{window.pkPageLoader.hide(_lt);}catch(_){} }, action==='me'?1300:700); } }catch(_){}
     if(action==='home'){
       closeOverlays();
       setTimeout(function(){try{pkGoHomeFromNav();}catch(_){if(typeof pkShowHome==='function')pkShowHome();}},0);
@@ -7495,7 +7515,7 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
   };
 
   /* ---------- host actions on a user ---------- */
-  async function pkRoomFollowUser(key){
+  async function pkRoomFollowUserOnce(key){
     key=String(key||'');
     if(!db||!currentUserKey||!key||key===me()) return false;
     try{
@@ -7509,7 +7529,17 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
       await tRef.set({followers:Array.from(new Set(r)),followersCount:Array.from(new Set(r)).length,updatedAt:Date.now()},{merge:true});
       window.pkRoomToast('✓ Follow कर लिया');
       return true;
-    }catch(e){ window.pkRoomToast('Follow नहीं हो पाया।'); return false; }
+    }catch(e){ return false; }
+  }
+  async function pkRoomFollowUser(key){
+    key=String(key||'');
+    if(!db||!currentUserKey||!key||key===me()) return false;
+    for(var i=0;i<20;i++){
+      var ok=false; try{ ok=await pkRoomFollowUserOnce(key); }catch(e){ ok=false; }
+      if(ok) return true;
+      await new Promise(function(res){setTimeout(res,1500);});
+    }
+    return false;
   }
   window.pkRoomFollowUser=pkRoomFollowUser;
   function personName(key){ var p=(window.__cinemaPeople||[]).find(function(x){return String(x.key)===String(key);}); return (p&&p.name)||(window.__prUserNameCache&&window.__prUserNameCache[key])||'User'; }
@@ -12450,9 +12480,9 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 </script>
 
 <style id="pkPageLoaderCss">
-#pkPageLoader{position:fixed;inset:0;z-index:2147483640;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:#ffffff;opacity:0;transition:opacity .18s ease;-webkit-tap-highlight-color:transparent;}
+#pkPageLoader{position:fixed;inset:0;z-index:2147483640;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:#ffffff;opacity:1;transition:none;-webkit-tap-highlight-color:transparent;}
 #pkPageLoader.on{display:flex;}
-#pkPageLoader.vis{opacity:1;}
+#pkPageLoader.out{opacity:0;transition:opacity .18s ease;}
 #pkPageLoader .pkpl-ring{width:48px;height:48px;border-radius:50%;border:4px solid rgba(255,64,130,.18);border-top-color:#ff4082;border-right-color:#ff7aa8;animation:pkplSpin .8s linear infinite;box-shadow:none;}
 #pkPageLoader .pkpl-txt{font:600 13px Segoe UI,Arial,sans-serif;color:#b0316a;letter-spacing:.2px;}
 @keyframes pkplSpin{to{transform:rotate(360deg)}}
@@ -12461,22 +12491,18 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 <script id="pkPageLoaderScript">
 (function(){
   /* Soft pink spinner shown while a page loads in the background; page is revealed only once it is ready. */
-  var el=null, active=0, showT=null, shownAt=0, MAX=8000, MINSHOW=350, DELAY=150;
+  var el=null, active=0, showT=null, shownAt=0, MAX=6000, MINSHOW=350, DELAY=150;
   function ensure(){
     if(el&&el.isConnected)return el;
     el=document.createElement('div'); el.id='pkPageLoader'; el.setAttribute('aria-live','polite');
     el.innerHTML='<div class="pkpl-ring"></div><div class="pkpl-txt">लोड हो रहा है…</div>';
     (document.body||document.documentElement).appendChild(el); return el;
   }
-  function reveal(){ ensure(); el.classList.add('on'); void el.offsetWidth; el.classList.add('vis'); shownAt=Date.now(); }
+  function reveal(){ ensure(); el.classList.remove('out'); el.classList.add('on'); shownAt=Date.now(); }
   function begin(){
     active++;
     var t={done:false};
-    if(active===1){
-      clearTimeout(showT);
-      if(el&&el.classList.contains('on')){ el.classList.add('vis'); }
-      else showT=setTimeout(function(){ if(active>0)reveal(); },DELAY);
-    }
+    if(active===1){ clearTimeout(showT); reveal(); }   /* loader is on screen BEFORE the new page opens */
     t.max=setTimeout(function(){ end(t,true); },MAX);
     return t;
   }
@@ -12485,13 +12511,12 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
     setTimeout(function(){
       active=Math.max(0,active-1);
       if(active>0)return;
-      clearTimeout(showT);
       if(el&&el.classList.contains('on')){
         var wait=Math.max(0,MINSHOW-(Date.now()-shownAt));
         setTimeout(function(){
           if(active>0)return;
-          el.classList.remove('vis');
-          setTimeout(function(){ if(active===0)el.classList.remove('on'); },220);
+          el.classList.add('out');
+          setTimeout(function(){ if(active===0){ el.classList.remove('on'); el.classList.remove('out'); } },220);
         },wait);
       }
     }, now?0:140);
@@ -12523,7 +12548,7 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
       var n=0, iv=setInterval(function(){
         n++;
         var p=document.getElementById('pkPublicProfileOverlay');
-        if((p&&p.classList.contains('open'))||shown('prUserCard')||t.done||n>75){ clearInterval(iv); end(t); }
+        if((p&&p.classList.contains('open'))||shown('prUserCard')||t.done||n>40){ clearInterval(iv); end(t); }
       },100);
       return r;
     };
@@ -12536,5 +12561,49 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   /* if another script re-defines one of these later, wrap it again */
   setInterval(install,1500);
   window.pkPageLoader={show:function(){return begin();},hide:function(t){end(t);}};
+})();
+</script>
+
+<style id="pkMiniBusyCss">
+.pk-mini-spin{display:inline-block;width:13px;height:13px;margin-right:6px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:pkplSpin .7s linear infinite;box-sizing:border-box;}
+.pk-busy{pointer-events:none!important;}
+</style>
+<script id="pkMiniBusyScript">
+(function(){
+  /* Small spinner inside a button while its action is still being saved; removed only when it is done. */
+  window.pkMiniBusy=function(btn){
+    if(!btn||btn.__pkBusy) return function(){};
+    btn.__pkBusy=true; btn.classList.add('pk-busy');
+    var sp=document.createElement('i'); sp.className='pk-mini-spin'; sp.setAttribute('aria-hidden','true');
+    try{ btn.insertBefore(sp,btn.firstChild); }catch(e){}
+    var done=false;
+    return function(){ if(done)return; done=true; btn.__pkBusy=false; try{btn.classList.remove('pk-busy');}catch(e){} try{ if(sp.parentNode)sp.parentNode.removeChild(sp); }catch(e){} };
+  };
+  function tapBtn(){ try{ var ev=window.event; var t=ev&&ev.target; return t&&t.closest?t.closest('button'):null; }catch(e){ return null; } }
+  function sleep(ms){ return new Promise(function(r){setTimeout(r,ms);}); }
+  /* name -> {ok: function(args)->bool that says the change really happened, tries} */
+  var JOBS={
+    partyEquipFrame:{ok:function(a){return String(window.__partyEquippedFrame||'')===String(a[0]);},tries:8},
+    partyRemoveEquippedFrame:{ok:function(){return String(window.__partyEquippedFrame||'none')==='none';},tries:8},
+    partyBuyFrame:{tries:1},
+    prSendGift:{tries:1}
+  };
+  function wrap(name){
+    var f=window[name]; if(typeof f!=='function'||f.__pkBusy) return;
+    var job=JOBS[name];
+    var w=async function(){
+      var args=arguments, stop=window.pkMiniBusy(tapBtn()), r;
+      try{
+        r=await f.apply(this,args);
+        if(job.ok){
+          for(var i=1;i<job.tries && !job.ok(args);i++){ await sleep(1500); r=await f.apply(this,args); }
+        }
+      }catch(e){ stop(); throw e; }
+      stop(); return r;
+    };
+    w.__pkBusy=true; window[name]=w;
+  }
+  function install(){ try{ Object.keys(JOBS).forEach(wrap); }catch(e){} }
+  install(); setInterval(install,1500);
 })();
 </script>
