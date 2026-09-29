@@ -1829,6 +1829,51 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{
 #prRoom.yt-sound-only #ytRoomUrlBar{display:none!important;}
 .yt-bottom-sheet-buttons #ytBottomSoundBtn{font-size:11px!important;padding:7px 10px!important;min-width:58px!important;}
 </style>
+
+<style id="partyRoomYoutubePureVideoTimelineFinal">
+/* Pure video surface: no controls/labels/overlays inside the video itself. */
+#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-card{
+  position:relative!important; overflow:hidden!important;
+}
+#prRoom.party-youtube-layout #partyYoutubeStage iframe,
+#prRoom.party-youtube-layout #partyYoutubeStage #ytRoomFrame,
+#prRoom.party-youtube-layout #partyYoutubeStage #ytRoomPlayerDiv{
+  pointer-events:none!important;
+}
+#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-hostbar{
+  pointer-events:none!important;
+  background:transparent!important;
+}
+#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-hostbar #ytRoomVolume{display:none!important;}
+#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-hostbar #ytRoomCloseVideoBtn{
+  pointer-events:auto!important;
+}
+#prRoom.party-youtube-layout #ytRoomViewerSeekBar{
+  order:2!important; position:relative!important; width:min(100%,900px)!important;
+  height:46px!important; min-height:46px!important; margin:0 auto!important; padding:7px 8px 5px!important;
+  box-sizing:border-box!important; display:flex!important; align-items:center!important; gap:8px!important;
+  border:0!important; border-radius:0!important; background:transparent!important; box-shadow:none!important;
+  z-index:36!important; pointer-events:auto!important;
+}
+#prRoom.party-youtube-layout #ytRoomViewerSeekRange{
+  flex:1 1 auto!important; width:100%!important; min-width:0!important; height:30px!important;
+  margin:0!important; padding:0!important; accent-color:#8b5cf6!important; cursor:pointer!important;
+  touch-action:pan-x!important;
+}
+#prRoom.party-youtube-layout #ytRoomViewerTime,
+#prRoom.party-youtube-layout #ytRoomViewerDuration{
+  flex:0 0 auto!important; min-width:42px!important; text-align:center!important;
+  color:rgba(255,255,255,.92)!important; font-size:10px!important; font-weight:900!important;
+  font-variant-numeric:tabular-nums!important;
+}
+#prRoom.party-youtube-layout.yt-host #ytRoomViewerSeekBar{display:flex!important;}
+@media(max-width:430px){
+  #prRoom.party-youtube-layout #ytRoomViewerSeekBar{height:42px!important;min-height:42px!important;padding:5px 5px 3px!important;gap:5px!important;}
+  #prRoom.party-youtube-layout #ytRoomViewerSeekRange{height:28px!important;}
+  #prRoom.party-youtube-layout #ytRoomViewerTime,
+  #prRoom.party-youtube-layout #ytRoomViewerDuration{min-width:38px!important;font-size:9px!important;}
+}
+</style>
 </head>
 
 <body>
@@ -2643,6 +2688,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <button type="button" class="pr-seg-mode" data-mode="gaming" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('gaming')"><span class="pr-seg-icon">🎮</span><span>Game</span></button>
             <button type="button" class="pr-seg-mode" data-mode="youtube" onclick="window.selectPartyRoomMode&&window.selectPartyRoomMode('youtube')"><span class="pr-seg-icon">▶️</span><span>YouTube</span></button>
           </div>
+          <div id="prViewerLiveTime" aria-label="Host की YouTube live position" aria-live="polite"><span class="pr-viewer-live-dot"></span><span class="pr-viewer-live-label">LIVE</span><span id="prViewerLiveClock">00:00</span></div>
           <div id="prTopRight">
             <button type="button" id="prFloatingViewerBtn" onclick="openPartyRoomViewers()" aria-label="Active viewers">👁 <span id="prFloatingViewerCount">0</span></button>
             <button type="button" id="prTopGiftersBtn" onclick="openPartyRoomTopGifters()" aria-label="Top Gifter"><span aria-hidden="true" style="display:none">🏆</span><span>Top Gifter</span></button>
@@ -2683,6 +2729,11 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             </div>
             <div id="ytRoomBlock" class="yt-room-block"></div>
             <div class="yt-room-hostbar"><label style="display:flex;align-items:center;gap:5px;background:rgba(15,23,42,.82);border-radius:10px;padding:5px 8px;color:#fff;font-size:11px;">🔊<input id="ytRoomVolume" type="range" min="0" max="100" value="80" style="width:82px;"></label><button type="button" id="ytRoomCloseVideoBtn" class="yt-room-close-video" onclick="window.ytRoomCloseShared&&window.ytRoomCloseShared()" title="सभी के लिए YouTube बंद करें" aria-label="बंद करें">✕</button></div>
+          </div>
+          <div id="ytRoomViewerSeekBar" class="yt-room-viewer-seekbar" aria-label="वीडियो की पूरी टाइमलाइन">
+            <span id="ytRoomViewerTime" class="yt-room-viewer-time">00:00</span>
+            <input id="ytRoomViewerSeekRange" class="yt-room-viewer-seek-range" type="range" min="0" max="0" step="0.1" value="0" aria-label="वीडियो टाइमलाइन">
+            <span id="ytRoomViewerDuration" class="yt-room-viewer-duration">00:00</span>
           </div>
           <button type="button" id="ytRoomUiHideBtn" class="yt-room-ui-hide-btn" aria-label="YouTube Queue और controls" title="Queue और YouTube controls">Q <span id="ytRoomUiHideBadge"></span></button>
           <button type="button" id="ytRoomLiveBtn" aria-label="Live पर जाएँ" title="अभी चल रहे scene पर जाएँ">LIVE</button>
@@ -10985,6 +11036,16 @@ modal.addEventListener('click',function(e){if(e.target===modal)closeModal();});
 if(mini)mini.addEventListener('click',function(){stopVideo();toast('⏹️ Music बंद');});
 
 window.openPartyRoomYouTube=openModal;
+window.setPartyYouTubeLocalVolume=function(v){
+  v=Math.max(0,Math.min(100,Number(v)||0));
+  volume=v; muted=v===0;
+  try{if(volSlider)volSlider.value=v;}catch(e){}
+  try{if(volVal)volVal.textContent=v+'%';}catch(e){}
+  try{if(muteBtn)muteBtn.textContent=muted?'🔇':'🔊';}catch(e){}
+  try{if(ytPlayer&&ytReady)ytPlayer.setVolume(muted?0:v);}catch(e){}
+  return v;
+};
+window.getPartyYouTubeLocalVolume=function(){return Math.max(0,Math.min(100,Number(volume)||0));};
 window.YTPlayer={
   play:function(id,title,opts){var info=getYouTubeInfo(id)||{type:'video',id:String(id)};playInfo(info,title,opts||{});},
   stop:stopVideo,
@@ -11039,6 +11100,28 @@ setInterval(function(){try{refreshHostState();listenRoomShare();ytRoomUpdateUI()
 #partyYoutubeStage .yt-room-hostbar .yt-room-close-video{background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;border:1px solid rgba(255,255,255,.22);box-shadow:0 5px 14px rgba(239,68,68,.28);white-space:nowrap;}
 #partyYoutubeStage .yt-room-hostbar .yt-room-close-video:active{transform:scale(.96);}
 #partyYoutubeStage .yt-room-hostbar .yt-room-close-video{width:30px;height:30px;min-width:30px;padding:0 !important;border-radius:50%;font-size:15px;line-height:1;justify-content:center;align-items:center;}
+/* Viewer seek controls: always visible BELOW the video, never over the video. */
+#prRoom.party-youtube-layout #ytRoomViewerSeekBar{
+  order:2!important; position:relative!important; width:min(100%,900px)!important; min-height:38px!important; height:38px!important;
+  margin:0 auto!important; padding:4px 6px!important; box-sizing:border-box!important; display:flex!important; align-items:center!important; justify-content:space-between!important; gap:8px!important;
+  border:1px solid rgba(255,255,255,.18)!important; border-radius:11px!important;
+  background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(5,10,24,.94))!important;
+  box-shadow:0 6px 18px rgba(0,0,0,.28)!important; z-index:35!important; pointer-events:auto!important;
+}
+#prRoom.party-youtube-layout #ytRoomViewerSeekBar button{
+  flex:0 0 auto!important; min-width:82px!important; height:30px!important; padding:0 10px!important; border:1px solid rgba(255,255,255,.22)!important; border-radius:9px!important;
+  background:rgba(255,255,255,.12)!important; color:#fff!important; font-size:11px!important; font-weight:900!important;
+  display:flex!important; align-items:center!important; justify-content:center!important; gap:4px!important; cursor:pointer!important; touch-action:manipulation!important;
+}
+#prRoom.party-youtube-layout #ytRoomViewerSeekBar button:active{transform:scale(.96)!important; background:rgba(255,255,255,.22)!important;}
+#prRoom.party-youtube-layout #ytRoomViewerTime{flex:1 1 auto!important; min-width:54px!important; text-align:center!important; color:#fff!important; font-size:11px!important; font-weight:900!important; letter-spacing:.2px!important;}
+#prRoom.party-youtube-layout.yt-host #ytRoomViewerSeekBar{display:none!important;}
+
+@media(max-width:430px){
+  #prRoom.party-youtube-layout #ytRoomViewerSeekBar{min-height:36px!important;height:36px!important;margin-top:0!important;padding:3px 5px!important;}
+  #prRoom.party-youtube-layout #ytRoomViewerSeekBar button{min-width:76px!important;height:29px!important;font-size:10px!important;}
+}
+
 #prRoom.party-youtube-layout #prModeBtnG[data-host="1"]{display:flex!important;}
 <style id="partyRoomYouTubeSeatFrameFinal">
 /* YouTube Mode: keep equipped frame attached to the seat exactly like Gaming Mode. */
@@ -11747,6 +11830,115 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 /* Blend the room's top edge into the phone's top bar (bar colour set to #1b1740 in WebToApk). Works with any room background photo. */
 #cinemaGharModal::before{content:"";position:absolute;top:0;left:0;right:0;height:26px;background:linear-gradient(180deg,#1b1740 0,rgba(27,23,64,.55) 45%,rgba(27,23,64,0) 100%);pointer-events:none;z-index:0}
 </style>
+
+<style id="partyRoomJoinNoticeBottomFinal">
+/* Room entry notices stay inside the normal bottom comment stream. */
+#prRoom #cinemaChatPanel #cinemaChatMessages > .pr-msg.pr-sys{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:100%!important;max-width:100%!important;box-sizing:border-box!important;
+  margin:2px 0 8px!important;padding:7px 10px!important;
+  border-radius:12px!important;
+  background:rgba(15,23,42,.58)!important;
+  border:1px solid rgba(255,255,255,.18)!important;
+  color:rgba(255,255,255,.92)!important;
+  font:600 11px/1.25 system-ui,sans-serif!important;
+  text-align:center!important;
+  box-shadow:0 3px 10px rgba(0,0,0,.14)!important;
+  backdrop-filter:blur(7px)!important;-webkit-backdrop-filter:blur(7px)!important;
+}
+#prRoom #cinemaChatPanel #cinemaChatMessages > .pr-msg.pr-sys .pr-ic{
+  flex:0 0 auto!important;margin-right:5px!important;font-size:14px!important;
+}
+#prRoom #cinemaChatPanel #cinemaChatMessages > .pr-msg.pr-sys b{color:#fff!important;}
+#prRoom #cinemaChatPanel #cinemaChatMessages > .pr-msg.pr-sys .pr-wbtn{
+  margin-left:7px!important;padding:4px 8px!important;border-radius:9px!important;
+  border:1px solid rgba(255,255,255,.22)!important;
+  background:rgba(255,255,255,.12)!important;color:#fff!important;font-size:10px!important;
+}
+</style>
+
+<script id="partyRoomYoutubeViewerLiveTimeScript">
+(function(){
+  'use strict';
+  function $(id){return document.getElementById(id);}
+  function isYT(){return String(window.__partyRoomMode||'chat')==='youtube';}
+  function isHost(){try{return !!cinemaIsHost;}catch(e){return false;}}
+  function formatTime(sec){
+    sec=Math.max(0,Math.floor(Number(sec)||0));
+    var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+    function pad(n){return n<10?'0'+n:String(n);}
+    return h>0?(h+':'+pad(m)+':'+pad(s)):(pad(m)+':'+pad(s));
+  }
+  function liveTime(d){
+    if(typeof ytRoomLiveTime==='function') return ytRoomLiveTime(d||{});
+    var t=Math.max(0,Number(d&&d.currentTime)||0);
+    if(d&&d.playing===true){var age=(Date.now()-(Number(d.updatedAt)||0))/1000;if(age>0)t+=age;}
+    if(d&&Number(d.dur)>0)t=Math.min(t,Number(d.dur));
+    return t;
+  }
+  function paint(){
+    var r=$('prRoom'),box=$('prViewerLiveTime'),clock=$('prViewerLiveClock');
+    if(!r||!box||!clock)return;
+    var d=window.__ytLastState;
+    var show=!!(isYT()&&!isHost()&&d&&!d.stopped&&(d.videoId||d.videoUrl));
+    r.classList.toggle('yt-viewer-live',show);
+    if(show) clock.textContent=formatTime(liveTime(d));
+    else clock.textContent='00:00';
+  }
+  function tick(){try{paint();}catch(e){}}
+  setInterval(tick,250);
+  document.addEventListener('DOMContentLoaded',tick);
+  window.addEventListener('resize',tick);
+  window.__paintYoutubeViewerLiveTime=paint;
+})();
+</script>
+
+<script id="partyRoomYoutubeViewerSeekControls">
+(function(){
+  function byId(id){return document.getElementById(id);}
+  function format(t){
+    t=Math.max(0,Number(t)||0); var h=Math.floor(t/3600), m=Math.floor((t%3600)/60), sec=Math.floor(t%60);
+    if(h>0)return h+':'+(m<10?'0':'')+m+':'+(sec<10?'0':'')+sec;
+    return (m<10?'0':'')+m+':'+(sec<10?'0':'')+sec;
+  }
+  function player(){return window.ytPlayer;}
+  function isHost(){try{return !!(typeof cinemaIsHost==='function'&&cinemaIsHost());}catch(e){return false;}}
+  function seekTo(t){
+    try{
+      var p=player(); if(!p||typeof p.seekTo!=='function')return;
+      var dur=Number(typeof p.getDuration==='function'?p.getDuration():0)||0;
+      t=Math.max(0,Number(t)||0); if(dur>0)t=Math.min(dur,t);
+      p.seekTo(t,true);
+      if(isHost()&&typeof ytRoomSyncNow==='function'){setTimeout(function(){try{ytRoomSyncNow(true);}catch(e){}},80);}
+    }catch(e){}
+  }
+  function update(){
+    try{
+      var p=player(), r=byId('ytRoomViewerSeekRange'), cur=byId('ytRoomViewerTime'), durEl=byId('ytRoomViewerDuration');
+      if(!r||!p||typeof p.getCurrentTime!=='function')return;
+      var t=Number(p.getCurrentTime())||0, d=Number(typeof p.getDuration==='function'?p.getDuration():0)||0;
+      if(d>0){r.max=String(d); if(!r.__dragging)r.value=String(Math.min(t,d));}
+      if(cur)cur.textContent=format(t);
+      if(durEl)durEl.textContent=format(d);
+    }catch(e){}
+  }
+  function wire(){
+    var r=byId('ytRoomViewerSeekRange');
+    if(r&&!r.__wired){
+      r.__wired=true;
+      r.addEventListener('pointerdown',function(){r.__dragging=true;});
+      r.addEventListener('touchstart',function(){r.__dragging=true;},{passive:true});
+      r.addEventListener('input',function(){
+        var cur=byId('ytRoomViewerTime'); if(cur)cur.textContent=format(r.value);
+      });
+      r.addEventListener('change',function(){r.__dragging=false;seekTo(Number(r.value)||0);});
+      r.addEventListener('pointerup',function(){if(r.__dragging){r.__dragging=false;seekTo(Number(r.value)||0);}});
+    }
+  }
+  wire();
+  setInterval(function(){wire();update();},250);
+})();
+</script>
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
@@ -11866,7 +12058,7 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 /* FINAL YouTube layout: VIDEO -> URL/LOAD -> HISTORY + Q. */
 #prRoom.party-youtube-layout #partyYoutubeStage{position:absolute!important;top:184px!important;left:0!important;right:0!important;bottom:116px!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:6px!important;padding:6px 8px!important;box-sizing:border-box!important;overflow-y:auto!important;overflow-x:hidden!important;z-index:30!important;}
 #prRoom.party-youtube-layout #partyYoutubeStage > .yt-room-card{order:1!important;position:relative!important;width:100%!important;max-width:900px!important;height:auto!important;aspect-ratio:16/9!important;min-height:0!important;flex:0 0 auto!important;align-self:center!important;margin:0!important;}
-#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomUrlBar{order:2!important;position:relative!important;inset:auto!important;display:block!important;width:100%!important;max-width:900px!important;height:auto!important;flex:0 0 auto!important;align-self:center!important;margin:0!important;padding:6px 8px!important;box-sizing:border-box!important;z-index:40!important;}
+#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomUrlBar{order:3!important;position:relative!important;inset:auto!important;display:block!important;width:100%!important;max-width:900px!important;height:auto!important;flex:0 0 auto!important;align-self:center!important;margin:0!important;padding:6px 8px!important;box-sizing:border-box!important;z-index:40!important;}
 #prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomInputTools{order:3!important;position:relative!important;inset:auto!important;display:block!important;width:100%!important;max-width:900px!important;height:auto!important;flex:0 0 auto!important;align-self:center!important;margin:0!important;padding:0!important;box-sizing:border-box!important;z-index:40!important;}
 #prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomInputTools .yt-room-tools-top{display:flex!important;width:100%!important;gap:8px!important;margin:0!important;}
 #prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomInputTools .yt-room-tools-top button{flex:1 1 0!important;min-width:0!important;min-height:42px!important;}
@@ -12328,6 +12520,30 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 #prRoom.party-youtube-layout #prSubRow{display:flex!important;position:absolute!important;left:8px!important;top:var(--yt-sub-top,70px)!important;margin:0!important;width:auto!important;z-index:60!important;pointer-events:auto!important;}
 #prRoom.party-youtube-layout #prSubRow #cinemaViewerBtn{display:inline-flex!important;}
 #ytQNotice .yq{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:6px;background:rgba(15,10,35,.85);border:1px solid rgba(255,255,255,.7);font-size:10px;font-weight:900;line-height:1;}
+</style>
+<style id="partyRoomYoutubeViewerLiveTime">
+/* YouTube Mode: viewers see the Host's current video position in the same top slot where Host sees Chat/Game/YouTube. */
+#prViewerLiveTime{
+  display:none;align-items:center;justify-content:center;gap:4px;
+  min-width:104px;max-width:128px;height:34px;padding:0 9px;box-sizing:border-box;
+  border-radius:12px;background:rgba(15,23,42,.76);
+  border:1px solid rgba(255,255,255,.16);
+  color:#fff;box-shadow:0 5px 16px rgba(0,0,0,.16);
+  font:900 10px/1 system-ui,Segoe UI,Arial,sans-serif;
+  white-space:nowrap;overflow:hidden;
+}
+#prViewerLiveTime .pr-viewer-live-dot{width:7px;height:7px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.14);flex:none;}
+#prViewerLiveTime .pr-viewer-live-label{font-size:9px;letter-spacing:.3px;opacity:.92;}
+#prViewerLiveTime #prViewerLiveClock{font-size:11px;font-variant-numeric:tabular-nums;letter-spacing:.2px;}
+#prRoom.party-youtube-layout.yt-viewer-live #prModeSegment{display:none!important;}
+#prRoom.party-youtube-layout.yt-viewer-live #prViewerLiveTime{display:flex!important;}
+#prRoom:not(.party-youtube-layout) #prViewerLiveTime{display:none!important;}
+#prRoom.yt-host #prViewerLiveTime{display:none!important;}
+@media(max-width:430px){
+  #prViewerLiveTime{min-width:96px;max-width:112px;height:32px;padding:0 7px;gap:3px;}
+  #prViewerLiveTime .pr-viewer-live-label{font-size:8px;}
+  #prViewerLiveTime #prViewerLiveClock{font-size:10px;}
+}
 </style>
 <style id="partyRoomYoutubeSeatsBigger">
 /* YouTube Mode: seats a little bigger and spread across the row (edges were unused). */
@@ -13045,5 +13261,102 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   window.addEventListener('resize',positionLiveButton);
   window.addEventListener('orientationchange',function(){setTimeout(positionLiveButton,100);});
   document.addEventListener('DOMContentLoaded',function(){wire();observe();});
+})();
+</script>
+
+
+<style id="partyRoomYouTubeSpeakerFinal">
+/* Final YouTube Speaker control: replaces the Q helper notice and is local to each viewer. */
+#prRoom.party-youtube-layout #prBrowserBtn{display:none!important;}
+#prRoom.party-youtube-layout #ytQNotice{display:none!important;}
+#prRoom.party-youtube-layout #ytRoomSpeakerControl{
+  display:flex!important;
+  position:absolute!important;
+  left:8px!important;
+  right:8px!important;
+  top:calc(var(--yt-sub-top,70px) + 5px)!important;
+  height:30px!important;
+  box-sizing:border-box!important;
+  align-items:center!important;
+  gap:8px!important;
+  padding:4px 9px!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:12px!important;
+  background:linear-gradient(135deg,rgba(15,23,42,.94),rgba(30,41,59,.92))!important;
+  box-shadow:0 5px 16px rgba(0,0,0,.24)!important;
+  z-index:75!important;
+  color:#fff!important;
+  touch-action:manipulation!important;
+}
+#prRoom.party-youtube-layout #ytRoomSpeakerControl .yt-speaker-label{
+  flex:0 0 auto!important;
+  min-width:92px!important;
+  font-size:11px!important;
+  line-height:20px!important;
+  font-weight:900!important;
+  white-space:nowrap!important;
+}
+#prRoom.party-youtube-layout #ytRoomSpeakerControl input[type="range"]{
+  flex:1 1 auto!important;
+  min-width:80px!important;
+  width:auto!important;
+  height:24px!important;
+  margin:0!important;
+  accent-color:#22c55e!important;
+  cursor:pointer!important;
+}
+#prRoom.party-youtube-layout #ytRoomSpeakerValue{
+  flex:0 0 38px!important;
+  text-align:right!important;
+  font-size:11px!important;
+  font-weight:900!important;
+  color:#f8fafc!important;
+}
+@media(max-width:430px){
+  #prRoom.party-youtube-layout #ytRoomSpeakerControl{top:calc(var(--yt-sub-top,70px) + 5px)!important;}
+  #prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomSpeakerControl{top:calc(var(--yt-sub-top,70px) + 5px)!important;}
+}
+#prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomSpeakerControl{top:calc(var(--yt-sub-top,70px) + 5px)!important;}
+</style>
+<script id="partyRoomYouTubeSpeakerFinalScript">
+(function(){
+  'use strict';
+  function byId(id){return document.getElementById(id);}
+  function getRoom(){return byId('prRoom');}
+  function currentVolume(){
+    try{if(typeof window.getPartyYouTubeLocalVolume==='function')return window.getPartyYouTubeLocalVolume();}catch(e){}
+    try{var x=localStorage.getItem('pk_volume');if(x!==null)return Math.max(0,Math.min(100,Number(x)||0));}catch(e){}
+    return 80;
+  }
+  function applyVolume(v){
+    v=Math.max(0,Math.min(100,Number(v)||0));
+    try{if(typeof window.setPartyYouTubeLocalVolume==='function')window.setPartyYouTubeLocalVolume(v);}catch(e){}
+    var val=byId('ytRoomSpeakerValue');if(val)val.textContent=v+'%';
+  }
+  function ensure(){
+    var r=getRoom();if(!r)return;
+    var c=byId('ytRoomSpeakerControl');
+    if(!c){
+      c=document.createElement('div');c.id='ytRoomSpeakerControl';c.setAttribute('aria-label','YouTube Speaker volume');
+      c.innerHTML='<span class="yt-speaker-label">🔊 YouTube Speaker</span><input id="ytRoomSpeakerSlider" type="range" min="0" max="100" step="1" value="80" aria-label="YouTube Speaker volume 0 to 100"><span id="ytRoomSpeakerValue">80%</span>';
+      r.appendChild(c);
+      var sl=byId('ytRoomSpeakerSlider');
+      if(sl){
+        sl.value=currentVolume();
+        sl.addEventListener('input',function(){applyVolume(this.value);});
+      }
+    }
+    var sl=byId('ytRoomSpeakerSlider');
+    if(sl && document.activeElement!==sl)sl.value=currentVolume();
+    var val=byId('ytRoomSpeakerValue');if(val)val.textContent=currentVolume()+'%';
+  }
+  function refresh(){
+    var r=getRoom();if(!r)return;
+    var c=byId('ytRoomSpeakerControl');
+    if(c)c.style.display=r.classList.contains('party-youtube-layout')?'flex':'none';
+    if(r.classList.contains('party-youtube-layout'))ensure();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh);else refresh();
+  setInterval(refresh,700);
 })();
 </script>
