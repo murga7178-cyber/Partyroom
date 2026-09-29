@@ -10280,6 +10280,9 @@ function ytRoomLiveTime(d){
 }
 function ytRoomApplyState(d){
   if(!ytRoomIsActive()||!d)return;
+  /* Host is the source of truth: for a few seconds after the host drags the timeline,
+     older snapshots must not pull the video back to the old position. */
+  if(ytRoomHost()&&Date.now()<(window.__ytHostSeekUntil||0))return;
   window.__ytLastState=d;
   ytRemoteApplying=true;
   try{
@@ -10691,6 +10694,46 @@ window.ytRoomForceSeek=function(target,playing,done){
     if(typeof done==='function')done(false);
   }
   run();
+};
+/* Bridge for the timeline slider. The slider code lives in a separate script block
+   and cannot see the private player variables, so it must go through this object. */
+window.ytRoomBridge={
+  host:function(){ try{return ytRoomHost();}catch(e){return false;} },
+  info:function(){
+    try{
+      if(current&&current.upload){
+        var lvI=$('ytRoomLocalVideo'); if(!lvI)return null;
+        return {upload:true,cur:lvI.currentTime||0,dur:(isFinite(lvI.duration)?lvI.duration:0)||0,state:lvI.paused?2:1};
+      }
+      if(!ytPlayer||!ytReady||typeof ytPlayer.getCurrentTime!=='function')return null;
+      var dI=0; try{dI=ytPlayer.getDuration()||0;}catch(e){}
+      if(current&&current.__maxDur&&current.__maxDur>dI)dI=current.__maxDur;
+      return {upload:false,cur:ytPlayer.getCurrentTime()||0,dur:dI,state:ytPlayer.getPlayerState?ytPlayer.getPlayerState():-1};
+    }catch(e){return null;}
+  },
+  seek:function(t){
+    t=Math.max(0,Number(t)||0);
+    try{
+      if(!ytRoomHost())return false; /* only the host controls the timeline */
+      if(current&&current.upload){
+        var lvS=$('ytRoomLocalVideo'); if(!lvS)return false;
+        window.__ytHostSeekUntil=Date.now()+4000;
+        lvS.currentTime=t; /* the 'seeked' listener publishes the new time to everyone */
+        return true;
+      }
+      if(!ytPlayer||!ytReady||typeof ytPlayer.seekTo!=='function')return false;
+      var myDur=0,maxDur=(current&&current.__maxDur)||0; try{myDur=ytPlayer.getDuration()||0;}catch(e){}
+      if(maxDur>0&&myDur>0&&myDur<maxDur-1.5)return false; /* an ad is playing: never seek the ad */
+      var stB=ytPlayer.getPlayerState?ytPlayer.getPlayerState():-1;
+      window.__ytHostSeekUntil=Date.now()+4000;
+      ytPlayer.seekTo(t,true);
+      var playingB=(stB!==2); /* paused stays paused, anything else plays after a seek */
+      if(playingB&&stB!==1&&typeof ytPlayer.playVideo==='function')ytPlayer.playVideo();
+      /* Publish the chosen time itself (not getCurrentTime, which can still be old for a moment). */
+      ytRoomWriteState({type:'youtube',playing:playingB,currentTime:t,dur:maxDur||myDur||0,videoId:current&&current.id||'',listId:current&&current.list||'',title:current&&current.title||'',shorts:!!(current&&current.shorts)});
+      return true;
+    }catch(e){return false;}
+  }
 };
 window.ytRoomPlayInfo=function(info,title,opts){return playInfo(info,title,opts||{});};
 
@@ -11894,31 +11937,30 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
     function pad(n){return n<10?'0'+n:String(n);}
     return h>0?(h+':'+pad(m)+':'+pad(s)):(pad(m)+':'+pad(s));
   }
-  function active(){return String(window.__partyRoomMode||'chat')==='youtube';}
-  function getPlayer(){return window.ytPlayer||null;}
-  function isHost(){try{return !!cinemaIsHost;}catch(e){return false;}}
+  function bridge(){return window.ytRoomBridge||null;}
+  function isHost(){var b=bridge();if(b)return !!b.host();try{return !!cinemaIsHost;}catch(e){return false;}}
   function stateTime(){
     try{if(typeof ytRoomLiveTime==='function'&&window.__ytLastState)return ytRoomLiveTime(window.__ytLastState);}catch(e){}
+    var st=window.__ytLastState;
+    if(st){
+      var t=Math.max(0,Number(st.currentTime)||0);
+      if(st.playing===true){var el=(Date.now()-(Number(st.updatedAt)||0))/1000;if(el>0)t+=el;}
+      var d=Number(st.dur)||0;if(d>0)t=Math.min(t,d);
+      return t;
+    }
     return 0;
   }
   function mediaInfo(){
-    var p=getPlayer(), lv=$("ytRoomLocalVideo"), d=0, cur=0, playing=false;
-    try{
-      if(window.current && current.upload && lv){
-        d=Number(lv.duration)||0;cur=Number(lv.currentTime)||0;playing=!lv.paused&&!lv.ended;
-      }else if(p&&window.ytReady){
-        d=Number(p.getDuration&&p.getDuration())||0;
-        cur=Number(p.getCurrentTime&&p.getCurrentTime())||0;
-        var st=p.getPlayerState&&p.getPlayerState(); playing=st===1;
-      }
-    }catch(e){}
+    var b=bridge(),bi=null,d=0,cur=0;
+    try{bi=b&&b.info();}catch(e){}
+    if(bi){d=Number(bi.dur)||0;cur=Number(bi.cur)||0;}
     var st=window.__ytLastState;
     if(st){
       var sd=Number(st.dur)||0;
       if(sd>d)d=sd;
-      if((!p||!window.ytReady) && !cur)cur=stateTime();
+      if(!bi&&!cur)cur=stateTime();
     }
-    return {d:d,cur:cur,playing:playing};
+    return {d:d,cur:cur};
   }
   function paint(){
     var bar=$("ytRoomViewerSeekBar"),range=$("ytRoomViewerSeekRange"),curEl=$("ytRoomViewerTime"),durEl=$("ytRoomViewerDuration"),room=$("prRoom");
@@ -11926,21 +11968,27 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
     var show=!!(room&&room.classList.contains('party-youtube-layout'));
     bar.style.display=show?'flex':'none';
     if(!show)return;
-    var m=mediaInfo(), d=m.d||0, c=m.cur||0;
+    var host=isHost();
+    /* Only the host moves the timeline; everyone else just watches the progress. */
+    if(range.disabled===host)range.disabled=!host;
+    var m=mediaInfo(),d=m.d||0,c=m.cur||0;
     var st=window.__ytLastState;
-    if(!isHost()&&st&&(st.videoId||st.videoUrl)){
-      var manualHold=Date.now() < (window.__ytViewerManualSeekUntil||0);
-      if(!manualHold)c=stateTime();
+    if(!host&&st&&(st.videoId||st.videoUrl)){
+      c=stateTime();
       var sd=Number(st.dur)||0;
       if(sd>0)d=Math.max(d,sd);
+    }
+    /* After the host seeks, show the chosen time until the player really arrives there. */
+    var pend=window.__ytSeekPending;
+    if(pend){
+      if(Date.now()<pend.until&&Math.abs(c-pend.t)>1.5)c=pend.t;
+      else window.__ytSeekPending=null;
     }
     if(d>0){
       range.max=String(d);
       range.setAttribute('aria-valuemax',String(d));
     }
     var safeD=Math.max(0,d),safeC=Math.max(0,Math.min(safeD||0,c));
-    /* While the user is dragging, never repaint the thumb back to 0 from a
-       temporarily-unready player. The manual value is the source of truth. */
     var dragging=range.dataset.dragging==='1';
     if(!dragging)range.value=String(safeC);
     if(curEl)curEl.textContent=fmt(dragging?(Number(range.value)||safeC):safeC);
@@ -11948,35 +11996,42 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   }
   function seekTo(t){
     t=Math.max(0,Number(t)||0);
-    var range=$("ytRoomViewerSeekRange");
-    if(range)range.value=String(t);
-    var p=getPlayer(),lv=$("ytRoomLocalVideo");
-    try{
-      if(window.current&&current.upload&&lv){
-        lv.currentTime=t;
-        if(isHost()&&!lv.paused&&!lv.ended)ytRoomWriteState({type:'upload',videoUrl:current.url,title:current.title,playing:true,currentTime:t,stopped:false});
-        return;
-      }
-      if(p&&window.ytReady&&p.seekTo){
-        window.__ytViewerManualSeekUntil=Date.now()+8000;
-        p.seekTo(t,true);
-        if(isHost()&&typeof ytRoomSyncNow==='function')setTimeout(function(){try{ytRoomSyncNow(true);}catch(e){}},120);
-      }
-    }catch(e){}
+    if(!isHost())return;
+    var b=bridge();if(!b)return;
+    window.__ytSeekPending={t:t,until:Date.now()+4000};
+    try{b.seek(t);}catch(e){}
+  }
+  var lastCommit={t:-1,at:0};
+  function commit(v){
+    v=Number(v)||0;
+    var now=Date.now();
+    if(Math.abs(v-lastCommit.t)<0.05&&now-lastCommit.at<600)return;
+    lastCommit={t:v,at:now};
+    seekTo(v);
   }
   function wire(){
     var range=$("ytRoomViewerSeekRange");
     if(!range||range.dataset.wired==='1')return;
     range.dataset.wired='1';
-    range.addEventListener('pointerdown',function(){range.dataset.dragging='1';});
+    range.addEventListener('pointerdown',function(){if(!range.disabled)range.dataset.dragging='1';});
+    /* While dragging only the time label moves; the video jumps once, when the finger lifts. */
     range.addEventListener('input',function(){
+      if(range.disabled)return;
       range.dataset.dragging='1';
-      seekTo(Number(this.value)||0);
       var cur=$("ytRoomViewerTime");if(cur)cur.textContent=fmt(Number(this.value)||0);
     });
-    range.addEventListener('change',function(){seekTo(Number(this.value)||0);range.dataset.dragging='0';paint();});
-    range.addEventListener('pointerup',function(){range.dataset.dragging='0';paint();});
-    range.addEventListener('touchend',function(){range.dataset.dragging='0';paint();},{passive:true});
+    range.addEventListener('change',function(){
+      if(range.disabled)return;
+      commit(this.value);
+      range.dataset.dragging='0';paint();
+    });
+    range.addEventListener('pointerup',function(){
+      if(range.dataset.dragging==='1'){commit(range.value);range.dataset.dragging='0';paint();}
+    });
+    range.addEventListener('touchend',function(){
+      if(range.dataset.dragging==='1'){commit(range.value);range.dataset.dragging='0';paint();}
+    },{passive:true});
+    range.addEventListener('pointercancel',function(){range.dataset.dragging='0';});
   }
   setInterval(function(){try{wire();paint();}catch(e){}},200);
   document.addEventListener('DOMContentLoaded',function(){wire();paint();});
