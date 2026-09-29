@@ -6819,8 +6819,7 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     var ph=String(r.roomImage||r.roomPhoto||'');
     var inner=photoOk(ph)?'<img class="pkh-cimg" src="'+esc(ph)+'" alt="">':letter(r.roomName);
     var st=photoOk(ph)?'':' style="background:'+bgFor(r.roomId||r.id)+'"';
-    var meta=String(r.hostName||'').trim();
-    return '<div class="pkh-story" data-history-rid="'+esc(r.roomId)+'" data-rname="'+esc(r.roomName)+'"><div class="pkh-circle'+(photoOk(ph)?'':' pkh-letter')+'"'+st+'>'+inner+'</div><span class="pkh-pill pkh-history-pill">'+(meta?esc(meta):'Room')+'</span><div class="pkh-label">'+esc(r.roomName)+'</div></div>';
+    return '<div class="pkh-story" data-history-rid="'+esc(r.roomId)+'" data-rname="'+esc(r.roomName)+'"><div class="pkh-circle'+(photoOk(ph)?'':' pkh-letter')+'"'+st+'>'+inner+'</div><div class="pkh-label">'+esc(r.roomName)+'</div></div>';
   }
 
   function removeHomeFollowersLabel(){
