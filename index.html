@@ -6580,6 +6580,11 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
   function levelOf(d){return Number(d.level||d.userLevel||d.lv||d.rankLevel)||1;}
   function coverOf(d){return String(d.coverURL||d.coverPhoto||d.profileCover||d.bannerURL||d.backgroundURL||'').trim();}
   function arrLen(v){return Array.isArray(v)?v.length:0;}
+  /* Profile data cache: profiles open instantly (no empty/loading look); data is refreshed quietly in the background. */
+  var PPC=window.__ppCache=window.__ppCache||{};
+  function ppGet(k){var c=PPC[k];return (c&&(Date.now()-c.at<300000))?c.d:null;}
+  function ppFetch(k){return db.collection('users').doc(String(k)).get().then(function(sn){var dd=sn.exists?(sn.data()||{}):{};PPC[String(k)]={d:dd,at:Date.now()};return dd;});}
+  function ppSig(x){x=x||{};return JSON.stringify([arrLen(x.followers),x.followersCount,arrLen(x.following),x.followingCount,x.name,x.photoURL,x.bio,x.vip,x.partyEquippedFrame,x.likes,x.gamePoints,x.coverURL]);}
   window.pkClosePublicProfile=function(){var o=document.getElementById('pkPublicProfileOverlay');if(o){o.classList.remove('open');o.setAttribute('aria-hidden','true');}};
   window.pkPublicProfileMore=function(){if(String(currentKey)===String(currentUserKey||'')){if(typeof toast==='function')toast('Profile options');}else if(typeof toast==='function')toast('Profile options जल्द उपलब्ध होंगे');};
   window.pkOwnProfileEdit=function(){try{if(typeof pkClosePublicProfile==='function')pkClosePublicProfile();if(typeof pkOpenEditProfile==='function')pkOpenEditProfile();else if(typeof toast==='function')toast('Edit Profile जल्द उपलब्ध होगा');}catch(e){}};
@@ -6615,6 +6620,7 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
           tx.set(meRef,{following:nf,followingCount:nf.length,updatedAt:Date.now()},{merge:true});
           tx.set(tRef,{followers:nr,followersCount:nr.length,updatedAt:Date.now()},{merge:true});
         });
+        try{delete PPC[String(currentKey)];delete PPC[String(currentUserKey)];}catch(_){}
         try{await render(currentKey);}catch(_){}
         stop(); return;
       }catch(err){ await new Promise(function(res){setTimeout(res,1500);}); }
@@ -6623,8 +6629,12 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
   }
   async function render(key){
     currentKey=String(key||'');if(!currentKey||!db)return;
-    try{var _po=document.getElementById('pkPublicProfileOverlay');if(_po){var _nm=(window.__prUserNameCache&&window.__prUserNameCache[currentKey])||'';var _n=document.getElementById('pkPPname');if(_n)_n.textContent=_nm||'…';['pkPPavatar','pkPPsub','pkPPid','pkPPinfo','pkPPbadges','pkPPcalls','pkPPstats'].forEach(function(id){var x=document.getElementById(id);if(x)x.innerHTML='';});var _rb=document.getElementById('pkPPRoomActions');if(_rb)_rb.style.display='none';_po.classList.add('open');_po.setAttribute('aria-hidden','false');}}catch(_){}
-    var snap=await db.collection('users').doc(currentKey).get();var d=snap.exists?(snap.data()||{}):{};var name=String(d.name||d.displayName||d.fullName||d.username||'User');
+    var _k=currentKey,d=ppGet(_k);
+    if(d){
+      var _sig0=ppSig(d);
+      ppFetch(_k).then(function(nd){var po=document.getElementById('pkPublicProfileOverlay');if(ppSig(nd)!==_sig0&&currentKey===_k&&po&&po.classList.contains('open'))render(_k);}).catch(function(){});
+    }else{ d=await ppFetch(_k); }
+var name=String(d.name||d.displayName||d.fullName||d.username||'User');
     var vip=isVip(d),photo=photoOf(d),level=levelOf(d),pub=String(d.publicUserId||d.userNumber||d.userId||d.uid||currentKey),followers=Array.isArray(d.followers)?d.followers.length:Number(d.followersCount)||0,following=Array.isArray(d.following)?d.following.length:Number(d.followingCount)||0,likes=Number(d.likes||d.likeCount||d.totalLikes)||0,rank=Number(d.rank||d.ranked||d.rankNo||0),items=arrLen(d.items)||arrLen(d.badges)||arrLen(d.achievements)||0,ver=Number(d.verifications||d.verificationCount||0),city=String(d.city||d.location||d.state||'');
     var o=document.getElementById('pkPublicProfileOverlay');if(!o)return;
     var c=document.getElementById('pkPPcover');c.style.backgroundImage=coverOf(d)?'url("'+escUrl(coverOf(d))+'")':'';
@@ -6654,8 +6664,8 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
         leaveBtn.style.display=seatedNow?'flex':'none';
       }
       try{var vc=document.getElementById('pkVisitorsCount');var vv=vc?vc.textContent:'0';var ov=document.getElementById('pkPPOwnVisitors');if(ov)ov.textContent=vv;}catch(_){}
-    }else{fb.style.display='block';dbtn.textContent='DM';dbtn.onclick=function(){pkClosePublicProfile();if(typeof pkOpenDirectMessage==='function')pkOpenDirectMessage(currentKey,name);};var mine=await db.collection('users').doc(String(currentUserKey)).get(),md=mine.exists?(mine.data()||{}):{};var mf=Array.isArray(md.following)?md.following.map(String):[];var tr=Array.isArray(d.followers)?d.followers.map(String):[];var on=mf.indexOf(currentKey)>=0||tr.indexOf(String(currentUserKey))>=0;fb.textContent=on?'✓ Following':'＋ Follow';fb.classList.toggle('following',on);fb.onclick=function(){toggleFollow(currentKey);};}
-    try{if(String(currentUserKey)!==currentKey){await db.collection('users').doc(currentKey).collection('profileVisitors').doc(String(currentUserKey)).set({visitorKey:String(currentUserKey),visitorName:String(cinemaUserName?cinemaUserName():'User'),visitedAt:Date.now()},{merge:true});}}catch(_){ }
+    }else{fb.style.display='block';dbtn.textContent='DM';dbtn.onclick=function(){pkClosePublicProfile();if(typeof pkOpenDirectMessage==='function')pkOpenDirectMessage(currentKey,name);};var md=ppGet(String(currentUserKey))||await ppFetch(String(currentUserKey));var mf=Array.isArray(md.following)?md.following.map(String):[];var tr=Array.isArray(d.followers)?d.followers.map(String):[];var on=mf.indexOf(currentKey)>=0||tr.indexOf(String(currentUserKey))>=0;fb.textContent=on?'✓ Following':'＋ Follow';fb.classList.toggle('following',on);fb.onclick=function(){toggleFollow(currentKey);};}
+    try{if(String(currentUserKey)!==currentKey){db.collection('users').doc(currentKey).collection('profileVisitors').doc(String(currentUserKey)).set({visitorKey:String(currentUserKey),visitorName:String(cinemaUserName?cinemaUserName():'User'),visitedAt:Date.now()},{merge:true}).catch(function(){});}}catch(_){ }
     try{window.pkRoomProfileHook&&window.pkRoomProfileHook(currentKey,d);}catch(_){}
     o.classList.add('open');o.setAttribute('aria-hidden','false');document.querySelector('#pkPublicProfileOverlay .pp-scroll').scrollTop=0;
   }
@@ -6674,6 +6684,20 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
   };
   window.currentKeyForProfile=function(){return currentKey;};
   window.prOpenUserCard=function(key){render(String(key||''));};
+  /* Warm the cache for everyone in the room (and me) so tapping a profile opens with no wait. */
+  var ppBusy=false;
+  setInterval(function(){
+    try{
+      if(ppBusy||!db)return;
+      var rm=document.getElementById('prRoom'); if(!rm||!rm.offsetParent)return;
+      var keys=[String(currentUserKey||'')].concat((Array.isArray(window.__cinemaPeople)?window.__cinemaPeople:[]).map(function(x){return String(x&&x.key||'');}));
+      if(window.__cinemaHostKey)keys.push(String(window.__cinemaHostKey));
+      var todo=keys.filter(function(k,i){return k&&keys.indexOf(k)===i&&!ppGet(k);}).slice(0,6);
+      if(!todo.length)return;
+      ppBusy=true;
+      Promise.all(todo.map(function(k){return ppFetch(k).catch(function(){});})).then(function(){ppBusy=false;},function(){ppBusy=false;});
+    }catch(e){ppBusy=false;}
+  },2500);
   document.addEventListener('keydown',function(ev){if(ev.key==='Escape')pkClosePublicProfile();});
 })();
 </script>
@@ -10481,18 +10505,7 @@ function partyRoomYoutubeExit(keepSound){
 }
 window.partyRoomYoutubeEnter=partyRoomYoutubeEnter;window.partyRoomYoutubeExit=partyRoomYoutubeExit;
 /* Leaving the room: stop YouTube/Sound-mode audio on THIS device only (does not stop it for other people in the room). */
-/* Host seek / pause / play: send to everyone right away (also works while paused). */
-setInterval(function(){
-  try{
-    if(!ytPlayer||!ytReady||!ytRoomIsActive()||!ytRoomHost()||ytRemoteApplying) return;
-    if(!current||current.upload) return;
-    var t=ytPlayer.getCurrentTime()||0, st=ytPlayer.getPlayerState(), now=Date.now();
-    var L=window.__ytSeekWatch||(window.__ytSeekWatch={t:t,at:now,st:st});
-    var expected=L.t+((L.st===1)?(now-L.at)/1000:0);
-    if(Math.abs(t-expected)>1.5||st!==L.st) ytRoomSyncNow(true);
-    L.t=t;L.at=now;L.st=st;
-  }catch(e){}
-},500);
+/* (duplicate host seek watcher removed: the watcher inside ytRoomStartSync already handles seek/play/pause) */
 window.partyRoomYoutubeLocalStop=function(){
   /* A real room exit is a hard local stop: no hidden Sound Mode, no retained
      iframe, and no future API callback is allowed to restart playback. */
@@ -10646,6 +10659,8 @@ function createPlayer(info,startSeconds){
       var oldDiv=document.getElementById(div.id); if(oldDiv&&oldDiv.parentNode)oldDiv.parentNode.removeChild(oldDiv);
       parent.insertBefore(div,targetFrame);
       targetFrame.style.display='none';
+      /* The direct embed must be stopped, not just hidden: a hidden iframe keeps playing its own audio from the start (double sound). */
+      try{targetFrame.removeAttribute('src');targetFrame.src='about:blank';}catch(x){}
       var vars={autoplay:1,rel:0,modestbranding:1,playsinline:1,controls:(roomMode?0:1),start:start,enablejsapi:1};
       if(info.list)vars.list=info.list;
       ytPlayer=new YT.Player(div.id,{
@@ -11482,7 +11497,7 @@ setInterval(function(){try{refreshHostState();listenRoomShare();ytRoomUpdateUI()
 })();
 </script>
 
-<script id="partyRoomLegacyHighCleanup">(function(){function clean(){var root=document.getElementById('prRoom');if(!root)return;root.querySelectorAll('*').forEach(function(el){if(el.id==='prSeatQuickPanel')return;var t=String(el.textContent||'').trim().toLowerCase();if((t==='high'||t==='hi'||t==='हाई')&&el.children.length===0){el.style.display='none';el.setAttribute('aria-hidden','true');}});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',clean);else clean();var r=document.getElementById('prRoom');if(r&&window.MutationObserver)new MutationObserver(clean).observe(r,{childList:true,subtree:true});document.addEventListener('click',function(e){var p=document.getElementById('prSeatQuickPanel'),b=document.getElementById('prSeatQuickBtn');if(p&&p.classList.contains('open')&&e.target!==p&&!p.contains(e.target)&&e.target!==b&&!b?.contains(e.target)){p.classList.remove('open');p.setAttribute('aria-hidden','true');}},true);})();
+<script id="partyRoomLegacyHighCleanup">(function(){function clean(){var root=document.getElementById('prRoom');if(!root)return;root.querySelectorAll('*').forEach(function(el){if(el.id==='prSeatQuickPanel')return;if(/^(INPUT|TEXTAREA|SELECT|BUTTON|IMG|VIDEO|CANVAS|IFRAME|AUDIO|svg|path|circle|rect|g|defs|use|stop)$/i.test(el.tagName)||(el.closest&&el.closest('#cinemaChatComposer,#partyRoomCommentToggle')))return;var t=String(el.textContent||'').trim().toLowerCase();if((t==='high'||t==='hi'||t==='हाई')&&el.children.length===0){el.style.display='none';el.setAttribute('aria-hidden','true');}});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',clean);else clean();var r=document.getElementById('prRoom');if(r&&window.MutationObserver)new MutationObserver(clean).observe(r,{childList:true,subtree:true});document.addEventListener('click',function(e){var p=document.getElementById('prSeatQuickPanel'),b=document.getElementById('prSeatQuickBtn');if(p&&p.classList.contains('open')&&e.target!==p&&!p.contains(e.target)&&e.target!==b&&!b?.contains(e.target)){p.classList.remove('open');p.setAttribute('aria-hidden','true');}},true);})();
 
 /* ===== Watch Together system ===== */
 function __watchTogetherInit() {
@@ -13517,6 +13532,7 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
     p.classList.add('chat-input-open');
     c.style.display='flex'; c.style.visibility='visible'; c.style.opacity='1'; c.style.pointerEvents='auto';
     c.style.position='absolute'; c.style.left='8px'; c.style.right='52px'; c.style.top='8px'; c.style.bottom='auto';
+    try{ var inp0=$('cinemaChatInput'); if(inp0){ inp0.style.display=''; inp0.removeAttribute('aria-hidden'); } }catch(e){}
     if(r)r.classList.remove('party-keyboard-open');
     var rt=$('partyRoomReactionTray'); if(rt)rt.style.display='none';
     var gt=$('partyRoomGiftTray'); if(gt)gt.style.display='none';
