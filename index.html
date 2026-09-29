@@ -12850,10 +12850,11 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 </style>
 
 <style id="partyRoomYoutubeLiveJump">
-/* Viewer fallback: LIVE stays OUTSIDE the video and is anchored to the video's actual bottom. */
+/* Viewer LIVE: keep it OUTSIDE the video, above the video's actual top edge.
+   It must never overlap the Q button. */
 #prRoom.party-youtube-layout #ytRoomLiveBtn{
   position:absolute!important;
-  top:var(--yt-live-top,207px)!important;
+  top:var(--yt-live-top,133px)!important;
   right:var(--yt-live-right,9px)!important;
   min-width:38px!important; width:38px!important; height:25px!important;
   padding:0!important; border:1px solid rgba(255,255,255,.30)!important;
@@ -12876,8 +12877,9 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   function isYT(){return String(window.__partyRoomMode||'chat')==='youtube';}
   function isHost(){try{return (typeof cinemaIsHost!=='undefined')?!!cinemaIsHost:false;}catch(e){return false;}}
 
-  /* Keep LIVE physically below the video, regardless of 16:9, Shorts 9:16,
-     twelve-seat layout, screen size, or later video-height changes. */
+  /* Keep LIVE physically ABOVE the video's actual top edge, regardless of
+     16:9, Shorts 9:16, twelve-seat layout, screen size, or later height changes.
+     This also keeps it physically separate from Q. */
   function positionLiveButton(){
     var r=root(),b=$('ytRoomLiveBtn'),c=card();
     if(!r||!b||!c||!isYT())return;
@@ -12885,10 +12887,10 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
       var rr=r.getBoundingClientRect(),cr=c.getBoundingClientRect();
       if(!rr.width||!cr.width||!cr.height)return;
       var gap=6;
-      var top=Math.round(cr.bottom-rr.top+gap);
+      /* Put LIVE immediately ABOVE the video, not below it and not beside Q. */
+      var top=Math.round(cr.top-rr.top-b.offsetHeight-gap);
       var right=Math.max(7,Math.round(rr.right-cr.right+2));
-      var maxTop=Math.max(8,Math.round(rr.height-b.offsetHeight-6));
-      if(top>maxTop)top=maxTop;
+      top=Math.max(8,top);
       r.style.setProperty('--yt-live-top',top+'px');
       r.style.setProperty('--yt-live-right',right+'px');
     }catch(e){}
