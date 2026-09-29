@@ -3015,6 +3015,9 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   function cinemaApplyRoom(d){
     const host=String(d?.hostKey||d?.ownerKey||'');
     cinemaIsHost=!!currentUserKey && host===String(currentUserKey);
+    /* Room mode selector is a Host-only control. Viewers should not see Chat/Game/YouTube switching. */
+    const modeSegment=document.getElementById('prModeSegment');
+    if(modeSegment) modeSegment.style.setProperty('display', cinemaIsHost ? 'flex' : 'none', 'important');
     window.__cinemaHostKey=host;
     window.__prLockedSeats=Array.isArray(d?.lockedSeats)?d.lockedSeats.map(Number):[];
     window.__cinemaAdmins=Array.isArray(d?.admins)?d.admins.map(String):[];
