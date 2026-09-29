@@ -1883,10 +1883,6 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{
       <div class="pkh-home-section-head"><b>History</b><span>हाल में देखे गए Rooms</span></div>
       <div class="pkh-recent pkh-history-row" id="pkhHistory"></div>
     </div>
-    <div class="pkh-home-section" id="pkhFollowersSection">
-      <div class="pkh-home-section-head"><b>Followers’ Rooms</b><span>आपके Follow किए लोगों के Rooms</span></div>
-      <div class="pkh-recent pkh-followers-row" id="pkhFollowers"></div>
-    </div>
     <div class="pkh-banner" id="pkhBanner"><span id="pkhBannerText"></span></div>
     <div class="pkh-games">
       <div class="pkh-game pkh-soon"><div>🎲</div><span>Ludo</span><em>Coming Soon</em></div>
@@ -2090,7 +2086,7 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{
 #pkHomeScreen .pkh-home-section-head{display:flex;align-items:baseline;gap:8px;padding:8px 20px 2px}
 #pkHomeScreen .pkh-home-section-head b{font-size:17px;color:#202020;font-weight:900}
 #pkHomeScreen .pkh-home-section-head span{font-size:11px;color:#8a8a96;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#pkHomeScreen .pkh-history-row,#pkHomeScreen .pkh-followers-row{padding-top:6px;padding-bottom:6px}
+#pkHomeScreen .pkh-history-row{padding-top:6px;padding-bottom:6px}
 #pkHomeScreen .pkh-history-pill{background:#6c5ce7;max-width:86px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #pkHomeScreen .pkh-home-empty{min-height:58px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;color:#8b8b95;font-size:12px;padding:6px 18px;box-sizing:border-box;flex:1;min-width:100%}
 #pkHomeScreen .pkh-home-empty small{display:block;margin-top:3px;color:#aaa;font-size:10px}
@@ -6798,6 +6794,27 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     var st=photoOk(ph)?'':' style="background:'+bgFor(r.id)+'"';
     return '<div class="pkh-story" data-rid="'+esc(r.id)+'" data-rname="'+esc(r.roomName)+'"><div class="pkh-circle'+(photoOk(ph)?'':' pkh-letter')+'"'+st+'>'+inner+'</div><span class="pkh-pill">'+(modeOf(r)==='gaming'?'Game':modeOf(r)==='cinema'?'YouTube':'Chat')+'</span><div class="pkh-label">'+esc(r.roomName)+'</div></div>';
   }
+  function followedPersonCircle(key){
+    key=String(key||'');
+    var ph='';
+    try{ ph=cinemaPhotoFor(key)||''; }catch(e){}
+    var nm='';
+    try{ nm=String(nameOf(key)||'').trim(); }catch(e){}
+    var inner=photoOk(ph)?'<img class="pkh-cimg" src="'+esc(ph)+'" alt="">':letter(nm||'U');
+    var st=photoOk(ph)?'':' style="background:'+bgFor(key)+'"';
+    return '<div class="pkh-story pkh-follow-person" data-follow-key="'+esc(key)+'"><div class="pkh-circle'+(photoOk(ph)?'':' pkh-letter')+'"'+st+'>'+inner+'</div></div>';
+  }
+  function followedPeopleHtml(){
+    var seen={};
+    var out=[];
+    S.active.forEach(function(r){
+      (r.__fkeys||[]).forEach(function(k){
+        k=String(k||'');
+        if(k&&!seen[k]){seen[k]=1;out.push(followedPersonCircle(k));}
+      });
+    });
+    return out.join('');
+  }
   function historyCircleFor(r){
     var ph=String(r.roomImage||r.roomPhoto||'');
     var inner=photoOk(ph)?'<img class="pkh-cimg" src="'+esc(ph)+'" alt="">':letter(r.roomName);
@@ -6806,29 +6823,38 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     return '<div class="pkh-story" data-history-rid="'+esc(r.roomId)+'" data-rname="'+esc(r.roomName)+'"><div class="pkh-circle'+(photoOk(ph)?'':' pkh-letter')+'"'+st+'>'+inner+'</div><span class="pkh-pill pkh-history-pill">'+(meta?esc(meta):'Room')+'</span><div class="pkh-label">'+esc(r.roomName)+'</div></div>';
   }
 
+  function removeHomeFollowersLabel(){
+    try{
+      var old=$('pkhFollowersSection');
+      if(old) old.remove();
+      var root=$('pkHomeScreen');
+      if(!root) return;
+      Array.prototype.slice.call(root.querySelectorAll('*')).forEach(function(el){
+        if(el===root) return;
+        var t=String(el.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+        if((t==='followers rooms'||t==='followers’ rooms'||t==="followers' rooms"||t==='followers room') && el.children.length===0){
+          var par=el.closest('.pkh-home-section');
+          if(par) par.remove(); else el.remove();
+        }
+      });
+    }catch(e){}
+  }
+
   function render(){
+    removeHomeFollowersLabel();
     var rc=$('pkhRecent');
     if(rc){
       var h='<div class="pkh-story" data-act="my"><div class="pkh-circle pkh-home-icon">'+(S.myRoom?'⌂':'➕')+'</div><div class="pkh-label">'+(S.myRoom?'My Room':'Create Room')+'</div></div>';
       h+='<div class="pkh-story" data-act="joined"><div class="pkh-circle pkh-pink">♥</div><div class="pkh-label">Joined</div></div>';
+      h+=followedPeopleHtml();
       rc.innerHTML=h;
     }
 
     var hs=$('pkhHistorySection'),hr=$('pkhHistory');
     if(hs&&hr){
       hs.style.display='block';
-      if(!S.loaded){hr.innerHTML='<div class="pkh-home-empty">History लोड हो रही है…</div>';}
-      else if(!S.history.length){hr.innerHTML='<div class="pkh-home-empty">अभी कोई Room History नहीं है<small>किसी Room में जाने के बाद वह यहाँ दिखेगा</small></div>';}
+      if(!S.loaded){hr.innerHTML='';}
       else hr.innerHTML=S.history.map(function(r){return historyCircleFor(r);}).join('');
-    }
-
-    var fs=$('pkhFollowersSection'),fr=$('pkhFollowers');
-    var fol=S.active.filter(function(r){return r.__followed;});
-    if(fs&&fr){
-      fs.style.display='block';
-      if(!S.loaded){fr.innerHTML='<div class="pkh-home-empty">Followers’ Rooms लोड हो रहे हैं…</div>';}
-      else if(!fol.length){fr.innerHTML='<div class="pkh-home-empty">अभी आपके Follow किए लोगों का कोई Active Room नहीं है</div>';}
-      else fr.innerHTML=fol.map(function(r){return circleFor(r);}).join('');
     }
     var tabs=$('pkhTabs');
     if(tabs){
@@ -6985,18 +7011,21 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
 
   /* ---------- wiring ---------- */
   function bind(){
-    var rc=$('pkhRecent'),g=$('pkhRoomGrid'),tabs=$('pkhTabs'),hr=$('pkhHistory'),fr=$('pkhFollowers');
+    var rc=$('pkhRecent'),g=$('pkhRoomGrid'),tabs=$('pkhTabs'),hr=$('pkhHistory');
     if(rc&&!rc.__b){rc.__b=1;rc.addEventListener('click',function(ev){
       var a=ev.target.closest('[data-act]');
+      var person=ev.target.closest('[data-follow-key]');
+      if(person){
+        var fk=person.getAttribute('data-follow-key');
+        var room=S.active.find(function(r){return (r.__fkeys||[]).map(String).indexOf(String(fk))>=0;});
+        if(room)pkHomeJoin(room.id,room.roomName);
+        return;
+      }
       if(a){var k=a.getAttribute('data-act');if(k==='my')pkHomeMyRoom();else showFollowedRooms();return;}
     });}
     if(hr&&!hr.__b){hr.__b=1;hr.addEventListener('click',function(ev){
       var r=ev.target.closest('[data-history-rid]');
       if(r)pkHomeJoin(r.getAttribute('data-history-rid'),r.getAttribute('data-rname'));
-    });}
-    if(fr&&!fr.__b){fr.__b=1;fr.addEventListener('click',function(ev){
-      var r=ev.target.closest('[data-rid]');
-      if(r)pkHomeJoin(r.getAttribute('data-rid'),r.getAttribute('data-rname'));
     });}
     if(g&&!g.__b){g.__b=1;g.addEventListener('click',function(ev){var r=ev.target.closest('[data-rid]');if(r)pkHomeJoin(r.getAttribute('data-rid'),r.getAttribute('data-rname'));});}
     if(tabs&&!tabs.__b){tabs.__b=1;tabs.addEventListener('click',function(ev){var t=ev.target.closest('[data-tab]');if(!t)return;S.tab=t.getAttribute('data-tab');try{navigator.vibrate&&navigator.vibrate(8);}catch(e){}render();});}
@@ -7024,6 +7053,8 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
 #pkHomeScreen .pkh-actions button:active{transform:scale(.9)}
 /* stories */
 #pkHomeScreen .pkh-recent{padding:14px 14px 4px;gap:10px}
+#pkHomeScreen .pkh-follow-person{min-width:78px;width:78px}
+#pkHomeScreen .pkh-follow-person .pkh-circle{margin:auto}
 #pkHomeScreen .pkh-circle{border:0;box-shadow:0 0 0 2px #fff,0 0 0 4.5px #c4a5fb,0 8px 16px rgba(124,58,237,.22);transition:transform .12s}
 #pkHomeScreen .pkh-story:active .pkh-circle{transform:scale(.94)}
 #pkHomeScreen .pkh-home-icon{box-shadow:0 0 0 2px #fff,0 0 0 4.5px #f5b942,0 8px 16px rgba(245,185,66,.3);color:#ec4899}
