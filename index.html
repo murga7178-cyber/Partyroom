@@ -2731,7 +2731,9 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <div class="yt-room-hostbar"><button type="button" id="ytRoomCloseVideoBtn" class="yt-room-close-video" onclick="window.ytRoomCloseShared&&window.ytRoomCloseShared()" title="सभी के लिए YouTube बंद करें" aria-label="बंद करें">✕</button></div>
           </div>
           <div id="ytRoomViewerSeekBar" class="yt-room-viewer-seekbar" aria-label="वीडियो की पूरी टाइमलाइन">
+            <span id="ytRoomViewerTime" class="yt-room-viewer-time">00:00</span>
             <input id="ytRoomViewerSeekRange" class="yt-room-viewer-seek-range" type="range" min="0" max="0" step="0.1" value="0" aria-label="वीडियो टाइमलाइन">
+            <span id="ytRoomViewerDuration" class="yt-room-viewer-duration">00:00</span>
           </div>
 <button type="button" id="ytRoomUiHideBtn" class="yt-room-ui-hide-btn" aria-label="YouTube Queue और controls" title="Queue और YouTube controls">Q <span id="ytRoomUiHideBadge"></span></button>
           <button type="button" id="ytRoomLiveBtn" aria-label="Live पर जाएँ" title="अभी चल रहे scene पर जाएँ">LIVE</button>
@@ -11887,8 +11889,8 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   'use strict';
   function $(id){return document.getElementById(id);}
   function fmt(t){
-    t=Math.max(0,Number(t)||0);
-    var h=Math.floor(t/3600),m=Math.floor((t%3600)/60),s=Math.floor(t%60);
+    t=Math.max(0,Math.floor(Number(t)||0));
+    var h=Math.floor(t/3600),m=Math.floor((t%3600)/60),s=t%60;
     function pad(n){return n<10?'0'+n:String(n);}
     return h>0?(h+':'+pad(m)+':'+pad(s)):(pad(m)+':'+pad(s));
   }
@@ -11902,11 +11904,20 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   function mediaInfo(){
     var p=getPlayer(), lv=$("ytRoomLocalVideo"), d=0, cur=0, playing=false;
     try{
-      if(window.current && current.upload && lv){d=Number(lv.duration)||0;cur=Number(lv.currentTime)||0;playing=!lv.paused&&!lv.ended;}
-      else if(p&&window.ytReady){d=Number(p.getDuration&&p.getDuration())||0;cur=Number(p.getCurrentTime&&p.getCurrentTime())||0;var st=p.getPlayerState&&p.getPlayerState();playing=st===1;}
+      if(window.current && current.upload && lv){
+        d=Number(lv.duration)||0;cur=Number(lv.currentTime)||0;playing=!lv.paused&&!lv.ended;
+      }else if(p&&window.ytReady){
+        d=Number(p.getDuration&&p.getDuration())||0;
+        cur=Number(p.getCurrentTime&&p.getCurrentTime())||0;
+        var st=p.getPlayerState&&p.getPlayerState(); playing=st===1;
+      }
     }catch(e){}
-    if(!d&&window.__ytLastState)d=Number(window.__ytLastState.dur)||0;
-    if(!cur&&(!p||!window.ytReady)&&window.__ytLastState)cur=stateTime();
+    var st=window.__ytLastState;
+    if(st){
+      var sd=Number(st.dur)||0;
+      if(sd>d)d=sd;
+      if((!p||!window.ytReady) && !cur)cur=stateTime();
+    }
     return {d:d,cur:cur,playing:playing};
   }
   function paint(){
@@ -11916,33 +11927,56 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
     bar.style.display=show?'flex':'none';
     if(!show)return;
     var m=mediaInfo(), d=m.d||0, c=m.cur||0;
-    if(!isHost() && window.__ytLastState){
-      var st=window.__ytLastState;
-      if(st.videoId||st.videoUrl){
-        var manualHold=Date.now() < (window.__ytViewerManualSeekUntil||0);
-        if(!manualHold) c=stateTime();
-        d=Number(st.dur)||d;
-      }
+    var st=window.__ytLastState;
+    if(!isHost()&&st&&(st.videoId||st.videoUrl)){
+      var manualHold=Date.now() < (window.__ytViewerManualSeekUntil||0);
+      if(!manualHold)c=stateTime();
+      var sd=Number(st.dur)||0;
+      if(sd>0)d=Math.max(d,sd);
     }
-    if(d>0)range.max=String(d);
-    range.value=String(Math.max(0,Math.min(d||0,c)));
-    if(curEl)curEl.textContent=fmt(c);
-    if(durEl)durEl.textContent=fmt(d);
+    if(d>0){
+      range.max=String(d);
+      range.setAttribute('aria-valuemax',String(d));
+    }
+    var safeD=Math.max(0,d),safeC=Math.max(0,Math.min(safeD||0,c));
+    /* While the user is dragging, never repaint the thumb back to 0 from a
+       temporarily-unready player. The manual value is the source of truth. */
+    var dragging=range.dataset.dragging==='1';
+    if(!dragging)range.value=String(safeC);
+    if(curEl)curEl.textContent=fmt(dragging?(Number(range.value)||safeC):safeC);
+    if(durEl)durEl.textContent=fmt(safeD);
   }
   function seekTo(t){
     t=Math.max(0,Number(t)||0);
+    var range=$("ytRoomViewerSeekRange");
+    if(range)range.value=String(t);
     var p=getPlayer(),lv=$("ytRoomLocalVideo");
     try{
-      if(window.current&&current.upload&&lv){lv.currentTime=t; if(isHost()&&!lv.paused&&!lv.ended)ytRoomWriteState({type:'upload',videoUrl:current.url,title:current.title,playing:true,currentTime:t,stopped:false});return;}
-      if(p&&window.ytReady&&p.seekTo){p.seekTo(t,true);window.__ytViewerManualSeekUntil=Date.now()+8000;if(isHost()&&typeof ytRoomSyncNow==='function')setTimeout(function(){try{ytRoomSyncNow(true);}catch(e){}},120);}
+      if(window.current&&current.upload&&lv){
+        lv.currentTime=t;
+        if(isHost()&&!lv.paused&&!lv.ended)ytRoomWriteState({type:'upload',videoUrl:current.url,title:current.title,playing:true,currentTime:t,stopped:false});
+        return;
+      }
+      if(p&&window.ytReady&&p.seekTo){
+        window.__ytViewerManualSeekUntil=Date.now()+8000;
+        p.seekTo(t,true);
+        if(isHost()&&typeof ytRoomSyncNow==='function')setTimeout(function(){try{ytRoomSyncNow(true);}catch(e){}},120);
+      }
     }catch(e){}
   }
   function wire(){
     var range=$("ytRoomViewerSeekRange");
     if(!range||range.dataset.wired==='1')return;
     range.dataset.wired='1';
-    range.addEventListener('input',function(){seekTo(Number(this.value)||0);});
-    range.addEventListener('change',function(){seekTo(Number(this.value)||0);});
+    range.addEventListener('pointerdown',function(){range.dataset.dragging='1';});
+    range.addEventListener('input',function(){
+      range.dataset.dragging='1';
+      seekTo(Number(this.value)||0);
+      var cur=$("ytRoomViewerTime");if(cur)cur.textContent=fmt(Number(this.value)||0);
+    });
+    range.addEventListener('change',function(){seekTo(Number(this.value)||0);range.dataset.dragging='0';paint();});
+    range.addEventListener('pointerup',function(){range.dataset.dragging='0';paint();});
+    range.addEventListener('touchend',function(){range.dataset.dragging='0';paint();},{passive:true});
   }
   setInterval(function(){try{wire();paint();}catch(e){}},200);
   document.addEventListener('DOMContentLoaded',function(){wire();paint();});
@@ -11971,6 +12005,12 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   #prRoom.party-youtube-layout #ytRoomSpeakerBar{height:29px;margin-top:3px;padding:0 7px;gap:5px;}
   #prRoom.party-youtube-layout .yt-room-speaker-label{font-size:8px;}
 }
+</style>
+
+<style id="partyRoomYoutubeSeekTimeFinal">
+#prRoom.party-youtube-layout #ytRoomViewerSeekBar{display:flex!important;align-items:center!important;gap:6px!important;}
+#prRoom.party-youtube-layout #ytRoomViewerSeekRange{flex:1 1 auto!important;min-width:0!important;}
+#prRoom.party-youtube-layout #ytRoomViewerTime,#prRoom.party-youtube-layout #ytRoomViewerDuration{display:block!important;flex:0 0 auto!important;min-width:42px!important;text-align:center!important;color:#fff!important;font:800 10px/1 system-ui,Segoe UI,Arial,sans-serif!important;font-variant-numeric:tabular-nums!important;white-space:nowrap!important;}
 </style>
 
 <style id="partyRoomYoutubeNoSpeakerFinal">
