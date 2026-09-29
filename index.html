@@ -1285,7 +1285,8 @@ html, body { overscroll-behavior-y: none; }
 #pkUniversalNav button span{width:34px!important;height:34px!important;border-radius:0!important;background:none!important;box-shadow:none!important;display:grid;place-items:center;}
 #pkUniversalNav button.active span{background:none!important;box-shadow:none!important;}
 #pkUniversalNav .pkun-ico{width:30px;height:30px;object-fit:contain;display:block;background:none;border:0;opacity:1;filter:none;transition:transform .18s,filter .18s;-webkit-user-drag:none;user-select:none;pointer-events:none;}
-#pkUniversalNav button.active .pkun-ico{transform:scale(1.08);filter:drop-shadow(0 0 2px rgba(255,64,130,.6)) drop-shadow(0 0 5px rgba(255,64,130,.35)) drop-shadow(0 0 9px rgba(255,105,160,.2));}
+#pkUniversalNav button.active .pkun-ico{transform:scale(1.08);filter:none;}
+#pkUniversalNav button.active::after{content:"";position:absolute;bottom:1px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#ff4082;}
 #pkUniversalNav button.active{color:#e11d68;}
 #pkUniversalNav button:active .pkun-ico{transform:scale(.92);}
 #pkUniversalNav em{top:3px;right:calc(50% - 24px);}
@@ -12449,10 +12450,10 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 </script>
 
 <style id="pkPageLoaderCss">
-#pkPageLoader{position:fixed;inset:0;z-index:2147483640;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:rgba(255,255,255,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transition:opacity .18s ease;-webkit-tap-highlight-color:transparent;}
+#pkPageLoader{position:fixed;inset:0;z-index:2147483640;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:#ffffff;opacity:0;transition:opacity .18s ease;-webkit-tap-highlight-color:transparent;}
 #pkPageLoader.on{display:flex;}
 #pkPageLoader.vis{opacity:1;}
-#pkPageLoader .pkpl-ring{width:48px;height:48px;border-radius:50%;border:4px solid rgba(255,64,130,.18);border-top-color:#ff4082;border-right-color:#ff7aa8;animation:pkplSpin .8s linear infinite;box-shadow:0 0 14px rgba(255,64,130,.25);}
+#pkPageLoader .pkpl-ring{width:48px;height:48px;border-radius:50%;border:4px solid rgba(255,64,130,.18);border-top-color:#ff4082;border-right-color:#ff7aa8;animation:pkplSpin .8s linear infinite;box-shadow:none;}
 #pkPageLoader .pkpl-txt{font:600 13px Segoe UI,Arial,sans-serif;color:#b0316a;letter-spacing:.2px;}
 @keyframes pkplSpin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){#pkPageLoader .pkpl-ring{animation-duration:1.6s}}
