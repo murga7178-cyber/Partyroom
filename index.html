@@ -3364,6 +3364,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       const data={roomId:id,roomName:name,ownerKey:currentUserKey||'guest',createdAt:Date.now(),updatedAt:Date.now(),roomMode:'chat',videoUrl:'',videoName:'',hostKey:currentUserKey||'guest',hostName:cinemaUserName(),playing:false,currentTime:0,passwordProtected:false,backgroundKey:'bloom',topic:name.slice(0,60),roomPhoto:window.__newRoomPhoto,controls:{chat:true,audio:true,seats:true,hostArea:true}};
       await db.collection('cinemaRooms').doc(id).set(data);
       window.__myRoomId=id;
+      try{ localStorage.setItem('pk_myRoomId_'+String(currentUserKey||''),String(id)); }catch(e){}
       try{ window.__newRoomPhoto=''; const pv=document.getElementById('cinemaNewRoomPhotoPrev'); if(pv){pv.style.backgroundImage='';pv.textContent='📷';} }catch(e){}
       if(msg)msg.textContent='';
       // Create page को आधा lobby दिखाने से पहले साफ करके सीधे बने हुए room में जाएँ।
@@ -3581,22 +3582,36 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   document.addEventListener('keydown',e=>{ const o=document.getElementById('prBrowserOverlay'); if(!o||!o.classList.contains('open'))return; if(e.key==='Enter' && document.activeElement?.id==='prBrowserUrl'){e.preventDefault();prBrowserGo();} if(e.key==='Escape'){e.preventDefault();prBrowserClose();} });
   window.prBrowserOpen=prBrowserOpen; window.prBrowserClose=prBrowserClose; window.prBrowserGo=prBrowserGo; window.prBrowserTryDownload=prBrowserTryDownload; window.prBrowserBack=prBrowserBack; window.prBrowserForward=prBrowserForward; window.prBrowserReload=prBrowserReload; window.prBrowserHome=prBrowserHome;
 
+  function partyRoomHistoryLocalKey(){return 'pk_party_room_history_'+String(currentUserKey||'guest');}
+  function partyRoomHistoryLocalRead(){
+    try{var a=JSON.parse(localStorage.getItem(partyRoomHistoryLocalKey())||'[]');return Array.isArray(a)?a:[];}catch(e){return [];}
+  }
+  function partyRoomHistoryLocalWrite(item){
+    try{
+      var a=partyRoomHistoryLocalRead().filter(function(x){return String(x.roomId)!==String(item.roomId);});
+      a.unshift(item);a=a.slice(0,20);localStorage.setItem(partyRoomHistoryLocalKey(),JSON.stringify(a));
+    }catch(e){}
+  }
   async function savePartyRoomHistory(id,roomData,fallbackName){
     try{
-      if(!db||!currentUserKey||!id)return;
-      var roomId=String(id);
-      var d=roomData||{};
+      if(!currentUserKey||!id)return;
+      var roomId=String(id),d=roomData||{};
       var roomName=String(d.roomName||fallbackName||'पार्टी रूम').trim()||'पार्टी रूम';
       var hostKey=String(d.ownerKey||d.hostKey||'');
       var hostName=String(d.hostName||d.ownerName||d.hostDisplayName||'').trim();
-      if(!hostName&&hostKey){
-        try{var hs=await db.collection('users').doc(hostKey).get();if(hs.exists){var hd=hs.data()||{};hostName=String(hd.name||hd.displayName||hd.fullName||hd.username||'').trim();}}catch(e){}
+      if(!hostName&&hostKey&&db){try{var hs=await db.collection('users').doc(hostKey).get();if(hs.exists){var hd=hs.data()||{};hostName=String(hd.name||hd.displayName||hd.fullName||hd.username||'').trim();}}catch(e){}}
+      var roomImage=String(d.roomPhoto||d.roomImage||'').trim(),now=Date.now();
+      var item={roomId:roomId,roomName:roomName,hostKey:hostKey,hostName:hostName,roomImage:roomImage,lastVisitedAt:now};
+      /* Local cache makes the visit appear immediately even if Firestore is slow/offline. */
+      partyRoomHistoryLocalWrite(item);
+      try{window.__partyRoomHistoryJustSaved=item;}catch(e){}
+      if(db){
+        try{
+          var docId=encodeURIComponent(roomId);
+          await db.collection('users').doc(String(currentUserKey)).collection('roomHistory').doc(docId).set(item,{merge:true});
+        }catch(e){}
       }
-      var roomImage=String(d.roomPhoto||d.roomImage||'').trim();
-      var docId=encodeURIComponent(roomId);
-      await db.collection('users').doc(String(currentUserKey)).collection('roomHistory').doc(docId).set({
-        roomId:roomId,roomName:roomName,hostKey:hostKey,hostName:hostName,roomImage:roomImage,lastVisitedAt:Date.now()
-      },{merge:true});
+      try{if(typeof window.pkHomeRefresh==='function' && document.getElementById('pkHomeScreen') && document.getElementById('pkHomeScreen').style.display!=='none')window.pkHomeRefresh();}catch(e){}
     }catch(e){/* History must never block room entry. */}
   }
 
@@ -5611,6 +5626,7 @@ setInterval(function(){try{
     var mine=null;
     if(me){ rooms.forEach(function(r){ if(String(r.ownerKey)===me && (!mine||(r.createdAt||0)>(mine.createdAt||0))) mine=r; }); }
     window.__myRoomId=mine?mine.id:'';
+    if(mine){ try{ localStorage.setItem('pk_myRoomId_'+String(currentUserKey||''),String(mine.id)); }catch(e){} }
     if(!mine){ card.style.display='none'; create.style.display=''; return; }
     create.style.display='none'; card.style.display='block';
     var ph=$('cinemaMyRoomPhoto');
@@ -6701,14 +6717,56 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     if(!db||!currentUserKey||S.loading)return; S.loading=true;
     try{
       var me=String(currentUserKey);
-      var res=await Promise.all([db.collection('cinemaRooms').get(),db.collection('users').doc(me).get(),db.collection('users').doc(me).collection('roomHistory').orderBy('lastVisitedAt','desc').limit(20).get()]);
-      var ud=res[1].exists?(res[1].data()||{}):{};
-      S.history=[];
-      try{res[2].forEach(function(doc){var h=doc.data()||{};if(h.roomId&&h.roomName)S.history.push(Object.assign({id:doc.id},h));});}catch(e){}
+      /* Keep the main Home load independent from optional History reads. */
+      var roomSnap=await db.collection('cinemaRooms').get();
+      var userSnap=null;try{userSnap=await db.collection('users').doc(me).get();}catch(e){}
+      var ud=userSnap&&userSnap.exists?(userSnap.data()||{}):{};
+      var localHistory=partyRoomHistoryLocalRead();
+      S.history=localHistory.slice().sort(function(a,b){return Number(b.lastVisitedAt||0)-Number(a.lastVisitedAt||0);});
+      try{
+        var hsnap=await db.collection('users').doc(me).collection('roomHistory').get();
+        var remote=[];hsnap.forEach(function(doc){var h=doc.data()||{};if(h.roomId&&h.roomName)remote.push(Object.assign({id:doc.id},h));});
+        var merged={};localHistory.concat(remote).forEach(function(h){var k=String(h.roomId||'');if(!k)return;if(!merged[k]||Number(h.lastVisitedAt||0)>Number(merged[k].lastVisitedAt||0))merged[k]=h;});
+        S.history=Object.keys(merged).map(function(k){return merged[k];}).sort(function(a,b){return Number(b.lastVisitedAt||0)-Number(a.lastVisitedAt||0);}).slice(0,20);
+      }catch(e){}
       S.following=(Array.isArray(ud.following)?ud.following:[]).map(String);
-      var rooms=[];res[0].forEach(function(doc){var d=doc.data()||{};if(d.roomName)rooms.push(Object.assign({id:doc.id},d));});
-      var mine=null;rooms.forEach(function(r){var o=String(r.ownerKey||'');if(o===me&&(!mine||(r.createdAt||0)>(mine.createdAt||0)))mine=r;});
+      var rooms=[];roomSnap.forEach(function(doc){var d=doc.data()||{};if(d.roomName)rooms.push(Object.assign({id:doc.id},d));});
+      var mine=null;
+      rooms.forEach(function(r){
+        var o=String(r.ownerKey||''),h=String(r.hostKey||'');
+        if((o===me||h===me)&&(!mine||Number(r.createdAt||0)>Number(mine.createdAt||0)))mine=r;
+      });
+      /* If the room was created in an older session/key, recover it from the saved room id. */
+      if(!mine){
+        try{
+          var savedId=String(localStorage.getItem('pk_myRoomId_'+me)||window.__myRoomId||'').trim();
+          if(savedId){
+            var savedSnap=await db.collection('cinemaRooms').doc(savedId).get();
+            if(savedSnap.exists){
+              var savedRoom=Object.assign({id:savedSnap.id},savedSnap.data()||{});
+              if(String(savedRoom.ownerKey||'')===me||String(savedRoom.hostKey||'')===me) mine=savedRoom;
+            }
+          }
+        }catch(e){}
+      }
+      /* Final fallback: direct owner/host queries, so My Room is not replaced by Create Room just because the broad list missed it. */
+      if(!mine){
+        try{
+          var ownSnap=await db.collection('cinemaRooms').where('ownerKey','==',me).limit(20).get();
+          ownSnap.forEach(function(x){var z=Object.assign({id:x.id},x.data()||{});if(z.roomName&&(!mine||Number(z.createdAt||0)>Number(mine.createdAt||0)))mine=z;});
+        }catch(e){}
+      }
+      if(!mine){
+        try{
+          var hostSnap=await db.collection('cinemaRooms').where('hostKey','==',me).limit(20).get();
+          hostSnap.forEach(function(x){var z=Object.assign({id:x.id},x.data()||{});if(z.roomName&&(!mine||Number(z.createdAt||0)>Number(mine.createdAt||0)))mine=z;});
+        }catch(e){}
+      }
       S.myRoom=mine;
+      if(mine){
+        window.__myRoomId=mine.id;
+        try{localStorage.setItem('pk_myRoomId_'+me,String(mine.id));}catch(e){}
+      }
       rooms.sort(function(a,b){return (b.createdAt||0)-(a.createdAt||0);});rooms=rooms.slice(0,40);
       var since=Date.now()-20000;
       await Promise.all(rooms.map(async function(r){
@@ -6723,7 +6781,12 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
         r.__followed=r.__fcount>0;
       });
       S.loaded=true;
-    }catch(e){}
+    }catch(e){
+      /* Never leave Home stuck on a permanent loading message. */
+      S.loaded=true;
+      S.history=partyRoomHistoryLocalRead().sort(function(a,b){return Number(b.lastVisitedAt||0)-Number(a.lastVisitedAt||0);});
+      S.active=[];S.following=[];
+    }
     S.loading=false;render();
   }
   window.pkHomeRefresh=function(){ try{return refresh();}catch(e){return Promise.resolve();} };
@@ -6795,6 +6858,15 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     if(!db||!currentUserKey)return;
     cinemaShowActionLoading('आपका Party Room चेक हो रहा है…');
     var mine=S.myRoom;
+    if(!mine){
+      try{
+        var savedId=String(localStorage.getItem('pk_myRoomId_'+String(currentUserKey))||window.__myRoomId||'').trim();
+        if(savedId){
+          var ss=await db.collection('cinemaRooms').doc(savedId).get();
+          if(ss.exists){var sd=ss.data()||{};if(String(sd.ownerKey||'')===String(currentUserKey)||String(sd.hostKey||'')===String(currentUserKey))mine=Object.assign({id:ss.id},sd);}
+        }
+      }catch(e){}
+    }
     if(!mine){
       try{
         var rs=await db.collection('cinemaRooms').where('ownerKey','==',String(currentUserKey)).limit(20).get();
