@@ -2661,6 +2661,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <div class="yt-room-hostbar"><label style="display:flex;align-items:center;gap:5px;background:rgba(15,23,42,.82);border-radius:10px;padding:5px 8px;color:#fff;font-size:11px;">🔊<input id="ytRoomVolume" type="range" min="0" max="100" value="80" style="width:82px;"></label><button type="button" id="ytRoomCloseVideoBtn" class="yt-room-close-video" onclick="window.ytRoomCloseShared&&window.ytRoomCloseShared()" title="सभी के लिए YouTube बंद करें" aria-label="बंद करें">✕</button></div>
           </div>
           <button type="button" id="ytRoomUiHideBtn" class="yt-room-ui-hide-btn" aria-label="YouTube Queue और controls" title="Queue और YouTube controls">Q <span id="ytRoomUiHideBadge"></span></button>
+          <button type="button" id="ytRoomLiveBtn" aria-label="Live पर जाएँ" title="अभी चल रहे scene पर जाएँ">LIVE</button>
           <div id="ytRoomUrlBar" class="yt-room-url-bar">
             <div class="yt-room-input-label">YouTube URL यहाँ डालें</div>
             <div class="yt-room-url-row">
@@ -2861,12 +2862,13 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       if(youtube){
         if(window.partyRoomYoutubeEnter) window.partyRoomYoutubeEnter();
       }else{
-        if(window.partyRoomYoutubeExit) window.partyRoomYoutubeExit(mode==='chat');
+        /* YouTube is strictly isolated to YouTube Mode. Never keep audio alive in Chat/Gaming/Cinema. */
+        if(window.partyRoomYoutubeExit) window.partyRoomYoutubeExit(false);
       }
     }else{
       window.PR_SEATS=[2,4,8,12].includes(Number(window.__chatSeatCount))?Number(window.__chatSeatCount):12;
       try{window.pkCloseJumpGame&&window.pkCloseJumpGame()}catch(e){}
-      if(window.partyRoomYoutubeExit) window.partyRoomYoutubeExit(mode==='chat');
+      if(window.partyRoomYoutubeExit) window.partyRoomYoutubeExit(false);
       const box=document.getElementById('cinemaSeats'); if(box){box.innerHTML='';box.__sigs=[];}
     }
     try{cinemaRenderSeats(window.__cinemaPeople||[])}catch(e){}
@@ -2891,6 +2893,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   window.setPartyRoomMode=setPartyRoomMode;
   function cinemaApplyRoomMode(mode){
     mode=(mode==='gaming'||mode==='youtube'||mode==='cinema')?mode:'chat'; window.__partyRoomMode=mode;
+    /* Any non-YouTube room mode must immediately kill local YouTube playback. */
+    if(mode!=='youtube'){ try{ if(window.partyRoomYoutubeExit) window.partyRoomYoutubeExit(false); }catch(e){} }
     const chatPage=document.getElementById('prRoom'), gamePage=document.getElementById('partyGamingModePage');
     if(chatPage) chatPage.style.display='';
     if(gamePage) gamePage.style.display='none';
@@ -10122,6 +10126,10 @@ input,textarea,select{font-size:16px}
 var HISTORY_KEY='yt_history_v3',QUEUE_KEY='yt_queue_v3',VOLUME_KEY='yt_volume_v3',SOUND_KEY='yt_soundmode_v3',MAX_HISTORY=20,MAX_QUEUE=30,SHARE_DOC='partyRoomYouTube';
 var queue=[],history=[],current=null,isHost=false,soundMode=false,volume=80,muted=false,roomShareEnabled=true;
 var ytPlayer=null,ytReady=false,ytApiLoaded=!!window.YT,ytProgressTimer=null,roomUnsub=null,lastRoomTs=0,listeningRoom='';
+/* Every player creation gets a generation id. Leaving the room invalidates the
+   old generation so a delayed YouTube IFrame API callback can never resurrect
+   a player after it has been closed. */
+var ytPlayerGeneration=0;
 var ytRoomStateUnsub=null,ytRoomQueueUnsub=null,ytRoomSyncTimer=null,ytRemoteApplying=false,ytRoomLastAction=0,ytRoomSuppressNextSync=false;
 var $=function(id){return document.getElementById(id);};
 var fab=$('ytFab'),fabBadge=fab&&fab.querySelector('.yt-badge'),mini=$('ytMini'),modal=$('ytModal'),closeBtn=$('ytCloseBtn'),input=$('ytInput'),loadBtn=$('ytLoadBtn'),pasteBtn=$('ytPasteBtn'),addQueue=$('ytAddQueueBtn'),historyBtn=$('ytHistoryBtn'),queueInput=$('ytQueueInput'),queueAddBtn=$('ytQueueAddBtn'),shareBtn=$('ytShareBtn'),clearBtn=$('ytClearBtn'),bottomHistoryBtn=$('ytBottomHistoryBtn'),bottomQueueBtn=$('ytBottomQueueBtn'),bottomInput=$('ytBottomInput'),bottomLoadBtn=$('ytBottomLoadBtn'),bottomSoundBtn=$('ytBottomSoundBtn'),bottomSoundPanel=$('ytBottomSoundPanel'),bottomSoundToggle=$('ytBottomSoundToggle'),frameHost=$('ytFrame'),queueList=$('ytQueueList'),historyList=$('ytHistoryList'),queueCount=$('ytQueueCount'),hostLock=$('ytHostLock'),enableSound=$('ytEnableSound'),clearHist=$('ytClearHistory'),playPause=$('ytPlayPause'),seekBack=$('ytSeekBack'),seekFwd=$('ytSeekFwd'),seekBar=$('ytSeekBar'),seekFill=$('ytSeekFill'),timeCur=$('ytTimeCur'),timeDur=$('ytTimeDur'),volSlider=$('ytVolSlider'),volVal=$('ytVolVal'),muteBtn=$('ytMuteBtn'),dockBtn=$('partyRoomYouTubeBtn'),dockBadge=$('partyRoomYoutubeBadge');
@@ -10210,8 +10218,11 @@ function ytRoomApplyState(d){
       try{ var vdB=ytPlayer.getVideoData&&ytPlayer.getVideoData(); if(vdB&&current&&current.id&&!current.list&&vdB.video_id&&String(vdB.video_id)!==String(current.id)){ ytRemoteApplying=false; return; } }catch(e){}
       /* If this viewer's own ad is playing (duration shorter than the host's video), leave it alone so Skip works. */
       try{ var myDur=ytPlayer.getDuration()||0, hostDur=Number(d.dur)||0; if(hostDur>0&&myDur>0&&myDur<hostDur-1.5){ ytRemoteApplying=false; return; } }catch(e){}
+      /* Join/live catch-up: use the host's timestamp, not the old position saved
+         when this viewer entered. This keeps a late-joining viewer on the
+         same scene even when the host has continued playing meanwhile. */
       var target=ytRoomLiveTime(d), now=ytPlayer.getCurrentTime()||0;
-      if(Math.abs(now-target)>2) ytPlayer.seekTo(target,true);
+      if(Math.abs(now-target)>0.75) ytPlayer.seekTo(target,true);
       if(d.playing===true) ytPlayer.playVideo(); else if(d.playing===false) ytPlayer.pauseVideo();
       if(d.muted===true) ytPlayer.mute(); else {ytPlayer.unMute(); if(Number.isFinite(Number(d.volume))){ytPlayer.setVolume(Number(d.volume));var rv=$('ytRoomVolume');if(rv)rv.value=Number(d.volume);volume=Number(d.volume);}}
     } else if(!info&&d.stopped){ stopVideo(); }
@@ -10295,6 +10306,21 @@ function ytRoomStartSync(){
   },function(){});
   if(ytRoomSyncTimer)clearInterval(ytRoomSyncTimer);
   ytRoomSyncTimer=setInterval(function(){ytRoomSyncNow(false);},2000);
+  /* Late-join/live catch-up for viewers: the host publishes a fresh timestamp
+     every ~2s. Re-apply that timestamp on viewers so they don't remain behind
+     after buffering, autoplay delay, or a slow YouTube iframe startup. */
+  if(window.__ytViewerCatchupTimer)clearInterval(window.__ytViewerCatchupTimer);
+  window.__ytViewerCatchupTimer=setInterval(function(){
+    try{
+      if(!ytRoomIsActive()||ytRoomHost()||!current||current.upload||!ytPlayer||!ytReady||!window.__ytLastState)return;
+      var d=window.__ytLastState;
+      if(!d.videoId||String(d.videoId)!==String(current.id||''))return;
+      var target=ytRoomLiveTime(d), now=ytPlayer.getCurrentTime()||0;
+      if(Math.abs(now-target)>1.25) ytPlayer.seekTo(target,true);
+      if(d.playing===true && ytPlayer.getPlayerState&&ytPlayer.getPlayerState()!==YT.PlayerState.PLAYING) ytPlayer.playVideo();
+      if(d.playing===false && ytPlayer.getPlayerState&&ytPlayer.getPlayerState()===YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
+    }catch(e){}
+  },1000);
   /* Host seek / play / pause is published immediately (also while paused). */
   if(window.__ytSeekWatch)clearInterval(window.__ytSeekWatch);
   var wT=null,wAt=0,wPlaying=false;
@@ -10323,6 +10349,7 @@ function ytRoomStopSync(){
   if(ytRoomQueueUnsub)try{ytRoomQueueUnsub();}catch(e){} ytRoomQueueUnsub=null;
   if(ytRoomSyncTimer)clearInterval(ytRoomSyncTimer); ytRoomSyncTimer=null;
   if(window.__ytSeekWatch){clearInterval(window.__ytSeekWatch);window.__ytSeekWatch=null;}
+  if(window.__ytViewerCatchupTimer){clearInterval(window.__ytViewerCatchupTimer);window.__ytViewerCatchupTimer=null;}
 }
 function ytRoomUpdateUI(){
   var st=ytRoomStage(); if(!st)return;
@@ -10376,9 +10403,16 @@ setInterval(function(){
   }catch(e){}
 },500);
 window.partyRoomYoutubeLocalStop=function(){
+  /* A real room exit is a hard local stop: no hidden Sound Mode, no retained
+     iframe, and no future API callback is allowed to restart playback. */
+  try{soundMode=false;storageSet(SOUND_KEY,'0');}catch(e){}
   try{destroyPlayer();}catch(e){}
   try{current=null;}catch(e){}
   try{var r=document.getElementById('prRoom'); if(r) r.classList.remove('yt-sound-only');}catch(e){}
+  try{
+    var f=document.getElementById('ytFrame'); if(f){f.removeAttribute('src');f.src='about:blank';f.style.display='none';}
+    var rf=document.getElementById('ytRoomFrame'); if(rf){rf.removeAttribute('src');rf.src='about:blank';rf.style.display='none';}
+  }catch(e){}
   try{var st=ytRoomStage(); if(st) st.style.display='none';}catch(e){}
   try{ytRoomStopSync();}catch(e){}
 };
@@ -10470,7 +10504,11 @@ function loadYTApi(cb){
 }
 
 function destroyPlayer(){
+  /* Invalidate any pending async YouTube API callback first. */
+  ytPlayerGeneration++;
   if(ytProgressTimer){clearInterval(ytProgressTimer);ytProgressTimer=null;}
+  try{if(ytPlayer&&ytPlayer.stopVideo)ytPlayer.stopVideo();}catch(e){}
+  try{if(ytPlayer&&ytPlayer.pauseVideo)ytPlayer.pauseVideo();}catch(e){}
   try{if(ytPlayer&&ytPlayer.destroy)ytPlayer.destroy();}catch(e){}
   ytPlayer=null;ytReady=false;
   var d=$('ytPlayerDiv');if(d)d.remove();
@@ -10484,6 +10522,8 @@ function destroyPlayer(){
 
 function createPlayer(info,startSeconds){
   destroyPlayer();
+  /* This token remains valid only while this particular player is alive. */
+  var playerGeneration=++ytPlayerGeneration;
   var roomMode=ytRoomIsActive(), targetFrame=roomMode?$('ytRoomFrame'):frameHost;
   if(!targetFrame||!info||!info.id)return;
   var start=Math.max(0,Number(startSeconds)||0);
@@ -10502,8 +10542,12 @@ function createPlayer(info,startSeconds){
 
   /* Upgrade the same visible player to the API-backed player when available. */
   loadYTApi(function(){
-    if(!window.YT||!window.YT.Player||!targetFrame)return;
-    try{
+    /* If the user exited/closed the room while the API was loading, do not
+       create another autoplaying player in the background. */
+    if(playerGeneration!==ytPlayerGeneration||!targetFrame||!targetFrame.isConnected)return;
+    if(!window.YT||!window.YT.Player)return;
+    try{ /* stale callback guard is checked again immediately before creation */
+      if(playerGeneration!==ytPlayerGeneration)return;
       var parent=targetFrame.parentNode;
       var div=document.createElement('div');
       div.id=roomMode?'ytRoomPlayerDiv':'ytPlayerDiv';
@@ -10543,6 +10587,15 @@ function createPlayer(info,startSeconds){
 function playInfo(info,title,opts){
   opts=opts||{};
   if(!info)return;
+  /* Inside a Party Room, YouTube playback is allowed only in YouTube Mode.
+     This blocks stale/legacy share callbacks from starting hidden audio/video in Chatting/Gaming/Cinema. */
+  try{
+    if(typeof cinemaRoomId!=='undefined' && cinemaRoomId && String(window.__partyRoomMode||'chat')!=='youtube'){
+      try{destroyPlayer();}catch(e){}
+      current=null;
+      return;
+    }
+  }catch(e){}
   if(info.type==='playlist'&&!info.id){toast('❌ Playlist नहीं मिली');return;}
   var id=info.id||'';
   current={id:id,list:info.list||'',shorts:!!info.shorts,title:title||('YouTube • '+id),addedBy:opts.addedBy||'You',ts:Date.now()};
@@ -10566,6 +10619,9 @@ function handleLoad(){
 
 function shareToRoom(video){
   try{
+    /* Legacy share documents are disabled for Party Rooms. The authoritative
+       room playback channel is youtube/state and is active only in YouTube Mode. */
+    if(typeof cinemaRoomId!=='undefined' && cinemaRoomId && String(window.__partyRoomMode||'chat')!=='youtube')return;
     if(typeof firebase==='undefined'||!firebase.firestore)return;
     var rid=getRoomId();
     if(!rid||rid==='default')return;
@@ -10889,7 +10945,8 @@ setInterval(function(){
   if(!room||room.offsetParent===null)modal.classList.remove('open');
 },800);
 setInterval(function(){try{refreshHostState();listenRoomShare();ytRoomUpdateUI();}catch(e){}},1500);
-listenRoomShare();
+/* Legacy youtube/SHARE_DOC listener intentionally disabled.
+   Party Room playback now comes only from youtube/state while in YouTube Mode. */
 })();
 </script>
 
@@ -12791,3 +12848,85 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 #pkHomeScreen .pkh-story{flex:0 0 78px;width:78px;min-width:78px;max-width:78px;box-sizing:border-box;overflow:visible}
 #pkHomeScreen .pkh-story .pkh-label{display:block;width:100%;max-width:100%;box-sizing:border-box;padding:0 3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
 </style>
+
+<style id="partyRoomYoutubeLiveJump">
+/* Viewer fallback: LIVE sits below Q, outside the video screen. */
+#prRoom.party-youtube-layout #ytRoomLiveBtn{
+  position:absolute!important;
+  top:calc(207px + var(--yt-shift,0px))!important;
+  right:9px!important;
+  min-width:38px!important; width:38px!important; height:25px!important;
+  padding:0!important; border:1px solid rgba(255,255,255,.28)!important;
+  border-radius:9px!important; background:#dc2626!important; color:#fff!important;
+  box-shadow:0 5px 14px rgba(220,38,38,.35)!important;
+  font-size:9px!important; font-weight:1000!important; letter-spacing:.4px!important;
+  z-index:91!important; display:none!important; align-items:center!important; justify-content:center!important;
+  pointer-events:auto!important; touch-action:manipulation!important; cursor:pointer!important;
+}
+#prRoom.party-youtube-layout.yt-live-available #ytRoomLiveBtn{display:flex!important;}
+#prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomLiveBtn{top:calc(263px + var(--yt-shift,0px))!important;}
+@media(max-width:430px){
+  #prRoom.party-youtube-layout #ytRoomLiveBtn{top:calc(205px + var(--yt-shift,0px))!important;right:7px!important;}
+  #prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomLiveBtn{top:calc(261px + var(--yt-shift,0px))!important;}
+}
+</style>
+<script id="partyRoomYoutubeLiveJumpScript">
+(function(){
+  function $(id){return document.getElementById(id);}
+  function isYT(){return String(window.__partyRoomMode||'chat')==='youtube';}
+  function isHost(){try{return (typeof cinemaIsHost!=='undefined')?!!cinemaIsHost:false;}catch(e){return false;}}
+  function refreshLiveButton(){
+    var r=$('prRoom'),b=$('ytRoomLiveBtn'); if(!r||!b)return;
+    var d=window.__ytLastState;
+    var has=!!(isYT()&&!isHost()&&d&&((d.videoId)||(d.videoUrl))&&!d.stopped);
+    r.classList.toggle('yt-live-available',has);
+  }
+  function liveTime(d){
+    var t=Math.max(0,Number(d&&d.currentTime)||0);
+    if(d&&d.playing===true){
+      var age=(Date.now()-(Number(d.updatedAt)||0))/1000;
+      if(age>0&&age<86400)t+=age;
+    }
+    return t;
+  }
+  async function jumpLive(){
+    if(!isYT()||isHost())return;
+    var b=$('ytRoomLiveBtn'); if(b){b.disabled=true;b.textContent='…';}
+    try{
+      var d=null,ref=(typeof ytRoomRef==='function'?ytRoomRef():null);
+      if(ref){
+        try{var snap=await ref.collection('youtube').doc('state').get();if(snap.exists)d=snap.data()||{};}catch(e){}
+      }
+      if(!d||d.stopped)d=window.__ytLastState||null;
+      if(!d||d.stopped||(!d.videoId&&!d.videoUrl)){toast('⏳ Host का live position अभी उपलब्ध नहीं है',1500);return;}
+      window.__ytLastState=d;
+      var target=liveTime(d);
+      if(d.type==='upload'&&d.videoUrl){
+        var lv=$('ytRoomLocalVideo');
+        if(!current||!current.upload||current.url!==d.videoUrl){
+          ytRemoteApplying=true;
+          try{playUploadedVideo(d.videoUrl,d.title||'Video',{start:target,playing:d.playing!==false,addedBy:d.updatedBy||'Host',remote:true});}finally{ytRemoteApplying=false;}
+        }else if(lv){try{lv.currentTime=target;}catch(e){} if(d.playing===true){var p=lv.play();if(p&&p.catch)p.catch(function(){});}else if(d.playing===false){try{lv.pause();}catch(e){}}}
+      }else if(d.videoId){
+        var same=!!(current&&!current.upload&&String(current.id||'')===String(d.videoId)&&String(current.list||'')===String(d.listId||''));
+        if(!same){
+          ytRemoteApplying=true;
+          try{playInfo({type:'video',id:String(d.videoId),list:d.listId||'',shorts:!!d.shorts},d.title||('YouTube • '+d.videoId),{addedBy:d.updatedBy||'Host',share:false,start:target,remote:true});}finally{ytRemoteApplying=false;}
+        }else if(ytPlayer&&ytReady){
+          try{ytPlayer.seekTo(target,true);if(d.playing===true)ytPlayer.playVideo();else if(d.playing===false)ytPlayer.pauseVideo();}catch(e){}
+        }
+      }
+      toast('🔴 LIVE — Host के current scene पर पहुँच गए',1300);
+    }catch(e){toast('LIVE sync नहीं हो पाया, दोबारा दबाएँ',1500);}
+    finally{if(b){b.disabled=false;b.textContent='LIVE';}}
+  }
+  window.ytRoomJumpLive=jumpLive;
+  function wire(){
+    var b=$('ytRoomLiveBtn');if(!b)return;
+    if(!b.__liveWired){b.__liveWired=true;b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();jumpLive();});}
+    refreshLiveButton();
+  }
+  setInterval(wire,700);
+  document.addEventListener('DOMContentLoaded',wire);
+})();
+</script>
