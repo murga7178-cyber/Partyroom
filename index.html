@@ -8164,7 +8164,20 @@ body.pk-game-open #pkUniversalNav{display:none!important}
     var c=$('prChatModeBtnG'); if(c) c.remove();
     var mode=String(window.__partyRoomMode||'chat');
     var iv=$('prInlineViewerCount'), vc=$('cinemaViewerCount'), fv=$('prFloatingViewerCount'); if(iv&&vc) iv.textContent=vc.textContent||'0'; if(fv&&vc) fv.textContent=vc.textContent||'0';
-    var mw=$('prModeMenuWrap'); if(mw){ if(host()) mw.setAttribute('data-host','1'); else { mw.removeAttribute('data-host'); closePartyRoomModeMenu(); } }
+    var mw=$('prModeMenuWrap');
+    if(mw){
+      /* Chat / Game / YouTube mode switch is HOST-ONLY. */
+      var meKey=String(typeof currentUserKey!=='undefined'&&currentUserKey?currentUserKey:'');
+      var roomHostKey=String(window.__cinemaHostKey||'');
+      var roomHostKnown=!!(meKey&&roomHostKey);
+      var isRoomHost=roomHostKnown ? (meKey===roomHostKey) : false;
+      if(!roomHostKnown && typeof cinemaIsHost!=='undefined' && cinemaIsHost===true && !window.__cinemaHostKey){
+        /* Standalone/non-room fallback only. In a real room, wait for hostKey. */
+        isRoomHost=!cinemaRoomId;
+      }
+      if(isRoomHost) mw.setAttribute('data-host','1');
+      else { mw.removeAttribute('data-host'); closePartyRoomModeMenu(); }
+    }
     paintModeMenu();
   }
   var wasKb=0;
@@ -11691,6 +11704,21 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 @media(max-width:430px){
   #prRoomPill{max-width:calc(100% - 138px)!important;}
   #prModeMenuBtn{min-width:64px!important;padding:0 8px!important;font-size:11.5px!important;height:30px!important;}
+}
+</style>
+
+<style id="partyRoomModeMenuHostOnlyFinal">
+/* Chat / Game / YouTube mode switch: visible only to the room Host. */
+#prModeMenuWrap{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+#prModeMenuWrap[data-host="1"]{
+  display:flex!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+  align-items:center;
 }
 </style>
 
