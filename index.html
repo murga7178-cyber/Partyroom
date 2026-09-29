@@ -1284,8 +1284,8 @@ html, body { overscroll-behavior-y: none; }
 /* Custom pink icons: same size on all three, transparent background, no extra circle/strip. */
 #pkUniversalNav button span{width:34px!important;height:34px!important;border-radius:0!important;background:none!important;box-shadow:none!important;display:grid;place-items:center;}
 #pkUniversalNav button.active span{background:none!important;box-shadow:none!important;}
-#pkUniversalNav .pkun-ico{width:30px;height:30px;object-fit:contain;display:block;background:none;border:0;opacity:.5;filter:saturate(.7);transition:opacity .15s,transform .15s,filter .15s;-webkit-user-drag:none;user-select:none;pointer-events:none;}
-#pkUniversalNav button.active .pkun-ico{opacity:1;filter:none;transform:scale(1.12);}
+#pkUniversalNav .pkun-ico{width:30px;height:30px;object-fit:contain;display:block;background:none;border:0;opacity:1;filter:none;transition:transform .18s,filter .18s;-webkit-user-drag:none;user-select:none;pointer-events:none;}
+#pkUniversalNav button.active .pkun-ico{transform:scale(1.08);filter:drop-shadow(0 0 2px rgba(255,64,130,.6)) drop-shadow(0 0 5px rgba(255,64,130,.35)) drop-shadow(0 0 9px rgba(255,105,160,.2));}
 #pkUniversalNav button.active{color:#e11d68;}
 #pkUniversalNav button:active .pkun-ico{transform:scale(.92);}
 #pkUniversalNav em{top:3px;right:calc(50% - 24px);}
@@ -1885,7 +1885,7 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{
       <div class="pkh-game pkh-live" role="button" tabindex="0" onclick="pkHomeOpenJump()"><div class="pkh-chick"><svg class="jc" viewBox="0 0 64 64" width="46" height="46" aria-hidden="true"><defs><radialGradient id="jcBodyH" cx="38%" cy="28%" r="85%"><stop offset="0" stop-color="#fff6ad"/><stop offset=".5" stop-color="#ffd93b"/><stop offset="1" stop-color="#f2a20c"/></radialGradient></defs><ellipse class="jc-shadow" cx="32" cy="59" rx="15" ry="3.2" fill="#000" opacity=".35"/><g class="jc-hop"><path d="M25 51v5M22 57h6M39 51v5M36 57h6" stroke="#ff8a1f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><ellipse cx="32" cy="35" rx="20" ry="19" fill="url(#jcBodyH)"/><path d="M29 17c-2-5 0-8 3-9-.6 3 1.2 4 2 9-2 .8-3.6.8-5 0z" fill="#f7b924"/><ellipse cx="32" cy="43" rx="11.5" ry="8.5" fill="#fff2b0" opacity=".85"/><ellipse class="jc-wing jc-wl" cx="13.5" cy="38" rx="5" ry="9" fill="#f5b020" transform="rotate(18 13.5 38)"/><ellipse class="jc-wing jc-wr" cx="50.5" cy="38" rx="5" ry="9" fill="#f5b020" transform="rotate(-18 50.5 38)"/><circle cx="20.5" cy="38.5" r="3" fill="#ff8f6b" opacity=".55"/><circle cx="43.5" cy="38.5" r="3" fill="#ff8f6b" opacity=".55"/><g class="jc-eye"><circle cx="25" cy="32" r="3" fill="#2b1a05"/><circle cx="26" cy="30.9" r="1" fill="#fff"/></g><g class="jc-eye"><circle cx="39" cy="32" r="3" fill="#2b1a05"/><circle cx="40" cy="30.9" r="1" fill="#fff"/></g><path d="M28.3 36.6h7.4L32 42z" fill="#ff8a1f" stroke="#e06d0b" stroke-width=".6" stroke-linejoin="round"/></g></svg></div><span>जंपिंग</span><em class="play">▶ Play</em></div>
       <div class="pkh-game pkh-soon"><div>🃏</div><span>Cards</span><em>Coming Soon</em></div>
     </div>
-    <div class="pkh-headline" id="pkhTabs"><button type="button" class="on" data-tab="rec">Cinema</button><button type="button" data-tab="chat">Chatroom</button><button type="button" data-tab="game">Game Room</button></div>
+    <div class="pkh-headline" id="pkhTabs"><button type="button" class="on" data-tab="rec">YouTube</button><button type="button" data-tab="chat">Chatroom</button><button type="button" data-tab="game">Game Room</button></div>
     <div class="pkh-room-grid" id="pkhRoomGrid"><div class="pkh-skel"></div><div class="pkh-skel"></div></div>
   </div>
   <div class="pkh-bottom">
@@ -6669,7 +6669,7 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     var ph=String(r.roomPhoto||'');
     var inner=photoOk(ph)?'<img class="pkh-cimg" src="'+esc(ph)+'" alt="">':letter(r.roomName);
     var st=photoOk(ph)?'':' style="background:'+bgFor(r.id)+'"';
-    return '<div class="pkh-story" data-rid="'+esc(r.id)+'" data-rname="'+esc(r.roomName)+'"><div class="pkh-circle'+(photoOk(ph)?'':' pkh-letter')+'"'+st+'>'+inner+'</div><span class="pkh-pill">'+(modeOf(r)==='gaming'?'Game':modeOf(r)==='cinema'?'Cinema':'Chat')+'</span><div class="pkh-label">'+esc(r.roomName)+'</div></div>';
+    return '<div class="pkh-story" data-rid="'+esc(r.id)+'" data-rname="'+esc(r.roomName)+'"><div class="pkh-circle'+(photoOk(ph)?'':' pkh-letter')+'"'+st+'>'+inner+'</div><span class="pkh-pill">'+(modeOf(r)==='gaming'?'Game':modeOf(r)==='cinema'?'YouTube':'Chat')+'</span><div class="pkh-label">'+esc(r.roomName)+'</div></div>';
   }
   function render(){
     var rc=$('pkhRecent');
@@ -6684,7 +6684,7 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     }
     var tabs=$('pkhTabs');
     if(tabs){
-      var nc=S.active.filter(function(r){return modeOf(r)==='chat';}).length,ng=S.active.filter(function(r){return modeOf(r)==='gaming';}).length,ncin=S.active.filter(function(r){return modeOf(r)==='cinema';}).length,cnt={rec:ncin,chat:nc,game:ng},lab={rec:'Cinema',chat:'Chatroom',game:'Game Room'};
+      var nc=S.active.filter(function(r){return modeOf(r)==='chat';}).length,ng=S.active.filter(function(r){return modeOf(r)==='gaming';}).length,ncin=S.active.filter(function(r){return modeOf(r)==='cinema';}).length,cnt={rec:ncin,chat:nc,game:ng},lab={rec:'YouTube',chat:'Chatroom',game:'Game Room'};
       Array.prototype.forEach.call(tabs.querySelectorAll('[data-tab]'),function(sp){var k=sp.getAttribute('data-tab');sp.classList.toggle('on',k===S.tab);var html=lab[k]+((S.loaded&&cnt[k]>0)?' <i>'+cnt[k]+'</i>':'');if(sp.__h!==html){sp.innerHTML=html;sp.__h=html;}});
     }
     var g=$('pkhRoomGrid');
@@ -12445,5 +12445,95 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
       lastSig=sig;
     }catch(e){}
   },400);
+})();
+</script>
+
+<style id="pkPageLoaderCss">
+#pkPageLoader{position:fixed;inset:0;z-index:2147483640;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:rgba(255,255,255,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transition:opacity .18s ease;-webkit-tap-highlight-color:transparent;}
+#pkPageLoader.on{display:flex;}
+#pkPageLoader.vis{opacity:1;}
+#pkPageLoader .pkpl-ring{width:48px;height:48px;border-radius:50%;border:4px solid rgba(255,64,130,.18);border-top-color:#ff4082;border-right-color:#ff7aa8;animation:pkplSpin .8s linear infinite;box-shadow:0 0 14px rgba(255,64,130,.25);}
+#pkPageLoader .pkpl-txt{font:600 13px Segoe UI,Arial,sans-serif;color:#b0316a;letter-spacing:.2px;}
+@keyframes pkplSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){#pkPageLoader .pkpl-ring{animation-duration:1.6s}}
+</style>
+<script id="pkPageLoaderScript">
+(function(){
+  /* Soft pink spinner shown while a page loads in the background; page is revealed only once it is ready. */
+  var el=null, active=0, showT=null, shownAt=0, MAX=8000, MINSHOW=350, DELAY=150;
+  function ensure(){
+    if(el&&el.isConnected)return el;
+    el=document.createElement('div'); el.id='pkPageLoader'; el.setAttribute('aria-live','polite');
+    el.innerHTML='<div class="pkpl-ring"></div><div class="pkpl-txt">लोड हो रहा है…</div>';
+    (document.body||document.documentElement).appendChild(el); return el;
+  }
+  function reveal(){ ensure(); el.classList.add('on'); void el.offsetWidth; el.classList.add('vis'); shownAt=Date.now(); }
+  function begin(){
+    active++;
+    var t={done:false};
+    if(active===1){
+      clearTimeout(showT);
+      if(el&&el.classList.contains('on')){ el.classList.add('vis'); }
+      else showT=setTimeout(function(){ if(active>0)reveal(); },DELAY);
+    }
+    t.max=setTimeout(function(){ end(t,true); },MAX);
+    return t;
+  }
+  function end(t,now){
+    if(!t||t.done)return; t.done=true; clearTimeout(t.max);
+    setTimeout(function(){
+      active=Math.max(0,active-1);
+      if(active>0)return;
+      clearTimeout(showT);
+      if(el&&el.classList.contains('on')){
+        var wait=Math.max(0,MINSHOW-(Date.now()-shownAt));
+        setTimeout(function(){
+          if(active>0)return;
+          el.classList.remove('vis');
+          setTimeout(function(){ if(active===0)el.classList.remove('on'); },220);
+        },wait);
+      }
+    }, now?0:140);
+  }
+  function shown(id){ var n=document.getElementById(id); if(!n)return false; try{ var c=getComputedStyle(n); return c.display!=='none'&&c.visibility!=='hidden'; }catch(e){ return false; } }
+
+  /* async page functions: loader until their promise finishes */
+  function wrapPromise(name){
+    var f=window[name]; if(typeof f!=='function'||f.__pkLoader)return;
+    var w=function(){
+      var t=begin(), r;
+      try{ r=f.apply(this,arguments); }catch(e){ end(t,true); throw e; }
+      if(r&&typeof r.then==='function') r.then(function(){end(t);},function(){end(t);});
+      else setTimeout(function(){end(t);},500);
+      return r;
+    };
+    w.__pkLoader=true; window[name]=w;
+  }
+  /* profile card: its render is not awaited, so wait until the profile page is really open */
+  function wrapProfile(name){
+    var f=window[name]; if(typeof f!=='function'||f.__pkLoader)return;
+    var w=function(){
+      var pp=document.getElementById('pkPublicProfileOverlay');
+      var was=(pp&&pp.classList.contains('open'))||shown('prUserCard');
+      var t=begin(), r;
+      try{ r=f.apply(this,arguments); }catch(e){ end(t,true); throw e; }
+      if(r&&typeof r.then==='function'){ r.then(function(){end(t);},function(){end(t);}); return r; }
+      if(was){ setTimeout(function(){end(t);},700); return r; }
+      var n=0, iv=setInterval(function(){
+        n++;
+        var p=document.getElementById('pkPublicProfileOverlay');
+        if((p&&p.classList.contains('open'))||shown('prUserCard')||t.done||n>75){ clearInterval(iv); end(t); }
+      },100);
+      return r;
+    };
+    w.__pkLoader=true; window[name]=w;
+  }
+  var PROMISE=['pkOpenGamingRanking','pkOpenVisitors','pkOpenVipPanel','pkOpenDirectMessage','pkOpenEditProfile','pkOpenWallet','cinemaJoinRoom','cinemaEnterRoom'];
+  var PROFILE=['prOpenUserCard','prOpenRoomCard'];
+  function install(){ try{ PROMISE.forEach(wrapPromise); PROFILE.forEach(wrapProfile); }catch(e){} }
+  install();
+  /* if another script re-defines one of these later, wrap it again */
+  setInterval(install,1500);
+  window.pkPageLoader={show:function(){return begin();},hide:function(t){end(t);}};
 })();
 </script>
