@@ -1879,6 +1879,14 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{
       <div class="pkh-actions"><button type="button" id="pkDailyBtn" onclick="pkOpenDailyCheckin()" aria-label="Daily Check-in">🎁<i class="pkdc-dot"></i></button><button type="button" onclick="pkOpenGlobalSearch()" aria-label="Search">⌕</button><button type="button" onclick="pkOpenGamingRanking()" aria-label="Gaming Ranking">🏆</button></div>
     </div>
     <div class="pkh-recent" id="pkhRecent"></div>
+    <div class="pkh-home-section" id="pkhHistorySection">
+      <div class="pkh-home-section-head"><b>History</b><span>हाल में देखे गए Rooms</span></div>
+      <div class="pkh-recent pkh-history-row" id="pkhHistory"></div>
+    </div>
+    <div class="pkh-home-section" id="pkhFollowersSection">
+      <div class="pkh-home-section-head"><b>Followers’ Rooms</b><span>आपके Follow किए लोगों के Rooms</span></div>
+      <div class="pkh-recent pkh-followers-row" id="pkhFollowers"></div>
+    </div>
     <div class="pkh-banner" id="pkhBanner"><span id="pkhBannerText"></span></div>
     <div class="pkh-games">
       <div class="pkh-game pkh-soon"><div>🎲</div><span>Ludo</span><em>Coming Soon</em></div>
@@ -2076,6 +2084,21 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{
 .pkh-actions{display:flex;gap:13px}.pkh-actions button{border:0;background:none;font-size:26px;padding:3px;color:#111}
 .pkh-recent{display:flex;gap:17px;overflow:hidden;padding:8px 24px 0}.pkh-story{min-width:112px;text-align:center;position:relative}.pkh-circle{width:84px;height:84px;margin:auto;border-radius:50%;border:2px solid #e6b85f;padding:3px;display:grid;place-items:center;background:#fff;box-shadow:0 0 0 3px #fff}.pkh-circle img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:none}.pkh-home-icon{font-size:40px;color:#ff638d;background:linear-gradient(145deg,#fff,#f9e5ef)}.pkh-home-nav-icon{color:inherit!important;}.pkh-pink{background:linear-gradient(145deg,#ff8dcc,#ff4a9d);font-size:35px}.pkh-gold{background:linear-gradient(145deg,#fff2bc,#ffcc58);font-size:34px}.pkh-blue{background:linear-gradient(145deg,#d8f7ff,#b8d5ef);font-size:34px}.pkh-label{margin-top:9px;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pkh-count,.pkh-pill{position:absolute;right:10px;bottom:31px;background:#ef4c91;color:#fff;border-radius:20px;padding:3px 9px;font-size:13px;font-weight:800}.pkh-pill{right:5px;bottom:31px}.pkh-section-note{display:flex;justify-content:space-around;color:#999;font-size:15px;padding:5px 62px 7px}.pkh-banner{margin:2px 24px 22px;height:148px;border-radius:21px;background:radial-gradient(circle at 50% 20%,#ffd56d,#8e0e22 46%,#2a0712 100%);color:#ffe7a0;text-align:center;padding:17px 10px;box-shadow:0 8px 22px rgba(90,0,20,.18);display:flex;flex-direction:column;justify-content:center}.pkh-banner b{font-size:18px}.pkh-banner strong{font-size:38px;line-height:1.05;color:#fff1b4;text-shadow:0 3px 0 #8d2c12}.pkh-banner small{font-size:13px;margin-top:7px;color:#ffe7c1}.pkh-games{display:flex;gap:14px;overflow:hidden;padding:0 24px 28px}.pkh-game{min-width:154px;height:136px;border-radius:24px;background:linear-gradient(145deg,#f8e9ff,#eee7ff);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#56305f;font-size:16px;font-weight:700}.pkh-game div{font-size:58px;line-height:1;margin-bottom:9px}.pkh-headline{display:flex;gap:43px;align-items:center;padding:0 28px 17px;font-size:22px;color:#888;white-space:nowrap}.pkh-headline b{color:#111}.pkh-room-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 24px 24px}.pkh-room-card{position:relative;border:0;border-radius:20px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.12);overflow:hidden;text-align:left;padding:0;color:#222}.pkh-room-art,.pkh-photo-card{height:155px;display:grid;place-items:center;text-align:center;font-size:27px;background:linear-gradient(145deg,#7a0036,#ffbd55 60%,#e93c87);color:#fff}.pkh-room-art strong{font-size:19px}.pkh-photo-card{background:linear-gradient(145deg,#b8d0d8,#53666f);font-size:54px}.pkh-photo-card.city{background:linear-gradient(145deg,#dbe8ef,#7c8f98)}.pkh-photo-card.couple{background:linear-gradient(145deg,#e5d7d7,#777)}.pkh-room-name{font-size:17px;padding:9px 11px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pkh-room-meta{font-size:12px;color:#777;padding:4px 11px 10px}.pkh-bottom{position:fixed;left:0;right:0;bottom:0;height:82px;background:rgba(255,255,255,.97);border-top:1px solid #eee;display:flex;align-items:center;justify-content:space-around;z-index:20;box-shadow:0 -4px 18px rgba(0,0,0,.06)}.pkh-nav{border:0;background:none;min-width:86px;height:70px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#777;font-size:13px}.pkh-nav span{width:39px;height:39px;display:grid;place-items:center;border-radius:50%;font-size:24px}.pkh-nav.active{color:#111}.pkh-nav.active span{background:#d9f8ff;border:2px solid #53d9ed}.pkh-nav i{width:8px;height:8px;border-radius:50%;background:#f04b55;position:absolute;margin:0 0 34px 30px}.pkh-me span img{width:100%;height:100%;border-radius:50%;object-fit:cover}.pkh-bottom .pkh-me{color:#777}
 @media(max-width:520px){.pkh-top{padding-left:24px;padding-right:18px}.pkh-tab{font-size:22px}.pkh-recent{gap:11px;padding-left:20px}.pkh-story{min-width:93px}.pkh-circle{width:78px;height:78px}.pkh-section-note{padding-left:45px;padding-right:45px}.pkh-banner{margin-left:20px;margin-right:20px;height:145px}.pkh-banner strong{font-size:34px}.pkh-games{padding-left:20px}.pkh-game{min-width:142px}.pkh-room-grid{padding-left:20px;padding-right:20px;gap:10px}.pkh-headline{padding-left:24px;gap:30px;font-size:20px}}
+</style>
+<style id="pkHomeHistoryStyle">
+#pkHomeScreen .pkh-home-section{margin:2px 0 10px;display:block}
+#pkHomeScreen .pkh-home-section-head{display:flex;align-items:baseline;gap:8px;padding:8px 20px 2px}
+#pkHomeScreen .pkh-home-section-head b{font-size:17px;color:#202020;font-weight:900}
+#pkHomeScreen .pkh-home-section-head span{font-size:11px;color:#8a8a96;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pkHomeScreen .pkh-history-row,#pkHomeScreen .pkh-followers-row{padding-top:6px;padding-bottom:6px}
+#pkHomeScreen .pkh-history-pill{background:#6c5ce7;max-width:86px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pkHomeScreen .pkh-home-empty{min-height:58px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;color:#8b8b95;font-size:12px;padding:6px 18px;box-sizing:border-box;flex:1;min-width:100%}
+#pkHomeScreen .pkh-home-empty small{display:block;margin-top:3px;color:#aaa;font-size:10px}
+@media(max-width:520px){
+  #pkHomeScreen .pkh-home-section-head{padding-left:14px;padding-right:14px}
+  #pkHomeScreen .pkh-home-section-head b{font-size:14px}
+  #pkHomeScreen .pkh-home-section-head span{font-size:10px}
+}
 </style>
 <script id="pkMeProfileScript">
 function pkOpenMeProfile(){
@@ -3341,6 +3364,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       const data={roomId:id,roomName:name,ownerKey:currentUserKey||'guest',createdAt:Date.now(),updatedAt:Date.now(),roomMode:'chat',videoUrl:'',videoName:'',hostKey:currentUserKey||'guest',hostName:cinemaUserName(),playing:false,currentTime:0,passwordProtected:false,backgroundKey:'bloom',topic:name.slice(0,60),roomPhoto:window.__newRoomPhoto,controls:{chat:true,audio:true,seats:true,hostArea:true}};
       await db.collection('cinemaRooms').doc(id).set(data);
       window.__myRoomId=id;
+      try{ localStorage.setItem('pk_myRoomId_'+String(currentUserKey||''),String(id)); }catch(e){}
       try{ window.__newRoomPhoto=''; const pv=document.getElementById('cinemaNewRoomPhotoPrev'); if(pv){pv.style.backgroundImage='';pv.textContent='📷';} }catch(e){}
       if(msg)msg.textContent='';
       // Create page को आधा lobby दिखाने से पहले साफ करके सीधे बने हुए room में जाएँ।
@@ -3558,10 +3582,43 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   document.addEventListener('keydown',e=>{ const o=document.getElementById('prBrowserOverlay'); if(!o||!o.classList.contains('open'))return; if(e.key==='Enter' && document.activeElement?.id==='prBrowserUrl'){e.preventDefault();prBrowserGo();} if(e.key==='Escape'){e.preventDefault();prBrowserClose();} });
   window.prBrowserOpen=prBrowserOpen; window.prBrowserClose=prBrowserClose; window.prBrowserGo=prBrowserGo; window.prBrowserTryDownload=prBrowserTryDownload; window.prBrowserBack=prBrowserBack; window.prBrowserForward=prBrowserForward; window.prBrowserReload=prBrowserReload; window.prBrowserHome=prBrowserHome;
 
+  function partyRoomHistoryLocalKey(){return 'pk_party_room_history_'+String(currentUserKey||'guest');}
+  function partyRoomHistoryLocalRead(){
+    try{var a=JSON.parse(localStorage.getItem(partyRoomHistoryLocalKey())||'[]');return Array.isArray(a)?a:[];}catch(e){return [];}
+  }
+  function partyRoomHistoryLocalWrite(item){
+    try{
+      var a=partyRoomHistoryLocalRead().filter(function(x){return String(x.roomId)!==String(item.roomId);});
+      a.unshift(item);a=a.slice(0,20);localStorage.setItem(partyRoomHistoryLocalKey(),JSON.stringify(a));
+    }catch(e){}
+  }
+  async function savePartyRoomHistory(id,roomData,fallbackName){
+    try{
+      if(!currentUserKey||!id)return;
+      var roomId=String(id),d=roomData||{};
+      var roomName=String(d.roomName||fallbackName||'पार्टी रूम').trim()||'पार्टी रूम';
+      var hostKey=String(d.ownerKey||d.hostKey||'');
+      var hostName=String(d.hostName||d.ownerName||d.hostDisplayName||'').trim();
+      if(!hostName&&hostKey&&db){try{var hs=await db.collection('users').doc(hostKey).get();if(hs.exists){var hd=hs.data()||{};hostName=String(hd.name||hd.displayName||hd.fullName||hd.username||'').trim();}}catch(e){}}
+      var roomImage=String(d.roomPhoto||d.roomImage||'').trim(),now=Date.now();
+      var item={roomId:roomId,roomName:roomName,hostKey:hostKey,hostName:hostName,roomImage:roomImage,lastVisitedAt:now};
+      /* Local cache makes the visit appear immediately even if Firestore is slow/offline. */
+      partyRoomHistoryLocalWrite(item);
+      try{window.__partyRoomHistoryJustSaved=item;}catch(e){}
+      if(db){
+        try{
+          var docId=encodeURIComponent(roomId);
+          await db.collection('users').doc(String(currentUserKey)).collection('roomHistory').doc(docId).set(item,{merge:true});
+        }catch(e){}
+      }
+      try{if(typeof window.pkHomeRefresh==='function' && document.getElementById('pkHomeScreen') && document.getElementById('pkHomeScreen').style.display!=='none')window.pkHomeRefresh();}catch(e){}
+    }catch(e){/* History must never block room entry. */}
+  }
+
   async function cinemaEnterRoom(id,name,isOwner){
     await cinemaLoadCurrentUserIdentity();
     cinemaRoomId=id; cinemaRoomName=name||'पार्टी रूम'; cinemaIsHost=!!isOwner; closePartyRoomSettings();
-    try{var rs=await db.collection('cinemaRooms').doc(id).get();var rd=rs&&rs.exists?(rs.data()||{}):{};window.__prPasswordProtected=!!(rd.passwordProtected||rd.passwordHash);window.__prRoomPhoto=rd.roomPhoto||'';}catch(e){window.__prPasswordProtected=false;}
+    try{var rs=await db.collection('cinemaRooms').doc(id).get();var rd=rs&&rs.exists?(rs.data()||{}):{};window.__prPasswordProtected=!!(rd.passwordProtected||rd.passwordHash);window.__prRoomPhoto=rd.roomPhoto||'';await savePartyRoomHistory(id,rd,cinemaRoomName);}catch(e){window.__prPasswordProtected=false;}
     window.__cinemaPhotoCache={}; window.__cinemaPhotoPending={};
     cinemaLobbyMode=false;
     const lobby=document.getElementById('cinemaLobby'), stage=document.getElementById('cinemaRoomStage'), title=document.getElementById('cinemaHeaderTitle'), count=document.getElementById('cinemaViewerCount'), label=document.getElementById('cinemaRoomLabelTop');
@@ -5569,6 +5626,7 @@ setInterval(function(){try{
     var mine=null;
     if(me){ rooms.forEach(function(r){ if(String(r.ownerKey)===me && (!mine||(r.createdAt||0)>(mine.createdAt||0))) mine=r; }); }
     window.__myRoomId=mine?mine.id:'';
+    if(mine){ try{ localStorage.setItem('pk_myRoomId_'+String(currentUserKey||''),String(mine.id)); }catch(e){} }
     if(!mine){ card.style.display='none'; create.style.display=''; return; }
     create.style.display='none'; card.style.display='block';
     var ph=$('cinemaMyRoomPhoto');
@@ -6539,9 +6597,7 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
 
 <style id="pkHomeLiveStyle">
 /* ===== Home: live stories / rooms / banner ===== */
-#pkHomeScreen .pkh-recent{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;display:flex;flex-wrap:nowrap;align-items:flex-start}
-#pkHomeScreen .pkh-recent .pkh-story{flex:0 0 auto}
-
+#pkHomeScreen .pkh-recent{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 #pkHomeScreen .pkh-recent::-webkit-scrollbar{display:none}
 #pkHomeScreen .pkh-story{flex:0 0 auto;cursor:pointer}
 #pkHomeScreen .pkh-circle{overflow:hidden}
@@ -6644,7 +6700,7 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
 </style>
 <script id="pkHomeLiveScript">
 (function(){
-  var S={active:[],following:[],tab:'rec',inbox:[],unread:0,uc:{},inboxKey:'',inboxUnsub:null,timer:null,loading:false,loaded:false,cfgOn:false,myRoom:null};
+  var S={active:[],following:[],history:[],tab:'rec',inbox:[],unread:0,uc:{},inboxKey:'',inboxUnsub:null,timer:null,loading:false,loaded:false,cfgOn:false,myRoom:null};
   var PH=/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/;
   function $(id){return document.getElementById(id);}
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
@@ -6661,12 +6717,56 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     if(!db||!currentUserKey||S.loading)return; S.loading=true;
     try{
       var me=String(currentUserKey);
-      var res=await Promise.all([db.collection('cinemaRooms').get(),db.collection('users').doc(me).get()]);
-      var ud=res[1].exists?(res[1].data()||{}):{};
+      /* Keep the main Home load independent from optional History reads. */
+      var roomSnap=await db.collection('cinemaRooms').get();
+      var userSnap=null;try{userSnap=await db.collection('users').doc(me).get();}catch(e){}
+      var ud=userSnap&&userSnap.exists?(userSnap.data()||{}):{};
+      var localHistory=partyRoomHistoryLocalRead();
+      S.history=localHistory.slice().sort(function(a,b){return Number(b.lastVisitedAt||0)-Number(a.lastVisitedAt||0);});
+      try{
+        var hsnap=await db.collection('users').doc(me).collection('roomHistory').get();
+        var remote=[];hsnap.forEach(function(doc){var h=doc.data()||{};if(h.roomId&&h.roomName)remote.push(Object.assign({id:doc.id},h));});
+        var merged={};localHistory.concat(remote).forEach(function(h){var k=String(h.roomId||'');if(!k)return;if(!merged[k]||Number(h.lastVisitedAt||0)>Number(merged[k].lastVisitedAt||0))merged[k]=h;});
+        S.history=Object.keys(merged).map(function(k){return merged[k];}).sort(function(a,b){return Number(b.lastVisitedAt||0)-Number(a.lastVisitedAt||0);}).slice(0,20);
+      }catch(e){}
       S.following=(Array.isArray(ud.following)?ud.following:[]).map(String);
-      var rooms=[];res[0].forEach(function(doc){var d=doc.data()||{};if(d.roomName)rooms.push(Object.assign({id:doc.id},d));});
-      var mine=null;rooms.forEach(function(r){var o=String(r.ownerKey||'');if(o===me&&(!mine||(r.createdAt||0)>(mine.createdAt||0)))mine=r;});
+      var rooms=[];roomSnap.forEach(function(doc){var d=doc.data()||{};if(d.roomName)rooms.push(Object.assign({id:doc.id},d));});
+      var mine=null;
+      rooms.forEach(function(r){
+        var o=String(r.ownerKey||''),h=String(r.hostKey||'');
+        if((o===me||h===me)&&(!mine||Number(r.createdAt||0)>Number(mine.createdAt||0)))mine=r;
+      });
+      /* If the room was created in an older session/key, recover it from the saved room id. */
+      if(!mine){
+        try{
+          var savedId=String(localStorage.getItem('pk_myRoomId_'+me)||window.__myRoomId||'').trim();
+          if(savedId){
+            var savedSnap=await db.collection('cinemaRooms').doc(savedId).get();
+            if(savedSnap.exists){
+              var savedRoom=Object.assign({id:savedSnap.id},savedSnap.data()||{});
+              if(String(savedRoom.ownerKey||'')===me||String(savedRoom.hostKey||'')===me) mine=savedRoom;
+            }
+          }
+        }catch(e){}
+      }
+      /* Final fallback: direct owner/host queries, so My Room is not replaced by Create Room just because the broad list missed it. */
+      if(!mine){
+        try{
+          var ownSnap=await db.collection('cinemaRooms').where('ownerKey','==',me).limit(20).get();
+          ownSnap.forEach(function(x){var z=Object.assign({id:x.id},x.data()||{});if(z.roomName&&(!mine||Number(z.createdAt||0)>Number(mine.createdAt||0)))mine=z;});
+        }catch(e){}
+      }
+      if(!mine){
+        try{
+          var hostSnap=await db.collection('cinemaRooms').where('hostKey','==',me).limit(20).get();
+          hostSnap.forEach(function(x){var z=Object.assign({id:x.id},x.data()||{});if(z.roomName&&(!mine||Number(z.createdAt||0)>Number(mine.createdAt||0)))mine=z;});
+        }catch(e){}
+      }
       S.myRoom=mine;
+      if(mine){
+        window.__myRoomId=mine.id;
+        try{localStorage.setItem('pk_myRoomId_'+me,String(mine.id));}catch(e){}
+      }
       rooms.sort(function(a,b){return (b.createdAt||0)-(a.createdAt||0);});rooms=rooms.slice(0,40);
       var since=Date.now()-20000;
       await Promise.all(rooms.map(async function(r){
@@ -6681,7 +6781,12 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
         r.__followed=r.__fcount>0;
       });
       S.loaded=true;
-    }catch(e){}
+    }catch(e){
+      /* Never leave Home stuck on a permanent loading message. */
+      S.loaded=true;
+      S.history=partyRoomHistoryLocalRead().sort(function(a,b){return Number(b.lastVisitedAt||0)-Number(a.lastVisitedAt||0);});
+      S.active=[];S.following=[];
+    }
     S.loading=false;render();
   }
   window.pkHomeRefresh=function(){ try{return refresh();}catch(e){return Promise.resolve();} };
@@ -6693,17 +6798,37 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     var st=photoOk(ph)?'':' style="background:'+bgFor(r.id)+'"';
     return '<div class="pkh-story" data-rid="'+esc(r.id)+'" data-rname="'+esc(r.roomName)+'"><div class="pkh-circle'+(photoOk(ph)?'':' pkh-letter')+'"'+st+'>'+inner+'</div><span class="pkh-pill">'+(modeOf(r)==='gaming'?'Game':modeOf(r)==='cinema'?'YouTube':'Chat')+'</span><div class="pkh-label">'+esc(r.roomName)+'</div></div>';
   }
+  function historyCircleFor(r){
+    var ph=String(r.roomImage||r.roomPhoto||'');
+    var inner=photoOk(ph)?'<img class="pkh-cimg" src="'+esc(ph)+'" alt="">':letter(r.roomName);
+    var st=photoOk(ph)?'':' style="background:'+bgFor(r.roomId||r.id)+'"';
+    var meta=String(r.hostName||'').trim();
+    return '<div class="pkh-story" data-history-rid="'+esc(r.roomId)+'" data-rname="'+esc(r.roomName)+'"><div class="pkh-circle'+(photoOk(ph)?'':' pkh-letter')+'"'+st+'>'+inner+'</div><span class="pkh-pill pkh-history-pill">'+(meta?esc(meta):'Room')+'</span><div class="pkh-label">'+esc(r.roomName)+'</div></div>';
+  }
+
   function render(){
     var rc=$('pkhRecent');
     if(rc){
-      var fol=S.active.filter(function(r){return r.__followed;});
       var h='<div class="pkh-story" data-act="my"><div class="pkh-circle pkh-home-icon">'+(S.myRoom?'⌂':'➕')+'</div><div class="pkh-label">'+(S.myRoom?'My Room':'Create Room')+'</div></div>';
-      /* Top strip: only My Room, Joined, then each followed active room as its own circle.
-         History/lower sections are intentionally untouched. */
       h+='<div class="pkh-story" data-act="joined"><div class="pkh-circle pkh-pink">♥</div><div class="pkh-label">Joined</div></div>';
-      fol.forEach(function(r){h+=circleFor(r);});
-
       rc.innerHTML=h;
+    }
+
+    var hs=$('pkhHistorySection'),hr=$('pkhHistory');
+    if(hs&&hr){
+      hs.style.display='block';
+      if(!S.loaded){hr.innerHTML='<div class="pkh-home-empty">History लोड हो रही है…</div>';}
+      else if(!S.history.length){hr.innerHTML='<div class="pkh-home-empty">अभी कोई Room History नहीं है<small>किसी Room में जाने के बाद वह यहाँ दिखेगा</small></div>';}
+      else hr.innerHTML=S.history.map(function(r){return historyCircleFor(r);}).join('');
+    }
+
+    var fs=$('pkhFollowersSection'),fr=$('pkhFollowers');
+    var fol=S.active.filter(function(r){return r.__followed;});
+    if(fs&&fr){
+      fs.style.display='block';
+      if(!S.loaded){fr.innerHTML='<div class="pkh-home-empty">Followers’ Rooms लोड हो रहे हैं…</div>';}
+      else if(!fol.length){fr.innerHTML='<div class="pkh-home-empty">अभी आपके Follow किए लोगों का कोई Active Room नहीं है</div>';}
+      else fr.innerHTML=fol.map(function(r){return circleFor(r);}).join('');
     }
     var tabs=$('pkhTabs');
     if(tabs){
@@ -6733,6 +6858,15 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     if(!db||!currentUserKey)return;
     cinemaShowActionLoading('आपका Party Room चेक हो रहा है…');
     var mine=S.myRoom;
+    if(!mine){
+      try{
+        var savedId=String(localStorage.getItem('pk_myRoomId_'+String(currentUserKey))||window.__myRoomId||'').trim();
+        if(savedId){
+          var ss=await db.collection('cinemaRooms').doc(savedId).get();
+          if(ss.exists){var sd=ss.data()||{};if(String(sd.ownerKey||'')===String(currentUserKey)||String(sd.hostKey||'')===String(currentUserKey))mine=Object.assign({id:ss.id},sd);}
+        }
+      }catch(e){}
+    }
     if(!mine){
       try{
         var rs=await db.collection('cinemaRooms').where('ownerKey','==',String(currentUserKey)).limit(20).get();
@@ -6851,11 +6985,18 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
 
   /* ---------- wiring ---------- */
   function bind(){
-    var rc=$('pkhRecent'),g=$('pkhRoomGrid'),tabs=$('pkhTabs');
+    var rc=$('pkhRecent'),g=$('pkhRoomGrid'),tabs=$('pkhTabs'),hr=$('pkhHistory'),fr=$('pkhFollowers');
     if(rc&&!rc.__b){rc.__b=1;rc.addEventListener('click',function(ev){
       var a=ev.target.closest('[data-act]');
       if(a){var k=a.getAttribute('data-act');if(k==='my')pkHomeMyRoom();else showFollowedRooms();return;}
-      var r=ev.target.closest('[data-rid]');if(r)pkHomeJoin(r.getAttribute('data-rid'),r.getAttribute('data-rname'));
+    });}
+    if(hr&&!hr.__b){hr.__b=1;hr.addEventListener('click',function(ev){
+      var r=ev.target.closest('[data-history-rid]');
+      if(r)pkHomeJoin(r.getAttribute('data-history-rid'),r.getAttribute('data-rname'));
+    });}
+    if(fr&&!fr.__b){fr.__b=1;fr.addEventListener('click',function(ev){
+      var r=ev.target.closest('[data-rid]');
+      if(r)pkHomeJoin(r.getAttribute('data-rid'),r.getAttribute('data-rname'));
     });}
     if(g&&!g.__b){g.__b=1;g.addEventListener('click',function(ev){var r=ev.target.closest('[data-rid]');if(r)pkHomeJoin(r.getAttribute('data-rid'),r.getAttribute('data-rname'));});}
     if(tabs&&!tabs.__b){tabs.__b=1;tabs.addEventListener('click',function(ev){var t=ev.target.closest('[data-tab]');if(!t)return;S.tab=t.getAttribute('data-tab');try{navigator.vibrate&&navigator.vibrate(8);}catch(e){}render();});}
