@@ -12850,83 +12850,183 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 </style>
 
 <style id="partyRoomYoutubeLiveJump">
-/* Viewer fallback: LIVE sits below Q, outside the video screen. */
+/* Viewer fallback: LIVE stays OUTSIDE the video and is anchored to the video's actual bottom. */
 #prRoom.party-youtube-layout #ytRoomLiveBtn{
   position:absolute!important;
-  top:calc(207px + var(--yt-shift,0px))!important;
-  right:9px!important;
+  top:var(--yt-live-top,207px)!important;
+  right:var(--yt-live-right,9px)!important;
   min-width:38px!important; width:38px!important; height:25px!important;
-  padding:0!important; border:1px solid rgba(255,255,255,.28)!important;
+  padding:0!important; border:1px solid rgba(255,255,255,.30)!important;
   border-radius:9px!important; background:#dc2626!important; color:#fff!important;
-  box-shadow:0 5px 14px rgba(220,38,38,.35)!important;
+  box-shadow:0 5px 14px rgba(220,38,38,.38)!important;
   font-size:9px!important; font-weight:1000!important; letter-spacing:.4px!important;
-  z-index:91!important; display:none!important; align-items:center!important; justify-content:center!important;
+  z-index:9999!important; display:none!important; align-items:center!important; justify-content:center!important;
   pointer-events:auto!important; touch-action:manipulation!important; cursor:pointer!important;
+  -webkit-tap-highlight-color:transparent!important;
 }
 #prRoom.party-youtube-layout.yt-live-available #ytRoomLiveBtn{display:flex!important;}
-#prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomLiveBtn{top:calc(263px + var(--yt-shift,0px))!important;}
-@media(max-width:430px){
-  #prRoom.party-youtube-layout #ytRoomLiveBtn{top:calc(205px + var(--yt-shift,0px))!important;right:7px!important;}
-  #prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomLiveBtn{top:calc(261px + var(--yt-shift,0px))!important;}
-}
+#prRoom.party-youtube-layout #ytRoomLiveBtn:disabled{opacity:.82!important;cursor:wait!important;}
 </style>
 <script id="partyRoomYoutubeLiveJumpScript">
 (function(){
   function $(id){return document.getElementById(id);}
+  function root(){return $('prRoom');}
+  function stage(){return $('partyYoutubeStage');}
+  function card(){var st=stage();return st?st.querySelector('.yt-room-card'):null;}
   function isYT(){return String(window.__partyRoomMode||'chat')==='youtube';}
   function isHost(){try{return (typeof cinemaIsHost!=='undefined')?!!cinemaIsHost:false;}catch(e){return false;}}
+
+  /* Keep LIVE physically below the video, regardless of 16:9, Shorts 9:16,
+     twelve-seat layout, screen size, or later video-height changes. */
+  function positionLiveButton(){
+    var r=root(),b=$('ytRoomLiveBtn'),c=card();
+    if(!r||!b||!c||!isYT())return;
+    try{
+      var rr=r.getBoundingClientRect(),cr=c.getBoundingClientRect();
+      if(!rr.width||!cr.width||!cr.height)return;
+      var gap=6;
+      var top=Math.round(cr.bottom-rr.top+gap);
+      var right=Math.max(7,Math.round(rr.right-cr.right+2));
+      var maxTop=Math.max(8,Math.round(rr.height-b.offsetHeight-6));
+      if(top>maxTop)top=maxTop;
+      r.style.setProperty('--yt-live-top',top+'px');
+      r.style.setProperty('--yt-live-right',right+'px');
+    }catch(e){}
+  }
+
   function refreshLiveButton(){
-    var r=$('prRoom'),b=$('ytRoomLiveBtn'); if(!r||!b)return;
+    var r=root(),b=$('ytRoomLiveBtn'); if(!r||!b)return;
     var d=window.__ytLastState;
     var has=!!(isYT()&&!isHost()&&d&&((d.videoId)||(d.videoUrl))&&!d.stopped);
     r.classList.toggle('yt-live-available',has);
+    if(has)requestAnimationFrame(positionLiveButton);
   }
+
   function liveTime(d){
     var t=Math.max(0,Number(d&&d.currentTime)||0);
     if(d&&d.playing===true){
       var age=(Date.now()-(Number(d.updatedAt)||0))/1000;
-      if(age>0&&age<86400)t+=age;
+      /* Host publishes every couple of seconds; carry the saved time forward
+         so LIVE lands at the Host's current position, not an old snapshot. */
+      if(age>0&&age<120)t+=age;
     }
     return t;
   }
+
   async function jumpLive(){
     if(!isYT()||isHost())return;
-    var b=$('ytRoomLiveBtn'); if(b){b.disabled=true;b.textContent='…';}
+    var b=$('ytRoomLiveBtn');
+    if(b){b.disabled=true;b.textContent='…';}
+    var finished=false;
     try{
       var d=null,ref=(typeof ytRoomRef==='function'?ytRoomRef():null);
       if(ref){
-        try{var snap=await ref.collection('youtube').doc('state').get();if(snap.exists)d=snap.data()||{};}catch(e){}
+        try{
+          var snap=await ref.collection('youtube').doc('state').get();
+          if(snap.exists)d=snap.data()||{};
+        }catch(e){}
       }
       if(!d||d.stopped)d=window.__ytLastState||null;
-      if(!d||d.stopped||(!d.videoId&&!d.videoUrl)){toast('⏳ Host का live position अभी उपलब्ध नहीं है',1500);return;}
+      if(!d||d.stopped||(!d.videoId&&!d.videoUrl)){
+        toast('⏳ Host की live position अभी उपलब्ध नहीं है',1500);
+        return;
+      }
       window.__ytLastState=d;
-      var target=liveTime(d);
+      var target=Math.max(0,liveTime(d));
+
       if(d.type==='upload'&&d.videoUrl){
         var lv=$('ytRoomLocalVideo');
         if(!current||!current.upload||current.url!==d.videoUrl){
           ytRemoteApplying=true;
-          try{playUploadedVideo(d.videoUrl,d.title||'Video',{start:target,playing:d.playing!==false,addedBy:d.updatedBy||'Host',remote:true});}finally{ytRemoteApplying=false;}
-        }else if(lv){try{lv.currentTime=target;}catch(e){} if(d.playing===true){var p=lv.play();if(p&&p.catch)p.catch(function(){});}else if(d.playing===false){try{lv.pause();}catch(e){}}}
+          try{
+            playUploadedVideo(d.videoUrl,d.title||'Video',{start:target,playing:d.playing!==false,addedBy:d.updatedBy||'Host',remote:true});
+          }finally{ytRemoteApplying=false;}
+        }else if(lv){
+          try{lv.currentTime=target;}catch(e){}
+          if(d.playing===true){var up=lv.play();if(up&&up.catch)up.catch(function(){});}
+          else if(d.playing===false){try{lv.pause();}catch(e){}}
+        }
       }else if(d.videoId){
         var same=!!(current&&!current.upload&&String(current.id||'')===String(d.videoId)&&String(current.list||'')===String(d.listId||''));
+        if(same&&ytPlayer&&ytReady&&typeof ytPlayer.seekTo==='function'){
+          try{
+            ytPlayer.seekTo(target,true);
+            if(d.playing===true&&typeof ytPlayer.playVideo==='function'){var pp=ytPlayer.playVideo();if(pp&&pp.catch)pp.catch(function(){});}
+            else if(d.playing===false&&typeof ytPlayer.pauseVideo==='function')ytPlayer.pauseVideo();
+          }catch(e){
+            same=false;
+          }
+        }
         if(!same){
+          /* Player not ready, viewer has a different video, or a playlist/Shorts
+             needs to be recreated: playInfo already supports start seconds. */
           ytRemoteApplying=true;
-          try{playInfo({type:'video',id:String(d.videoId),list:d.listId||'',shorts:!!d.shorts},d.title||('YouTube • '+d.videoId),{addedBy:d.updatedBy||'Host',share:false,start:target,remote:true});}finally{ytRemoteApplying=false;}
-        }else if(ytPlayer&&ytReady){
-          try{ytPlayer.seekTo(target,true);if(d.playing===true)ytPlayer.playVideo();else if(d.playing===false)ytPlayer.pauseVideo();}catch(e){}
+          try{
+            playInfo({type:'video',id:String(d.videoId),list:d.listId||'',shorts:!!d.shorts},d.title||('YouTube • '+d.videoId),{addedBy:d.updatedBy||'Host',share:false,start:target,remote:true});
+          }finally{ytRemoteApplying=false;}
+          /* createPlayer is async; seek once more after the API is ready. */
+          setTimeout(function(){
+            try{
+              if(!isYT()||!ytPlayer||!ytReady)return;
+              ytPlayer.seekTo(target,true);
+              if(d.playing===true)ytPlayer.playVideo();
+              else if(d.playing===false)ytPlayer.pauseVideo();
+            }catch(e){}
+          },900);
         }
       }
-      toast('🔴 LIVE — Host के current scene पर पहुँच गए',1300);
-    }catch(e){toast('LIVE sync नहीं हो पाया, दोबारा दबाएँ',1500);}
-    finally{if(b){b.disabled=false;b.textContent='LIVE';}}
+      finished=true;
+      toast('🔴 LIVE — Host की current position पर पहुँच गए',1300);
+    }catch(e){
+      toast('LIVE sync नहीं हो पाया, दोबारा दबाएँ',1500);
+    }finally{
+      if(b){b.disabled=false;b.textContent='LIVE';}
+      positionLiveButton();
+    }
   }
+
   window.ytRoomJumpLive=jumpLive;
   function wire(){
     var b=$('ytRoomLiveBtn');if(!b)return;
-    if(!b.__liveWired){b.__liveWired=true;b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();jumpLive();});}
+    if(!b.__liveWired){
+      b.__liveWired=true;
+      b.addEventListener('click',function(e){
+        e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();
+        jumpLive();
+        return false;
+      },true);
+      b.addEventListener('pointerup',function(e){e.stopImmediatePropagation();e.stopPropagation();},true);
+      b.addEventListener('touchend',function(e){e.stopImmediatePropagation();e.stopPropagation();},true);
+    }
     refreshLiveButton();
+    positionLiveButton();
   }
-  setInterval(wire,700);
-  document.addEventListener('DOMContentLoaded',wire);
+
+  function observe(){
+    var r=root(),st=stage(),c=card();
+    if(!r)return;
+    positionLiveButton();
+    try{
+      if(window.ResizeObserver){
+        if(!r.__liveRO){
+          r.__liveRO=new ResizeObserver(function(){positionLiveButton();});
+          r.__liveRO.observe(r);
+        }
+        if(st&&!st.__liveROObserved){
+          st.__liveROObserved=true;
+          r.__liveRO.observe(st);
+        }
+        if(c&&!c.__liveROObserved){
+          c.__liveROObserved=true;
+          r.__liveRO.observe(c);
+        }
+      }
+    }catch(e){}
+  }
+
+  setInterval(function(){wire();observe();},700);
+  window.addEventListener('resize',positionLiveButton);
+  window.addEventListener('orientationchange',function(){setTimeout(positionLiveButton,100);});
+  document.addEventListener('DOMContentLoaded',function(){wire();observe();});
 })();
 </script>
