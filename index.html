@@ -2728,19 +2728,12 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
               <div id="ytRoomUploadProgress" style="flex:1;height:6px;border-radius:4px;background:rgba(255,255,255,.18);overflow:hidden;display:none;"><div id="ytRoomUploadProgressFill" style="height:100%;width:0%;background:linear-gradient(90deg,#22c55e,#16a34a);"></div></div>
             </div>
             <div id="ytRoomBlock" class="yt-room-block"></div>
-            <div class="yt-room-hostbar"><label style="display:flex;align-items:center;gap:5px;background:rgba(15,23,42,.82);border-radius:10px;padding:5px 8px;color:#fff;font-size:11px;">🔊<input id="ytRoomVolume" type="range" min="0" max="100" value="80" style="width:82px;"></label><button type="button" id="ytRoomCloseVideoBtn" class="yt-room-close-video" onclick="window.ytRoomCloseShared&&window.ytRoomCloseShared()" title="सभी के लिए YouTube बंद करें" aria-label="बंद करें">✕</button></div>
+            <div class="yt-room-hostbar"><button type="button" id="ytRoomCloseVideoBtn" class="yt-room-close-video" onclick="window.ytRoomCloseShared&&window.ytRoomCloseShared()" title="सभी के लिए YouTube बंद करें" aria-label="बंद करें">✕</button></div>
           </div>
           <div id="ytRoomViewerSeekBar" class="yt-room-viewer-seekbar" aria-label="वीडियो की पूरी टाइमलाइन">
-            <span id="ytRoomViewerTime" class="yt-room-viewer-time">00:00</span>
             <input id="ytRoomViewerSeekRange" class="yt-room-viewer-seek-range" type="range" min="0" max="0" step="0.1" value="0" aria-label="वीडियो टाइमलाइन">
-            <span id="ytRoomViewerDuration" class="yt-room-viewer-duration">00:00</span>
           </div>
-          <div id="ytRoomSpeakerBar" class="yt-room-speaker-bar" aria-label="YouTube Speaker">
-            <span class="yt-room-speaker-icon">🔊</span><span class="yt-room-speaker-label">YouTube Speaker</span>
-            <input id="ytRoomSpeakerRange" class="yt-room-speaker-range" type="range" min="0" max="100" value="80" step="1" aria-label="YouTube Speaker volume">
-            <span id="ytRoomSpeakerValue" class="yt-room-speaker-value">80%</span>
-          </div>
-          <button type="button" id="ytRoomUiHideBtn" class="yt-room-ui-hide-btn" aria-label="YouTube Queue और controls" title="Queue और YouTube controls">Q <span id="ytRoomUiHideBadge"></span></button>
+<button type="button" id="ytRoomUiHideBtn" class="yt-room-ui-hide-btn" aria-label="YouTube Queue और controls" title="Queue और YouTube controls">Q <span id="ytRoomUiHideBadge"></span></button>
           <button type="button" id="ytRoomLiveBtn" aria-label="Live पर जाएँ" title="अभी चल रहे scene पर जाएँ">LIVE</button>
           <div id="ytRoomUrlBar" class="yt-room-url-bar">
             <div class="yt-room-input-label">YouTube URL यहाँ डालें</div>
@@ -2796,8 +2789,9 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         <div id="cinemaCallGrid" style="display:none;"></div>
 
         <div id="cinemaChatPanel">
+          <button type="button" id="partyRoomCommentToggle" class="pr-comment-toggle" onclick="window.partyRoomFocusChat&&window.partyRoomFocusChat()" aria-label="कमेंट लिखें" aria-expanded="false">💬<span id="partyRoomUnreadBadge" class="prd-badge">0</span></button>
           <div id="cinemaChatMessages"><div style="text-align:center;color:rgba(255,255,255,.6);font-size:12px;padding:16px 6px;">चैट लोड हो रही है…</div></div>
-          <div id="cinemaChatComposer" style="display:none;position:absolute;left:7px;right:7px;bottom:68px;z-index:150;height:48px;gap:6px;margin:0;padding:5px;background:rgba(8,15,31,.98);border:1px solid rgba(255,255,255,.28);border-radius:15px;box-shadow:0 8px 24px rgba(0,0,0,.45);box-sizing:border-box;">
+          <div id="cinemaChatComposer" style="display:none;position:absolute;left:8px;right:8px;top:8px;bottom:auto;z-index:150;min-height:56px;height:auto;gap:6px;margin:0;padding:6px;background:rgba(8,15,31,.98);border:1px solid rgba(255,255,255,.28);border-radius:17px;box-shadow:0 10px 28px rgba(0,0,0,.42);box-sizing:border-box;">
             <button type="button" onmousedown="event.preventDefault()" onclick="window.prOpenTagPicker&&window.prOpenTagPicker()" aria-label="Tag someone" title="किसी को टैग करें" style="width:34px;height:34px;flex:0 0 34px;border:1px solid #334155;border-radius:11px;background:#070d18;color:#a78bfa;font-size:15px;font-weight:900;cursor:pointer;">@</button>
             <input id="cinemaChatInput" maxlength="300" placeholder="मैसेज लिखें…" autocomplete="off" enterkeyhint="send" autocapitalize="sentences" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();cinemaSendChat();}" style="flex:1;min-width:0;height:34px;padding:6px 10px;border-radius:11px;border:1px solid #334155;background:#070d18;color:#fff;outline:none;font-size:13px;box-sizing:border-box;">
             <button type="button" onmousedown="event.preventDefault()" onclick="cinemaSendChat()" aria-label="Send message" style="width:44px;height:34px;flex:0 0 44px;border:0;border-radius:11px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:18px;font-weight:900;cursor:pointer;">➤</button>
@@ -2811,7 +2805,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
 
         <div id="partyRoomBottomDock">
           <div class="prd-group">
-            <button type="button" id="partyRoomFocusChatBtn" onclick="window.partyRoomFocusChat && window.partyRoomFocusChat()" aria-label="Open chat input">💬<span id="partyRoomUnreadBadge" class="prd-badge">0</span></button>
+            <button type="button" id="partyRoomFocusChatBtn" style="display:none!important;" aria-hidden="true" tabindex="-1">💬</button>
             <button type="button" onclick="togglePartyRoomReactionTray()" aria-label="Emoji reactions"><span class="prr-dock-ico"></span></button>
             <button type="button" id="partyRoomInboxBtn" onclick="pkHomeOpenInbox()" aria-label="Messages">✉️<span id="partyRoomInboxBadge" class="prd-badge-inbox">0</span></button>
           </div>
@@ -3873,22 +3867,24 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     ref.set(data)
       .then(()=>{
         delete partyRoomChatPending[ref.id];
-        /* Send के बाद Party Room में typing panel तुरंत पूरी तरह हटे; केवल छोटा 💬 icon रहे। */
+        /* New Party Room comment panel: Send keeps the panel open. The user closes it only with the small 💬 button. */
         const composer=document.getElementById('cinemaChatComposer');
         const panel=document.getElementById('cinemaChatPanel');
+        const toggle=document.getElementById('partyRoomCommentToggle');
         if(composer){
-          composer.classList.remove('party-composer-open');
-          composer.style.display='none';
-          composer.style.visibility='hidden';
-          composer.style.opacity='0';
-          composer.style.pointerEvents='none';
+          composer.classList.add('party-composer-open');
+          composer.style.display='flex';
+          composer.style.visibility='visible';
+          composer.style.opacity='1';
+          composer.style.pointerEvents='auto';
           composer.style.position='absolute';
-          composer.style.top='auto';
-          composer.style.bottom='68px';
-          composer.style.left='7px';
-          composer.style.right='7px';
+          composer.style.left='8px';
+          composer.style.right='8px';
+          composer.style.top='8px';
+          composer.style.bottom='auto';
         }
-        if(panel) panel.classList.remove('chat-input-open');
+        if(panel) panel.classList.add('chat-input-open');
+        if(toggle){ toggle.setAttribute('aria-expanded','true'); toggle.classList.add('is-open'); }
         const room=document.getElementById('prRoom'); if(room) room.classList.remove('party-keyboard-open');
         try{input.blur();}catch(e){}
         const dock=document.getElementById('partyRoomBottomDock');
@@ -10310,7 +10306,8 @@ function ytRoomApplyState(d){
          when this viewer entered. This keeps a late-joining viewer on the
          same scene even when the host has continued playing meanwhile. */
       var target=ytRoomLiveTime(d), now=ytPlayer.getCurrentTime()||0;
-      if(Math.abs(now-target)>0.75) ytPlayer.seekTo(target,true);
+      var manualHold=(!ytRoomHost() && Date.now() < (window.__ytViewerManualSeekUntil||0));
+      if(!manualHold && Math.abs(now-target)>0.75) ytPlayer.seekTo(target,true);
       if(d.playing===true) ytPlayer.playVideo(); else if(d.playing===false) ytPlayer.pauseVideo();
       if(d.muted===true) ytPlayer.mute(); else {ytPlayer.unMute(); if(Number.isFinite(Number(d.volume))){ytPlayer.setVolume(Number(d.volume));var rv=$('ytRoomVolume');if(rv)rv.value=Number(d.volume);volume=Number(d.volume);}}
     } else if(!info&&d.stopped){ stopVideo(); }
@@ -10618,7 +10615,7 @@ function createPlayer(info,startSeconds){
   var start=Math.max(0,Number(startSeconds)||0);
   /* Always put a real YouTube embed on screen first. This makes Load/Play work
      even if the IFrame API is delayed, blocked, or its global callback is lost. */
-  var params='autoplay=1&rel=0&modestbranding=1&playsinline=1&controls='+(roomMode?0:1)+'&enablejsapi=1&origin='+encodeURIComponent(location.origin);
+  var params='autoplay=1&rel=0&modestbranding=1&playsinline=1&controls='+(roomMode?0:1)+'&disablekb=1&fs=0&iv_load_policy=3&cc_load_policy=0&enablejsapi=1&origin='+encodeURIComponent(location.origin);
   if(start)params+='&start='+start;
   if(info.list)params+='&list='+encodeURIComponent(info.list);
   targetFrame.src='https://www.youtube.com/embed/'+encodeURIComponent(info.id)+'?'+params;
@@ -10651,11 +10648,7 @@ function createPlayer(info,startSeconds){
         events:{
           onReady:function(e){
             ytReady=true;
-            var roomSp=document.getElementById('ytRoomSpeakerRange');
-            var roomSv=document.getElementById('ytRoomSpeakerValue');
-            var roomVol=roomSp?Math.max(0,Math.min(100,Number(roomSp.value)||80)):80;
-            if(roomSv)roomSv.textContent=roomVol+'%';
-            e.target.setVolume(roomVol);
+            e.target.setVolume(muted?0:volume);
             startProgress();
             updatePlayPause();
             if(roomMode){ytRoomUpdateUI(); if(ytRoomSuppressNextSync){ytRoomSuppressNextSync=false;} else if(!ytRemoteApplying)ytRoomSyncNow(true); if(!ytRoomHost()&&window.__ytLastState){setTimeout(function(){try{ytRoomApplyState(window.__ytLastState);}catch(x){}},700);}}
@@ -11926,7 +11919,8 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
     if(!isHost() && window.__ytLastState){
       var st=window.__ytLastState;
       if(st.videoId||st.videoUrl){
-        c=stateTime();
+        var manualHold=Date.now() < (window.__ytViewerManualSeekUntil||0);
+        if(!manualHold) c=stateTime();
         d=Number(st.dur)||d;
       }
     }
@@ -11940,7 +11934,7 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
     var p=getPlayer(),lv=$("ytRoomLocalVideo");
     try{
       if(window.current&&current.upload&&lv){lv.currentTime=t; if(isHost()&&!lv.paused&&!lv.ended)ytRoomWriteState({type:'upload',videoUrl:current.url,title:current.title,playing:true,currentTime:t,stopped:false});return;}
-      if(p&&window.ytReady&&p.seekTo){p.seekTo(t,true);window.__ytViewerManualSeekUntil=Date.now()+3000;if(isHost()&&typeof ytRoomSyncNow==='function')setTimeout(function(){try{ytRoomSyncNow(true);}catch(e){}},120);}
+      if(p&&window.ytReady&&p.seekTo){p.seekTo(t,true);window.__ytViewerManualSeekUntil=Date.now()+8000;if(isHost()&&typeof ytRoomSyncNow==='function')setTimeout(function(){try{ytRoomSyncNow(true);}catch(e){}},120);}
     }catch(e){}
   }
   function wire(){
@@ -11949,17 +11943,6 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
     range.dataset.wired='1';
     range.addEventListener('input',function(){seekTo(Number(this.value)||0);});
     range.addEventListener('change',function(){seekTo(Number(this.value)||0);});
-    var sp=$("ytRoomSpeakerRange"),sv=$("ytRoomSpeakerValue");
-    if(sp&&sp.dataset.wired!=='1'){
-      sp.dataset.wired='1';
-      var saved=80;try{saved=Math.max(0,Math.min(100,Number(localStorage.getItem('pr_youtube_speaker_volume'))));if(!Number.isFinite(saved))saved=80;}catch(e){}
-      sp.value=saved;if(sv)sv.textContent=saved+'%';
-      sp.addEventListener('input',function(){
-        var v=Math.max(0,Math.min(100,Number(this.value)||0));if(sv)sv.textContent=v+'%';
-        try{localStorage.setItem('pr_youtube_speaker_volume',String(v));}catch(e){}
-        try{var p=getPlayer(),lv=$("ytRoomLocalVideo");if(p&&window.ytReady){if(v===0)p.mute();else{p.unMute();p.setVolume(v);}}if(lv){lv.volume=v/100;lv.muted=v===0;}}catch(e){}
-      });
-    }
   }
   setInterval(function(){try{wire();paint();}catch(e){}},200);
   document.addEventListener('DOMContentLoaded',function(){wire();paint();});
@@ -11975,29 +11958,26 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   pointer-events:none!important;
 }
 #prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomViewerSeekBar{order:2!important;}
-#prRoom.party-youtube-layout #partyYoutubeStage > #ytRoomSpeakerBar{order:2!important;}
 #prRoom.party-youtube-layout #ytRoomViewerSeekBar{
-  display:flex!important;align-items:center;gap:7px;width:min(100%,900px);height:30px;box-sizing:border-box;
-  margin:6px auto 0;padding:0 8px;border-radius:10px;background:rgba(8,15,30,.92);
+  display:flex!important;align-items:center;gap:0;width:min(100%,900px);height:24px;box-sizing:border-box;
+  margin:5px auto 0;padding:0 4px;border-radius:10px;background:rgba(8,15,30,.92);
   border:1px solid rgba(255,255,255,.12);box-shadow:0 4px 14px rgba(0,0,0,.22);z-index:70;
 }
-#prRoom.party-youtube-layout #ytRoomViewerSeekRange{flex:1;min-width:0;height:24px;accent-color:#ef4444;touch-action:pan-x;cursor:pointer;}
+#prRoom.party-youtube-layout #ytRoomViewerSeekRange{flex:1;min-width:0;height:24px;accent-color:#ef4444;touch-action:pan-x;cursor:pointer;pointer-events:auto!important;}
 #prRoom.party-youtube-layout .yt-room-viewer-time,#prRoom.party-youtube-layout .yt-room-viewer-duration{min-width:42px;text-align:center;color:#fff;font:800 10px/1 system-ui,Segoe UI,Arial,sans-serif;font-variant-numeric:tabular-nums;opacity:.9;}
-#prRoom.party-youtube-layout #ytRoomSpeakerBar{
-  display:flex!important;align-items:center;gap:7px;width:min(100%,900px);height:30px;box-sizing:border-box;
-  margin:4px auto 0;padding:0 9px;border-radius:10px;background:rgba(8,15,30,.88);
-  border:1px solid rgba(255,255,255,.10);color:#fff;z-index:70;
-}
-#prRoom.party-youtube-layout .yt-room-speaker-icon{font-size:14px;line-height:1;}
-#prRoom.party-youtube-layout .yt-room-speaker-label{font:800 9px/1 system-ui,Segoe UI,Arial,sans-serif;white-space:nowrap;opacity:.92;}
-#prRoom.party-youtube-layout #ytRoomSpeakerRange{flex:1;min-width:70px;height:22px;accent-color:#22c55e;touch-action:pan-x;}
-#prRoom.party-youtube-layout .yt-room-speaker-value{width:34px;text-align:right;font:800 9px/1 system-ui,Segoe UI,Arial,sans-serif;font-variant-numeric:tabular-nums;}
 #prRoom.party-youtube-layout #ytRoomVolume{display:none!important;pointer-events:none!important;}
 @media(max-width:430px){
   #prRoom.party-youtube-layout #ytRoomViewerSeekBar{height:29px;margin-top:5px;padding:0 6px;gap:4px;}
   #prRoom.party-youtube-layout #ytRoomSpeakerBar{height:29px;margin-top:3px;padding:0 7px;gap:5px;}
   #prRoom.party-youtube-layout .yt-room-speaker-label{font-size:8px;}
 }
+</style>
+
+<style id="partyRoomYoutubeNoSpeakerFinal">
+/* YouTube Speaker controls removed by request. */
+#prRoom.party-youtube-layout #ytRoomVolume,
+#prRoom.party-youtube-layout #ytRoomSpeakerBar,
+#prRoom.party-youtube-layout #ytRoomSpeakerControl{display:none!important;pointer-events:none!important;}
 </style>
 </body>
 
@@ -13325,98 +13305,178 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 </script>
 
 
-<style id="partyRoomYouTubeSpeakerFinal">
-/* Final YouTube Speaker control: replaces the Q helper notice and is local to each viewer. */
-#prRoom.party-youtube-layout #prBrowserBtn{display:none!important;}
-#prRoom.party-youtube-layout #ytQNotice{display:none!important;}
-#prRoom.party-youtube-layout #ytRoomSpeakerControl{
-  display:flex!important;
+
+<style id="partyRoomInlineCommentPanelFinal">
+/* Party Room: compact comment launcher lives beside the start of the comment area, not in the bottom dock. */
+#prRoom #partyRoomCommentToggle{
+  position:absolute!important;
+  top:7px!important;
+  right:7px!important;
+  z-index:180!important;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  min-height:38px!important;
+  padding:0!important;
+  display:grid!important;
+  place-items:center!important;
+  border:1px solid rgba(255,255,255,.28)!important;
+  border-radius:13px!important;
+  background:linear-gradient(145deg,rgba(124,58,237,.96),rgba(236,72,153,.92))!important;
+  color:#fff!important;
+  font-size:18px!important;
+  font-weight:950!important;
+  line-height:1!important;
+  box-shadow:0 7px 20px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.28)!important;
+  cursor:pointer!important;
+  touch-action:manipulation!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+#prRoom #partyRoomCommentToggle:active{transform:scale(.93)!important;}
+#prRoom #partyRoomCommentToggle.is-open{background:rgba(15,23,42,.88)!important;border-color:rgba(255,255,255,.34)!important;font-size:19px!important;}
+#prRoom #partyRoomCommentToggle .prd-badge{
+  position:absolute!important;
+  top:-5px!important;
+  right:-5px!important;
+  min-width:16px!important;
+  height:16px!important;
+  padding:0 4px!important;
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border-radius:999px!important;
+  background:#ffd21f!important;
+  color:#17100a!important;
+  border:2px solid #241044!important;
+  font:900 9px/12px system-ui,sans-serif!important;
+}
+#prRoom #partyRoomCommentToggle .prd-badge:not(:empty){display:flex!important;}
+/* The composer is an in-room popover. It never occupies the mobile bottom edge. */
+#prRoom #cinemaChatComposer{
   position:absolute!important;
   left:8px!important;
-  right:8px!important;
-  top:calc(var(--yt-sub-top,70px) + 5px)!important;
-  height:30px!important;
-  box-sizing:border-box!important;
-  align-items:center!important;
-  gap:8px!important;
-  padding:4px 9px!important;
-  border:1px solid rgba(255,255,255,.16)!important;
-  border-radius:12px!important;
-  background:linear-gradient(135deg,rgba(15,23,42,.94),rgba(30,41,59,.92))!important;
-  box-shadow:0 5px 16px rgba(0,0,0,.24)!important;
-  z-index:75!important;
-  color:#fff!important;
-  touch-action:manipulation!important;
-}
-#prRoom.party-youtube-layout #ytRoomSpeakerControl .yt-speaker-label{
-  flex:0 0 auto!important;
-  min-width:92px!important;
-  font-size:11px!important;
-  line-height:20px!important;
-  font-weight:900!important;
-  white-space:nowrap!important;
-}
-#prRoom.party-youtube-layout #ytRoomSpeakerControl input[type="range"]{
-  flex:1 1 auto!important;
-  min-width:80px!important;
+  right:52px!important;
+  top:8px!important;
+  bottom:auto!important;
   width:auto!important;
-  height:24px!important;
-  margin:0!important;
-  accent-color:#22c55e!important;
-  cursor:pointer!important;
+  height:auto!important;
+  min-height:56px!important;
+  z-index:170!important;
+  border-radius:17px!important;
+  background:rgba(8,15,31,.97)!important;
+  border:1px solid rgba(255,255,255,.28)!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.42)!important;
+  padding:6px!important;
 }
-#prRoom.party-youtube-layout #ytRoomSpeakerValue{
-  flex:0 0 38px!important;
-  text-align:right!important;
-  font-size:11px!important;
-  font-weight:900!important;
-  color:#f8fafc!important;
+#prRoom #cinemaChatComposer input#cinemaChatInput{
+  height:42px!important;
+  min-height:42px!important;
+  border-radius:12px!important;
+  font-size:14px!important;
+  background:#fff!important;
+  color:#111!important;
+  -webkit-text-fill-color:#111!important;
 }
-@media(max-width:430px){
-  #prRoom.party-youtube-layout #ytRoomSpeakerControl{top:calc(var(--yt-sub-top,70px) + 5px)!important;}
-  #prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomSpeakerControl{top:calc(var(--yt-sub-top,70px) + 5px)!important;}
+#prRoom #cinemaChatComposer button{height:42px!important;border-radius:12px!important;}
+#prRoom #cinemaChatComposer button:first-child{width:38px!important;flex-basis:38px!important;}
+#prRoom #cinemaChatComposer button:last-child{width:46px!important;flex-basis:46px!important;}
+/* Opening the composer only reserves a little room at the top; the bottom gap/dock is untouched. */
+#prRoom #cinemaChatPanel.chat-input-open #cinemaChatMessages{
+  padding-top:70px!important;
 }
-#prRoom.party-youtube-layout:has(#cinemaSeats.pr-twelve-seat-mode) #ytRoomSpeakerControl{top:calc(var(--yt-sub-top,70px) + 5px)!important;}
+#prRoom #cinemaChatPanel:not(.chat-input-open) #cinemaChatComposer,
+#prRoom #cinemaChatComposer:not(.party-composer-open){
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+#prRoom #cinemaChatPanel.chat-input-open #cinemaChatComposer,
+#prRoom #cinemaChatComposer.party-composer-open{
+  display:flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+}
+/* The old bottom chat launcher is disabled; its dock space remains, so the bottom gap/layout does not change. */
+#prRoom #partyRoomBottomDock #partyRoomFocusChatBtn{display:none!important;visibility:hidden!important;pointer-events:none!important;}
 </style>
-<script id="partyRoomYouTubeSpeakerFinalScript">
+
+<script id="partyRoomInlineCommentPanelFinalScript">
 (function(){
   'use strict';
-  function byId(id){return document.getElementById(id);}
-  function getRoom(){return byId('prRoom');}
-  function currentVolume(){
-    try{if(typeof window.getPartyYouTubeLocalVolume==='function')return window.getPartyYouTubeLocalVolume();}catch(e){}
-    try{var x=localStorage.getItem('pk_volume');if(x!==null)return Math.max(0,Math.min(100,Number(x)||0));}catch(e){}
-    return 80;
+  var OPEN_KEY='__partyInlineCommentOpen';
+  function $(id){return document.getElementById(id);}
+  function setToggle(open){
+    var b=$('partyRoomCommentToggle');
+    if(!b)return;
+    b.setAttribute('aria-expanded',open?'true':'false');
+    b.classList.toggle('is-open',!!open);
+    if(b.firstChild && b.firstChild.nodeType===3) b.firstChild.nodeValue=open?'✕':'💬';
   }
-  function applyVolume(v){
-    v=Math.max(0,Math.min(100,Number(v)||0));
-    try{if(typeof window.setPartyYouTubeLocalVolume==='function')window.setPartyYouTubeLocalVolume(v);}catch(e){}
-    var val=byId('ytRoomSpeakerValue');if(val)val.textContent=v+'%';
+  function openPanel(){
+    var c=$('cinemaChatComposer'), p=$('cinemaChatPanel'), r=$('prRoom');
+    if(!c||!p)return;
+    window[OPEN_KEY]=true;
+    c.classList.add('party-composer-open');
+    p.classList.add('chat-input-open');
+    c.style.display='flex'; c.style.visibility='visible'; c.style.opacity='1'; c.style.pointerEvents='auto';
+    c.style.position='absolute'; c.style.left='8px'; c.style.right='52px'; c.style.top='8px'; c.style.bottom='auto';
+    if(r)r.classList.remove('party-keyboard-open');
+    var rt=$('partyRoomReactionTray'); if(rt)rt.style.display='none';
+    var gt=$('partyRoomGiftTray'); if(gt)gt.style.display='none';
+    setToggle(true);
+    try{ if(typeof partyRoomMarkChatRead==='function')partyRoomMarkChatRead(); }catch(e){}
   }
-  function ensure(){
-    var r=getRoom();if(!r)return;
-    var c=byId('ytRoomSpeakerControl');
-    if(!c){
-      c=document.createElement('div');c.id='ytRoomSpeakerControl';c.setAttribute('aria-label','YouTube Speaker volume');
-      c.innerHTML='<span class="yt-speaker-label">🔊 YouTube Speaker</span><input id="ytRoomSpeakerSlider" type="range" min="0" max="100" step="1" value="80" aria-label="YouTube Speaker volume 0 to 100"><span id="ytRoomSpeakerValue">80%</span>';
-      r.appendChild(c);
-      var sl=byId('ytRoomSpeakerSlider');
-      if(sl){
-        sl.value=currentVolume();
-        sl.addEventListener('input',function(){applyVolume(this.value);});
-      }
+  function closePanel(){
+    var c=$('cinemaChatComposer'), p=$('cinemaChatPanel'), r=$('prRoom'), i=$('cinemaChatInput');
+    window[OPEN_KEY]=false;
+    if(c){
+      c.classList.remove('party-composer-open');
+      c.style.display='none'; c.style.visibility='hidden'; c.style.opacity='0'; c.style.pointerEvents='none';
+      c.style.position='absolute'; c.style.left='8px'; c.style.right='52px'; c.style.top='8px'; c.style.bottom='auto';
     }
-    var sl=byId('ytRoomSpeakerSlider');
-    if(sl && document.activeElement!==sl)sl.value=currentVolume();
-    var val=byId('ytRoomSpeakerValue');if(val)val.textContent=currentVolume()+'%';
+    if(p)p.classList.remove('chat-input-open');
+    if(r)r.classList.remove('party-keyboard-open');
+    try{if(i)i.blur();}catch(e){}
+    var d=$('partyRoomBottomDock'); if(d)d.style.transform='';
+    setToggle(false);
   }
-  function refresh(){
-    var r=getRoom();if(!r)return;
-    var c=byId('ytRoomSpeakerControl');
-    if(c)c.style.display=r.classList.contains('party-youtube-layout')?'flex':'none';
-    if(r.classList.contains('party-youtube-layout'))ensure();
+  window.partyRoomFocusChat=function(){
+    var c=$('cinemaChatComposer');
+    var open=!!(c && c.classList.contains('party-composer-open'));
+    if(open) closePanel(); else openPanel();
+    return false;
+  };
+  window.partyRoomCloseChatPanel=closePanel;
+
+  /* Do not let the old keyboard/focus helpers close the new panel. */
+  document.addEventListener('focusout',function(e){
+    if(e.target && e.target.id==='cinemaChatInput' && window[OPEN_KEY]){
+      e.stopImmediatePropagation();
+    }
+  },true);
+
+  /* Older keyboard handlers in this large legacy file may hide the composer. Restore it while the user has not pressed ✕. */
+  var mo=new MutationObserver(function(){
+    if(!window[OPEN_KEY])return;
+    var c=$('cinemaChatComposer'),p=$('cinemaChatPanel');
+    if(!c||!p)return;
+    if(!c.classList.contains('party-composer-open')||c.style.display==='none'||p.classList.contains('chat-input-open')===false){
+      c.classList.add('party-composer-open');
+      p.classList.add('chat-input-open');
+      c.style.display='flex'; c.style.visibility='visible'; c.style.opacity='1'; c.style.pointerEvents='auto';
+      c.style.position='absolute'; c.style.left='8px'; c.style.right='52px'; c.style.top='8px'; c.style.bottom='auto';
+      setToggle(true);
+    }
+  });
+  function start(){
+    var p=$('cinemaChatPanel');
+    if(p)mo.observe(p,{attributes:true,attributeFilter:['class'],subtree:true});
+    var c=$('cinemaChatComposer');
+    if(c)mo.observe(c,{attributes:true,attributeFilter:['class','style']});
+    setToggle(false);
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh);else refresh();
-  setInterval(refresh,700);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
 </script>
