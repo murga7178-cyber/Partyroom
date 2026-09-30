@@ -3919,7 +3919,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     const text=String(input.value||'').trim(); if(!text)return;
     const sendRoomId=String(cinemaRoomId);
     input.value='';
-    try{ input.focus({preventScroll:true}); }catch(e){}   // कीबोर्ड खुला रहे, अगला मैसेज तुरंत टाइप हो
     const rt=document.getElementById('partyRoomReactionTray'); if(rt) rt.style.display='none';
     let photo=''; try{ photo=(typeof currentUserPhotoURL!=='undefined')?String(currentUserPhotoURL||''):''; }catch(e){}
     if(!/^https:\/\//i.test(photo) || photo.length>500) photo='';   // भारी base64 फोटो हर मैसेज के साथ नहीं भेजते
@@ -3938,27 +3937,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       .then(()=>{
         delete partyRoomChatPending[ref.id];
         /* New Party Room comment panel: Send keeps the panel open. The user closes it only with the small 💬 button. */
-        const composer=document.getElementById('cinemaChatComposer');
-        const panel=document.getElementById('cinemaChatPanel');
-        const toggle=document.getElementById('partyRoomCommentToggle');
-        if(composer){
-          composer.classList.add('party-composer-open');
-          composer.style.display='flex';
-          composer.style.visibility='visible';
-          composer.style.opacity='1';
-          composer.style.pointerEvents='auto';
-          composer.style.position='absolute';
-          composer.style.left='8px';
-          composer.style.right='8px';
-          composer.style.top='8px';
-          composer.style.bottom='auto';
-        }
-        if(panel) panel.classList.add('chat-input-open');
-        if(toggle){ toggle.setAttribute('aria-expanded','true'); toggle.classList.add('is-open'); }
-        const room=document.getElementById('prRoom'); if(room) room.classList.remove('party-keyboard-open');
-        try{input.blur();}catch(e){}
-        const dock=document.getElementById('partyRoomBottomDock');
-        if(dock) dock.style.transform='';
+        /* Keep the simple composer open; no focus, blur, keyboard or viewport manipulation. */
+        try{var composer=document.getElementById('cinemaChatComposer'); if(composer) composer.classList.add('party-composer-open');}catch(e){}
       })
       .catch(()=>{
         delete partyRoomChatPending[ref.id];
@@ -10350,22 +10330,28 @@ function ytAutoPlus2AfterPlay(){
     var vd=ytPlayer.getVideoData()||{},id=String(vd.video_id||'');
     if(!id||ytPlus2AppliedVideoId===id||ytPlus2Timer)return;
     var b=ytEnsureHiddenPlus2Button();
-    ytPlus2Timer=setTimeout(function(){
+    var tries=0;
+    function check(){
       ytPlus2Timer=null;
       try{
-        if(!ytPlayer||!ytReady||typeof ytPlayer.getPlayerState!=='function')return;
+        if(!ytPlayer||!ytReady)return;
         var nowVd=ytPlayer.getVideoData()||{},nowId=String(nowVd.video_id||'');
         if(nowId!==id)return;
-        if(ytPlayer.getPlayerState()!==YT.PlayerState.PLAYING)return;
+        var cur=Number(ytPlayer.getCurrentTime())||0;
         var dur=typeof ytPlayer.getDuration==='function'?(Number(ytPlayer.getDuration())||0):0;
-        if(dur<=0){
-          ytAutoPlus2AfterPlay();
+        var st=typeof ytPlayer.getPlayerState==='function'?ytPlayer.getPlayerState():-1;
+        /* Only act after the video metadata is ready and the player is still at 0:00.
+           PLAYING is deliberately NOT required. */
+        if(dur>2 && cur<=0.15 && (st===-1 || st===2 || st===5)){
+          ytPlus2AppliedVideoId=id;
+          b.click();
           return;
         }
-        ytPlus2AppliedVideoId=id;
-        b.click();
+        /* Keep waiting only while it remains at the beginning. */
+        if(cur<=0.15 && tries++<40) ytPlus2Timer=setTimeout(check,250);
       }catch(e){}
-    },2500);
+    }
+    check();
   }catch(e){}
 }
 
@@ -10752,7 +10738,7 @@ function destroyPlayer(){
   try{if(ytPlayer&&ytPlayer.stopVideo)ytPlayer.stopVideo();}catch(e){}
   try{if(ytPlayer&&ytPlayer.pauseVideo)ytPlayer.pauseVideo();}catch(e){}
   try{if(ytPlayer&&ytPlayer.destroy)ytPlayer.destroy();}catch(e){}
-  ytPlayer=null;ytReady=false;
+  ytPlayer=null;ytReady=false;try{window.ytPlayer=null;window.ytReady=false;}catch(e){};
   var d=$('ytPlayerDiv');if(d)d.remove();
   var d2=$('ytRoomPlayerDiv');if(d2)d2.remove();
   if(frameHost){frameHost.style.display='block';frameHost.removeAttribute('src');}
@@ -10807,7 +10793,7 @@ function createPlayer(info,startSeconds){
         height:'100%',width:'100%',videoId:info.id,playerVars:vars,
         events:{
           onReady:function(e){
-            ytReady=true;
+            ytReady=true;try{window.ytPlayer=ytPlayer;window.ytReady=true;}catch(x){}
             e.target.setVolume(muted?0:volume);
             startProgress();
             updatePlayPause();
@@ -10837,6 +10823,7 @@ function createPlayer(info,startSeconds){
           }
         }
       });
+      try{window.ytPlayer=ytPlayer;window.ytReady=false;}catch(x){}
     }catch(e){
       try{targetFrame.style.display='block';}catch(x){}
     }
@@ -13092,28 +13079,11 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 
   /* A single clean sender. Uses the existing room Firebase collection and the
      existing chat renderer/listener; no pending DOM row, no focus, no blur. */
+  var realCinemaSendChat=window.cinemaSendChat;
   window.cinemaSendChat=function(){
     var input=$('cinemaChatInput');
-    if(!input||!window.db||!window.cinemaRoomId)return;
-    var msg=String(input.value||'').trim();
-    if(!msg)return;
-    var roomId=String(window.cinemaRoomId);
-    var userKey=String(window.currentUserKey||'guest');
-    var name='';
-    try{name=typeof window.cinemaUserName==='function'?window.cinemaUserName():(window.cinemaUserName||'Guest');}catch(e){name='Guest';}
-    var photo='';
-    try{photo=String(window.currentUserPhotoURL||'');}catch(e){}
-    if(!/^https:\/\//i.test(photo)||photo.length>500)photo='';
-    var data={text:msg.slice(0,300),name:name,userKey:userKey,photoURL:photo,createdAt:Date.now()};
-    input.value='';
-    window.db.collection('cinemaRooms').doc(roomId).collection('chat').add(data)
-      .then(function(){
-        setComment(true);
-      })
-      .catch(function(err){
-        input.value=msg;
-        try{(window.pkRoomToast||window.alert)('मैसेज भेजा नहीं जा सका।');}catch(e){}
-      });
+    if(!input||!String(input.value||'').trim())return;
+    if(typeof realCinemaSendChat==='function') return realCinemaSendChat();
   };
 
   if(document.readyState==='loading'){
