@@ -3894,11 +3894,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       // added/modified/removed और re-order होने पर कोई row गलत जगह नहीं अटकती।
       el.innerHTML='';
       const frag=document.createDocumentFragment();
-      docs.forEach(doc=>{
-        const data=doc.data()||{};
-        if(data.type==='join') return;
-        frag.appendChild(prChatRow(Object.assign({},data,{__docId:doc.id})));
-      });
+      docs.forEach(doc=>{ frag.appendChild(prChatRow(Object.assign({},doc.data()||{},{__docId:doc.id}))); });
       el.appendChild(frag); el.__ready=true;
       const fresh=snap.docChanges().filter(ch=>ch.type==='added').map(ch=>ch.doc);
       if(fresh.length){ prResolveChatNames(fresh); prResolveChatAvatars(fresh); }
@@ -3919,6 +3915,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     const text=String(input.value||'').trim(); if(!text)return;
     const sendRoomId=String(cinemaRoomId);
     input.value='';
+    try{ input.focus({preventScroll:true}); }catch(e){}   // कीबोर्ड खुला रहे, अगला मैसेज तुरंत टाइप हो
     const rt=document.getElementById('partyRoomReactionTray'); if(rt) rt.style.display='none';
     let photo=''; try{ photo=(typeof currentUserPhotoURL!=='undefined')?String(currentUserPhotoURL||''):''; }catch(e){}
     if(!/^https:\/\//i.test(photo) || photo.length>500) photo='';   // भारी base64 फोटो हर मैसेज के साथ नहीं भेजते
@@ -3937,8 +3934,27 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       .then(()=>{
         delete partyRoomChatPending[ref.id];
         /* New Party Room comment panel: Send keeps the panel open. The user closes it only with the small 💬 button. */
-        /* Keep the simple composer open; no focus, blur, keyboard or viewport manipulation. */
-        try{var composer=document.getElementById('cinemaChatComposer'); if(composer) composer.classList.add('party-composer-open');}catch(e){}
+        const composer=document.getElementById('cinemaChatComposer');
+        const panel=document.getElementById('cinemaChatPanel');
+        const toggle=document.getElementById('partyRoomCommentToggle');
+        if(composer){
+          composer.classList.add('party-composer-open');
+          composer.style.display='flex';
+          composer.style.visibility='visible';
+          composer.style.opacity='1';
+          composer.style.pointerEvents='auto';
+          composer.style.position='absolute';
+          composer.style.left='8px';
+          composer.style.right='8px';
+          composer.style.top='8px';
+          composer.style.bottom='auto';
+        }
+        if(panel) panel.classList.add('chat-input-open');
+        if(toggle){ toggle.setAttribute('aria-expanded','true'); toggle.classList.add('is-open'); }
+        const room=document.getElementById('prRoom'); if(room) room.classList.remove('party-keyboard-open');
+        try{input.blur();}catch(e){}
+        const dock=document.getElementById('partyRoomBottomDock');
+        if(dock) dock.style.transform='';
       })
       .catch(()=>{
         delete partyRoomChatPending[ref.id];
@@ -4667,9 +4683,20 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       });
     }catch(e){ toast('मैसेज नहीं गया'); }
   };
-  // Join-welcome notice disabled: entering the room no longer posts
-  // “रूम में आए हैं। स्वागत करें!” into the Party Room chat.
-  window.prAnnounceJoin=function(){};
+  window.prAnnounceJoin=function(){
+    if(!db||!cinemaRoomId||!currentUserKey) return;
+    var seen=window.__prJoinAt||(window.__prJoinAt={});
+    var now=Date.now();
+    if(seen[cinemaRoomId] && now-seen[cinemaRoomId]<90000) return;
+    seen[cinemaRoomId]=now;
+    setTimeout(function(){
+      try{
+        db.collection('cinemaRooms').doc(cinemaRoomId).collection('chat').add({
+          type:'join',text:'',name:(nameOf(String(currentUserKey||''))||cinemaUserName()),userKey:String(currentUserKey||'guest'),createdAt:Date.now()
+        }).catch(function(){});
+      }catch(e){}
+    },900);
+  };
 
   // ---------- gift listener: totals under names, combo banner, floating gift ----------
   function prSyncCoinDisplays(){
@@ -10270,91 +10297,6 @@ input,textarea,select{font-size:16px}
 var HISTORY_KEY='yt_history_v3',QUEUE_KEY='yt_queue_v3',VOLUME_KEY='yt_volume_v3',SOUND_KEY='yt_soundmode_v3',MAX_HISTORY=20,MAX_QUEUE=30,SHARE_DOC='partyRoomYouTube';
 var queue=[],history=[],current=null,isHost=false,soundMode=false,volume=80,muted=false,roomShareEnabled=true;
 var ytPlayer=null,ytReady=false,ytApiLoaded=!!window.YT,ytProgressTimer=null,roomUnsub=null,lastRoomTs=0,listeningRoom='';
-var ytPlus2AppliedVideoId='';
-var ytHiddenPlus2Btn=null;
-var ytPlus2Timer=null;
-var ytPlus2Overlay=null;
-
-function ytEnsurePlus2Overlay(){
-  if(ytPlus2Overlay&&document.body.contains(ytPlus2Overlay))return ytPlus2Overlay;
-  ytPlus2Overlay=document.createElement('div');
-  ytPlus2Overlay.id='ytRoomPlus2Overlay';
-  ytPlus2Overlay.setAttribute('aria-hidden','true');
-  ytPlus2Overlay.style.cssText='display:none;position:absolute;inset:0;z-index:9999;pointer-events:none;align-items:center;justify-content:center;background:rgba(5,8,18,.34);backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);border-radius:14px;';
-  ytPlus2Overlay.innerHTML='<div style="padding:10px 16px;border-radius:999px;background:rgba(0,0,0,.72);color:#fff;font:800 13px/1.1 system-ui,-apple-system,sans-serif;box-shadow:0 6px 22px rgba(0,0,0,.35);">⏩ +2 सेकंड</div>';
-  document.body.appendChild(ytPlus2Overlay);
-  return ytPlus2Overlay;
-}
-function ytShowPlus2Overlay(){
-  try{
-    var ov=ytEnsurePlus2Overlay(),card=document.querySelector('#partyYoutubeStage .yt-room-card')||document.querySelector('.yt-room-card');
-    if(card&&!ov.parentNode.isSameNode(card))card.appendChild(ov);
-    ov.style.display='flex';
-    ov.setAttribute('aria-hidden','false');
-  }catch(e){}
-}
-function ytHidePlus2Overlay(){
-  try{
-    if(ytPlus2Overlay){
-      ytPlus2Overlay.style.display='none';
-      ytPlus2Overlay.setAttribute('aria-hidden','true');
-    }
-  }catch(e){}
-}
-function ytEnsureHiddenPlus2Button(){
-  if(ytHiddenPlus2Btn&&document.body.contains(ytHiddenPlus2Btn))return ytHiddenPlus2Btn;
-  ytHiddenPlus2Btn=document.createElement('button');
-  ytHiddenPlus2Btn.id='ytRoomHiddenPlus2Btn';
-  ytHiddenPlus2Btn.type='button';
-  ytHiddenPlus2Btn.tabIndex=-1;
-  ytHiddenPlus2Btn.setAttribute('aria-hidden','true');
-  ytHiddenPlus2Btn.style.cssText='display:none!important;visibility:hidden!important;width:0;height:0;position:absolute;left:-99999px;top:-99999px;opacity:0;pointer-events:none;margin:0;padding:0;border:0;';
-  document.body.appendChild(ytHiddenPlus2Btn);
-  ytHiddenPlus2Btn.addEventListener('click',function(){
-    try{
-      if(!ytPlayer||!ytReady||typeof ytPlayer.getCurrentTime!=='function'||typeof ytPlayer.seekTo!=='function')return;
-      ytShowPlus2Overlay();
-      var t=Number(ytPlayer.getCurrentTime())||0;
-      var d=typeof ytPlayer.getDuration==='function'?(Number(ytPlayer.getDuration())||0):0;
-      var target=t+2;
-      if(d>0)target=Math.min(target,Math.max(0,d-0.05));
-      ytPlayer.seekTo(target,true);
-      setTimeout(ytHidePlus2Overlay,450);
-    }catch(e){ ytHidePlus2Overlay(); }
-  });
-  return ytHiddenPlus2Btn;
-}
-function ytAutoPlus2AfterPlay(){
-  try{
-    if(!ytPlayer||!ytReady||typeof ytPlayer.getVideoData!=='function')return;
-    var vd=ytPlayer.getVideoData()||{},id=String(vd.video_id||'');
-    if(!id||ytPlus2AppliedVideoId===id||ytPlus2Timer)return;
-    var b=ytEnsureHiddenPlus2Button();
-    var tries=0;
-    function check(){
-      ytPlus2Timer=null;
-      try{
-        if(!ytPlayer||!ytReady)return;
-        var nowVd=ytPlayer.getVideoData()||{},nowId=String(nowVd.video_id||'');
-        if(nowId!==id)return;
-        var cur=Number(ytPlayer.getCurrentTime())||0;
-        var dur=typeof ytPlayer.getDuration==='function'?(Number(ytPlayer.getDuration())||0):0;
-        var st=typeof ytPlayer.getPlayerState==='function'?ytPlayer.getPlayerState():-1;
-        /* Only act after the video metadata is ready and the player is still at 0:00.
-           PLAYING is deliberately NOT required. */
-        if(dur>2 && cur<=0.15 && (st===-1 || st===2 || st===5)){
-          ytPlus2AppliedVideoId=id;
-          b.click();
-          return;
-        }
-        /* Keep waiting only while it remains at the beginning. */
-        if(cur<=0.15 && tries++<40) ytPlus2Timer=setTimeout(check,250);
-      }catch(e){}
-    }
-    check();
-  }catch(e){}
-}
-
 /* Every player creation gets a generation id. Leaving the room invalidates the
    old generation so a delayed YouTube IFrame API callback can never resurrect
    a player after it has been closed. */
@@ -10738,7 +10680,7 @@ function destroyPlayer(){
   try{if(ytPlayer&&ytPlayer.stopVideo)ytPlayer.stopVideo();}catch(e){}
   try{if(ytPlayer&&ytPlayer.pauseVideo)ytPlayer.pauseVideo();}catch(e){}
   try{if(ytPlayer&&ytPlayer.destroy)ytPlayer.destroy();}catch(e){}
-  ytPlayer=null;ytReady=false;try{window.ytPlayer=null;window.ytReady=false;}catch(e){};
+  ytPlayer=null;ytReady=false;
   var d=$('ytPlayerDiv');if(d)d.remove();
   var d2=$('ytRoomPlayerDiv');if(d2)d2.remove();
   if(frameHost){frameHost.style.display='block';frameHost.removeAttribute('src');}
@@ -10788,12 +10730,11 @@ function createPlayer(info,startSeconds){
       var vars={autoplay:0,rel:0,modestbranding:1,playsinline:1,controls:1,start:start,enablejsapi:1,loop:0};
       if(roomMode){vars.fs=0;vars.disablekb=1;vars.iv_load_policy=3;vars.cc_load_policy=0;}
       if(info.list)vars.list=info.list;
-      if(ytPlus2Timer){clearTimeout(ytPlus2Timer);ytPlus2Timer=null;} ytPlus2AppliedVideoId=''; ytHidePlus2Overlay(); ytEnsureHiddenPlus2Button();
       ytPlayer=new YT.Player(div.id,{
         height:'100%',width:'100%',videoId:info.id,playerVars:vars,
         events:{
           onReady:function(e){
-            ytReady=true;try{window.ytPlayer=ytPlayer;window.ytReady=true;}catch(x){}
+            ytReady=true;
             e.target.setVolume(muted?0:volume);
             startProgress();
             updatePlayPause();
@@ -10808,7 +10749,6 @@ function createPlayer(info,startSeconds){
           },
           onStateChange:function(e){
             updatePlayPause();
-            if(e.data===YT.PlayerState.PLAYING)ytAutoPlus2AfterPlay();
             if(e.data===YT.PlayerState.ENDED){
               if(roomMode&&!ytRemoteApplying&&ytRoomHost()){
                 ytRoomWriteState({playing:false,currentTime:0,stopped:true});
@@ -10823,7 +10763,6 @@ function createPlayer(info,startSeconds){
           }
         }
       });
-      try{window.ytPlayer=ytPlayer;window.ytReady=false;}catch(x){}
     }catch(e){
       try{targetFrame.style.display='block';}catch(x){}
     }
@@ -10858,13 +10797,39 @@ window.ytRoomBridge={
     try{
       if(current&&current.upload){
         var lvI=$('ytRoomLocalVideo'); if(!lvI)return null;
-        return {upload:true,cur:lvI.currentTime||0,dur:(isFinite(lvI.duration)?lvI.duration:0)||0,state:lvI.paused?2:1};
+        return {upload:true,cur:lvI.currentTime||0,dur:(isFinite(lvI.duration)?lvI.duration:0)||0,state:lvI.paused?2:1,vid:current.url||current.title||'upload',ad:false};
       }
       if(!ytPlayer||!ytReady||typeof ytPlayer.getCurrentTime!=='function')return null;
       var dI=0; try{dI=ytPlayer.getDuration()||0;}catch(e){}
+      var adI=false;
+      try{ var vdI=ytPlayer.getVideoData&&ytPlayer.getVideoData(); if(vdI&&current&&current.id&&!current.list&&vdI.video_id&&String(vdI.video_id)!==String(current.id))adI=true; }catch(e){}
+      if(current&&current.__maxDur&&dI>0&&dI<current.__maxDur-1.5)adI=true;
       if(current&&current.__maxDur&&current.__maxDur>dI)dI=current.__maxDur;
-      return {upload:false,cur:ytPlayer.getCurrentTime()||0,dur:dI,state:ytPlayer.getPlayerState?ytPlayer.getPlayerState():-1};
+      return {upload:false,cur:ytPlayer.getCurrentTime()||0,dur:dI,state:ytPlayer.getPlayerState?ytPlayer.getPlayerState():-1,vid:(current&&(current.id||current.list||current.url))||'',ad:adI};
     }catch(e){return null;}
+  },
+  /* Gentle auto-nudge right after a video loads: moves to t seconds WITHOUT starting playback
+     (paused stays paused). Returns true only if a seek was really sent. */
+  nudge:function(t){
+    t=Math.max(0,Number(t)||0);
+    try{
+      if(!ytRoomHost()||!current)return false;
+      if(current.upload){
+        var lvN=$('ytRoomLocalVideo'); if(!lvN||!(lvN.currentTime<t-0.1))return false;
+        window.__ytHostSeekUntil=Date.now()+4000;
+        lvN.currentTime=t;
+        return true;
+      }
+      if(!ytPlayer||!ytReady||typeof ytPlayer.seekTo!=='function')return false;
+      var stN=ytPlayer.getPlayerState?ytPlayer.getPlayerState():-1;
+      if(stN!==1&&stN!==2)return false; /* not started / buffering / cued: wait */
+      var myDurN=0,maxDurN=current.__maxDur||0; try{myDurN=ytPlayer.getDuration()||0;}catch(e){}
+      if(maxDurN>0&&myDurN>0&&myDurN<maxDurN-1.5)return false; /* ad playing */
+      window.__ytHostSeekUntil=Date.now()+4000;
+      ytPlayer.seekTo(t,true);
+      ytRoomWriteState({type:'youtube',playing:(stN===1),currentTime:t,dur:maxDurN||myDurN||0,videoId:current.id||'',listId:current.list||'',title:current.title||'',shorts:!!current.shorts});
+      return true;
+    }catch(e){return false;}
   },
   seek:function(t){
     t=Math.max(0,Number(t)||0);
@@ -12203,6 +12168,23 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   setInterval(function(){try{wire();paint();}catch(e){}},200);
   document.addEventListener('DOMContentLoaded',function(){wire();paint();});
   window.__ytRoomPaintSeekControls=paint;
+  /* When a video loads and sits at 0:00, push it forward to 2s and keep retrying (every 1s)
+     until it really reaches 2s; then stop. Stops at once if the host seeks by hand. */
+  var nz={vid:'',done:false,tries:0};
+  setInterval(function(){
+    try{
+      var b=bridge(); if(!b||!b.nudge||!isHost())return;
+      var bi=b.info(); if(!bi||!bi.vid)return;
+      if(nz.vid!==bi.vid)nz={vid:bi.vid,done:false,tries:0};
+      if(nz.done)return;
+      var rg=$("ytRoomViewerSeekRange");
+      if(window.__ytSeekPending||(rg&&rg.dataset.dragging==='1')){nz.done=true;return;}
+      if(bi.ad)return;
+      if((Number(bi.cur)||0)>=1.9){nz.done=true;return;}
+      if(++nz.tries>40){nz.done=true;return;}
+      b.nudge(2);
+    }catch(e){}
+  },1000);
 })();
 </script>
 
@@ -12298,300 +12280,6 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 })();
 </script>
 
-
-<style id="partyRoomYoutubeCommentStableFinal">
-/* YouTube Party Room: comment composer stays inside the chat area below the video.
-   It must never be pinned to the viewport/keyboard or jump over the video. */
-#prRoom.party-youtube-layout #cinemaChatPanel #cinemaChatComposer,
-#prRoom.party-youtube-layout #cinemaChatComposer.party-composer-open{
-  position:absolute!important;
-  left:8px!important;
-  right:8px!important;
-  top:auto!important;
-  bottom:6px!important;
-  width:auto!important;
-  z-index:170!important;
-}
-#prRoom.party-youtube-layout #cinemaChatPanel{
-  overflow:visible!important;
-}
-/* Opening/typing must not make the YouTube comment panel follow the keyboard viewport. */
-#prRoom.party-youtube-layout.party-keyboard-open #cinemaChatPanel{
-  position:absolute!important;
-  top:var(--yt-chat-top,auto)!important;
-  bottom:64px!important;
-  transform:none!important;
-}
-</style>
-<script id="partyRoomYoutubeCommentStableScript">
-(function(){
-  'use strict';
-  function fix(){
-    var r=document.getElementById('prRoom');
-    var c=document.getElementById('cinemaChatComposer');
-    if(!r||!c||!r.classList.contains('party-youtube-layout')||!c.classList.contains('party-composer-open')) return;
-    c.style.setProperty('position','absolute','important');
-    c.style.setProperty('left','8px','important');
-    c.style.setProperty('right','8px','important');
-    c.style.setProperty('top','auto','important');
-    c.style.setProperty('bottom','6px','important');
-  }
-  function init(){
-    fix();
-    var r=document.getElementById('prRoom'), c=document.getElementById('cinemaChatComposer');
-    if(r){try{new MutationObserver(fix).observe(r,{attributes:true,attributeFilter:['class']});}catch(e){}}
-    if(c){try{new MutationObserver(fix).observe(c,{attributes:true,attributeFilter:['class']});}catch(e){}}
-    setInterval(fix,500);
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
-})();
-</script>
-
-
-<style id="partyRoomFinalSimpleComment">
-/* अंतिम सरल comment UI: केवल input + Send */
-#prRoom #cinemaChatComposer{
-  display:none!important;
-  position:absolute!important;
-  left:8px!important; right:8px!important; top:8px!important; bottom:auto!important;
-  min-height:50px!important; height:50px!important;
-  padding:7px!important; gap:7px!important;
-  box-sizing:border-box!important;
-}
-#prRoom #cinemaChatComposer.party-composer-open{
-  display:flex!important;
-}
-#prRoom #cinemaChatComposer > button:first-child{
-  display:none!important;
-}
-#prRoom #cinemaChatInput{
-  height:36px!important;
-  min-height:36px!important;
-  margin:0!important;
-  font-size:14px!important;
-  -webkit-appearance:none!important;
-}
-#prRoom #cinemaChatComposer button[aria-label="Send message"]{
-  width:44px!important;height:36px!important;min-width:44px!important;
-  display:block!important;
-}
-</style>
-<script id="partyRoomFinalFix">
-(function(){
-  'use strict';
-  function $(id){return document.getElementById(id);}
-
-  /* =========================================================
-     1) HIDDEN +2: trigger while video is still at 0:00.
-        It does NOT wait for PLAYING.
-     ========================================================= */
-  var plusDoneId='';
-  var plusRetry=0;
-  var plusTimer=null;
-
-  function ensurePlusButton(){
-    if(window.ytHiddenPlus2Btn && document.body.contains(window.ytHiddenPlus2Btn))
-      return window.ytHiddenPlus2Btn;
-
-    var b=document.getElementById('ytRoomFinalHiddenPlus2Btn');
-    if(!b){
-      b=document.createElement('button');
-      b.id='ytRoomFinalHiddenPlus2Btn';
-      b.type='button';
-      b.tabIndex=-1;
-      b.setAttribute('aria-hidden','true');
-      b.style.cssText='display:none!important;visibility:hidden!important;width:0!important;height:0!important;position:absolute!important;left:-99999px!important;top:-99999px!important;opacity:0!important;pointer-events:none!important;';
-      document.body.appendChild(b);
-    }
-    window.ytHiddenPlus2Btn=b;
-    return b;
-  }
-
-  function showPlusCurtain(){
-    try{
-      var ov=window.ytPlus2Overlay;
-      if(!ov){
-        ov=document.getElementById('ytRoomPlus2Overlay');
-        window.ytPlus2Overlay=ov;
-      }
-      if(!ov && typeof window.ytEnsurePlus2Overlay==='function')
-        ov=window.ytEnsurePlus2Overlay();
-      var card=document.querySelector('#partyYoutubeStage .yt-room-card')||document.querySelector('.yt-room-card');
-      if(ov && card && ov.parentNode!==card) card.appendChild(ov);
-      if(ov){
-        ov.style.display='flex';
-        ov.style.visibility='visible';
-        ov.style.pointerEvents='none';
-        ov.setAttribute('aria-hidden','false');
-      }
-      return ov;
-    }catch(e){return null;}
-  }
-  function hidePlusCurtain(){
-    try{
-      var ov=window.ytPlus2Overlay||document.getElementById('ytRoomPlus2Overlay');
-      if(ov){
-        ov.style.display='none';
-        ov.setAttribute('aria-hidden','true');
-      }
-    }catch(e){}
-  }
-
-  function doHiddenPlus2(){
-    try{
-      var p=window.ytPlayer;
-      if(!p || typeof p.getCurrentTime!=='function' || typeof p.seekTo!=='function') return false;
-      var t=Number(p.getCurrentTime())||0;
-      /* This trigger is only valid at the very beginning. */
-      if(t>0.35) return false;
-      var d=typeof p.getDuration==='function'?(Number(p.getDuration())||0):0;
-      if(d<=2.05) return false;
-
-      var b=ensurePlusButton();
-      if(!b) return false;
-
-      showPlusCurtain();
-      try{ b.onclick=null; }catch(e){}
-      /* Keep the hidden button semantics: one internal click performs +2. */
-      b.onclick=function(){
-        try{
-          var pp=window.ytPlayer;
-          if(!pp || typeof pp.getCurrentTime!=='function' || typeof pp.seekTo!=='function') return;
-          var now=Number(pp.getCurrentTime())||0;
-          if(now>0.75) return;
-          pp.seekTo(Math.min(now+2,Math.max(0,d-0.05)),true);
-        }catch(e){}
-      };
-      b.click();
-
-      /* Verify the seek actually happened; retry only while still near 0:00. */
-      var tries=0;
-      var verify=setInterval(function(){
-        tries++;
-        try{
-          var pp=window.ytPlayer, cur=pp?Number(pp.getCurrentTime())||0:0;
-          if(cur>=1.4 || tries>=8){
-            clearInterval(verify);
-            setTimeout(hidePlusCurtain,450);
-          }else if(cur<0.35 && pp && typeof pp.seekTo==='function'){
-            b.click();
-          }
-        }catch(e){
-          clearInterval(verify);
-          hidePlusCurtain();
-        }
-      },250);
-      return true;
-    }catch(e){
-      hidePlusCurtain();
-      return false;
-    }
-  }
-
-  function watchForLoadedAtZero(){
-    if(plusTimer) clearTimeout(plusTimer);
-    plusRetry=0;
-    plusDoneId='';
-    function check(){
-      plusRetry++;
-      try{
-        var p=window.ytPlayer;
-        if(p && window.ytReady && typeof p.getVideoData==='function'){
-          var vd=p.getVideoData()||{}, id=String(vd.video_id||'');
-          var st=typeof p.getPlayerState==='function'?p.getPlayerState():-99;
-          var cur=typeof p.getCurrentTime==='function'?(Number(p.getCurrentTime())||0):99;
-          var dur=typeof p.getDuration==='function'?(Number(p.getDuration())||0):0;
-
-          /* Video must be loaded/cued, duration known, and still at 0:00.
-             PLAYING is intentionally NOT required. */
-          if(id && id!==plusDoneId && dur>2 && cur<=0.35 &&
-             (st===-1 || st===5 || st===2)){
-            plusDoneId=id;
-            if(doHiddenPlus2()) return;
-          }
-        }
-      }catch(e){}
-      if(plusRetry<80) plusTimer=setTimeout(check,250);
-    }
-    check();
-  }
-
-  /* Replace the old play-dependent function. */
-  window.ytAutoPlus2AfterPlay=function(){
-    watchForLoadedAtZero();
-  };
-
-  /* Start checking shortly after any player becomes available, including
-     a freshly loaded/search-selected video. */
-  var boot=setInterval(function(){
-    if(window.ytPlayer && window.ytReady){
-      watchForLoadedAtZero();
-    }
-  },500);
-  setTimeout(function(){clearInterval(boot);},30000);
-
-  /* =========================================================
-     2) SIMPLE COMMENT: open/close only; no forced focus,
-        no keyboard observer, no delayed focus, no dock movement.
-     ========================================================= */
-  var open=false;
-  function setOpen(v){
-    open=!!v;
-    var c=$('cinemaChatComposer'), p=$('cinemaChatPanel'), t=$('partyRoomCommentToggle');
-    if(c){
-      c.classList.toggle('party-composer-open',open);
-      c.style.display=open?'flex':'none';
-      c.style.visibility=open?'visible':'hidden';
-      c.style.opacity=open?'1':'0';
-      c.style.pointerEvents=open?'auto':'none';
-      c.style.position='absolute';
-      c.style.left='8px'; c.style.right='8px'; c.style.top='8px'; c.style.bottom='auto';
-    }
-    if(p) p.classList.toggle('chat-input-open',open);
-    if(t){
-      t.setAttribute('aria-expanded',open?'true':'false');
-      t.classList.toggle('is-open',open);
-      var txt=t.firstChild;
-      if(txt && txt.nodeType===3) txt.nodeValue=open?'✕':'💬';
-    }
-  }
-
-  window.partyRoomFocusChat=function(){
-    setOpen(!open);
-    /* Deliberately do NOT force keyboard focus. User can tap the input. */
-    return false;
-  };
-  window.partyRoomCloseChatPanel=function(){setOpen(false);};
-
-  /* Make the Send action simple: use the existing Firebase sender,
-     but do not blur/focus/reposition the input afterward. */
-  var originalSend=window.cinemaSendChat;
-  if(typeof originalSend==='function' && !originalSend.__simpleWrapped){
-    var simpleSend=function(){
-      var i=$('cinemaChatInput');
-      if(!i) return;
-      var value=String(i.value||'').trim();
-      if(!value) return;
-      /* Let the proven room/Firebase sender do the actual save. */
-      originalSend.call(this);
-      /* Keep the small composer open; no keyboard/layout manipulation. */
-      setTimeout(function(){
-        if(open) setOpen(true);
-      },80);
-    };
-    simpleSend.__simpleWrapped=true;
-    window.cinemaSendChat=simpleSend;
-  }
-
-  /* Remove old capture/focus helpers by making the actual button's inline
-     handler the only open/close path. */
-  document.addEventListener('DOMContentLoaded',function(){
-    var tag=$('cinemaChatComposer') && $('cinemaChatComposer').querySelector('button:first-child');
-    if(tag) tag.style.display='none';
-    setOpen(false);
-  });
-})();
-</script>
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
@@ -12826,273 +12514,6 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 }
 </style>
 
-
-<style id="partyRoomCommentAndroidStableFix">
-/* Android/mobile: keep the comment composer anchored inside the chat panel.
-   It must not move with the visual keyboard or get clipped by the YouTube stage. */
-#prRoom.party-youtube-layout #cinemaChatPanel{
-  position:absolute!important;
-  left:7px!important;
-  right:7px!important;
-  bottom:64px!important;
-  top:auto!important;
-  height:72px!important;
-  min-height:72px!important;
-  overflow:visible!important;
-  z-index:90!important;
-}
-#prRoom.party-youtube-layout #cinemaChatPanel #cinemaChatMessages{
-  height:72px!important;
-  min-height:72px!important;
-  overflow-y:auto!important;
-  padding:6px 8px 4px!important;
-}
-#prRoom.party-youtube-layout #cinemaChatPanel #cinemaChatComposer.party-composer-open{
-  position:absolute!important;
-  left:8px!important;
-  right:52px!important;
-  top:8px!important;
-  bottom:auto!important;
-  width:auto!important;
-  z-index:190!important;
-}
-#prRoom.party-youtube-layout #partyRoomCommentToggle{
-  z-index:200!important;
-  touch-action:manipulation!important;
-  pointer-events:auto!important;
-}
-</style>
-
-<style id="partyRoomEightFixesCSS">
-/* FINAL CLEAN FIX: no visible +2 button; overlay only appears during the internal seek. */
-#ytRoomFinalHiddenPlus2Btn{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;width:0!important;height:0!important;position:absolute!important;left:-10000px!important;top:-10000px!important;}
-#ytRoomPlus2Overlay.party-plus2-curtain{
-  position:absolute!important;inset:0!important;z-index:9999!important;
-  display:none;align-items:center;justify-content:center;
-  background:rgba(5,8,20,.48)!important;
-  backdrop-filter:blur(2px)!important;-webkit-backdrop-filter:blur(2px)!important;
-  pointer-events:none!important;border-radius:inherit!important;
-}
-#ytRoomPlus2Overlay.party-plus2-curtain .party-plus2-badge{
-  padding:10px 18px;border-radius:999px;background:rgba(15,23,42,.94);
-  color:#fff;font:900 15px/1 system-ui,sans-serif;
-  box-shadow:0 8px 24px rgba(0,0,0,.35);
-}
-/* Simple comment: only input + send, no keyboard/focus tricks. */
-#prRoom #cinemaChatComposer.party-simple-final{
-  display:none!important;position:absolute!important;left:8px!important;right:52px!important;
-  top:8px!important;bottom:auto!important;z-index:300!important;
-  height:50px!important;min-height:50px!important;padding:6px!important;
-  gap:6px!important;align-items:center!important;box-sizing:border-box!important;
-}
-#prRoom #cinemaChatComposer.party-simple-final.party-composer-open{display:flex!important;}
-#prRoom #cinemaChatComposer.party-simple-final > button:first-child{display:none!important;}
-#prRoom #cinemaChatComposer.party-simple-final #cinemaChatInput{
-  display:block!important;flex:1 1 auto!important;min-width:0!important;
-  height:38px!important;min-height:38px!important;margin:0!important;
-}
-#prRoom #cinemaChatComposer.party-simple-final button[aria-label="Send message"]{
-  display:flex!important;width:42px!important;min-width:42px!important;height:38px!important;
-  align-items:center!important;justify-content:center!important;
-}
-</style>
-<script id="partyRoomEightFixesFinal">
-(function(){
-  'use strict';
-  var $=function(id){return document.getElementById(id);};
-
-  /* =========================================================
-     FIX 1-5: YouTube hidden +2 at 0:00 after LOAD/CUE.
-     It does not wait for PLAYING. It triggers one hidden
-     button click per newly loaded video.
-     ========================================================= */
-  var plusState={id:'',busy:false,done:false,timer:0,tries:0};
-
-  function hiddenPlusButton(){
-    var b=$('ytRoomFinalHiddenPlus2Btn');
-    if(!b){
-      b=document.createElement('button');
-      b.id='ytRoomFinalHiddenPlus2Btn';
-      b.type='button';
-      b.setAttribute('aria-hidden','true');
-      b.tabIndex=-1;
-      document.body.appendChild(b);
-    }
-    b.style.cssText='display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;width:0!important;height:0!important;position:absolute!important;left:-10000px!important;top:-10000px!important;';
-    return b;
-  }
-
-  function curtain(on){
-    var ov=$('ytRoomPlus2Overlay');
-    var card=document.querySelector('#partyYoutubeStage .yt-room-card')||document.querySelector('.yt-room-card');
-    if(!ov && typeof window.ytEnsurePlus2Overlay==='function'){
-      try{ov=window.ytEnsurePlus2Overlay();}catch(e){}
-    }
-    if(ov && card && ov.parentNode!==card) card.appendChild(ov);
-    if(ov){
-      ov.classList.add('party-plus2-curtain');
-      ov.style.display=on?'flex':'none';
-      ov.style.visibility=on?'visible':'hidden';
-      ov.innerHTML='<div class="party-plus2-badge">⏩ +2 सेकंड</div>';
-    }
-  }
-
-  function resetForVideo(id){
-    if(!id)return;
-    if(plusState.id!==id){
-      plusState={id:id,busy:false,done:false,timer:0,tries:0};
-      if(plusState.timer)clearTimeout(plusState.timer);
-    }
-  }
-
-  function triggerPlusAtZero(){
-    if(plusState.done||plusState.busy)return false;
-    var p=window.ytPlayer;
-    if(!p||!window.ytReady||typeof p.getCurrentTime!=='function'||typeof p.seekTo!=='function')return false;
-    var vd={}; try{vd=p.getVideoData?p.getVideoData():{};}catch(e){}
-    var id=String((vd&&vd.video_id)||'');
-    if(!id)return false;
-    resetForVideo(id);
-    var cur=0,dur=0,state=-1;
-    try{cur=Number(p.getCurrentTime())||0;}catch(e){}
-    try{dur=Number(p.getDuration())||0;}catch(e){}
-    try{state=p.getPlayerState?p.getPlayerState():-1;}catch(e){}
-    /* Only trigger while the loaded/cued video is genuinely at 0:00. */
-    if(cur>0.15 || dur<=2.05)return false;
-    if(!(state===5||state===-1||state===2))return false;
-
-    plusState.busy=true;
-    var b=hiddenPlusButton();
-    b.onclick=function(){
-      var pp=window.ytPlayer;
-      if(!pp||typeof pp.seekTo!=='function')return;
-      var now=0;
-      try{now=Number(pp.getCurrentTime())||0;}catch(e){}
-      if(now>0.35)return;
-      var dd=0;try{dd=Number(pp.getDuration())||0;}catch(e){}
-      if(dd<=2.05)return;
-      try{pp.seekTo(Math.min(2,dd-0.05),true);}catch(e){}
-    };
-    curtain(true);
-    try{b.click();}catch(e){}
-    /* Confirm seek; if the API did not accept it yet, click again while still at 0:00. */
-    var started=Date.now();
-    (function verify(){
-      var pp=window.ytPlayer, now=0;
-      try{now=pp?Number(pp.getCurrentTime())||0:0;}catch(e){}
-      if(now>=1.4){
-        plusState.done=true;plusState.busy=false;curtain(false);return;
-      }
-      if(Date.now()-started<5000 && now<=0.35){
-        setTimeout(function(){try{b.click();}catch(e){} verify();},300);
-        return;
-      }
-      plusState.busy=false;curtain(false);
-    })();
-    return true;
-  }
-
-  function pollLoaded(){
-    var p=window.ytPlayer;
-    if(!p||!window.ytReady||typeof p.getVideoData!=='function'){
-      setTimeout(pollLoaded,250);return;
-    }
-    var vd={};try{vd=p.getVideoData()||{};}catch(e){}
-    var id=String(vd.video_id||'');
-    if(id)resetForVideo(id);
-    triggerPlusAtZero();
-    /* Keep checking only while the video remains at 0:00; once it moves, stop. */
-    var n=0;
-    var timer=setInterval(function(){
-      n++;
-      if(!window.ytPlayer||n>30){clearInterval(timer);return;}
-      var cur=99;try{cur=Number(window.ytPlayer.getCurrentTime())||0;}catch(e){}
-      if(cur>0.35){clearInterval(timer);return;}
-      triggerPlusAtZero();
-      if(plusState.done)clearInterval(timer);
-    },250);
-  }
-
-  /* Whenever the app loads/cues a new video, the existing code eventually calls
-     this global. Our replacement starts the 0:00 check instead of waiting for PLAYING. */
-  window.ytAutoPlus2AfterPlay=function(){pollLoaded();};
-
-  /* Also watch for a freshly-created player, independent of play state. */
-  var bootN=0;
-  var bootTimer=setInterval(function(){
-    bootN++;
-    if(window.ytPlayer&&window.ytReady){pollLoaded();}
-    if(bootN>120)clearInterval(bootTimer);
-  },250);
-
-  /* =========================================================
-     FIX 6-8: simple comment box. Replace all focus/keyboard
-     behavior with one explicit open/close and one Firebase send.
-     ========================================================= */
-  var commentOpen=false;
-
-  function setComment(open){
-    commentOpen=!!open;
-    var c=$('cinemaChatComposer'), p=$('cinemaChatPanel'), b=$('partyRoomCommentToggle');
-    if(c){
-      c.classList.add('party-simple-final');
-      c.classList.toggle('party-composer-open',commentOpen);
-      c.style.display=commentOpen?'flex':'none';
-      c.style.visibility=commentOpen?'visible':'hidden';
-      c.style.opacity=commentOpen?'1':'0';
-      c.style.pointerEvents=commentOpen?'auto':'none';
-    }
-    if(p)p.classList.toggle('chat-input-open',commentOpen);
-    if(b){
-      b.setAttribute('aria-expanded',commentOpen?'true':'false');
-      b.classList.toggle('is-open',commentOpen);
-      if(b.firstChild&&b.firstChild.nodeType===3)b.firstChild.nodeValue=commentOpen?'✕':'💬';
-    }
-  }
-
-  window.partyRoomFocusChat=function(){
-    setComment(!commentOpen);
-    return false;
-  };
-  window.partyRoomCloseChatPanel=function(){setComment(false);};
-
-  /* Remove the old inline handler so only this function controls the launcher. */
-  function wireComment(){
-    var b=$('partyRoomCommentToggle'),c=$('cinemaChatComposer'),inp=$('cinemaChatInput'),send=null;
-    if(!b||!c)return;
-    b.onclick=function(e){if(e)e.preventDefault();setComment(!commentOpen);return false;};
-    b.onmousedown=function(e){if(e)e.preventDefault();};
-    c.classList.add('party-simple-final');
-    var buttons=c.querySelectorAll('button');
-    for(var i=0;i<buttons.length;i++){
-      if(buttons[i].getAttribute('aria-label')==='Send message')send=buttons[i];
-      else buttons[i].style.display='none';
-    }
-    if(send)send.onclick=function(e){if(e)e.preventDefault();window.cinemaSendChat();return false;};
-    if(inp){
-      inp.onkeydown=function(e){
-        if(e.key==='Enter'){e.preventDefault();window.cinemaSendChat();return false;}
-      };
-    }
-    setComment(false);
-  }
-
-  /* A single clean sender. Uses the existing room Firebase collection and the
-     existing chat renderer/listener; no pending DOM row, no focus, no blur. */
-  var realCinemaSendChat=window.cinemaSendChat;
-  window.cinemaSendChat=function(){
-    var input=$('cinemaChatInput');
-    if(!input||!String(input.value||'').trim())return;
-    if(typeof realCinemaSendChat==='function') return realCinemaSendChat();
-  };
-
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',wireComment);
-  }else wireComment();
-  setTimeout(wireComment,500);
-  setTimeout(wireComment,1500);
-})();
-</script>
 </html>
 
 <script id="partyRoomYoutubeHideExtrasScript">/* Replaced by final Q-only YouTube controls. */</script>
@@ -14368,26 +13789,18 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 (function(){
   'use strict';
   function $(id){return document.getElementById(id);}
-  /* Open the keyboard from the actual tap.
-     Do NOT delay focus: on some Android WebViews a setTimeout focus loses
-     the user gesture, the keyboard opens separately, and the composer appears
-     to disappear. Focus synchronously while the tap is still active. */
+  /* Open the keyboard together with the panel. */
   function wrap(){
     var orig=window.partyRoomFocusChat;
     if(typeof orig!=='function'||orig.__wrapped)return;
     var w=function(){
       var r=orig.apply(this,arguments);
-      try{
+      setTimeout(function(){
         var c=$('cinemaChatComposer'),i=$('cinemaChatInput');
-        if(c&&i&&c.classList.contains('party-composer-open')){
-          i.focus({preventScroll:true});
+        if(c&&i&&c.classList.contains('party-composer-open')&&document.activeElement!==i){
+          try{i.focus({preventScroll:true});}catch(e){try{i.focus();}catch(_){}}
         }
-      }catch(e){
-        try{
-          var i2=$('cinemaChatInput');
-          if(i2)i2.focus();
-        }catch(_){}
-      }
+      },60);
       return r;
     };
     w.__wrapped=true; window.partyRoomFocusChat=w;
@@ -14461,5 +13874,165 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
     if(e.key!=='PARTY_ROOM_SELECTED_YOUTUBE' || !e.newValue) return;
     try{ var d=JSON.parse(e.newValue); if(d && d.url) loadSelectedVideo(d.url); }catch(err){}
   });
+})();
+</script>
+
+<style id="partyFloatingCommentPanel">
+/* ===== Floating, draggable comment panel (opens from the small 💬 button) ===== */
+html body #cinemaChatComposer.pcx{
+  position:fixed!important;
+  left:var(--pcx-x,10px)!important;top:var(--pcx-y,90px)!important;right:auto!important;bottom:auto!important;
+  width:min(92vw,340px)!important;height:auto!important;min-height:0!important;max-width:none!important;
+  margin:0!important;padding:0!important;gap:0!important;box-sizing:border-box!important;
+  flex-wrap:wrap!important;align-items:center!important;
+  z-index:2147483200!important;overflow:hidden!important;transform:none!important;
+  background:rgba(255,255,255,.96)!important;
+  -webkit-backdrop-filter:blur(14px)!important;backdrop-filter:blur(14px)!important;
+  border:1px solid rgba(124,58,237,.22)!important;border-radius:20px!important;
+  box-shadow:0 14px 38px rgba(40,10,90,.38),0 2px 0 rgba(255,255,255,.7) inset!important;
+  transition:none!important;
+}
+html body #cinemaChatComposer.pcx.party-composer-open{display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;animation:pcxPop .16s ease-out;}
+html body #cinemaChatComposer.pcx:not(.party-composer-open){display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
+@keyframes pcxPop{from{transform:scale(.88);opacity:0}to{transform:scale(1);opacity:1}}
+html body #cinemaChatComposer.pcx::before,html body #cinemaChatComposer.pcx::after{display:none!important;}
+html body #cinemaChatComposer.pcx .pcx-head{
+  flex:0 0 100%;display:flex;align-items:center;gap:8px;height:38px;padding:0 8px 0 12px;box-sizing:border-box;
+  background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;font:800 13px/1 system-ui,'Segoe UI',Arial,sans-serif;
+  cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;
+}
+html body #cinemaChatComposer.pcx .pcx-head.pcx-drag{cursor:grabbing;}
+html body #cinemaChatComposer.pcx .pcx-grip{font-size:15px;letter-spacing:-2px;opacity:.85;}
+html body #cinemaChatComposer.pcx .pcx-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+html body #cinemaChatComposer.pcx .pcx-close{
+  width:28px;height:28px;border-radius:50%;display:grid;place-items:center;flex:0 0 28px;
+  background:rgba(255,255,255,.22);color:#fff;font-size:14px;font-weight:900;cursor:pointer;touch-action:manipulation;
+}
+html body #cinemaChatComposer.pcx .pcx-close:active{transform:scale(.9);}
+html body #cinemaChatComposer.pcx > button[aria-label="Tag someone"]{display:none!important;}
+html body #cinemaChatComposer.pcx input#cinemaChatInput{
+  flex:1 1 auto!important;min-width:0!important;width:auto!important;height:42px!important;margin:10px 0 10px 10px!important;
+  padding:0 14px!important;border-radius:21px!important;border:1.5px solid rgba(124,58,237,.28)!important;
+  background:#f7f3ff!important;color:#1b1233!important;-webkit-text-fill-color:#1b1233!important;
+  font-size:16px!important;box-shadow:none!important;outline:none!important;
+}
+html body #cinemaChatComposer.pcx input#cinemaChatInput:focus{border-color:#7c3aed!important;background:#fff!important;}
+html body #cinemaChatComposer.pcx input#cinemaChatInput::placeholder{color:#8b82a8!important;-webkit-text-fill-color:#8b82a8!important;}
+html body #cinemaChatComposer.pcx > button[aria-label="Send message"]{
+  flex:0 0 42px!important;width:42px!important;height:42px!important;margin:10px 10px 10px 8px!important;border-radius:50%!important;
+  background:linear-gradient(135deg,#7c3aed,#db2777)!important;color:#fff!important;font-size:18px!important;border:0!important;
+  box-shadow:0 4px 12px rgba(124,58,237,.45)!important;display:flex!important;align-items:center;justify-content:center;
+}
+/* The panel floats over the room now, so the message list needs no extra top gap while it is open. */
+#prRoom #cinemaChatPanel.chat-input-open #cinemaChatMessages{padding-top:var(--pcx-pt,6px)!important;}
+</style>
+
+<script id="partyFloatingCommentPanelScript">
+(function(){
+  'use strict';
+  var KEY='partyCommentPanelPos';
+  function $(id){return document.getElementById(id);}
+  var pos=null; /* {x,y} remembered for this session */
+  try{ var sv=JSON.parse(localStorage.getItem(KEY)||'null'); if(sv&&isFinite(sv.x)&&isFinite(sv.y))pos=sv; }catch(e){}
+
+  function vpBox(){
+    var vv=window.visualViewport;
+    return vv?{l:vv.offsetLeft,t:vv.offsetTop,w:vv.width,h:vv.height}:{l:0,t:0,w:window.innerWidth,h:window.innerHeight};
+  }
+  function place(x,y){
+    var c=$('cinemaChatComposer'); if(!c)return;
+    var b=vpBox(), w=c.offsetWidth||320, h=c.offsetHeight||96;
+    x=Math.max(b.l+6,Math.min(b.l+b.w-w-6,x));
+    y=Math.max(b.t+6,Math.min(b.t+b.h-h-6,y));
+    c.style.setProperty('--pcx-x',Math.round(x)+'px');
+    c.style.setProperty('--pcx-y',Math.round(y)+'px');
+    pos={x:x,y:y};
+  }
+  function defaultPos(){
+    var p=$('cinemaChatPanel'), c=$('cinemaChatComposer'), b=vpBox();
+    var w=c?(c.offsetWidth||320):320;
+    var r=p?p.getBoundingClientRect():null;
+    var y=(r&&r.height>0)?r.top+6:b.t+90;
+    return {x:b.l+(b.w-w)/2,y:y};
+  }
+  function showAt(){
+    var d=pos||defaultPos();
+    place(d.x,d.y);
+  }
+
+  function build(){
+    var c=$('cinemaChatComposer'); if(!c||c.dataset.pcx==='1')return;
+    c.dataset.pcx='1';
+    c.classList.add('pcx');
+    /* move out of the room so nothing in the room (transforms, blur) can trap or clip it */
+    if(c.parentNode!==document.body)document.body.appendChild(c);
+    var head=document.createElement('div');
+    head.className='pcx-head';
+    head.innerHTML='<span class="pcx-grip">⋮⋮</span><span class="pcx-title">💬 कमेंट लिखें</span><span class="pcx-close" role="button" aria-label="बंद करें">✕</span>';
+    c.insertBefore(head,c.firstChild);
+    var cl=head.querySelector('.pcx-close');
+    cl.addEventListener('click',function(e){e.stopPropagation();if(typeof window.partyRoomCloseChatPanel==='function')window.partyRoomCloseChatPanel();});
+    /* drag by the header */
+    var st=null;
+    head.addEventListener('pointerdown',function(e){
+      if(e.target.closest&&e.target.closest('.pcx-close'))return;
+      var r=c.getBoundingClientRect();
+      st={id:e.pointerId,dx:e.clientX-r.left,dy:e.clientY-r.top};
+      head.classList.add('pcx-drag');
+      try{head.setPointerCapture(e.pointerId);}catch(_){}
+      e.preventDefault();
+    });
+    head.addEventListener('pointermove',function(e){
+      if(!st||e.pointerId!==st.id)return;
+      place(e.clientX-st.dx,e.clientY-st.dy);
+      e.preventDefault();
+    });
+    function end(e){
+      if(!st)return; st=null; head.classList.remove('pcx-drag');
+      try{localStorage.setItem(KEY,JSON.stringify(pos));}catch(_){}
+    }
+    head.addEventListener('pointerup',end);
+    head.addEventListener('pointercancel',end);
+  }
+
+  /* remember the normal top gap of the message list, so opening the panel does not leave a blank strip */
+  function savePad(){
+    var p=$('cinemaChatPanel'), m=$('cinemaChatMessages'); if(!p||!m||p.classList.contains('chat-input-open'))return;
+    try{ var v=parseFloat(getComputedStyle(m).paddingTop); if(isFinite(v))p.style.setProperty('--pcx-pt',v+'px'); }catch(e){}
+  }
+
+  function wrap(){
+    var orig=window.partyRoomFocusChat;
+    if(typeof orig!=='function'||orig.__pcx)return;
+    var w=function(){
+      build(); savePad();
+      var r=orig.apply(this,arguments);
+      var c=$('cinemaChatComposer');
+      if(c&&c.classList.contains('party-composer-open')){
+        showAt();
+        setTimeout(function(){showAt();var i=$('cinemaChatInput');if(i&&document.activeElement!==i){try{i.focus({preventScroll:true});}catch(_){}}},80);
+      }
+      return r;
+    };
+    w.__pcx=true; window.partyRoomFocusChat=w;
+  }
+
+  /* keep the panel inside the visible area (keyboard, rotation) and hide it when the room is left */
+  function keep(){
+    var c=$('cinemaChatComposer'); if(!c||c.dataset.pcx!=='1')return;
+    if(!c.classList.contains('party-composer-open'))return;
+    var room=$('prRoom');
+    var roomOn=!!(room&&room.getClientRects().length&&getComputedStyle(room).visibility!=='hidden');
+    if(!roomOn){ if(typeof window.partyRoomCloseChatPanel==='function')window.partyRoomCloseChatPanel(); return; }
+    if(pos)place(pos.x,pos.y);
+  }
+  var vv=window.visualViewport;
+  if(vv){vv.addEventListener('resize',keep);vv.addEventListener('scroll',keep);}
+  window.addEventListener('resize',keep);
+  window.addEventListener('orientationchange',function(){setTimeout(keep,150);});
+  setInterval(keep,600);
+
+  function init(){ build(); wrap(); setTimeout(wrap,1800); savePad(); }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
