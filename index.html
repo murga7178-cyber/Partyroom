@@ -10699,7 +10699,7 @@ function createPlayer(info,startSeconds){
   var start=Math.max(0,Number(startSeconds)||0);
   /* Always put a real YouTube embed on screen first. This makes Load/Play work
      even if the IFrame API is delayed, blocked, or its global callback is lost. */
-  var params='autoplay=0&rel=0&modestbranding=1&playsinline=1&controls=1&disablekb=0&fs=1&iv_load_policy=3&cc_load_policy=0&enablejsapi=1&loop=0&origin='+encodeURIComponent(location.origin);
+  var params='autoplay=0&rel=0&modestbranding=1&playsinline=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&cc_load_policy=0&enablejsapi=1&loop=0&origin='+encodeURIComponent(location.origin);
   if(start)params+='&start='+start;
   if(info.list)params+='&list='+encodeURIComponent(info.list); else if(roomMode)params+='&playlist='+encodeURIComponent(info.id);
   targetFrame.src='https://www.youtube.com/embed/'+encodeURIComponent(info.id)+'?'+params;
@@ -10727,7 +10727,7 @@ function createPlayer(info,startSeconds){
       targetFrame.style.display='none';
       /* The direct embed must be stopped, not just hidden: a hidden iframe keeps playing its own audio from the start (double sound). */
       try{targetFrame.removeAttribute('src');targetFrame.src='about:blank';}catch(x){}
-      var vars={autoplay:0,rel:0,modestbranding:1,playsinline:1,controls:1,start:start,enablejsapi:1,loop:0};
+      var vars={autoplay:0,rel:0,modestbranding:1,playsinline:1,controls:0,start:start,enablejsapi:1,loop:0,fs:0,disablekb:1,iv_load_policy:3,cc_load_policy:0};
       if(roomMode){vars.fs=0;vars.disablekb=1;vars.iv_load_policy=3;vars.cc_load_policy=0;}
       if(info.list)vars.list=info.list;
       ytPlayer=new YT.Player(div.id,{
@@ -14052,11 +14052,11 @@ html body #cinemaChatComposer.pcx > button[aria-label="Send message"]{
 }
 /* Slight crop only at the player edge, so a thin black top strip from the embed container is not visible. */
 #prRoom.party-youtube-layout #partyYoutubeStage .yt-room-card iframe{
-  transform:scale(1.025)!important;
+  transform:scale(1.04)!important;
   transform-origin:center center!important;
 }
 #prRoom.party-youtube-layout #partyYoutubeStage.yt-shorts-mode .yt-room-card iframe{
-  transform:scale(1.018)!important;
+  transform:scale(1.03)!important;
 }
 
 /* Hide the old YouTube/comment panel completely in YouTube mode. */
@@ -14207,3 +14207,94 @@ html body #cinemaChatComposer.pcx > button[aria-label="Send message"]{
 })();
 </script>
 
+
+
+<!-- ===== FINAL USER REQUEST FIX 2: keep bottom actions down while typing + cleaner YouTube surface ===== -->
+<style id="partyRoomRequestedFinalFix2">
+/* Keep the bottom emoji/inbox/gift/music/settings dock at the bottom in YouTube mode.
+   It must not get pulled upward by the chat input/keyboard layout. */
+#prRoom.party-youtube-layout #partyRoomBottomDock{
+  position:fixed!important;
+  left:8px!important;
+  right:8px!important;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 8px)!important;
+  top:auto!important;
+  transform:none!important;
+  margin:0!important;
+  z-index:240!important;
+}
+#prRoom.party-youtube-layout #partyRoomBottomDock button{
+  transform:none!important;
+}
+#prRoom.party-youtube-layout #partyRoomBottomDock button:active{transform:scale(.93)!important;}
+
+/* Keep the clean chat bar just above the bottom dock. */
+#prRoom.party-youtube-layout #ytPartySimpleChat{
+  position:fixed!important;
+  left:8px!important;
+  right:8px!important;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 66px)!important;
+  top:auto!important;
+  z-index:235!important;
+}
+#prRoom.party-youtube-layout #ytPartySimpleChatMessages{
+  position:fixed!important;
+  left:8px!important;
+  right:8px!important;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 130px)!important;
+  top:auto!important;
+  z-index:234!important;
+}
+
+/* No native YouTube controls/overlay is wanted on the video surface. */
+#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-card{
+  background:#000!important;
+  overflow:hidden!important;
+}
+#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-card iframe,
+#prRoom.party-youtube-layout #partyYoutubeStage #ytRoomPlayerDiv{
+  pointer-events:none!important;
+  user-select:none!important;
+  -webkit-user-select:none!important;
+}
+/* Hide any last-pixel player chrome at the very top/bottom edge. */
+#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-card::before,
+#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-card::after{
+  display:none!important;
+}
+
+@media(max-width:430px){
+  #prRoom.party-youtube-layout #partyRoomBottomDock{
+    left:8px!important;right:8px!important;
+    bottom:calc(env(safe-area-inset-bottom,0px) + 7px)!important;
+  }
+  #prRoom.party-youtube-layout #ytPartySimpleChat{
+    left:7px!important;right:7px!important;
+    bottom:calc(env(safe-area-inset-bottom,0px) + 63px)!important;
+  }
+  #prRoom.party-youtube-layout #ytPartySimpleChatMessages{
+    left:7px!important;right:7px!important;
+    bottom:calc(env(safe-area-inset-bottom,0px) + 123px)!important;
+  }
+}
+</style>
+<script id="partyRoomRequestedFinalFix2Script">
+(function(){
+  'use strict';
+  function $(id){return document.getElementById(id);}
+  function wire(){
+    var input=$('ytPartySimpleChatInput');
+    if(!input || input.dataset.prfix2==='1') return;
+    input.dataset.prfix2='1';
+    /* Do not activate the legacy party-keyboard layout for this clean YouTube chat. */
+    input.addEventListener('focus',function(){
+      var r=$('prRoom');
+      if(r) r.classList.remove('party-keyboard-open');
+      var d=$('partyRoomBottomDock');
+      if(d){d.style.position='fixed';d.style.transform='none';}
+    });
+  }
+  setInterval(wire,300);
+  wire();
+})();
+</script>
