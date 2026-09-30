@@ -14298,3 +14298,164 @@ html body #cinemaChatComposer.pcx > button[aria-label="Send message"]{
   wire();
 })();
 </script>
+
+<!-- ===== FINAL USER REQUEST FIX 3: bottom action dock stays in its original place while typing + YouTube surface stays clean ===== -->
+<style id="partyRoomRequestedFinalFix3">
+/* Keep the bottom Emoji / Inbox / Gift / Music / Mic dock visible in the SAME place
+   when the Android keyboard opens. Do not move it above the keyboard. */
+#prRoom.party-youtube-layout #partyRoomBottomDock,
+#prRoom.party-youtube-layout.party-keyboard-open #partyRoomBottomDock{
+  display:flex!important;
+  position:fixed!important;
+  left:8px!important;
+  right:8px!important;
+  top:var(--pr-ytdock-top,auto)!important;
+  bottom:var(--pr-ytdock-bottom,8px)!important;
+  transform:none!important;
+  margin:0!important;
+  z-index:2140!important;
+}
+#prRoom.party-youtube-layout #partyRoomBottomDock button,
+#prRoom.party-youtube-layout.party-keyboard-open #partyRoomBottomDock button{
+  transform:none!important;
+}
+
+/* Never restore the old black title-bar shield. The top of the video must stay clean. */
+#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-card::before,
+#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-card::after{
+  display:none!important;
+  content:none!important;
+  background:none!important;
+}
+
+/* YouTube iframe/API surface: no native player controls are wanted. */
+#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-card{
+  background:transparent!important;
+  box-shadow:none!important;
+  border:0!important;
+  border-radius:0!important;
+  overflow:hidden!important;
+}
+#prRoom.party-youtube-layout #partyYoutubeStage iframe,
+#prRoom.party-youtube-layout #partyYoutubeStage #ytRoomPlayerDiv{
+  pointer-events:none!important;
+  user-select:none!important;
+  -webkit-user-select:none!important;
+}
+</style>
+<script id="partyRoomRequestedFinalFix3Script">
+(function(){
+  'use strict';
+  function $(id){return document.getElementById(id);}
+  var lockedTop=null;
+  var lastRoom=false;
+
+  function isYT(){
+    var r=$('prRoom');
+    return !!(r && r.classList.contains('party-youtube-layout'));
+  }
+
+  /* Capture the dock's current position BEFORE Android moves the visual viewport for the keyboard. */
+  function lockDock(){
+    var d=$('partyRoomBottomDock');
+    if(!d || !isYT()) return;
+    var r=d.getBoundingClientRect();
+    if(r.width<1 || r.height<1) return;
+    lockedTop=Math.round(r.top);
+    d.style.setProperty('--pr-ytdock-top',lockedTop+'px');
+    d.style.setProperty('--pr-ytdock-bottom','auto');
+    d.style.position='fixed';
+    d.style.top=lockedTop+'px';
+    d.style.bottom='auto';
+    d.style.transform='none';
+  }
+
+  function unlockDock(){
+    var d=$('partyRoomBottomDock');
+    if(!d) return;
+    lockedTop=null;
+    d.style.removeProperty('--pr-ytdock-top');
+    d.style.removeProperty('--pr-ytdock-bottom');
+    d.style.top='auto';
+    d.style.bottom='calc(env(safe-area-inset-bottom,0px) + 8px)';
+    d.style.position='fixed';
+    d.style.transform='none';
+  }
+
+  function wireInput(){
+    var i=$('ytPartySimpleChatInput');
+    if(!i || i.dataset.prfix3==='1') return;
+    i.dataset.prfix3='1';
+    i.addEventListener('pointerdown',function(){ lockDock(); },{capture:true});
+    i.addEventListener('touchstart',function(){ lockDock(); },{capture:true,passive:true});
+    i.addEventListener('focus',function(){
+      /* The pointer/touch handler normally captures it first; this is a fallback. */
+      if(lockedTop===null) lockDock();
+      var r=$('prRoom');
+      if(r) r.classList.remove('party-keyboard-open');
+    },true);
+  }
+
+  function keepDock(){
+    var d=$('partyRoomBottomDock');
+    if(!d) return;
+    if(isYT()){
+      if(!lastRoom){
+        /* First YouTube frame: use the normal bottom position. */
+        d.style.position='fixed';
+        d.style.bottom='calc(env(safe-area-inset-bottom,0px) + 8px)';
+        d.style.top='auto';
+        d.style.transform='none';
+      }
+      if(lockedTop!==null){
+        d.style.position='fixed';
+        d.style.top=lockedTop+'px';
+        d.style.bottom='auto';
+        d.style.transform='none';
+      }
+      wireInput();
+    }else if(lastRoom){
+      unlockDock();
+    }
+    lastRoom=isYT();
+  }
+
+  /* Remove the legacy keyboard class if an older handler puts it back. */
+  function stopLegacyMove(){
+    var r=$('prRoom');
+    if(isYT() && r && r.classList.contains('party-keyboard-open')) r.classList.remove('party-keyboard-open');
+  }
+
+  setInterval(function(){keepDock();stopLegacyMove();},100);
+  keepDock();
+
+  /* If the user starts typing, do not let viewport-resize code reposition the dock. */
+  var vv=window.visualViewport;
+  if(vv){
+    vv.addEventListener('resize',function(){
+      if(isYT() && lockedTop!==null){
+        var d=$('partyRoomBottomDock');
+        if(d){d.style.top=lockedTop+'px';d.style.bottom='auto';d.style.position='fixed';d.style.transform='none';}
+      }
+    });
+  }
+
+  /* YouTube's own paused-state overlay contains the title/share/pause chrome.
+     Room YouTube is intended to be a clean video surface, so resume paused playback
+     instead of leaving that native overlay visible. Do not restart an ended video. */
+  function keepVideoPlaying(){
+    if(!isYT()) return;
+    var p=window.ytPlayer;
+    try{
+      if(p && typeof p.getPlayerState==='function' && typeof p.playVideo==='function' && window.YT){
+        var st=p.getPlayerState();
+        if(st===YT.PlayerState.PAUSED || st===YT.PlayerState.CUED || st===YT.PlayerState.UNSTARTED){
+          p.playVideo();
+        }
+      }
+    }catch(e){}
+  }
+  setInterval(keepVideoPlaying,1200);
+})();
+</script>
+
