@@ -10699,9 +10699,9 @@ function createPlayer(info,startSeconds){
   var start=Math.max(0,Number(startSeconds)||0);
   /* Always put a real YouTube embed on screen first. This makes Load/Play work
      even if the IFrame API is delayed, blocked, or its global callback is lost. */
-  var params='autoplay=1&rel=0&modestbranding=1&playsinline=1&controls='+(roomMode?0:1)+'&disablekb=1&fs=0&iv_load_policy=3&cc_load_policy=0&enablejsapi=1&origin='+encodeURIComponent(location.origin);
+  var params='autoplay=1&rel=0&modestbranding=1&playsinline=1&controls='+(roomMode?0:1)+'&disablekb=1&fs=0&iv_load_policy=3&cc_load_policy=0&enablejsapi=1&loop='+(roomMode?1:0)+'&origin='+encodeURIComponent(location.origin);
   if(start)params+='&start='+start;
-  if(info.list)params+='&list='+encodeURIComponent(info.list);
+  if(info.list)params+='&list='+encodeURIComponent(info.list); else if(roomMode)params+='&playlist='+encodeURIComponent(info.id);
   targetFrame.src='https://www.youtube.com/embed/'+encodeURIComponent(info.id)+'?'+params;
   targetFrame.style.display='block';
   if(roomMode){
@@ -10727,7 +10727,7 @@ function createPlayer(info,startSeconds){
       targetFrame.style.display='none';
       /* The direct embed must be stopped, not just hidden: a hidden iframe keeps playing its own audio from the start (double sound). */
       try{targetFrame.removeAttribute('src');targetFrame.src='about:blank';}catch(x){}
-      var vars={autoplay:1,rel:0,modestbranding:1,playsinline:1,controls:(roomMode?0:1),start:start,enablejsapi:1};
+      var vars={autoplay:1,rel:0,modestbranding:1,playsinline:1,controls:(roomMode?0:1),start:start,enablejsapi:1,loop:(roomMode?1:0)}; if(roomMode&&!info.list)vars.playlist=info.id;
       if(roomMode){vars.fs=0;vars.disablekb=1;vars.iv_load_policy=3;vars.cc_load_policy=0;}
       if(info.list)vars.list=info.list;
       ytPlayer=new YT.Player(div.id,{
@@ -10742,7 +10742,7 @@ function createPlayer(info,startSeconds){
           },
           onStateChange:function(e){
             updatePlayPause();
-            if(e.data===YT.PlayerState.ENDED){toast('⏹️ Video खत्म',1500); if(roomMode&&!ytRemoteApplying)ytRoomWriteState({playing:false,currentTime:ytPlayer.getDuration()||0,stopped:true}); if(roomMode&&!ytRemoteApplying&&ytRoomHost())ytRoomAdvanceQueue();}
+            if(e.data===YT.PlayerState.ENDED){ if(roomMode){ try{ytPlayer.seekTo(0,true);ytPlayer.playVideo();}catch(x){} if(!ytRemoteApplying&&ytRoomHost())ytRoomWriteState({playing:true,currentTime:0,stopped:false}); } else {toast('⏹️ Video खत्म',1500);} }
             else if(roomMode&&!ytRemoteApplying)ytRoomSyncNow(true);
           },
           onError:function(){
@@ -11330,6 +11330,14 @@ setInterval(function(){try{refreshHostState();listenRoomShare();ytRoomUpdateUI()
   #partyYoutubeStage.yt-shorts-mode{top:64px!important;bottom:72px!important;padding:2px!important;}
   #partyYoutubeStage.yt-shorts-mode .yt-room-card{width:min(90vw,420px)!important;height:min(calc(100dvh - 136px),747px)!important;border-radius:16px!important;}
 }
+</style>
+<style id="partyRoomYouTubeAutoPlayOnly">
+/* Party Room YouTube: video surface only. No pause/stop/restart/seek UI. */
+#prRoom.party-youtube-layout #ytRoomViewerSeekBar,
+#prRoom.party-youtube-layout #ytRoomLiveBtn,
+#prRoom.party-youtube-layout #ytRoomUiHideBtn,
+#prRoom.party-youtube-layout #ytRoomCloseVideoBtn{display:none!important;}
+#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-hostbar{display:none!important;}
 </style>
 <style id="partyRoomYouTubeTapPolish">
 #partyYoutubeStage .yt-room-card{touch-action:manipulation;}
