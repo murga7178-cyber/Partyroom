@@ -10292,6 +10292,35 @@ var queue=[],history=[],current=null,isHost=false,soundMode=false,volume=80,mute
 var ytPlayer=null,ytReady=false,ytApiLoaded=!!window.YT,ytProgressTimer=null,roomUnsub=null,lastRoomTs=0,listeningRoom='';
 var ytPlus2AppliedVideoId='';
 var ytHiddenPlus2Btn=null;
+var ytPlus2Timer=null;
+var ytPlus2Overlay=null;
+
+function ytEnsurePlus2Overlay(){
+  if(ytPlus2Overlay&&document.body.contains(ytPlus2Overlay))return ytPlus2Overlay;
+  ytPlus2Overlay=document.createElement('div');
+  ytPlus2Overlay.id='ytRoomPlus2Overlay';
+  ytPlus2Overlay.setAttribute('aria-hidden','true');
+  ytPlus2Overlay.style.cssText='display:none;position:absolute;inset:0;z-index:9999;pointer-events:none;align-items:center;justify-content:center;background:rgba(5,8,18,.34);backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);border-radius:14px;';
+  ytPlus2Overlay.innerHTML='<div style="padding:10px 16px;border-radius:999px;background:rgba(0,0,0,.72);color:#fff;font:800 13px/1.1 system-ui,-apple-system,sans-serif;box-shadow:0 6px 22px rgba(0,0,0,.35);">⏩ +2 सेकंड</div>';
+  document.body.appendChild(ytPlus2Overlay);
+  return ytPlus2Overlay;
+}
+function ytShowPlus2Overlay(){
+  try{
+    var ov=ytEnsurePlus2Overlay(),card=document.querySelector('#partyYoutubeStage .yt-room-card')||document.querySelector('.yt-room-card');
+    if(card&&!ov.parentNode.isSameNode(card))card.appendChild(ov);
+    ov.style.display='flex';
+    ov.setAttribute('aria-hidden','false');
+  }catch(e){}
+}
+function ytHidePlus2Overlay(){
+  try{
+    if(ytPlus2Overlay){
+      ytPlus2Overlay.style.display='none';
+      ytPlus2Overlay.setAttribute('aria-hidden','true');
+    }
+  }catch(e){}
+}
 function ytEnsureHiddenPlus2Button(){
   if(ytHiddenPlus2Btn&&document.body.contains(ytHiddenPlus2Btn))return ytHiddenPlus2Btn;
   ytHiddenPlus2Btn=document.createElement('button');
@@ -10299,17 +10328,19 @@ function ytEnsureHiddenPlus2Button(){
   ytHiddenPlus2Btn.type='button';
   ytHiddenPlus2Btn.tabIndex=-1;
   ytHiddenPlus2Btn.setAttribute('aria-hidden','true');
-  ytHiddenPlus2Btn.style.cssText='display:none!important;visibility:hidden!important;width:0;height:0;position:absolute;opacity:0;pointer-events:none;margin:0;padding:0;border:0;';
+  ytHiddenPlus2Btn.style.cssText='display:none!important;visibility:hidden!important;width:0;height:0;position:absolute;left:-99999px;top:-99999px;opacity:0;pointer-events:none;margin:0;padding:0;border:0;';
   document.body.appendChild(ytHiddenPlus2Btn);
   ytHiddenPlus2Btn.addEventListener('click',function(){
     try{
       if(!ytPlayer||!ytReady||typeof ytPlayer.getCurrentTime!=='function'||typeof ytPlayer.seekTo!=='function')return;
+      ytShowPlus2Overlay();
       var t=Number(ytPlayer.getCurrentTime())||0;
       var d=typeof ytPlayer.getDuration==='function'?(Number(ytPlayer.getDuration())||0):0;
       var target=t+2;
       if(d>0)target=Math.min(target,Math.max(0,d-0.05));
       ytPlayer.seekTo(target,true);
-    }catch(e){}
+      setTimeout(ytHidePlus2Overlay,450);
+    }catch(e){ ytHidePlus2Overlay(); }
   });
   return ytHiddenPlus2Btn;
 }
@@ -10317,14 +10348,24 @@ function ytAutoPlus2AfterPlay(){
   try{
     if(!ytPlayer||!ytReady||typeof ytPlayer.getVideoData!=='function')return;
     var vd=ytPlayer.getVideoData()||{},id=String(vd.video_id||'');
-    if(!id||ytPlus2AppliedVideoId===id)return;
-    ytPlus2AppliedVideoId=id;
+    if(!id||ytPlus2AppliedVideoId===id||ytPlus2Timer)return;
     var b=ytEnsureHiddenPlus2Button();
-    setTimeout(function(){
+    ytPlus2Timer=setTimeout(function(){
+      ytPlus2Timer=null;
       try{
-        if(ytPlayer&&ytReady&&typeof ytPlayer.getPlayerState==='function'&&ytPlayer.getPlayerState()===YT.PlayerState.PLAYING)b.click();
+        if(!ytPlayer||!ytReady||typeof ytPlayer.getPlayerState!=='function')return;
+        var nowVd=ytPlayer.getVideoData()||{},nowId=String(nowVd.video_id||'');
+        if(nowId!==id)return;
+        if(ytPlayer.getPlayerState()!==YT.PlayerState.PLAYING)return;
+        var dur=typeof ytPlayer.getDuration==='function'?(Number(ytPlayer.getDuration())||0):0;
+        if(dur<=0){
+          ytAutoPlus2AfterPlay();
+          return;
+        }
+        ytPlus2AppliedVideoId=id;
+        b.click();
       }catch(e){}
-    },120);
+    },2500);
   }catch(e){}
 }
 
@@ -10761,7 +10802,7 @@ function createPlayer(info,startSeconds){
       var vars={autoplay:0,rel:0,modestbranding:1,playsinline:1,controls:1,start:start,enablejsapi:1,loop:0};
       if(roomMode){vars.fs=0;vars.disablekb=1;vars.iv_load_policy=3;vars.cc_load_policy=0;}
       if(info.list)vars.list=info.list;
-      ytPlus2AppliedVideoId=''; ytEnsureHiddenPlus2Button();
+      if(ytPlus2Timer){clearTimeout(ytPlus2Timer);ytPlus2Timer=null;} ytPlus2AppliedVideoId=''; ytHidePlus2Overlay(); ytEnsureHiddenPlus2Button();
       ytPlayer=new YT.Player(div.id,{
         height:'100%',width:'100%',videoId:info.id,playerVars:vars,
         events:{
@@ -12553,6 +12594,42 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 }
 </style>
 
+
+<style id="partyRoomCommentAndroidStableFix">
+/* Android/mobile: keep the comment composer anchored inside the chat panel.
+   It must not move with the visual keyboard or get clipped by the YouTube stage. */
+#prRoom.party-youtube-layout #cinemaChatPanel{
+  position:absolute!important;
+  left:7px!important;
+  right:7px!important;
+  bottom:64px!important;
+  top:auto!important;
+  height:72px!important;
+  min-height:72px!important;
+  overflow:visible!important;
+  z-index:90!important;
+}
+#prRoom.party-youtube-layout #cinemaChatPanel #cinemaChatMessages{
+  height:72px!important;
+  min-height:72px!important;
+  overflow-y:auto!important;
+  padding:6px 8px 4px!important;
+}
+#prRoom.party-youtube-layout #cinemaChatPanel #cinemaChatComposer.party-composer-open{
+  position:absolute!important;
+  left:8px!important;
+  right:52px!important;
+  top:8px!important;
+  bottom:auto!important;
+  width:auto!important;
+  z-index:190!important;
+}
+#prRoom.party-youtube-layout #partyRoomCommentToggle{
+  z-index:200!important;
+  touch-action:manipulation!important;
+  pointer-events:auto!important;
+}
+</style>
 </html>
 
 <script id="partyRoomYoutubeHideExtrasScript">/* Replaced by final Q-only YouTube controls. */</script>
@@ -13828,18 +13905,26 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 (function(){
   'use strict';
   function $(id){return document.getElementById(id);}
-  /* Open the keyboard together with the panel. */
+  /* Open the keyboard from the actual tap.
+     Do NOT delay focus: on some Android WebViews a setTimeout focus loses
+     the user gesture, the keyboard opens separately, and the composer appears
+     to disappear. Focus synchronously while the tap is still active. */
   function wrap(){
     var orig=window.partyRoomFocusChat;
     if(typeof orig!=='function'||orig.__wrapped)return;
     var w=function(){
       var r=orig.apply(this,arguments);
-      setTimeout(function(){
+      try{
         var c=$('cinemaChatComposer'),i=$('cinemaChatInput');
-        if(c&&i&&c.classList.contains('party-composer-open')&&document.activeElement!==i){
-          try{i.focus({preventScroll:true});}catch(e){try{i.focus();}catch(_){}}
+        if(c&&i&&c.classList.contains('party-composer-open')){
+          i.focus({preventScroll:true});
         }
-      },60);
+      }catch(e){
+        try{
+          var i2=$('cinemaChatInput');
+          if(i2)i2.focus();
+        }catch(_){}
+      }
       return r;
     };
     w.__wrapped=true; window.partyRoomFocusChat=w;
