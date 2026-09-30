@@ -2854,25 +2854,31 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         </div>
         <div id="cinemaCallGrid" style="display:none;"></div>
 
-        <div id="cinemaChatPanel">
-          <button type="button" id="partyRoomCommentToggle" class="pr-comment-toggle" onclick="window.partyRoomFocusChat&&window.partyRoomFocusChat()" aria-label="कमेंट लिखें" aria-expanded="false">💬<span id="partyRoomUnreadBadge" class="prd-badge">0</span></button>
-          <div id="cinemaChatMessages"><div style="text-align:center;color:rgba(255,255,255,.6);font-size:12px;padding:16px 6px;">चैट लोड हो रही है…</div></div>
+        <div id="cinemaChatPanel" class="pr-new-comment-widget">
+          <div class="pr-new-trigger" id="partyRoomCommentTrigger" role="button" tabindex="0" onclick="window.partyRoomFocusChat&&window.partyRoomFocusChat()">
+            <div class="pr-new-trigger-avatar" id="newCommentAvatar">A</div>
+            <span class="pr-new-trigger-text">कमेंट जोड़ें...</span>
+            <div class="pr-new-trigger-icons"><span>☺</span><span>🎁</span></div>
+          </div>
 
-          <div id="cinemaChatComposer" class="new-comment-panel" style="display:none;">
-            <div class="new-comment-panel-top">
-              <div class="new-comment-avatar" id="newCommentAvatar">A</div>
-              <div class="new-comment-info">
-                <div class="new-comment-title">💬 कमेंट करें</div>
-                <div class="new-comment-sub">अपना मैसेज लिखें</div>
+          <div class="pr-new-input-panel" id="prNewInputPanel">
+            <div class="pr-new-panel-top">
+              <div class="pr-new-panel-avatar" id="newCommentAvatar2">A</div>
+              <div class="pr-new-panel-info">
+                <div class="pr-new-panel-title">💬 कमेंट करें</div>
+                <div class="pr-new-panel-sub">अपना मैसेज लिखें</div>
               </div>
-              <button type="button" class="new-comment-close" onclick="window.partyRoomCloseChatPanel&&window.partyRoomCloseChatPanel()" aria-label="कमेंट बंद करें">×</button>
+              <button type="button" class="pr-new-close" onclick="window.partyRoomCloseChatPanel&&window.partyRoomCloseChatPanel()" aria-label="कमेंट बंद करें">×</button>
             </div>
-            <div class="new-comment-input-row">
-              <textarea id="cinemaChatInput" maxlength="300" rows="1" placeholder="अपना कमेंट लिखें..." autocomplete="off" enterkeyhint="send" autocapitalize="sentences" spellcheck="false"></textarea>
-              <button type="button" class="new-comment-emoji" onclick="partyRoomInsertReaction('😊')" aria-label="Emoji">☺</button>
-              <button type="button" class="new-comment-send" aria-label="Send message" onclick="cinemaSendChat()">➤</button>
+            <div class="pr-new-input-row">
+              <textarea id="cinemaChatInput" maxlength="300" rows="1" placeholder="अपना कमेंट लिखें..." autocomplete="off" enterkeyhint="send" spellcheck="false"></textarea>
+              <button type="button" class="pr-new-emoji" onclick="partyRoomInsertReaction('😊')" aria-label="Emoji">☺</button>
+              <button type="button" class="pr-new-send" aria-label="Send message" onclick="cinemaSendChat()">➤</button>
             </div>
           </div>
+
+          <!-- Firebase comments remain connected, but the legacy chat list is no longer rendered here. -->
+          <div id="cinemaChatMessages" class="pr-new-comment-feed" aria-live="polite"></div>
         </div>
 
         <div id="partyRoomReactionTray">
@@ -12553,6 +12559,100 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 })();
 </script>
 
+
+<style id="prNewCommentReplacementFinal">
+/* FINAL: Replace the legacy Party Room chat UI with the supplied slim comment widget. */
+#prRoom #cinemaChatPanel.pr-new-comment-widget{
+  position:relative!important;display:flex!important;flex-direction:column!important;gap:9px!important;
+  order:40!important;width:100%!important;max-width:100%!important;margin:10px 0 0!important;
+  padding:0 8px!important;background:transparent!important;border:0!important;box-shadow:none!important;
+  overflow:visible!important;isolation:isolate!important;z-index:30!important;pointer-events:auto!important;
+}
+#prRoom #cinemaChatPanel.pr-new-comment-widget .pr-new-trigger{
+  display:flex!important;align-items:center!important;gap:10px!important;width:100%!important;min-height:52px!important;
+  padding:7px 10px 7px 8px!important;border-radius:28px!important;cursor:pointer!important;user-select:none!important;
+  background:linear-gradient(135deg,rgba(60,15,45,.94),rgba(45,10,40,.97))!important;
+  border:1px solid rgba(255,100,180,.42)!important;box-shadow:0 8px 20px -10px rgba(0,0,0,.8),inset 0 1px 1px rgba(255,100,180,.15)!important;
+}
+#prRoom .pr-new-trigger-avatar,#prRoom .pr-new-panel-avatar{
+  width:32px!important;height:32px!important;min-width:32px!important;border-radius:50%!important;display:grid!important;place-items:center!important;
+  background:linear-gradient(135deg,#ff6bb5,#ff3d8f)!important;color:#fff!important;font-weight:800!important;font-size:13px!important;
+  border:1.5px solid rgba(255,255,255,.3)!important;box-shadow:0 4px 12px rgba(255,60,150,.5)!important;
+}
+#prRoom .pr-new-trigger-text{flex:1!important;color:#d99abf!important;font-size:14px!important;font-style:italic!important;font-weight:400!important;}
+#prRoom .pr-new-trigger-icons{display:flex!important;gap:9px!important;color:#ff8dc7!important;font-size:17px!important;padding-right:4px!important;}
+#prRoom .pr-new-input-panel{
+  display:none!important;flex-direction:column!important;gap:9px!important;width:100%!important;
+  animation:prNewPanelIn .22s ease!important;
+}
+#prRoom .pr-new-input-panel.open{display:flex!important;}
+@keyframes prNewPanelIn{from{opacity:0;transform:translateY(-8px) scale(.99)}to{opacity:1;transform:none}}
+#prRoom .pr-new-panel-top{display:flex!important;align-items:center!important;gap:10px!important;padding:0 4px!important;}
+#prRoom .pr-new-panel-info{flex:1!important;min-width:0!important;}
+#prRoom .pr-new-panel-title{color:#ff8dc7!important;font-size:14px!important;font-weight:700!important;}
+#prRoom .pr-new-panel-sub{color:#a878a0!important;font-size:11px!important;margin-top:2px!important;}
+#prRoom .pr-new-close{width:32px!important;height:32px!important;border-radius:50%!important;border:1px solid rgba(255,100,180,.25)!important;background:rgba(255,80,160,.12)!important;color:#ff8dc7!important;font-size:21px!important;line-height:1!important;}
+#prRoom .pr-new-input-row{
+  display:flex!important;align-items:center!important;gap:7px!important;width:100%!important;
+  padding:5px 5px 5px 13px!important;border-radius:28px!important;
+  background:linear-gradient(135deg,rgba(55,12,45,.94),rgba(40,8,35,.97))!important;
+  border:1px solid rgba(255,100,180,.3)!important;box-shadow:inset 0 1px 2px rgba(0,0,0,.5),0 8px 20px -10px rgba(0,0,0,.6)!important;
+}
+#prRoom .pr-new-input-row textarea{
+  flex:1 1 auto!important;min-width:0!important;height:40px!important;max-height:90px!important;resize:none!important;outline:none!important;
+  border:0!important;background:transparent!important;color:#ffe0f0!important;-webkit-text-fill-color:#ffe0f0!important;
+  font-size:15px!important;line-height:1.35!important;padding:9px 0!important;font-family:inherit!important;
+}
+#prRoom .pr-new-input-row textarea::placeholder{color:#a878a0!important;-webkit-text-fill-color:#a878a0!important;}
+#prRoom .pr-new-emoji,#prRoom .pr-new-send{flex:0 0 40px!important;width:40px!important;height:40px!important;border-radius:50%!important;display:grid!important;place-items:center!important;cursor:pointer!important;}
+#prRoom .pr-new-emoji{background:rgba(255,100,180,.10)!important;color:#ff8dc7!important;border:1px solid rgba(255,100,180,.2)!important;font-size:18px!important;}
+#prRoom .pr-new-send{background:linear-gradient(135deg,#ff6bb5,#ff3d8f)!important;color:#fff!important;border:1px solid rgba(255,255,255,.25)!important;font-size:17px!important;box-shadow:0 6px 15px -5px rgba(255,60,150,.7)!important;}
+#prRoom #cinemaChatPanel.pr-new-comment-widget #cinemaChatMessages.pr-new-comment-feed{
+  display:none!important;height:0!important;min-height:0!important;max-height:0!important;overflow:hidden!important;padding:0!important;margin:0!important;border:0!important;
+}
+/* Disable all legacy visual chat/composer rules in this final UI. */
+#prRoom #cinemaChatPanel.pr-new-comment-widget #partyRoomCommentToggle,
+#prRoom #cinemaChatPanel.pr-new-comment-widget #cinemaChatComposer{display:none!important!important;}
+</style>
+<script id="prNewCommentReplacementFinalScript">
+(function(){
+  'use strict';
+  function $(id){return document.getElementById(id);}
+  function openNewComment(){
+    var panel=$('prNewInputPanel'), trigger=$('partyRoomCommentTrigger');
+    if(!panel)return;
+    panel.classList.add('open');
+    if(trigger)trigger.style.display='none';
+    var input=$('cinemaChatInput');
+    if(input){setTimeout(function(){try{input.focus({preventScroll:true});}catch(e){input.focus();}},40);}
+    updateAvatar();
+  }
+  function closeNewComment(){
+    var panel=$('prNewInputPanel'), trigger=$('partyRoomCommentTrigger');
+    if(panel)panel.classList.remove('open');
+    if(trigger)trigger.style.display='flex';
+    var input=$('cinemaChatInput'); if(input){try{input.blur();}catch(e){}}
+  }
+  function updateAvatar(){
+    var name='A';
+    try{ if(typeof cinemaUserName==='function'){var n=cinemaUserName(); if(n)name=String(n).trim().charAt(0).toUpperCase();} }catch(e){}
+    ['newCommentAvatar','newCommentAvatar2'].forEach(function(id){var e=$(id);if(e)e.textContent=name||'A';});
+  }
+  window.partyRoomFocusChat=function(){openNewComment();return false;};
+  window.partyRoomCloseChatPanel=function(){closeNewComment();return false;};
+  document.addEventListener('keydown',function(e){
+    var input=$('cinemaChatInput');
+    if(e.target===input && e.key==='Enter' && !e.shiftKey){e.preventDefault();var b=document.querySelector('.pr-new-send');if(b)b.click();}
+  },true);
+  document.addEventListener('input',function(e){
+    if(e.target && e.target.id==='cinemaChatInput'){
+      e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,90)+'px';
+    }
+  },true);
+  document.addEventListener('DOMContentLoaded',updateAvatar);
+  setTimeout(updateAvatar,500);
+})();
+</script>
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
