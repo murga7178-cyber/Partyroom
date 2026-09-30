@@ -2857,10 +2857,21 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         <div id="cinemaChatPanel">
           <button type="button" id="partyRoomCommentToggle" class="pr-comment-toggle" onclick="window.partyRoomFocusChat&&window.partyRoomFocusChat()" aria-label="कमेंट लिखें" aria-expanded="false">💬<span id="partyRoomUnreadBadge" class="prd-badge">0</span></button>
           <div id="cinemaChatMessages"><div style="text-align:center;color:rgba(255,255,255,.6);font-size:12px;padding:16px 6px;">चैट लोड हो रही है…</div></div>
-          <div id="cinemaChatComposer" style="display:none;position:absolute;left:8px;right:8px;top:8px;bottom:auto;z-index:150;min-height:56px;height:auto;gap:6px;margin:0;padding:6px;background:rgba(8,15,31,.98);border:1px solid rgba(255,255,255,.28);border-radius:17px;box-shadow:0 10px 28px rgba(0,0,0,.42);box-sizing:border-box;">
-            <button type="button" onmousedown="event.preventDefault()" onclick="window.prOpenTagPicker&&window.prOpenTagPicker()" aria-label="Tag someone" title="किसी को टैग करें" style="width:34px;height:34px;flex:0 0 34px;border:1px solid #334155;border-radius:11px;background:#070d18;color:#a78bfa;font-size:15px;font-weight:900;cursor:pointer;">@</button>
-            <input id="cinemaChatInput" maxlength="300" placeholder="कमेंट लिखें…" autocomplete="off" enterkeyhint="send" autocapitalize="sentences" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();cinemaSendChat();}" style="flex:1;min-width:0;height:34px;padding:6px 10px;border-radius:11px;border:1px solid #334155;background:#070d18;color:#fff;outline:none;font-size:13px;box-sizing:border-box;">
-            <button type="button" onmousedown="event.preventDefault()" onclick="cinemaSendChat()" aria-label="Send message" style="width:44px;height:34px;flex:0 0 44px;border:0;border-radius:11px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:18px;font-weight:900;cursor:pointer;">➤</button>
+
+          <div id="cinemaChatComposer" class="new-comment-panel" style="display:none;">
+            <div class="new-comment-panel-top">
+              <div class="new-comment-avatar" id="newCommentAvatar">A</div>
+              <div class="new-comment-info">
+                <div class="new-comment-title">💬 कमेंट करें</div>
+                <div class="new-comment-sub">अपना मैसेज लिखें</div>
+              </div>
+              <button type="button" class="new-comment-close" onclick="window.partyRoomCloseChatPanel&&window.partyRoomCloseChatPanel()" aria-label="कमेंट बंद करें">×</button>
+            </div>
+            <div class="new-comment-input-row">
+              <textarea id="cinemaChatInput" maxlength="300" rows="1" placeholder="अपना कमेंट लिखें..." autocomplete="off" enterkeyhint="send" autocapitalize="sentences" spellcheck="false"></textarea>
+              <button type="button" class="new-comment-emoji" onclick="partyRoomInsertReaction('😊')" aria-label="Emoji">☺</button>
+              <button type="button" class="new-comment-send" aria-label="Send message" onclick="cinemaSendChat()">➤</button>
+            </div>
           </div>
         </div>
 
@@ -12277,6 +12288,268 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   document.addEventListener('keydown',function(e){
     if(e.key==='Escape'&&overlay&&overlay.classList.contains('open'))closeMoreVideo();
   });
+})();
+</script>
+
+
+<style id="partyRoomNewCommentPanelFinal">
+/* ===== New Party Room comment panel: never overlays video/game/seats ===== */
+#prRoom > #cinemaChatPanel{
+  order:40!important;
+  flex:0 0 auto!important;
+  width:100%!important;
+  min-height:0!important;
+  height:auto!important;
+  margin:6px 0 66px!important;
+  padding:0!important;
+  overflow:visible!important;
+  position:relative!important;
+  z-index:45!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+}
+#prRoom > #prHostRow{order:10!important;}
+#prRoom > #cinemaSeats{order:20!important;}
+#prRoom > #partyYoutubeStage{order:30!important;}
+#prRoom > #partyGamingCenter{order:30!important;}
+#prRoom > #cinemaCallStatus{order:35!important;}
+#prRoom > #cinemaChatPanel #cinemaChatMessages{
+  order:1!important;
+  width:100%!important;
+  height:48px!important;
+  min-height:48px!important;
+  max-height:72px!important;
+  padding:4px 2px!important;
+  margin:0!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:flex-end!important;
+  gap:3px!important;
+  -webkit-mask-image:none!important;
+  mask-image:none!important;
+  scrollbar-width:none!important;
+}
+#prRoom > #cinemaChatPanel #cinemaChatMessages::-webkit-scrollbar{display:none!important;}
+#prRoom > #cinemaChatPanel #cinemaChatMessages .pr-chat-line{
+  margin:0!important;
+  max-width:100%!important;
+  min-height:0!important;
+}
+#prRoom > #cinemaChatPanel #partyRoomCommentToggle{
+  position:absolute!important;
+  right:6px!important;
+  top:4px!important;
+  width:38px!important;
+  height:38px!important;
+  z-index:20!important;
+  border-radius:50%!important;
+  background:linear-gradient(135deg,#ff6bb5,#ff3d8f)!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.4)!important;
+  box-shadow:0 6px 16px rgba(255,60,150,.3)!important;
+}
+#prRoom > #cinemaChatPanel #cinemaChatComposer.new-comment-panel{
+  position:relative!important;
+  inset:auto!important;
+  left:auto!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:auto!important;
+  z-index:5!important;
+  width:100%!important;
+  min-height:0!important;
+  height:auto!important;
+  display:none!important;
+  flex-direction:column!important;
+  gap:8px!important;
+  padding:10px!important;
+  margin:6px 0 0!important;
+  box-sizing:border-box!important;
+  border:1px solid rgba(255,100,180,.35)!important;
+  border-radius:18px!important;
+  background:linear-gradient(135deg,rgba(60,15,45,.96),rgba(38,8,34,.98))!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.28),inset 0 1px 1px rgba(255,100,180,.12)!important;
+  backdrop-filter:blur(14px)!important;
+  -webkit-backdrop-filter:blur(14px)!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+#prRoom > #cinemaChatPanel.chat-input-open #cinemaChatComposer.new-comment-panel,
+#prRoom > #cinemaChatPanel #cinemaChatComposer.new-comment-panel.party-composer-open{
+  display:flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+}
+.new-comment-panel-top{display:flex;align-items:center;gap:9px;min-height:34px;}
+.new-comment-avatar{
+  width:34px;height:34px;flex:0 0 34px;border-radius:50%;
+  display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;
+  background:linear-gradient(135deg,#ff6bb5,#ff3d8f);
+  border:1.5px solid rgba(255,255,255,.3);
+  box-shadow:0 4px 12px rgba(255,60,150,.35);
+}
+.new-comment-info{flex:1;min-width:0;text-align:left;}
+.new-comment-title{color:#ff8dc7;font-size:13px;font-weight:800;line-height:1.1;}
+.new-comment-sub{color:#c59ab8;font-size:10px;margin-top:2px;}
+.new-comment-close{
+  width:30px!important;height:30px!important;flex:0 0 30px!important;padding:0!important;
+  border-radius:50%!important;border:1px solid rgba(255,100,180,.25)!important;
+  background:rgba(255,80,160,.12)!important;color:#ffb0d8!important;
+  font-size:20px!important;line-height:1!important;cursor:pointer!important;
+}
+.new-comment-input-row{
+  display:flex;align-items:center;gap:7px;
+  padding:5px 5px 5px 11px;
+  border-radius:22px;
+  border:1px solid rgba(255,100,180,.3);
+  background:linear-gradient(135deg,rgba(55,12,45,.92),rgba(40,8,35,.96));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.45);
+}
+.new-comment-input-row textarea{
+  flex:1;min-width:0;width:100%;height:38px;min-height:38px;max-height:72px;
+  resize:none;outline:none;border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;
+  color:#ffe0f0!important;-webkit-text-fill-color:#ffe0f0!important;
+  font-family:inherit;font-size:14px;line-height:1.35;padding:8px 0!important;
+}
+.new-comment-input-row textarea::placeholder{color:#a878a0!important;-webkit-text-fill-color:#a878a0!important;}
+.new-comment-emoji,.new-comment-send{
+  width:38px!important;height:38px!important;flex:0 0 38px!important;
+  border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important;
+  cursor:pointer!important;
+}
+.new-comment-emoji{
+  background:rgba(255,255,255,.08)!important;color:#ffd0e8!important;
+  border:1px solid rgba(255,255,255,.12)!important;font-size:19px!important;
+}
+.new-comment-send{
+  background:linear-gradient(135deg,#ff6bb5,#ff3d8f)!important;color:#fff!important;
+  border:1px solid rgba(255,255,255,.25)!important;font-size:18px!important;
+  box-shadow:0 5px 14px rgba(255,60,150,.35)!important;
+}
+.new-comment-send:active,.new-comment-emoji:active{transform:scale(.92)!important;}
+/* When content is video/game, keep the comment strip strictly below it. */
+#prRoom.party-youtube-layout > #partyYoutubeStage,
+#prRoom.party-gaming-layout > #partyGamingCenter{order:30!important;}
+#prRoom.party-youtube-layout > #cinemaChatPanel,
+#prRoom.party-gaming-layout > #cinemaChatPanel{order:40!important;}
+@media(max-height:700px){
+  #prRoom > #cinemaChatPanel #cinemaChatMessages{height:40px!important;min-height:40px!important;}
+  #prRoom > #cinemaChatPanel{margin-bottom:62px!important;}
+}
+</style>
+
+<script id="partyRoomNewCommentPanelFinalJS">
+(function(){
+  'use strict';
+  var $=function(id){return document.getElementById(id);};
+
+  function syncAvatar(){
+    var a=$('newCommentAvatar');
+    if(!a)return;
+    try{
+      var n=(typeof cinemaUserName==='function')?cinemaUserName():'A';
+      a.textContent=String(n||'A').trim().charAt(0).toUpperCase()||'A';
+    }catch(e){}
+  }
+
+  function setOpen(open,focus){
+    var c=$('cinemaChatComposer'), p=$('cinemaChatPanel'), t=$('partyRoomCommentToggle'), i=$('cinemaChatInput');
+    if(!c||!p)return;
+    if(open){
+      syncAvatar();
+      c.classList.add('party-composer-open');
+      p.classList.add('chat-input-open');
+      c.style.display='flex'; c.style.visibility='visible'; c.style.opacity='1'; c.style.pointerEvents='auto';
+      c.style.position='relative'; c.style.left='auto'; c.style.right='auto'; c.style.top='auto'; c.style.bottom='auto';
+      if(t){t.classList.add('is-open');t.setAttribute('aria-expanded','true');}
+      if(focus && i){setTimeout(function(){try{i.focus({preventScroll:true});}catch(e){try{i.focus();}catch(_){}}},50);}
+    }else{
+      c.classList.remove('party-composer-open');
+      p.classList.remove('chat-input-open');
+      c.style.display='none'; c.style.visibility='hidden'; c.style.opacity='0'; c.style.pointerEvents='none';
+      c.style.position='relative'; c.style.left='auto'; c.style.right='auto'; c.style.top='auto'; c.style.bottom='auto';
+      if(t){t.classList.remove('is-open');t.setAttribute('aria-expanded','false');}
+      try{if(i)i.blur();}catch(e){}
+    }
+  }
+
+  window.partyRoomFocusChat=function(){ setOpen(true,true); return true; };
+  window.partyRoomCloseChatPanel=function(){ setOpen(false,false); return true; };
+
+  function wire(){
+    var t=$('partyRoomCommentToggle'), i=$('cinemaChatInput');
+    if(t){
+      t.onclick=function(e){e.preventDefault();e.stopPropagation();
+        var c=$('cinemaChatComposer');
+        setOpen(!(c&&c.classList.contains('party-composer-open')),true);
+      };
+    }
+    if(i){
+      i.oninput=function(){
+        this.style.height='auto';
+        this.style.height=Math.min(this.scrollHeight,72)+'px';
+      };
+      i.onkeydown=function(e){
+        if(e.key==='Enter' && !e.shiftKey){
+          e.preventDefault();
+          var b=document.querySelector('#cinemaChatComposer .new-comment-send');
+          if(b)b.click();
+        }
+      };
+    }
+    syncAvatar();
+  }
+
+  /* Keep legacy keyboard/position code from moving this panel over content. */
+  function enforce(){
+    var c=$('cinemaChatComposer'),p=$('cinemaChatPanel');
+    if(!c||!p||!c.classList.contains('party-composer-open'))return;
+    c.style.position='relative'; c.style.left='auto'; c.style.right='auto'; c.style.top='auto'; c.style.bottom='auto';
+    c.style.display='flex'; c.style.visibility='visible'; c.style.opacity='1'; c.style.pointerEvents='auto';
+    p.classList.add('chat-input-open');
+  }
+
+  document.addEventListener('DOMContentLoaded',function(){
+    wire();
+    setTimeout(wire,300);
+    setTimeout(wire,1200);
+    var c=$('cinemaChatComposer');
+    if(c){
+      var mo=new MutationObserver(function(){ enforce(); });
+      mo.observe(c,{attributes:true,attributeFilter:['style','class']});
+    }
+  });
+
+  /* Sending still uses the existing Firebase cinemaSendChat(). Close the panel shortly after a successful send. */
+  var timer=setInterval(function(){
+    if(typeof window.cinemaSendChat!=='function')return;
+    if(window.cinemaSendChat.__newCommentWrapped)return;
+    var original=window.cinemaSendChat;
+    var wrapped=function(){
+      var before='';
+      try{before=String(($('cinemaChatInput')||{}).value||'').trim();}catch(e){}
+      var result=original.apply(this,arguments);
+      if(before){
+        setTimeout(function(){setOpen(false,false);},650);
+      }
+      return result;
+    };
+    wrapped.__newCommentWrapped=true;
+    window.cinemaSendChat=wrapped;
+    clearInterval(timer);
+  },250);
+
+  /* If another legacy helper opens the old floating composer, normalize it back below the content. */
+  setInterval(function(){
+    var c=$('cinemaChatComposer');
+    if(c && c.classList.contains('party-composer-open')) enforce();
+  },350);
 })();
 </script>
 
