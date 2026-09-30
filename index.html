@@ -2855,6 +2855,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         <div id="cinemaCallGrid" style="display:none;"></div>
 
         <div id="cinemaChatPanel">
+          <button type="button" id="partyRoomCommentToggle" class="pr-comment-toggle" onclick="window.partyRoomFocusChat&&window.partyRoomFocusChat()" aria-label="कमेंट लिखें" aria-expanded="false">💬<span id="partyRoomUnreadBadge" class="prd-badge">0</span></button>
           <div id="cinemaChatMessages"><div style="text-align:center;color:rgba(255,255,255,.6);font-size:12px;padding:16px 6px;">चैट लोड हो रही है…</div></div>
           <div id="cinemaChatComposer" style="display:none;position:absolute;left:8px;right:8px;top:8px;bottom:auto;z-index:150;min-height:56px;height:auto;gap:6px;margin:0;padding:6px;background:rgba(8,15,31,.98);border:1px solid rgba(255,255,255,.28);border-radius:17px;box-shadow:0 10px 28px rgba(0,0,0,.42);box-sizing:border-box;">
             <button type="button" onmousedown="event.preventDefault()" onclick="window.prOpenTagPicker&&window.prOpenTagPicker()" aria-label="Tag someone" title="किसी को टैग करें" style="width:34px;height:34px;flex:0 0 34px;border:1px solid #334155;border-radius:11px;background:#070d18;color:#a78bfa;font-size:15px;font-weight:900;cursor:pointer;">@</button>
@@ -3893,7 +3894,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       // added/modified/removed और re-order होने पर कोई row गलत जगह नहीं अटकती।
       el.innerHTML='';
       const frag=document.createDocumentFragment();
-      docs.forEach(doc=>{ const row=prChatRow(Object.assign({},doc.data()||{},{__docId:doc.id})); if(row) frag.appendChild(row); });
+      docs.forEach(doc=>{ frag.appendChild(prChatRow(Object.assign({},doc.data()||{},{__docId:doc.id}))); });
       el.appendChild(frag); el.__ready=true;
       const fresh=snap.docChanges().filter(ch=>ch.type==='added').map(ch=>ch.doc);
       if(fresh.length){ prResolveChatNames(fresh); prResolveChatAvatars(fresh); }
@@ -3926,8 +3927,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     const chatBox=document.getElementById('cinemaChatMessages');
     if(chatBox && chatBox.__ready){
       const pendingRow=prChatRow(Object.assign({},data,{__docId:ref.id}));
-      if(pendingRow){ pendingRow.classList.add('pr-new','pr-pending');
-        chatBox.appendChild(pendingRow); chatBox.scrollTop=chatBox.scrollHeight; }
+      pendingRow.classList.add('pr-new','pr-pending');
+      chatBox.appendChild(pendingRow); chatBox.scrollTop=chatBox.scrollHeight;
     }
     ref.set(data)
       .then(()=>{
@@ -4597,7 +4598,9 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     var initial=esc(letterOf(resolvedName || d.name || 'User'));
     var avatar='<span class="pr-chat-avatar" data-pr-act="profile" data-key="'+esc(d.userKey||'')+'" data-chat-avatar-key="'+esc(d.userKey||'')+'" style="cursor:pointer;">'+(chatPhoto&&cinemaOkPhoto(chatPhoto)?'<img alt="" src="'+esc(chatPhoto)+'">':initial)+'</span>';
     if(d.type==='join'){
-      return null;
+      row.classList.add('pr-sys');
+      row.innerHTML='<span class="pr-ic">🎉</span><span><b>'+nm+'</b> रूम में आए हैं। स्वागत करें!</span>'
+        +(mine?'':'<button type="button" class="pr-wbtn" data-pr-act="welcome" data-name="'+nm+'">👋 स्वागत</button>');
     } else if(d.type==='gift'){
       row.classList.add('pr-giftmsg');
       var em=esc(d.emoji||'🎁');
@@ -12277,37 +12280,6 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 })();
 </script>
 
-
-
-
-
-<style id="partyRoomFinalCleanup">
-/* Final requested cleanup: no live-comment composer/toggle and no room-entry welcome notices. */
-#prRoom #partyRoomCommentToggle,
-#prRoom #cinemaChatComposer,
-#prRoom .pr-msg.pr-sys,
-#prRoom .pr-msg.pr-notice{display:none!important;}
-</style>
-<script id="partyRoomFinalCleanupJs">
-(function(){
-  'use strict';
-  function clean(){
-    var root=document.getElementById('prRoom');
-    if(!root)return;
-    ['partyRoomCommentToggle','cinemaChatComposer'].forEach(function(id){
-      var el=document.getElementById(id);
-      if(el && root.contains(el)) el.remove();
-    });
-    root.querySelectorAll('.pr-msg.pr-sys,.pr-msg.pr-notice').forEach(function(el){el.remove();});
-    root.querySelectorAll('.pr-wbtn').forEach(function(el){el.remove();});
-    root.querySelectorAll('#ytRoomRocketBtn').forEach(function(el){el.remove();});
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',clean);else clean();
-  var mo=new MutationObserver(clean);
-  mo.observe(document.body,{childList:true,subtree:true});
-  setInterval(clean,1000);
-})();
-</script>
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
@@ -14064,3 +14036,174 @@ html body #cinemaChatComposer.pcx > button[aria-label="Send message"]{
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
+
+<!-- ===== FINAL USER REQUEST FIX: YouTube clean player + new compact room chat + no welcome notices ===== -->
+<style id="partyRoomRequestedFinalFix">
+/* 1) YouTube player: remove the visible black strip/frame around the actual player. */
+#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-card{
+  background:transparent!important;
+  box-shadow:none!important;
+  border:0!important;
+  border-radius:0!important;
+}
+#prRoom.party-youtube-layout #partyYoutubeStage iframe,
+#prRoom.party-youtube-layout #partyYoutubeStage #ytRoomPlayerDiv{
+  background:transparent!important;
+}
+/* Slight crop only at the player edge, so a thin black top strip from the embed container is not visible. */
+#prRoom.party-youtube-layout #partyYoutubeStage .yt-room-card iframe{
+  transform:scale(1.025)!important;
+  transform-origin:center center!important;
+}
+#prRoom.party-youtube-layout #partyYoutubeStage.yt-shorts-mode .yt-room-card iframe{
+  transform:scale(1.018)!important;
+}
+
+/* Hide the old YouTube/comment panel completely in YouTube mode. */
+#prRoom.party-youtube-layout #cinemaChatPanel{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+
+/* New clean Party Room chat for YouTube mode. */
+#ytPartySimpleChat{
+  position:absolute!important;
+  left:8px!important;
+  right:8px!important;
+  bottom:66px!important;
+  height:58px!important;
+  z-index:180!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:7px!important;
+  padding:6px 7px!important;
+  box-sizing:border-box!important;
+  background:rgba(255,255,255,.94)!important;
+  border:1px solid rgba(255,255,255,.85)!important;
+  border-radius:18px!important;
+  box-shadow:0 7px 24px rgba(0,0,0,.18)!important;
+  backdrop-filter:blur(12px)!important;
+  -webkit-backdrop-filter:blur(12px)!important;
+}
+#ytPartySimpleChatInput{
+  flex:1 1 auto!important;
+  min-width:0!important;
+  height:42px!important;
+  border:1px solid #e1e5ec!important;
+  border-radius:21px!important;
+  background:#f7f8fa!important;
+  color:#171717!important;
+  -webkit-text-fill-color:#171717!important;
+  outline:none!important;
+  padding:0 14px!important;
+  font-size:14px!important;
+  box-shadow:none!important;
+}
+#ytPartySimpleChatInput::placeholder{color:#8b9098!important;}
+#ytPartySimpleChatSend{
+  flex:0 0 42px!important;
+  width:42px!important;
+  height:42px!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:linear-gradient(135deg,#7c3aed,#db2777)!important;
+  color:#fff!important;
+  font-size:18px!important;
+  font-weight:900!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  cursor:pointer!important;
+}
+#ytPartySimpleChatSend:active{transform:scale(.94)!important;}
+#ytPartySimpleChatMessages{
+  position:absolute!important;
+  left:8px!important;
+  right:8px!important;
+  bottom:130px!important;
+  max-height:92px!important;
+  overflow-y:auto!important;
+  z-index:179!important;
+  display:flex!important;
+  flex-direction:column!important;
+  gap:5px!important;
+  pointer-events:none!important;
+  scrollbar-width:none!important;
+}
+#ytPartySimpleChatMessages::-webkit-scrollbar{display:none!important;}
+#ytPartySimpleChatMessages .ytpsc-msg{
+  align-self:flex-start!important;
+  max-width:82%!important;
+  padding:6px 10px!important;
+  border-radius:13px!important;
+  background:rgba(12,16,30,.78)!important;
+  color:#fff!important;
+  font-size:12px!important;
+  line-height:1.25!important;
+  text-align:left!important;
+  box-shadow:0 3px 10px rgba(0,0,0,.18)!important;
+}
+#ytPartySimpleChatMessages .ytpsc-msg.mine{align-self:flex-end!important;background:rgba(124,58,237,.88)!important;}
+@media(max-width:430px){
+  #ytPartySimpleChat{left:7px!important;right:7px!important;bottom:64px!important;height:56px!important;padding:5px 6px!important;}
+  #ytPartySimpleChatInput{height:42px!important;font-size:13px!important;}
+  #ytPartySimpleChatSend{width:42px!important;height:42px!important;}
+  #ytPartySimpleChatMessages{left:7px!important;right:7px!important;bottom:124px!important;max-height:82px!important;}
+}
+
+/* Welcome/join notifications are fully removed. */
+#prRoom .pr-sys,
+#prRoom .pr-wbtn,
+#prRoom [data-pr-act="welcome"]{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+</style>
+<script id="partyRoomRequestedFinalFixScript">
+(function(){
+  'use strict';
+  var boxId='ytPartySimpleChat', msgId='ytPartySimpleChatMessages', inputId='ytPartySimpleChatInput';
+  var active=false, timer=null;
+  function $(id){return document.getElementById(id);}
+  function escText(v){return String(v==null?'':v).replace(/[&<>\"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c];});}
+  function build(){
+    if($(boxId)) return;
+    var room=$('prRoom'); if(!room)return;
+    var m=document.createElement('div'); m.id=msgId;
+    var b=document.createElement('div'); b.id=boxId;
+    b.innerHTML='<input id="'+inputId+'" maxlength="300" autocomplete="off" enterkeyhint="send" placeholder="मैसेज लिखें…"><button id="ytPartySimpleChatSend" type="button" aria-label="Send">➤</button>';
+    room.appendChild(m); room.appendChild(b);
+    var inp=$(inputId), send=$('ytPartySimpleChatSend');
+    function sendMsg(){
+      var v=String(inp.value||'').trim(); if(!v)return;
+      var old=$('cinemaChatInput');
+      if(old){old.value=v; try{window.cinemaSendChat&&window.cinemaSendChat();}catch(e){} inp.value='';}
+    }
+    inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();sendMsg();}});
+    send.addEventListener('click',sendMsg);
+  }
+  function render(){
+    var src=$('cinemaChatMessages'), dst=$(msgId); if(!src||!dst)return;
+    var rows=src.querySelectorAll('.pr-chat-line');
+    var html=[];
+    Array.prototype.slice.call(rows,-5).forEach(function(r){
+      var t=r.querySelector('.pr-t'), n=r.querySelector('.pr-n');
+      if(!t)return;
+      var name=n?n.textContent:'';
+      html.push('<div class="ytpsc-msg '+(r.classList.contains('pr-mine')||r.classList.contains('pr-me')?'mine':'')+'">'+(name?'<b>'+escText(name)+'</b> ':'')+escText(t.textContent)+'</div>');
+    });
+    dst.innerHTML=html.join(''); dst.scrollTop=dst.scrollHeight;
+  }
+  function update(){
+    var room=$('prRoom'); if(!room)return;
+    var isYT=room.classList.contains('party-youtube-layout');
+    if(isYT && !active){build(); active=true;}
+    if(!isYT && active){var b=$(boxId),m=$(msgId);if(b)b.remove();if(m)m.remove();active=false;}
+    if(isYT){build();render();}
+  }
+  function disableWelcome(){
+    try{window.prAnnounceJoin=function(){};window.prWelcome=function(){};}catch(e){}
+  }
+  disableWelcome();
+  setInterval(function(){disableWelcome();update();},350);
+})();
+</script>
+
