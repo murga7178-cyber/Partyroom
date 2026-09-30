@@ -3894,7 +3894,11 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       // added/modified/removed और re-order होने पर कोई row गलत जगह नहीं अटकती।
       el.innerHTML='';
       const frag=document.createDocumentFragment();
-      docs.forEach(doc=>{ frag.appendChild(prChatRow(Object.assign({},doc.data()||{},{__docId:doc.id}))); });
+      docs.forEach(doc=>{
+        const data=doc.data()||{};
+        if(data.type==='join') return;
+        frag.appendChild(prChatRow(Object.assign({},data,{__docId:doc.id})));
+      });
       el.appendChild(frag); el.__ready=true;
       const fresh=snap.docChanges().filter(ch=>ch.type==='added').map(ch=>ch.doc);
       if(fresh.length){ prResolveChatNames(fresh); prResolveChatAvatars(fresh); }
@@ -4683,20 +4687,9 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       });
     }catch(e){ toast('मैसेज नहीं गया'); }
   };
-  window.prAnnounceJoin=function(){
-    if(!db||!cinemaRoomId||!currentUserKey) return;
-    var seen=window.__prJoinAt||(window.__prJoinAt={});
-    var now=Date.now();
-    if(seen[cinemaRoomId] && now-seen[cinemaRoomId]<90000) return;
-    seen[cinemaRoomId]=now;
-    setTimeout(function(){
-      try{
-        db.collection('cinemaRooms').doc(cinemaRoomId).collection('chat').add({
-          type:'join',text:'',name:(nameOf(String(currentUserKey||''))||cinemaUserName()),userKey:String(currentUserKey||'guest'),createdAt:Date.now()
-        }).catch(function(){});
-      }catch(e){}
-    },900);
-  };
+  // Join-welcome notice disabled: entering the room no longer posts
+  // “रूम में आए हैं। स्वागत करें!” into the Party Room chat.
+  window.prAnnounceJoin=function(){};
 
   // ---------- gift listener: totals under names, combo banner, floating gift ----------
   function prSyncCoinDisplays(){
@@ -10297,6 +10290,44 @@ input,textarea,select{font-size:16px}
 var HISTORY_KEY='yt_history_v3',QUEUE_KEY='yt_queue_v3',VOLUME_KEY='yt_volume_v3',SOUND_KEY='yt_soundmode_v3',MAX_HISTORY=20,MAX_QUEUE=30,SHARE_DOC='partyRoomYouTube';
 var queue=[],history=[],current=null,isHost=false,soundMode=false,volume=80,muted=false,roomShareEnabled=true;
 var ytPlayer=null,ytReady=false,ytApiLoaded=!!window.YT,ytProgressTimer=null,roomUnsub=null,lastRoomTs=0,listeningRoom='';
+var ytPlus2AppliedVideoId='';
+var ytHiddenPlus2Btn=null;
+function ytEnsureHiddenPlus2Button(){
+  if(ytHiddenPlus2Btn&&document.body.contains(ytHiddenPlus2Btn))return ytHiddenPlus2Btn;
+  ytHiddenPlus2Btn=document.createElement('button');
+  ytHiddenPlus2Btn.id='ytRoomHiddenPlus2Btn';
+  ytHiddenPlus2Btn.type='button';
+  ytHiddenPlus2Btn.tabIndex=-1;
+  ytHiddenPlus2Btn.setAttribute('aria-hidden','true');
+  ytHiddenPlus2Btn.style.cssText='display:none!important;visibility:hidden!important;width:0;height:0;position:absolute;opacity:0;pointer-events:none;margin:0;padding:0;border:0;';
+  document.body.appendChild(ytHiddenPlus2Btn);
+  ytHiddenPlus2Btn.addEventListener('click',function(){
+    try{
+      if(!ytPlayer||!ytReady||typeof ytPlayer.getCurrentTime!=='function'||typeof ytPlayer.seekTo!=='function')return;
+      var t=Number(ytPlayer.getCurrentTime())||0;
+      var d=typeof ytPlayer.getDuration==='function'?(Number(ytPlayer.getDuration())||0):0;
+      var target=t+2;
+      if(d>0)target=Math.min(target,Math.max(0,d-0.05));
+      ytPlayer.seekTo(target,true);
+    }catch(e){}
+  });
+  return ytHiddenPlus2Btn;
+}
+function ytAutoPlus2AfterPlay(){
+  try{
+    if(!ytPlayer||!ytReady||typeof ytPlayer.getVideoData!=='function')return;
+    var vd=ytPlayer.getVideoData()||{},id=String(vd.video_id||'');
+    if(!id||ytPlus2AppliedVideoId===id)return;
+    ytPlus2AppliedVideoId=id;
+    var b=ytEnsureHiddenPlus2Button();
+    setTimeout(function(){
+      try{
+        if(ytPlayer&&ytReady&&typeof ytPlayer.getPlayerState==='function'&&ytPlayer.getPlayerState()===YT.PlayerState.PLAYING)b.click();
+      }catch(e){}
+    },120);
+  }catch(e){}
+}
+
 /* Every player creation gets a generation id. Leaving the room invalidates the
    old generation so a delayed YouTube IFrame API callback can never resurrect
    a player after it has been closed. */
@@ -10730,6 +10761,7 @@ function createPlayer(info,startSeconds){
       var vars={autoplay:0,rel:0,modestbranding:1,playsinline:1,controls:1,start:start,enablejsapi:1,loop:0};
       if(roomMode){vars.fs=0;vars.disablekb=1;vars.iv_load_policy=3;vars.cc_load_policy=0;}
       if(info.list)vars.list=info.list;
+      ytPlus2AppliedVideoId=''; ytEnsureHiddenPlus2Button();
       ytPlayer=new YT.Player(div.id,{
         height:'100%',width:'100%',videoId:info.id,playerVars:vars,
         events:{
@@ -10749,6 +10781,7 @@ function createPlayer(info,startSeconds){
           },
           onStateChange:function(e){
             updatePlayPause();
+            if(e.data===YT.PlayerState.PLAYING)ytAutoPlus2AfterPlay();
             if(e.data===YT.PlayerState.ENDED){
               if(roomMode&&!ytRemoteApplying&&ytRoomHost()){
                 ytRoomWriteState({playing:false,currentTime:0,stopped:true});
@@ -12234,6 +12267,55 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   document.addEventListener('keydown',function(e){
     if(e.key==='Escape'&&overlay&&overlay.classList.contains('open'))closeMoreVideo();
   });
+})();
+</script>
+
+
+<style id="partyRoomYoutubeCommentStableFinal">
+/* YouTube Party Room: comment composer stays inside the chat area below the video.
+   It must never be pinned to the viewport/keyboard or jump over the video. */
+#prRoom.party-youtube-layout #cinemaChatPanel #cinemaChatComposer,
+#prRoom.party-youtube-layout #cinemaChatComposer.party-composer-open{
+  position:absolute!important;
+  left:8px!important;
+  right:8px!important;
+  top:auto!important;
+  bottom:6px!important;
+  width:auto!important;
+  z-index:170!important;
+}
+#prRoom.party-youtube-layout #cinemaChatPanel{
+  overflow:visible!important;
+}
+/* Opening/typing must not make the YouTube comment panel follow the keyboard viewport. */
+#prRoom.party-youtube-layout.party-keyboard-open #cinemaChatPanel{
+  position:absolute!important;
+  top:var(--yt-chat-top,auto)!important;
+  bottom:64px!important;
+  transform:none!important;
+}
+</style>
+<script id="partyRoomYoutubeCommentStableScript">
+(function(){
+  'use strict';
+  function fix(){
+    var r=document.getElementById('prRoom');
+    var c=document.getElementById('cinemaChatComposer');
+    if(!r||!c||!r.classList.contains('party-youtube-layout')||!c.classList.contains('party-composer-open')) return;
+    c.style.setProperty('position','absolute','important');
+    c.style.setProperty('left','8px','important');
+    c.style.setProperty('right','8px','important');
+    c.style.setProperty('top','auto','important');
+    c.style.setProperty('bottom','6px','important');
+  }
+  function init(){
+    fix();
+    var r=document.getElementById('prRoom'), c=document.getElementById('cinemaChatComposer');
+    if(r){try{new MutationObserver(fix).observe(r,{attributes:true,attributeFilter:['class']});}catch(e){}}
+    if(c){try{new MutationObserver(fix).observe(c,{attributes:true,attributeFilter:['class']});}catch(e){}}
+    setInterval(fix,500);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
 </script>
 
