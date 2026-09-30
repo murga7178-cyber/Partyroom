@@ -12280,6 +12280,173 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 })();
 </script>
 
+
+<style id="pkPartyRoomFourSmallChanges">
+/* 1) Party Room YouTube: remove the artificial black top shield/spot. */
+#partyYoutubeStage .yt-room-card::before{display:none!important;content:none!important;background:none!important;}
+
+/* 2) Temporarily remove the live-comment entry controls. Keep the room itself untouched. */
+#prRoom #partyRoomCommentToggle,
+#prRoom #cinemaChatComposer{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
+
+/* 4) Hide room-entry/welcome notices and the old generic notice row. */
+#prRoom #cinemaChatMessages > .pr-msg.pr-sys,
+#prRoom #cinemaChatMessages > .pr-msg.pr-notice{display:none!important;}
+
+/* 3) Small Play/Rocket control sits directly on the progress thumb. */
+#ytRoomViewerSeekBar{position:relative!important;}
+#ytRoomRocketBtn{
+  position:absolute!important;
+  z-index:120!important;
+  width:30px!important;height:30px!important;
+  min-width:30px!important;min-height:30px!important;
+  padding:0!important;margin:0!important;
+  border:1px solid rgba(255,255,255,.55)!important;
+  border-radius:50%!important;
+  background:rgba(20,20,28,.96)!important;
+  color:#fff!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  font:900 15px/1 system-ui,sans-serif!important;
+  box-shadow:0 2px 9px rgba(0,0,0,.45),0 0 0 1px rgba(0,0,0,.15)!important;
+  cursor:pointer!important;touch-action:manipulation!important;
+  transform:translate(-50%,-50%)!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+#ytRoomRocketBtn.is-playing{
+  background:rgba(12,18,30,.98)!important;
+  font-size:18px!important;
+}
+#ytRoomRocketBtn.is-playing::after{
+  content:'🔥';
+  position:absolute;
+  left:-12px;top:50%;
+  transform:translateY(-50%) rotate(-12deg);
+  font-size:14px;
+  line-height:1;
+  filter:drop-shadow(0 0 3px rgba(255,110,0,.75));
+  animation:pkRocketFire .22s ease-in-out infinite alternate;
+  pointer-events:none;
+}
+@keyframes pkRocketFire{
+  from{transform:translateY(-50%) scale(.88) rotate(-10deg);opacity:.78;}
+  to{transform:translateY(-50%) scale(1.12) rotate(-16deg);opacity:1;}
+}
+#ytRoomRocketBtn:active{transform:translate(-50%,-50%) scale(.9)!important;}
+#ytRoomRocketBtn[disabled]{opacity:.65!important;cursor:default!important;}
+</style>
+<script id="pkPartyRoomFourSmallChangesJs">
+(function(){
+  'use strict';
+  function $(id){return document.getElementById(id);}
+  function host(){
+    try{ return !!(window.ytRoomBridge && window.ytRoomBridge.host && window.ytRoomBridge.host()); }
+    catch(e){ try{return !!window.cinemaIsHost;}catch(_){return false;} }
+  }
+  function mediaState(){
+    try{
+      if(window.ytRoomBridge && window.ytRoomBridge.info){
+        var b=window.ytRoomBridge.info();
+        if(b) return {playing:Number(b.state)===1,cur:Number(b.cur)||0,dur:Number(b.dur)||0};
+      }
+    }catch(e){}
+    try{
+      if(window.ytPlayer && window.ytPlayer.getPlayerState){
+        var st=window.ytPlayer.getPlayerState();
+        return {playing:st===1,cur:Number(window.ytPlayer.getCurrentTime&&window.ytPlayer.getCurrentTime())||0,dur:Number(window.ytPlayer.getDuration&&window.ytPlayer.getDuration())||0};
+      }
+    }catch(e){}
+    return {playing:false,cur:0,dur:0};
+  }
+  function ensureButton(){
+    var bar=$('ytRoomViewerSeekBar'),range=$('ytRoomViewerSeekRange');
+    if(!bar||!range)return null;
+    var btn=$('ytRoomRocketBtn');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.type='button';
+      btn.id='ytRoomRocketBtn';
+      btn.setAttribute('aria-label','Play/Pause');
+      btn.title='Play / Pause';
+      btn.textContent='▶';
+      bar.appendChild(btn);
+      btn.addEventListener('click',function(e){
+        e.preventDefault();e.stopPropagation();
+        if(!host())return;
+        toggle();
+      });
+    }
+    return btn;
+  }
+  function position(){
+    var btn=ensureButton(),range=$('ytRoomViewerSeekRange'),bar=$('ytRoomViewerSeekBar');
+    if(!btn||!range||!bar)return;
+    var max=Number(range.max)||0, val=Number(range.value)||0;
+    var rr=range.getBoundingClientRect(), br=bar.getBoundingClientRect();
+    var ratio=max>0?Math.max(0,Math.min(1,val/max)):0;
+    /* Keep the button exactly over the native range thumb, including while it moves. */
+    var x=(rr.left + rr.width*ratio)-br.left;
+    var y=(rr.top + rr.height/2)-br.top;
+    btn.style.left=x+'px';
+    btn.style.top=y+'px';
+    btn.disabled=!host();
+  }
+  function paint(){
+    var btn=ensureButton(),bar=$('ytRoomViewerSeekBar'),range=$('ytRoomViewerSeekRange');
+    if(!btn||!bar||!range)return;
+    var room=$('prRoom');
+    var visible=!!(room&&room.classList.contains('party-youtube-layout'));
+    btn.style.display=visible?'flex':'none';
+    if(!visible)return;
+    var st=mediaState();
+    var playing=!!st.playing;
+    btn.classList.toggle('is-playing',playing);
+    btn.textContent=playing?'🚀':'▶';
+    btn.setAttribute('aria-label',playing?'Pause':'Play');
+    btn.title=playing?'Pause':'Play';
+    position();
+  }
+  function writePlayState(playing){
+    try{
+      if(typeof ytRoomWriteState==='function' && window.current){
+        var d=mediaState();
+        ytRoomWriteState({
+          type:window.current.upload?'upload':'youtube',
+          videoUrl:window.current.upload?(window.current.url||''):undefined,
+          videoId:window.current.id||'',
+          listId:window.current.list||'',
+          title:window.current.title||'',
+          playing:!!playing,
+          currentTime:d.cur||0,
+          dur:d.dur||0,
+          stopped:false,
+          shorts:!!window.current.shorts
+        });
+      }
+    }catch(e){}
+  }
+  function toggle(){
+    var st=mediaState(), next=!st.playing;
+    try{
+      if(window.current&&window.current.upload){
+        var lv=$('ytRoomLocalVideo');
+        if(!lv)return;
+        if(next){var pr=lv.play();if(pr&&pr.catch)pr.catch(function(){});}else lv.pause();
+      }else if(window.ytPlayer&&window.ytReady){
+        if(next&&window.ytPlayer.playVideo)window.ytPlayer.playVideo();
+        else if(!next&&window.ytPlayer.pauseVideo)window.ytPlayer.pauseVideo();
+      }else{return;}
+      writePlayState(next);
+      setTimeout(paint,40);
+    }catch(e){}
+  }
+  function tick(){try{paint();}catch(e){}}
+  document.addEventListener('DOMContentLoaded',tick);
+  setInterval(tick,120);
+  window.addEventListener('resize',tick);
+  window.addEventListener('orientationchange',function(){setTimeout(tick,100);});
+})();
+</script>
+
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
