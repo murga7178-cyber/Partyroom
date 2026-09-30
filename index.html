@@ -12360,6 +12360,251 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 })();
 </script>
 
+
+<style id="partyRoomFinalSimpleComment">
+/* अंतिम सरल comment UI: केवल input + Send */
+#prRoom #cinemaChatComposer{
+  display:none!important;
+  position:absolute!important;
+  left:8px!important; right:8px!important; top:8px!important; bottom:auto!important;
+  min-height:50px!important; height:50px!important;
+  padding:7px!important; gap:7px!important;
+  box-sizing:border-box!important;
+}
+#prRoom #cinemaChatComposer.party-composer-open{
+  display:flex!important;
+}
+#prRoom #cinemaChatComposer > button:first-child{
+  display:none!important;
+}
+#prRoom #cinemaChatInput{
+  height:36px!important;
+  min-height:36px!important;
+  margin:0!important;
+  font-size:14px!important;
+  -webkit-appearance:none!important;
+}
+#prRoom #cinemaChatComposer button[aria-label="Send message"]{
+  width:44px!important;height:36px!important;min-width:44px!important;
+  display:block!important;
+}
+</style>
+<script id="partyRoomFinalFix">
+(function(){
+  'use strict';
+  function $(id){return document.getElementById(id);}
+
+  /* =========================================================
+     1) HIDDEN +2: trigger while video is still at 0:00.
+        It does NOT wait for PLAYING.
+     ========================================================= */
+  var plusDoneId='';
+  var plusRetry=0;
+  var plusTimer=null;
+
+  function ensurePlusButton(){
+    if(window.ytHiddenPlus2Btn && document.body.contains(window.ytHiddenPlus2Btn))
+      return window.ytHiddenPlus2Btn;
+
+    var b=document.getElementById('ytRoomFinalHiddenPlus2Btn');
+    if(!b){
+      b=document.createElement('button');
+      b.id='ytRoomFinalHiddenPlus2Btn';
+      b.type='button';
+      b.tabIndex=-1;
+      b.setAttribute('aria-hidden','true');
+      b.style.cssText='display:none!important;visibility:hidden!important;width:0!important;height:0!important;position:absolute!important;left:-99999px!important;top:-99999px!important;opacity:0!important;pointer-events:none!important;';
+      document.body.appendChild(b);
+    }
+    window.ytHiddenPlus2Btn=b;
+    return b;
+  }
+
+  function showPlusCurtain(){
+    try{
+      var ov=window.ytPlus2Overlay;
+      if(!ov){
+        ov=document.getElementById('ytRoomPlus2Overlay');
+        window.ytPlus2Overlay=ov;
+      }
+      if(!ov && typeof window.ytEnsurePlus2Overlay==='function')
+        ov=window.ytEnsurePlus2Overlay();
+      var card=document.querySelector('#partyYoutubeStage .yt-room-card')||document.querySelector('.yt-room-card');
+      if(ov && card && ov.parentNode!==card) card.appendChild(ov);
+      if(ov){
+        ov.style.display='flex';
+        ov.style.visibility='visible';
+        ov.style.pointerEvents='none';
+        ov.setAttribute('aria-hidden','false');
+      }
+      return ov;
+    }catch(e){return null;}
+  }
+  function hidePlusCurtain(){
+    try{
+      var ov=window.ytPlus2Overlay||document.getElementById('ytRoomPlus2Overlay');
+      if(ov){
+        ov.style.display='none';
+        ov.setAttribute('aria-hidden','true');
+      }
+    }catch(e){}
+  }
+
+  function doHiddenPlus2(){
+    try{
+      var p=window.ytPlayer;
+      if(!p || typeof p.getCurrentTime!=='function' || typeof p.seekTo!=='function') return false;
+      var t=Number(p.getCurrentTime())||0;
+      /* This trigger is only valid at the very beginning. */
+      if(t>0.35) return false;
+      var d=typeof p.getDuration==='function'?(Number(p.getDuration())||0):0;
+      if(d<=2.05) return false;
+
+      var b=ensurePlusButton();
+      if(!b) return false;
+
+      showPlusCurtain();
+      try{ b.onclick=null; }catch(e){}
+      /* Keep the hidden button semantics: one internal click performs +2. */
+      b.onclick=function(){
+        try{
+          var pp=window.ytPlayer;
+          if(!pp || typeof pp.getCurrentTime!=='function' || typeof pp.seekTo!=='function') return;
+          var now=Number(pp.getCurrentTime())||0;
+          if(now>0.75) return;
+          pp.seekTo(Math.min(now+2,Math.max(0,d-0.05)),true);
+        }catch(e){}
+      };
+      b.click();
+
+      /* Verify the seek actually happened; retry only while still near 0:00. */
+      var tries=0;
+      var verify=setInterval(function(){
+        tries++;
+        try{
+          var pp=window.ytPlayer, cur=pp?Number(pp.getCurrentTime())||0:0;
+          if(cur>=1.4 || tries>=8){
+            clearInterval(verify);
+            setTimeout(hidePlusCurtain,450);
+          }else if(cur<0.35 && pp && typeof pp.seekTo==='function'){
+            b.click();
+          }
+        }catch(e){
+          clearInterval(verify);
+          hidePlusCurtain();
+        }
+      },250);
+      return true;
+    }catch(e){
+      hidePlusCurtain();
+      return false;
+    }
+  }
+
+  function watchForLoadedAtZero(){
+    if(plusTimer) clearTimeout(plusTimer);
+    plusRetry=0;
+    plusDoneId='';
+    function check(){
+      plusRetry++;
+      try{
+        var p=window.ytPlayer;
+        if(p && window.ytReady && typeof p.getVideoData==='function'){
+          var vd=p.getVideoData()||{}, id=String(vd.video_id||'');
+          var st=typeof p.getPlayerState==='function'?p.getPlayerState():-99;
+          var cur=typeof p.getCurrentTime==='function'?(Number(p.getCurrentTime())||0):99;
+          var dur=typeof p.getDuration==='function'?(Number(p.getDuration())||0):0;
+
+          /* Video must be loaded/cued, duration known, and still at 0:00.
+             PLAYING is intentionally NOT required. */
+          if(id && id!==plusDoneId && dur>2 && cur<=0.35 &&
+             (st===-1 || st===5 || st===2)){
+            plusDoneId=id;
+            if(doHiddenPlus2()) return;
+          }
+        }
+      }catch(e){}
+      if(plusRetry<80) plusTimer=setTimeout(check,250);
+    }
+    check();
+  }
+
+  /* Replace the old play-dependent function. */
+  window.ytAutoPlus2AfterPlay=function(){
+    watchForLoadedAtZero();
+  };
+
+  /* Start checking shortly after any player becomes available, including
+     a freshly loaded/search-selected video. */
+  var boot=setInterval(function(){
+    if(window.ytPlayer && window.ytReady){
+      watchForLoadedAtZero();
+    }
+  },500);
+  setTimeout(function(){clearInterval(boot);},30000);
+
+  /* =========================================================
+     2) SIMPLE COMMENT: open/close only; no forced focus,
+        no keyboard observer, no delayed focus, no dock movement.
+     ========================================================= */
+  var open=false;
+  function setOpen(v){
+    open=!!v;
+    var c=$('cinemaChatComposer'), p=$('cinemaChatPanel'), t=$('partyRoomCommentToggle');
+    if(c){
+      c.classList.toggle('party-composer-open',open);
+      c.style.display=open?'flex':'none';
+      c.style.visibility=open?'visible':'hidden';
+      c.style.opacity=open?'1':'0';
+      c.style.pointerEvents=open?'auto':'none';
+      c.style.position='absolute';
+      c.style.left='8px'; c.style.right='8px'; c.style.top='8px'; c.style.bottom='auto';
+    }
+    if(p) p.classList.toggle('chat-input-open',open);
+    if(t){
+      t.setAttribute('aria-expanded',open?'true':'false');
+      t.classList.toggle('is-open',open);
+      var txt=t.firstChild;
+      if(txt && txt.nodeType===3) txt.nodeValue=open?'✕':'💬';
+    }
+  }
+
+  window.partyRoomFocusChat=function(){
+    setOpen(!open);
+    /* Deliberately do NOT force keyboard focus. User can tap the input. */
+    return false;
+  };
+  window.partyRoomCloseChatPanel=function(){setOpen(false);};
+
+  /* Make the Send action simple: use the existing Firebase sender,
+     but do not blur/focus/reposition the input afterward. */
+  var originalSend=window.cinemaSendChat;
+  if(typeof originalSend==='function' && !originalSend.__simpleWrapped){
+    var simpleSend=function(){
+      var i=$('cinemaChatInput');
+      if(!i) return;
+      var value=String(i.value||'').trim();
+      if(!value) return;
+      /* Let the proven room/Firebase sender do the actual save. */
+      originalSend.call(this);
+      /* Keep the small composer open; no keyboard/layout manipulation. */
+      setTimeout(function(){
+        if(open) setOpen(true);
+      },80);
+    };
+    simpleSend.__simpleWrapped=true;
+    window.cinemaSendChat=simpleSend;
+  }
+
+  /* Remove old capture/focus helpers by making the actual button's inline
+     handler the only open/close path. */
+  document.addEventListener('DOMContentLoaded',function(){
+    var tag=$('cinemaChatComposer') && $('cinemaChatComposer').querySelector('button:first-child');
+    if(tag) tag.style.display='none';
+    setOpen(false);
+  });
+})();
+</script>
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
