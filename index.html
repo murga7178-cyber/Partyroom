@@ -2835,18 +2835,20 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
           <div id="cinemaChatMessages" aria-live="polite"></div>
           <div class="prc-trigger" id="prcTrigger" role="button" tabindex="0"><div class="prc-av">A</div><span class="t">कमेंट जोड़ें...</span><span class="i">☺🎁</span></div>
           <div class="prc-panel" id="prcPanel">
-            <div class="prc-top"><div class="prc-av">A</div><b>💬 कमेंट करें</b><button type="button" class="prc-x" id="prcClose" aria-label="बंद करें">✕</button></div>
+            <button type="button" class="prc-x" id="prcClose" aria-label="बंद करें" style="display:none">✕</button>
             <div class="prc-prev" id="prcPrev"></div>
-            <div class="prc-row">
-              <textarea id="cinemaChatInput" maxlength="180" rows="1" placeholder="अपना कमेंट लिखें..." autocomplete="off" enterkeyhint="send" spellcheck="false"></textarea>
-              <div class="prc-fs" id="prcFs" role="button" aria-label="उड़ान">🚀</div>
-              <button type="button" class="prc-b gif" id="prcBg">GIF</button>
-              <button type="button" class="prc-send" id="prcSend" aria-label="Send message" disabled>➤</button>
+            <div class="input-row" id="prcInputRow">
+              <button type="button" class="icon-btn emoji-btn" id="prcBe" title="Emoji"><span class="icon-inner"><span class="emoji-icon">😀</span></span></button>
+              <button type="button" class="icon-btn gif-btn" id="prcBg" title="GIF"><span class="icon-inner"><span class="emoji-icon">🎞️</span><span class="label">GIF</span></span></button>
+              <textarea id="cinemaChatInput" inputmode="none" maxlength="180" rows="1" placeholder="Type here..." autocomplete="off" enterkeyhint="send" spellcheck="false"></textarea>
+              <div class="switch-wrap"><div class="switch" id="prcFs" role="button" aria-label="उड़ान" title="उड़ान"></div></div>
+              <button type="button" class="icon-btn keyboard-btn" id="prcKbBtn" title="Keyboard"><span class="icon-inner"><span class="emoji-icon">⌨️</span></span></button>
+              <button type="button" id="prcSend" aria-label="Send message" title="Send" disabled><span class="icon-inner">➤</span></button>
             </div>
             <div class="prc-st" id="prcSt"><button type="button" class="on" data-s="wave">वेव</button><button type="button" data-s="rocket">रॉकेट</button><button type="button" data-s="flower">फूल</button><button type="button" data-s="heart">दिल</button></div>
             <div class="prc-pick" id="prcPick">
               <div id="prcEmoTab"><div class="prc-eg" id="prcEg"></div></div>
-              <div id="prcGifTab" style="display:none"><div class="prc-gs"><input id="prcGsIn" placeholder="सर्च: dog, dance, love..."><button type="button" id="prcGsBtn">🔍</button></div><div class="prc-gg" id="prcGg"></div></div>
+              <div id="prcGifTab" style="display:none"><div class="prc-gg" id="prcGg"></div></div>
             </div>
           </div>
         </div>
@@ -2858,7 +2860,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
 
         <div id="partyRoomBottomDock">
           <div class="prd-group">
-            <button type="button" id="partyRoomCommentDockBtn" class="prd-comment" onclick="partyRoomOpenCommentFromDock()" aria-label="कमेंट करें" title="कमेंट करें">💬</button>
+            <button type="button" id="partyRoomFocusChatBtn" style="display:none!important;" aria-hidden="true" tabindex="-1">💬</button>
+            <button type="button" id="partyRoomChatDockBtn" onclick="if(window.partyRoomFocusChat)window.partyRoomFocusChat();return false;" aria-label="Comment"><span class="prd-chat-ico"></span></button>
             <button type="button" onclick="togglePartyRoomReactionTray()" aria-label="Emoji reactions"><span class="prr-dock-ico"></span></button>
             <button type="button" id="partyRoomInboxBtn" onclick="pkHomeOpenInbox()" aria-label="Messages">✉️<span id="partyRoomInboxBadge" class="prd-badge-inbox">0</span></button>
           </div>
@@ -4606,8 +4609,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     return row;
   };
   window.prOpenComposer=function(prefill){
-    var composer=$('cinemaChatComposer'), input=$('cinemaChatInput'); if(!composer||!input) return;
-    if(composer.style.display!=='flex' && typeof window.partyRoomFocusChat==='function') window.partyRoomFocusChat();
+    var input=$('cinemaChatInput'), pn=$('prcPanel'); if(!input) return;
+    if(pn && !pn.classList.contains('open') && typeof window.partyRoomFocusChat==='function') window.partyRoomFocusChat();
     setTimeout(function(){ try{ if(prefill){ input.value=prefill; } input.focus(); }catch(e){} },90);
   };
   window.prTagUserToComment=function(key,name){
@@ -4629,12 +4632,12 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       btn.onclick=function(){
         var nm=btn.getAttribute('data-tag-name');
         el.remove();
-        var composer=$('cinemaChatComposer'), input=$('cinemaChatInput');
-        if(composer && composer.style.display!=='flex' && typeof window.partyRoomFocusChat==='function') window.partyRoomFocusChat();
+        var input=$('cinemaChatInput'), pn=$('prcPanel');
+        if(pn && !pn.classList.contains('open') && typeof window.partyRoomFocusChat==='function') window.partyRoomFocusChat();
         setTimeout(function(){
           try{
             var cur=(input&&input.value)||''; var sep=(cur && !/\s$/.test(cur))?' ':'';
-            if(input){ input.value=cur+sep+'@'+nm+' '; input.focus(); }
+            if(input){ input.value=cur+sep+'@'+nm+' '; input.dispatchEvent(new Event('input',{bubbles:true})); input.focus({preventScroll:true}); }
           }catch(e){}
         },90);
       };
@@ -12534,6 +12537,7 @@ var swallow=0;
 document.addEventListener('pointerdown',function(e){
   var p=$('prcPanel');if(!p||!p.classList.contains('open'))return;
   if(p.contains(e.target))return;
+  var kbx=$('prcKb');if(kbx&&kbx.contains(e.target))return;
   var t=$('prcTrigger');if(t&&t.contains(e.target))return;
   swallow=Date.now();
   if(typeof window.partyRoomCloseChatPanel==='function')window.partyRoomCloseChatPanel();
@@ -12550,48 +12554,12 @@ tick();
 html body #prRoom > #cinemaChatPanel,
 html body #prRoom #cinemaChatPanel,
 html body #prRoom #cinemaChatMessages,
-html body #prRoom #prcTrigger,
-html body #prRoom #prcPanel,
 html body #prRoom #cinemaChatComposer,
 html body #prRoom #partyRoomCommentToggle,
 html body #prRoom #partyRoomFocusChatBtn,
 html body #prRoom .pr-msg,
 html body .prc-fly{display:none!important;visibility:hidden!important;pointer-events:none!important;}
 </style>
-<style id="partyRoomCommentDockFinal">
-/* Final Party Room comment dock: Comment → Emoji → Message. The existing HTML comment panel is reused. */
-#partyRoomBottomDock .prd-group:first-child{display:flex!important;align-items:center!important;gap:5px!important;}
-#partyRoomBottomDock .prd-group:first-child #partyRoomCommentDockBtn{
-  display:flex!important;align-items:center!important;justify-content:center!important;
-  width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;
-  padding:0!important;border:0!important;border-radius:50%!important;
-  background:linear-gradient(135deg,#ff6bb5,#e0136f)!important;
-  color:#fff!important;font-size:18px!important;line-height:1!important;
-  box-shadow:0 6px 16px rgba(224,19,111,.42)!important;
-  -webkit-tap-highlight-color:transparent!important;
-}
-#partyRoomBottomDock .prd-group:first-child #partyRoomCommentDockBtn:active{transform:scale(.92)!important;}
-/* The old draggable bubble is no longer needed in the corner; the dock button is its new cropped/pink home. */
-html body #prRoom > #prcTrigger{display:none!important;visibility:hidden!important;pointer-events:none!important;}
-html body #prRoom > #prcPanel{display:none;}
-html body #prRoom > #prcPanel.open{display:flex!important;visibility:visible!important;pointer-events:auto!important;}
-/* Restore the existing comment/message feed and panel that an older no-comments override hid. */
-html body #prRoom > #cinemaChatPanel{display:block!important;visibility:visible!important;pointer-events:auto!important;}
-html body #prRoom #cinemaChatMessages{display:flex!important;visibility:visible!important;pointer-events:auto!important;}
-html body #prRoom .pr-msg{display:flex!important;visibility:visible!important;}
-html body #prRoom #prcPanel{visibility:visible!important;}
-</style>
-<script id="partyRoomCommentDockFinalScript">
-(function(){
-  function openComment(){
-    var panel=document.getElementById('prcPanel');
-    if(panel && panel.classList.contains('open')) return;
-    if(typeof window.prOpenComposer==='function'){ window.prOpenComposer(); return; }
-    if(typeof window.partyRoomFocusChat==='function') window.partyRoomFocusChat();
-  }
-  window.partyRoomOpenCommentFromDock=openComment;
-})();
-</script>
 <style id="ytSeekPadStyle">
 /* YouTube Mode (host): small control pad in the empty space under the room photo, above the seats. */
 #prRoom #ytSeekPad{display:none;position:absolute;left:8px;top:var(--yt-sub-top,70px);height:30px;z-index:61;align-items:center;gap:4px;padding:2px 4px;box-sizing:border-box;border-radius:999px;background:linear-gradient(135deg,rgba(49,27,105,.94),rgba(30,18,75,.94));border:1px solid rgba(167,139,250,.75);box-shadow:0 5px 16px rgba(88,28,135,.35),0 0 0 1px rgba(255,255,255,.05) inset;pointer-events:auto;-webkit-tap-highlight-color:transparent;}
@@ -12975,6 +12943,42 @@ html body #prRoom #prcPanel{visibility:visible!important;}
 html.prc-kb-on body #prRoom > #cinemaChatPanel.prc{margin-bottom:calc(var(--prcKb,0px) + 4px)!important}
 html.prc-kb-on body #prRoom.party-youtube-layout > #cinemaChatPanel.prc,html.prc-kb-on body #prRoom.party-gaming-layout > #cinemaChatPanel.prc{margin:0!important;top:auto!important;bottom:calc(var(--prcKb,0px) + 4px)!important}
 </style>
+<style id="pkChatDockIcon">
+.prd-chat-ico{display:block;width:29px;height:29px;background:url(data:image/png;base64,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) center/contain no-repeat;filter:drop-shadow(0 2px 6px rgba(224,19,111,.45))}
+#partyRoomBottomDock .prd-group:first-child .prd-chat-ico{width:22px!important;height:22px!important}
+</style>
+<style id="pkPrcNewPanel">
+/* Comment panel = exact look of keywords.html (Pro Keyboard): emoji | GIF | text | switch | keyboard | send, keyboard right below */
+html body #prRoom > #prcPanel.prc-panel{left:0!important;right:0!important;max-width:none!important;width:100%!important;margin:0!important;padding:10px!important;gap:8px!important;flex-direction:column!important;border-radius:16px 16px 0 0!important;background:linear-gradient(160deg,rgba(45,10,35,.98),rgba(25,5,20,1))!important;border:1.5px solid rgba(255,20,147,.5)!important;border-bottom:0!important;box-shadow:0 -10px 30px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08)!important;bottom:calc(env(safe-area-inset-bottom,0px) + 0px)!important;overflow:visible!important}
+html.prc-kb-on body #prRoom > #prcPanel.prc-panel{bottom:var(--prcKb,0px)!important;border-radius:16px 16px 0 0!important}
+html.prc-kb-on #prcKb{border-top:0!important;border-radius:0!important;box-shadow:none!important}
+html.prc-kb-on body #prRoom > #prcTrigger{display:none!important}
+#prcPanel .input-row{display:flex;align-items:stretch;gap:0;background:linear-gradient(135deg,rgba(20,5,15,.95),rgba(35,10,28,.95));border:1.5px solid rgba(255,20,147,.5);border-radius:10px;padding:0;box-shadow:inset 0 2px 8px rgba(0,0,0,.5);position:relative;overflow:hidden;min-height:46px;flex-shrink:0}
+#prcPanel .input-row::before{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(255,20,147,.15) 50%,transparent 70%);background-size:200% 100%;animation:prcShineSlide 3s linear infinite;pointer-events:none}
+@keyframes prcShineSlide{0%{background-position:200% 0}100%{background-position:-200% 0}}
+#prcPanel .icon-btn{width:34px;min-width:34px;flex-shrink:0;border-radius:0;border:none;border-right:1px solid rgba(255,20,147,.25);background:linear-gradient(135deg,#3a1a2e,#2a0f20);color:#ffb3d9;font-size:.95rem;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;padding:0 2px;-webkit-tap-highlight-color:transparent;height:auto}
+#prcPanel .icon-btn .icon-inner{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px;width:100%;height:100%;position:relative}
+#prcPanel .icon-btn .label{font-size:.45rem;font-weight:700;letter-spacing:.5px;line-height:1;opacity:.9}
+#prcPanel .icon-btn .emoji-icon{font-size:.95rem;line-height:1}
+#prcPanel .icon-btn .icon-inner::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:16px;height:1.5px;background:linear-gradient(90deg,transparent,#ff1493,#ff69b4,transparent);box-shadow:0 0 6px #ff1493;border-radius:2px;opacity:.7}
+#prcPanel .icon-btn.on{background:linear-gradient(135deg,#6b1f4f,#4a1238)}
+#prcPanel #cinemaChatInput{flex:1 1 auto;min-width:0;background:transparent!important;border:none!important;outline:none!important;box-shadow:none!important;color:#fff!important;-webkit-text-fill-color:#fff!important;caret-color:#ff69b4!important;font-size:.95rem!important;font-weight:600!important;padding:12px 8px!important;height:46px!important;min-height:46px!important;max-height:46px!important;line-height:1.5!important;resize:none!important;border-radius:0!important;position:relative;z-index:1;text-shadow:0 0 8px rgba(255,20,147,.4);overflow-y:auto}
+#prcPanel #cinemaChatInput::placeholder{color:#a88098!important;-webkit-text-fill-color:#a88098!important;font-weight:500;text-shadow:none}
+#prcPanel .switch-wrap{display:flex;align-items:center;justify-content:center;padding:0 6px;border-left:1px solid rgba(255,20,147,.25);border-right:1px solid rgba(255,20,147,.25);position:relative;z-index:1;flex-shrink:0}
+#prcPanel .switch{position:relative;width:30px;height:16px;background:linear-gradient(135deg,#3a1a2e,#2a0f20);border:1px solid rgba(255,20,147,.4);border-radius:4px;cursor:pointer;box-shadow:inset 0 2px 4px rgba(0,0,0,.5);flex:none;padding:0;margin:0;font-size:0;min-width:0}
+#prcPanel .switch::after{content:'';position:absolute;top:1px;left:1px;width:12px;height:12px;background:linear-gradient(135deg,#fff,#ffb3d9);border-radius:3px;transition:.35s cubic-bezier(.34,1.56,.64,1);box-shadow:0 2px 5px rgba(0,0,0,.4)}
+#prcPanel .switch.on{background:linear-gradient(135deg,#ffd60a,#ffa500);border-color:#ffd60a;box-shadow:0 0 15px rgba(255,214,10,.7)}
+#prcPanel .switch.on::after{left:15px;background:#fff}
+#prcPanel #prcSend{width:40px;min-width:40px;flex:0 0 40px;border-radius:0!important;border:none!important;background:linear-gradient(135deg,#3a1a2e,#2a0f20)!important;color:#ff69b4!important;font-size:1.2rem;display:flex;align-items:center;justify-content:center;font-weight:700;position:relative;z-index:1;height:auto!important;padding:0!important;box-shadow:none!important;opacity:1!important}
+#prcPanel #prcSend:disabled{opacity:.55!important}
+#prcPanel #prcSend .icon-inner{display:flex;align-items:center;justify-content:center;width:100%;height:100%;text-shadow:0 0 8px rgba(255,20,147,.6)}
+#prcPanel #prcSend:active .icon-inner{color:#fff;text-shadow:0 0 15px #fff,0 0 30px #ff1493;transform:scale(1.2)}
+html body #prRoom #prcPanel .input-row .icon-btn{border-radius:0!important;width:34px!important;min-width:34px!important;height:auto!important;box-shadow:none!important;border:none!important;border-right:1px solid rgba(255,20,147,.25)!important;background:linear-gradient(135deg,#3a1a2e,#2a0f20)!important}
+html body #prRoom #prcPanel .input-row .icon-btn.on{background:linear-gradient(135deg,#6b1f4f,#4a1238)!important}
+html body #prRoom #prcPanel #cinemaChatInput{font-family:'Segoe UI','SF Pro Display',system-ui,sans-serif!important}
+html body #prRoom #prcPanel #prcSend{border-radius:0!important}
+html body #prRoom > #prcTrigger,html body #prRoom #prcTrigger{display:none!important}
+</style>
 <div id="prcKb"><div class="prckb-body"><div class="prckb-pane open" id="prckbKeys"><div class="keyboard" id="prckb_keyboard">
           <div class="reader-row">
             <div class="reader-btn" id="prckb_readerBtn">
@@ -13053,7 +13057,7 @@ var keysPane=$('prckbKeys'),numPane=$('prckbNum');
 var shiftActive=false,capsLock=false,lastShiftClick=0,currentSuggestion='',currentWord='',cursorPos=0,currentPopup=null,popupTimer=null;
 var HISTORY_KEY='proKeyboardHistory_v1',FREQ_KEY='proKeyboardFreq_v1',PREF='prcKbOn_v1';
 var userHistory=[],wordFrequency={},kbOn=true;
-try{var sv=localStorage.getItem(HISTORY_KEY);if(sv)userHistory=JSON.parse(sv);var fq=localStorage.getItem(FREQ_KEY);if(fq)wordFrequency=JSON.parse(fq);if(localStorage.getItem(PREF)==='0')kbOn=false}catch(e){userHistory=[];wordFrequency={}}
+try{var sv=localStorage.getItem(HISTORY_KEY);if(sv)userHistory=JSON.parse(sv);var fq=localStorage.getItem(FREQ_KEY);if(fq)wordFrequency=JSON.parse(fq);kbOn=true;try{localStorage.removeItem(PREF)}catch(_e){}}catch(e){userHistory=[];wordFrequency={}}
 const dictionary = [
     'a','an','and','are','as','at','all','also','always','am','another','any','around','about','after','again','able','accept','accident','account','across','act','action','activity','actor','actually','add','address','adult','advice','afraid','afternoon','against','age','ago','agree','air','airport','allow','almost','alone','along','already','although','among','amount','ancient','anger','angry','animal','ankle','announce','answer','anybody','anymore','anyone','anything','anyway','anywhere','apart','apartment','appear','apple','apply','area','argue','arm','army','arrange','arrive','art','article','artist','ashamed','ask','asleep','attack','attend','attention','aunt','autumn','available','avoid','awake','away','awful',
     'be','because','been','before','being','below','best','better','between','big','both','bring','but','buy','by','baby','back','bad','bag','ball','banana','band','bank','bar','baseball','basic','basket','basketball','bath','bathroom','beach','bean','bear','beat','beautiful','bed','bedroom','beer','begin','beginning','behind','believe','bell','belong','belt','bench','bend','beside','beyond','bicycle','bike','bill','bird','birth','birthday','bit','bite','black','blanket','blind','block','blood','blow','blue','board','boat','body','boil','bone','book','border','boring','born','borrow','boss','bother','bottle','bottom','bowl','box','boy','brain','branch','brave','bread','break','breakfast','breath','breathe','brick','bridge','bright','brother','brown','brush','build','building','burn','business','bus','busy','butter','button','bye',
@@ -13319,12 +13323,12 @@ function sendNow(){var s=$('prcSend');if(s&&!s.disabled){s.click();setTimeout(fu
 function showPane(n){keysPane.classList.toggle('open',n==='k');numPane.classList.toggle('open',n==='n')}
 function showKb(){if(!ta||shown)return;shown=true;ta.setAttribute('inputmode','none');kbRoot.classList.add('show');showPane('k');cursorPos=ta.value.length;
  document.documentElement.classList.add('prc-kb-on');document.documentElement.style.setProperty('--prcKb',kbRoot.offsetHeight+'px');ensureFocus();refresh()}
-function hideKb(){if(!shown)return;shown=false;kbRoot.classList.remove('show');document.documentElement.classList.remove('prc-kb-on');document.documentElement.style.setProperty('--prcKb','0px');if(ta)ta.removeAttribute('inputmode');hideKeyPopup();stopBS()}
+function hideKb(){if(!shown)return;shown=false;kbRoot.classList.remove('show');document.documentElement.classList.remove('prc-kb-on');document.documentElement.style.setProperty('--prcKb','0px');hideKeyPopup();stopBS()}
 function syncPanel(){var open=panelEl.classList.contains('open');if(btn)btn.classList.toggle('on',kbOn);if(open&&kbOn)showKb();else hideKb()}
 function hook(){ta=$('cinemaChatInput');panelEl=$('prcPanel');var fsEl=$('prcFs');if(!ta||!panelEl||!fsEl||hooked)return;hooked=true;
- btn=document.createElement('button');btn.type='button';btn.id='prcKbBtn';btn.className='prc-b';btn.textContent='⌨️';btn.setAttribute('aria-label','कीबोर्ड बदलें');fsEl.parentNode.insertBefore(btn,fsEl);
- btn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();kbOn=!kbOn;try{localStorage.setItem(PREF,kbOn?'1':'0')}catch(x){}
-  if(panelEl.classList.contains('open')){if(kbOn){showKb();try{ta.blur()}catch(x){}setTimeout(ensureFocus,40)}else{hideKb();try{ta.blur()}catch(x){}setTimeout(function(){try{ta.focus()}catch(x){}},60)}}btn.classList.toggle('on',kbOn)});
+ ta.setAttribute('inputmode','none');ta.addEventListener('focus',function(){ta.setAttribute('inputmode','none')},true);
+  var kbBtn=$('prcKbBtn');if(kbBtn)kbBtn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();if(shown){kbOn=false;hideKb();kbBtn.classList.add('on')}else{kbOn=true;kbBtn.classList.remove('on');if(panelEl.classList.contains('open'))showKb()}});
+  ta.addEventListener('click',function(){if(!shown&&panelEl.classList.contains('open')){kbOn=true;if(kbBtn)kbBtn.classList.remove('on');showKb()}});
  new MutationObserver(syncPanel).observe(panelEl,{attributes:true,attributeFilter:['class']});
  ['click','keyup','touchend','select'].forEach(function(ev){ta.addEventListener(ev,function(){if(!shown)return;setTimeout(function(){cursorPos=ta.selectionStart==null?ta.value.length:ta.selectionStart;refresh()},0)})});
  ta.addEventListener('input',function(){if(shown&&!ta.value){cursorPos=0;refresh()}});
@@ -13342,7 +13346,7 @@ shiftKey.addEventListener('click',function(e){e.stopPropagation();jump(shiftKey)
 readerBtn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();jump(readerBtn);var w=readerBtn.dataset.word;if(!w||!currentWord)return;ensureFocus();
  var t=getText(),before=t.slice(0,cursorPos-currentWord.length),after=t.slice(cursorPos);setText(before+w+' '+after);cursorPos=before.length+w.length+1;addToUserHistory(w);renderWithCursor();refresh()});
 bottomSendBtn.addEventListener('click',function(e){e.stopPropagation();jump(bottomSendBtn);sendNow()});
-setInterval(function(){try{hook();if(shown&&panelEl&&!panelEl.offsetParent)hideKb()}catch(e){}},400);
+setInterval(function(){try{hook();if(shown&&panelEl&&!(panelEl.classList.contains('open')&&panelEl.getClientRects().length))hideKb()}catch(e){}},400);
 
 })();
 </script>
@@ -15061,7 +15065,7 @@ function init(){var panelWrap=$('cinemaChatPanel');ta=$('cinemaChatInput');trig=
  ta.addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,84)+'px';upd()});
  ta.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!send.disabled)doSend()}});
  ($('prcBe')||{classList:{toggle:function(){},remove:function(){}}}).onclick=function(){tab('e')};$('prcBg').onclick=function(){tab('g')};
- $('prcGsBtn').onclick=function(){loadGifs($('prcGsIn').value.trim())};$('prcGsIn').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();loadGifs(this.value.trim())}});
+ 
  fs.onclick=function(){fly=!fly;fs.classList.toggle('on',fly);st.classList.toggle('show',fly)};
  st.querySelectorAll('button').forEach(function(b){b.onclick=function(){st.querySelectorAll('button').forEach(function(x){x.classList.remove('on')});b.classList.add('on');style=b.dataset.s}});
  var feed=$('cinemaChatMessages');new MutationObserver(function(){scan(feed)}).observe(feed,{childList:true});
@@ -15090,106 +15094,5 @@ function tick(){
   b.style.display=(playing&&host())?'flex':'none';
 }
 setInterval(tick,400);
-})();
-</script>
-
-<!-- FINAL COMMENT KEYBOARD OVERRIDE: use ONLY the custom prcKb keyboard from keywords.html. -->
-<style id="finalOnlyCustomCommentKeyboard">
-/* Remove every legacy Party Room comment input/panel from the visible UI. */
-html body #prRoom > #prcTrigger,
-html body #prRoom > #prcPanel,
-html body #prRoom > #cinemaChatComposer,
-html body #prRoom #partyRoomFocusChatBtn,
-html body #prRoom #cinemaChatPanel > #prcTrigger,
-html body #prRoom #cinemaChatPanel > #prcPanel{
-  display:none!important;
-  visibility:hidden!important;
-  opacity:0!important;
-  pointer-events:none!important;
-}
-/* The ONLY active comment keyboard is the imported/custom prcKb keyboard. */
-html body #prcKb{z-index:2147483647!important;}
-html body #prcKb:not(.show){display:none!important;}
-html body #prcKb.show{display:block!important;}
-/* Comment button: compact pink icon in the bottom dock. */
-html body #partyRoomBottomDock #partyRoomCommentDockBtn{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  width:38px!important;
-  height:38px!important;
-  min-width:38px!important;
-  min-height:38px!important;
-  padding:0!important;
-  border:0!important;
-  border-radius:50%!important;
-  background:linear-gradient(145deg,#ff79bd,#e0136f)!important;
-  color:#fff!important;
-  font-size:0!important;
-  line-height:1!important;
-  box-shadow:0 5px 15px rgba(224,19,111,.42)!important;
-}
-html body #partyRoomBottomDock #partyRoomCommentDockBtn::before{
-  content:'💬';
-  font-size:19px;
-  line-height:1;
-  filter:saturate(1.1);
-}
-html body #partyRoomBottomDock #partyRoomCommentDockBtn:active{transform:scale(.92)!important;}
-/* Keep the native textarea only as a hidden bridge for the custom keyboard -> Firebase sender. */
-html body #prRoom #cinemaChatInput{
-  position:absolute!important;
-  width:1px!important;
-  height:1px!important;
-  min-height:1px!important;
-  opacity:0!important;
-  pointer-events:none!important;
-  left:-9999px!important;
-  top:-9999px!important;
-}
-</style>
-<script id="finalOnlyCustomCommentKeyboardScript">
-(function(){
-  'use strict';
-  function byId(id){return document.getElementById(id);}
-  function openOnlyCustomKeyboard(){
-    var panel=byId('prcPanel');
-    var kb=byId('prcKb');
-    var ta=byId('cinemaChatInput');
-    if(!kb||!ta)return false;
-    /* Open the hidden legacy panel only as the bridge watched by the custom keyboard. */
-    if(panel)panel.classList.add('open');
-    ta.setAttribute('inputmode','none');
-    ta.setAttribute('autocomplete','off');
-    ta.setAttribute('autocorrect','off');
-    ta.setAttribute('spellcheck','false');
-    /* The keyboard script observes prcPanel.open and activates prcKb. */
-    kb.classList.add('show');
-    document.documentElement.classList.add('prc-kb-on');
-    document.documentElement.style.setProperty('--prcKb',kb.offsetHeight+'px');
-    try{ta.focus({preventScroll:true});}catch(e){try{ta.focus();}catch(_){} }
-    return false;
-  }
-  function closeOnlyCustomKeyboard(){
-    var panel=byId('prcPanel'),kb=byId('prcKb'),ta=byId('cinemaChatInput');
-    if(panel)panel.classList.remove('open');
-    if(kb)kb.classList.remove('show');
-    document.documentElement.classList.remove('prc-kb-on');
-    document.documentElement.style.setProperty('--prcKb','0px');
-    try{if(ta)ta.blur();}catch(e){}
-    return false;
-  }
-  window.partyRoomOpenCommentFromDock=openOnlyCustomKeyboard;
-  window.partyRoomFocusChat=openOnlyCustomKeyboard;
-  window.prOpenComposer=openOnlyCustomKeyboard;
-  window.partyRoomCloseChatPanel=closeOnlyCustomKeyboard;
-  document.addEventListener('DOMContentLoaded',function(){
-    var btn=byId('partyRoomCommentDockBtn');
-    if(btn){btn.onclick=openOnlyCustomKeyboard;}
-  });
-  setTimeout(function(){
-    var btn=byId('partyRoomCommentDockBtn');
-    if(btn)btn.onclick=openOnlyCustomKeyboard;
-  },500);
 })();
 </script>
