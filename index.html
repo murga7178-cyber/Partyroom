@@ -10800,9 +10800,10 @@ function createPlayer(info,startSeconds){
             updatePlayPause();
             if(e.data===YT.PlayerState.ENDED){
               if(roomMode&&!ytRemoteApplying&&ytRoomHost()){
-                ytRoomWriteState({playing:false,currentTime:0,stopped:true});
+                if(queue.length){ ytRoomAdvanceQueue(); }
+                else{ ytRoomWriteState({playing:false,currentTime:0,stopped:true}); toast('⏹️ Video खत्म',1800); }
               }
-              toast('⏹️ Video खत्म — फिर से चलाने के लिए Play दबाएँ',1800);
+              else if(!(roomMode&&ytRoomIsActive())) toast('⏹️ Video खत्म — फिर से चलाने के लिए Play दबाएँ',1800);
             }
             else if(roomMode&&!ytRemoteApplying)ytRoomSyncNow(true);
           },
@@ -10842,8 +10843,8 @@ window.ytRoomForceSeek=function(target,playing,done){
    and cannot see the private player variables, so it must go through this object. */
 window.ytRoomBridge={
   host:function(){ try{return ytRoomHost();}catch(e){return false;} },
-  /* Everyone in the room may play / pause / seek. */
-  canControl:function(){ try{return !!(ytRoomHost()||ytRoomIsActive());}catch(e){return false;} },
+  /* Only the host may play / pause / seek. */
+  canControl:function(){ try{return !!ytRoomHost();}catch(e){return false;} },
   /* Where the room really is right now (for non-hosts their own player can lag). */
   live:function(){ try{ var s=window.__ytLastState; return s?ytRoomLiveTime(s):null; }catch(e){return null;} },
   roomPlaying:function(){ try{ var s=window.__ytLastState; if(s&&!s.stopped&&(s.videoId||s.videoUrl))return s.playing===true; }catch(e){} return null; },
@@ -10888,7 +10889,7 @@ window.ytRoomBridge={
   seek:function(t){
     t=Math.max(0,Number(t)||0);
     try{
-      if(!ytRoomHost()&&!ytRoomIsActive())return false;
+      if(!ytRoomHost())return false;
       if(current&&current.upload){
         var lvS=$('ytRoomLocalVideo'); if(!lvS)return false;
         window.__ytHostSeekUntil=Date.now()+4000;
@@ -10914,7 +10915,7 @@ window.ytRoomBridge={
   toggle:function(){
     try{
       if(!current)return false;
-      if(!ytRoomHost()&&!ytRoomIsActive())return false;
+      if(!ytRoomHost())return false;
       var hostT=ytRoomHost(), rsT=window.__ytLastState;
       if(current.upload){
         var lvT=$('ytRoomLocalVideo'); if(!lvT)return false;
@@ -11145,9 +11146,53 @@ if(pasteBtn)pasteBtn.addEventListener('click',async function(){
     if(x){input.value=x;toast('📋 Paste हो गया');}else toast('Clipboard खाली है');
   }catch(e){toast('Clipboard permission नहीं मिली — manually paste करें',2000);}
 });
+function ytRoomNothingPlaying(){
+  try{
+    if(current)return false;
+    var st=window.__ytLastState;
+    if(st&&!st.stopped&&(st.videoId||st.videoUrl))return false;
+  }catch(e){}
+  return true;
+}
+/* Starts the freshly loaded video and tells the room (used for queue/auto-advance). */
+function ytRoomAutoStart(id){
+  var tries=0,iv=setInterval(function(){
+    tries++;
+    try{
+      if(!current||current.upload||String(current.id)!==String(id)){clearInterval(iv);return;}
+      if(ytPlayer&&ytReady&&typeof ytPlayer.playVideo==='function'){
+        var stA=ytPlayer.getPlayerState?ytPlayer.getPlayerState():-1;
+        if(stA===1){clearInterval(iv);return;}
+        ytPlayer.playVideo();
+        ytRoomWriteState({type:'youtube',playing:true,currentTime:0,videoId:current.id,listId:current.list||'',title:current.title||'',shorts:!!current.shorts,stopped:false,__cmd:true});
+        clearInterval(iv);return;
+      }
+    }catch(e){}
+    if(tries>40)clearInterval(iv);
+  },300);
+}
+/* Video ended: the host client plays the first queued video and removes it from the queue. */
+function ytRoomAdvanceQueue(){
+  if(!ytRoomHost()||!ytRoomIsActive())return;
+  var next=queue[0]; if(!next)return;
+  try{var ref=ytRoomRef(); if(ref&&next.docId)ref.collection('youtubeQueue').doc(String(next.docId)).delete().catch(function(){});}catch(e){}
+  queue.shift(); try{storageSet(QUEUE_KEY,JSON.stringify(queue));}catch(e){}
+  try{renderQueue();renderInlineRoomPanel('queue');}catch(e){}
+  setTimeout(function(){
+    playInfo({type:'video',id:next.id,list:next.list||'',shorts:false},next.title,{addedBy:next.addedBy||'You',byKey:next.addedByKey||'',cmd:true});
+    ytRoomAutoStart(next.id);
+  },500);
+}
 function addVideoToQueue(raw,clearTarget){
   var info=getYouTubeInfo(raw);
   if(!info||info.type!=='video'){toast('❌ सिर्फ YouTube Video लिंक डालें');return false;}
+  /* Nothing is playing in the room: this video plays right away instead of waiting in the queue. */
+  if(ytRoomIsActive()&&ytRoomNothingPlaying()){
+    playInfo(info,null,{addedBy:typeof cinemaUserName==='function'?cinemaUserName():'You',cmd:true});
+    ytRoomAutoStart(info.id);
+    if(clearTarget)clearTarget.value='';
+    return true;
+  }
   if(queue.length>=MAX_QUEUE){toast('📺 Queue full है');return false;}
   var item={id:info.id,list:'',title:'YouTube • '+info.id,addedBy:typeof cinemaUserName==='function'?cinemaUserName():'You',addedByKey:typeof currentUserKey!=='undefined'?String(currentUserKey||''):'',ts:Date.now()};
   try{
@@ -11182,7 +11227,7 @@ function ytBottomLoad(){
 window.ytRoomBottomSubmitImpl=function(v){
   v=String(v||'').trim();
   if(!v){toast('🔗 पहले YouTube URL डालें');return;}
-  if(isHost||ytRoomIsActive()){
+  if(ytRoomHost()){
     input.value=v;
     handleLoad();
     var ri=document.getElementById('ytRoomInput');if(ri)ri.value='';
@@ -11217,7 +11262,7 @@ function renderInlineRoomPanel(name){
     el.addEventListener('click',function(e){
       if(e.target && e.target.closest && e.target.closest('[data-qdel]')) return;
       var v=queue[Number(el.dataset.qidx)]; if(!v)return; refreshHostState();
-      if(false){toast('👑 सिर्फ Host video चला सकता है',1800);return;}
+      if(!ytRoomHost()){toast('👑 सिर्फ Host Queue से video चला सकता है',1800);return;}
       playInfo({type:'video',id:v.id,list:v.list||'',shorts:!!v.shorts},v.title,{addedBy:v.addedBy||'You',byKey:v.addedByKey||'',cmd:true});
     });
   });
@@ -12592,6 +12637,679 @@ html body .prc-fly{display:none!important;visibility:hidden!important;pointer-ev
     if(blk&&!blk.__yspWired){ blk.__yspWired=1; blk.addEventListener('click',function(e){ e.preventDefault(); toggle(); }); }
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+
+<!-- ===== PRC KEYBOARD: custom English keyboard for the Party Room comment box ===== -->
+<style id="prcKbStyle">@keyframes prcJumpTap{
+    0%   { transform:translateY(0) scale(1); }
+    25%  { transform:translateY(-5px) scale(1.08); }
+    50%  { transform:translateY(2px) scale(0.96); }
+    75%  { transform:translateY(-2px) scale(1.02); }
+    100% { transform:translateY(0) scale(1); }
+  }
+#prcKb .jump{ animation:prcJumpTap 0.15s cubic-bezier(.34,1.56,.64,1); }
+#prcKb .key-popup{
+    position:fixed;
+    z-index:99999;
+    background:linear-gradient(160deg,#ff1493,#b478ff);
+    color:#fff;
+    font-size:2.4rem;
+    font-weight:900;
+    padding:14px 22px;
+    border-radius:14px;
+    border:2px solid #fff;
+    box-shadow:
+      0 8px 30px rgba(0,0,0,0.7),
+      0 0 40px rgba(255,20,147,0.9),
+      0 0 70px rgba(180,120,255,0.6),
+      inset 0 1px 0 rgba(255,255,255,0.4);
+    text-shadow:0 0 15px #fff, 0 0 25px rgba(255,20,147,1);
+    pointer-events:none;
+    transform:translate(-50%,-100%) translateY(-15px);
+    animation:prcPopupIn 0.18s cubic-bezier(.34,1.56,.64,1);
+    min-width:56px;
+    text-align:center;
+    letter-spacing:1px;
+  }
+@keyframes prcPopupIn{
+    0%   { opacity:0; transform:translate(-50%,-100%) translateY(-5px) scale(0.6); }
+    100% { opacity:1; transform:translate(-50%,-100%) translateY(-15px) scale(1); }
+  }
+#prcKb .key-popup.fade-out{
+    animation:prcPopupOut 0.15s ease forwards;
+  }
+@keyframes prcPopupOut{
+    0%   { opacity:1; transform:translate(-50%,-100%) translateY(-15px) scale(1); }
+    100% { opacity:0; transform:translate(-50%,-100%) translateY(-25px) scale(0.8); }
+  }
+#prcKb .keyboard{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    user-select:none;
+    height:100%;
+  }
+#prcKb .reader-row{
+    display:flex;
+    gap:4px;
+    width:100%;
+    align-items:stretch;
+    flex-shrink:0;
+  }
+#prcKb .reader-btn{
+    flex:4;
+    background:linear-gradient(160deg,#7a2550,#4a1030);
+    color:#ffffff;
+    border:1.5px solid rgba(255,105,180,0.7);
+    border-radius:8px;
+    padding:12px 12px;
+    font-size:1rem;
+    font-weight:800;
+    cursor:pointer;
+    box-shadow:
+      0 3px 0 #200510,
+      0 4px 12px rgba(0,0,0,0.5),
+      0 0 20px rgba(255,20,147,0.4),
+      inset 0 1px 0 rgba(255,255,255,0.15);
+    text-shadow:0 0 10px rgba(255,20,147,0.8);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-width:0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    position:relative;
+    -webkit-tap-highlight-color:transparent;
+    letter-spacing:0.3px;
+  }
+#prcKb .reader-btn::before{
+    content:''; position:absolute;
+    bottom:0; left:5%;
+    height:2px; width:90%;
+    background:linear-gradient(90deg,transparent,#ff1493,#ff69b4,transparent);
+    box-shadow:0 0 10px #ff1493;
+    border-radius:2px;
+    opacity:0.7;
+    animation:prcSuggestWave 3s ease-in-out infinite;
+  }
+#prcKb .reader-btn .reader-text{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    text-align:center;
+    color:#ffffff;
+    width:100%;
+  }
+#prcKb .reader-btn.has-text{
+    background:linear-gradient(160deg,#a0305a,#5a1540);
+    box-shadow:
+      0 3px 0 #200510,
+      0 4px 12px rgba(0,0,0,0.5),
+      0 0 28px rgba(255,20,147,0.8),
+      inset 0 1px 0 rgba(255,255,255,0.2);
+    border-color:rgba(255,140,200,1);
+  }
+#prcKb .reader-btn:active,#prcKb .reader-btn.active{
+    background:linear-gradient(160deg,#ff1493,#ff69b4);
+    color:#fff;
+    box-shadow:0 0 0 #200510, 0 0 30px rgba(255,20,147,1), inset 0 2px 4px rgba(0,0,0,0.3);
+    border-color:#fff;
+  }
+#prcKb .reader-btn.jump{ animation:prcJumpTap 0.15s cubic-bezier(.34,1.56,.64,1); }
+#prcKb .reader-text .typed-part{
+    color:#ff69b4;
+    text-shadow:0 0 10px #ff1493, 0 0 20px rgba(255,20,147,0.6);
+    font-weight:900;
+  }
+#prcKb .reader-text .suggest-part{
+    color:#d9b3c8;
+    font-weight:700;
+  }
+#prcKb .send-arrow-btn{
+    flex:1;
+    background:transparent;
+    border:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+    -webkit-tap-highlight-color:transparent;
+    min-width:48px;
+  }
+#prcKb .send-arrow-btn .arrow{
+    font-size:2rem;
+    font-weight:900;
+    color:#ff69b4;
+    text-shadow:
+      0 0 10px rgba(255,20,147,0.8),
+      0 0 20px rgba(255,20,147,0.5),
+      0 0 30px rgba(255,20,147,0.3);
+    display:inline-block;
+    line-height:1;
+    transition:all 0.2s;
+  }
+#prcKb .send-arrow-btn:hover .arrow{ color:#fff; text-shadow:0 0 12px #fff, 0 0 25px #ff1493, 0 0 40px #ff1493; }
+#prcKb .send-arrow-btn:active .arrow,#prcKb .send-arrow-btn.active .arrow{
+    color:#fff;
+    text-shadow:0 0 15px #fff, 0 0 30px #ff1493, 0 0 50px #ff1493;
+    transform:scale(1.3);
+  }
+#prcKb .send-arrow-btn.jump .arrow{ animation:prcJumpTap 0.15s cubic-bezier(.34,1.56,.64,1); }
+#prcKb .key-row{ display:flex; justify-content:center; gap:4px; width:100%; }
+#prcKb .key-row-2{ padding:0 10px; }
+#prcKb .key-row-3{ padding:0 4px; }
+#prcKb .key{
+    position:relative;
+    background:linear-gradient(160deg,#5a1a3d,#3a0f28);
+    color:#ffffff;
+    border:1px solid rgba(255,20,147,0.5);
+    border-radius:7px;
+    padding:14px 0;
+    min-width:0;
+    text-align:center;
+    font-size:1.15rem; font-weight:800;
+    cursor:pointer;
+    box-shadow:0 3px 0 #200510, 0 4px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12);
+    flex:1 1 0;
+    overflow:hidden;
+    text-shadow:0 0 6px rgba(255,20,147,0.6);
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
+    -webkit-user-select:none; user-select:none;
+    letter-spacing:0.5px;
+  }
+#prcKb .key::before{
+    content:''; position:absolute;
+    bottom:0; left:0;
+    height:2px; width:40%;
+    background:linear-gradient(90deg,transparent,#ff1493,#ff69b4,transparent);
+    box-shadow:0 0 8px #ff1493;
+    border-radius:2px;
+    animation:prcSoftWave 3.5s ease-in-out infinite;
+    opacity:0.7;
+  }
+#prcKb .key:nth-child(1)::before{ animation-delay:0s; }
+#prcKb .key:nth-child(2)::before{ animation-delay:0.3s; }
+#prcKb .key:nth-child(3)::before{ animation-delay:0.6s; }
+#prcKb .key:nth-child(4)::before{ animation-delay:0.9s; }
+#prcKb .key:nth-child(5)::before{ animation-delay:1.2s; }
+#prcKb .key:nth-child(6)::before{ animation-delay:1.5s; }
+#prcKb .key:nth-child(7)::before{ animation-delay:1.8s; }
+#prcKb .key:nth-child(8)::before{ animation-delay:2.1s; }
+#prcKb .key:nth-child(9)::before{ animation-delay:2.4s; }
+#prcKb .key:nth-child(10)::before{ animation-delay:2.7s; }
+#prcKb .key:active,#prcKb .key.active{
+    background:linear-gradient(160deg,#ff1493,#ff69b4);
+    color:#fff;
+    box-shadow:0 0 0 #200510, 0 0 25px rgba(255,20,147,0.9), inset 0 2px 6px rgba(0,0,0,0.3);
+    border-color:#fff;
+  }
+#prcKb .key.jump{ animation:prcJumpTap 0.15s cubic-bezier(.34,1.56,.64,1); }
+#prcKb .key.wide{ flex:1.5 1 0; }
+#prcKb .key.space{ flex:5 1 0; font-size:0.9rem; }
+#prcKb .key.shift-key{ flex:1.8 1 0; font-size:1.2rem; }
+#prcKb .key.backspace-key{ flex:1.8 1 0; font-size:1.3rem; }
+#prcKb .key.shift-active{
+    background:linear-gradient(160deg,#ff1493,#ff69b4);
+    color:#fff;
+    box-shadow:0 0 0 #200510, 0 0 20px rgba(255,20,147,0.9), 0 0 35px rgba(255,20,147,0.6), inset 0 2px 6px rgba(0,0,0,0.3);
+    border-color:#fff;
+  }
+#prcKb .key.shift-caps{
+    background:linear-gradient(160deg,#ffd60a,#ffa500);
+    color:#1a0520;
+    box-shadow:0 0 0 #200510, 0 0 25px rgba(255,214,10,0.9), 0 0 50px rgba(255,165,0,0.6), inset 0 2px 6px rgba(0,0,0,0.3);
+    border-color:#fff;
+  }
+#prcKb .keyboard-body{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    flex:1;
+    justify-content:space-between;
+  }
+#prcKb .numpad{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:5px;
+    height:100%;
+    align-content:center;
+  }
+#prcKb .numpad-key{
+    background:linear-gradient(160deg,#5a1a3d,#3a0f28);
+    color:#fff;
+    border:1px solid rgba(255,20,147,0.5);
+    border-radius:8px;
+    padding:12px 0;
+    text-align:center;
+    font-size:1.25rem; font-weight:800;
+    cursor:pointer;
+    box-shadow:0 3px 0 #200510, 0 4px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12);
+    text-shadow:0 0 6px rgba(255,20,147,0.6);
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+    touch-action:manipulation;
+    position:relative;
+    overflow:hidden;
+  }
+#prcKb .numpad-key::before{
+    content:''; position:absolute;
+    bottom:0; left:0;
+    height:2px; width:35%;
+    background:linear-gradient(90deg,transparent,#ff1493,#ff69b4,transparent);
+    box-shadow:0 0 8px #ff1493;
+    border-radius:2px;
+    animation:prcSoftWave 3.5s ease-in-out infinite;
+    opacity:0.6;
+  }
+#prcKb .numpad-key:active,#prcKb .numpad-key.active{
+    background:linear-gradient(160deg,#ff1493,#ff69b4);
+    color:#fff;
+    box-shadow:0 0 0 #200510, 0 0 25px rgba(255,20,147,0.9), inset 0 2px 6px rgba(0,0,0,0.3);
+    border-color:#fff;
+  }
+#prcKb .numpad-key.jump{ animation:prcJumpTap 0.15s cubic-bezier(.34,1.56,.64,1); }
+#prcKb .numpad-key.action{
+    background:linear-gradient(160deg,#7a2550,#4a1030);
+    font-size:1.1rem;
+  }
+#prcKb .numpad-key.zero{ grid-column:span 2; }
+@media (max-width:600px){#prcKb .key{ padding:12px 0; font-size:1rem; border-radius:6px; }
+#prcKb .key-row{ gap:4px; }
+#prcKb .keyboard{ gap:4px; }
+#prcKb .reader-btn{ padding:10px 10px; font-size:0.95rem; }
+#prcKb .send-arrow-btn .arrow{ font-size:1.7rem; }
+#prcKb .numpad{ gap:4px; }
+#prcKb .numpad-key{ padding:10px 0; font-size:1.1rem; }
+#prcKb .key-popup{ font-size:2rem; padding:12px 18px; }}
+@media (max-width:360px){#prcKb .key{ padding:10px 0; font-size:0.9rem; }
+#prcKb .reader-btn{ padding:8px 8px; font-size:0.85rem; }
+#prcKb .send-arrow-btn .arrow{ font-size:1.5rem; }
+#prcKb .key-popup{ font-size:1.8rem; padding:10px 16px; }}
+@keyframes prcSoftWave{0%{transform:translateX(-30%);opacity:.3}50%{transform:translateX(180%);opacity:.9}100%{transform:translateX(-30%);opacity:.3}}@keyframes prcSuggestWave{0%,100%{transform:translateX(-15%);opacity:.4}50%{transform:translateX(15%);opacity:1}}
+#prcKb{position:fixed;left:0;right:0;bottom:0;z-index:2147482000;display:none;padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));background:linear-gradient(160deg,rgba(45,10,35,.99),rgba(25,5,20,1));border-top:1.5px solid rgba(255,20,147,.55);border-radius:16px 16px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.6);-webkit-user-select:none;user-select:none;touch-action:manipulation}
+#prcKb.show{display:block}
+#prcKb .prckb-body{position:relative;height:262px}
+#prcKb .prckb-pane{position:absolute;inset:0;display:none}
+#prcKb .prckb-pane.open{display:block}
+@media(max-width:360px){#prcKb .prckb-body{height:246px}}
+#prcKb .numpad-key.zero{grid-column:span 1}
+#prcKbBtn{flex:0 0 32px!important;width:32px!important;height:32px!important;font-size:14px!important}
+html.prc-kb-on body #prRoom > #cinemaChatPanel.prc{margin-bottom:calc(var(--prcKb,0px) + 4px)!important}
+html.prc-kb-on body #prRoom.party-youtube-layout > #cinemaChatPanel.prc,html.prc-kb-on body #prRoom.party-gaming-layout > #cinemaChatPanel.prc{margin:0!important;top:auto!important;bottom:calc(var(--prcKb,0px) + 4px)!important}
+</style>
+<div id="prcKb"><div class="prckb-body"><div class="prckb-pane open" id="prckbKeys"><div class="keyboard" id="prckb_keyboard">
+          <div class="reader-row">
+            <div class="reader-btn" id="prckb_readerBtn">
+              <span class="reader-text" id="prckb_readerText">✨ Start typing...</span>
+            </div>
+            <button class="send-arrow-btn" id="prckb_bottomSendBtn" title="Send">
+              <span class="arrow">➤</span>
+            </button>
+          </div>
+
+          <div class="keyboard-body">
+            <div class="key-row">
+              <div class="key" data-key="q">Q</div>
+              <div class="key" data-key="w">W</div>
+              <div class="key" data-key="e">E</div>
+              <div class="key" data-key="r">R</div>
+              <div class="key" data-key="t">T</div>
+              <div class="key" data-key="y">Y</div>
+              <div class="key" data-key="u">U</div>
+              <div class="key" data-key="i">I</div>
+              <div class="key" data-key="o">O</div>
+              <div class="key" data-key="p">P</div>
+            </div>
+            <div class="key-row key-row-2">
+              <div class="key" data-key="a">A</div>
+              <div class="key" data-key="s">S</div>
+              <div class="key" data-key="d">D</div>
+              <div class="key" data-key="f">F</div>
+              <div class="key" data-key="g">G</div>
+              <div class="key" data-key="h">H</div>
+              <div class="key" data-key="j">J</div>
+              <div class="key" data-key="k">K</div>
+              <div class="key" data-key="l">L</div>
+            </div>
+            <div class="key-row key-row-3">
+              <div class="key shift-key" data-key="Shift" id="prckb_shiftKey">⇧</div>
+              <div class="key" data-key="z">Z</div>
+              <div class="key" data-key="x">X</div>
+              <div class="key" data-key="c">C</div>
+              <div class="key" data-key="v">V</div>
+              <div class="key" data-key="b">B</div>
+              <div class="key" data-key="n">N</div>
+              <div class="key" data-key="m">M</div>
+              <div class="key backspace-key" data-key="Backspace" id="prckb_backspaceKey">⌫</div>
+            </div>
+            <div class="key-row">
+              <div class="key wide" data-key="num" id="prckb_numToggleKey">123</div>
+              <div class="key space" data-key=" ">Space</div>
+              <div class="key wide" data-key="Enter">↵</div>
+            </div>
+          </div>
+        </div></div><div class="prckb-pane" id="prckbNum"><div class="numpad" id="prckb_numpad">
+          <div class="numpad-key" data-num="1">1</div>
+          <div class="numpad-key" data-num="2">2</div>
+          <div class="numpad-key" data-num="3">3</div>
+          <div class="numpad-key action" data-num="-">−</div>
+          <div class="numpad-key" data-num="4">4</div>
+          <div class="numpad-key" data-num="5">5</div>
+          <div class="numpad-key" data-num="6">6</div>
+          <div class="numpad-key action" data-num="+">+</div>
+          <div class="numpad-key" data-num="7">7</div>
+          <div class="numpad-key" data-num="8">8</div>
+          <div class="numpad-key" data-num="9">9</div>
+          <div class="numpad-key action" data-num=".">.</div>
+          <div class="numpad-key action" data-num="ABC">ABC</div>
+<div class="numpad-key zero" data-num="0">0</div>
+          <div class="numpad-key action" data-num="Backspace">⌫</div>
+          <div class="numpad-key action" data-num="Enter">↵</div>
+        </div></div></div></div>
+<script id="prcKbScript">
+(function(){'use strict';
+var $=function(i){return document.getElementById(i)};
+var kbRoot=$('prcKb'),ta=null,panelEl=null,btn=null,shown=false,hooked=false;
+var keyboard=$('prckb_keyboard'),readerBtn=$('prckb_readerBtn'),readerText=$('prckb_readerText'),bottomSendBtn=$('prckb_bottomSendBtn'),shiftKey=$('prckb_shiftKey'),backspaceKey=$('prckb_backspaceKey'),numToggleKey=$('prckb_numToggleKey'),numpad=$('prckb_numpad');
+var keysPane=$('prckbKeys'),numPane=$('prckbNum');
+var shiftActive=false,capsLock=false,lastShiftClick=0,currentSuggestion='',currentWord='',cursorPos=0,currentPopup=null,popupTimer=null;
+var HISTORY_KEY='proKeyboardHistory_v1',FREQ_KEY='proKeyboardFreq_v1',PREF='prcKbOn_v1';
+var userHistory=[],wordFrequency={},kbOn=true;
+try{var sv=localStorage.getItem(HISTORY_KEY);if(sv)userHistory=JSON.parse(sv);var fq=localStorage.getItem(FREQ_KEY);if(fq)wordFrequency=JSON.parse(fq);if(localStorage.getItem(PREF)==='0')kbOn=false}catch(e){userHistory=[];wordFrequency={}}
+const dictionary = [
+    'a','an','and','are','as','at','all','also','always','am','another','any','around','about','after','again','able','accept','accident','account','across','act','action','activity','actor','actually','add','address','adult','advice','afraid','afternoon','against','age','ago','agree','air','airport','allow','almost','alone','along','already','although','among','amount','ancient','anger','angry','animal','ankle','announce','answer','anybody','anymore','anyone','anything','anyway','anywhere','apart','apartment','appear','apple','apply','area','argue','arm','army','arrange','arrive','art','article','artist','ashamed','ask','asleep','attack','attend','attention','aunt','autumn','available','avoid','awake','away','awful',
+    'be','because','been','before','being','below','best','better','between','big','both','bring','but','buy','by','baby','back','bad','bag','ball','banana','band','bank','bar','baseball','basic','basket','basketball','bath','bathroom','beach','bean','bear','beat','beautiful','bed','bedroom','beer','begin','beginning','behind','believe','bell','belong','belt','bench','bend','beside','beyond','bicycle','bike','bill','bird','birth','birthday','bit','bite','black','blanket','blind','block','blood','blow','blue','board','boat','body','boil','bone','book','border','boring','born','borrow','boss','bother','bottle','bottom','bowl','box','boy','brain','branch','brave','bread','break','breakfast','breath','breathe','brick','bridge','bright','brother','brown','brush','build','building','burn','business','bus','busy','butter','button','bye',
+    'call','can','care','carry','case','catch','change','check','child','children','choose','city','class','clean','clear','close','come','company','could','country','course','cut',
+    'day','did','different','do','does','done','down','during',
+    'each','early','earth','end','even','ever','every',
+    'face','fact','family','far','fast','father','feel','few','find','fire','first','follow','food','for','form','found','friend','from','front','full',
+    'game','gave','get','girl','give','go','going','good','got','government','great','group','grow','guy',
+    'had','half','hand','happen','happy','hard','has','have','he','head','hear','help','her','here','high','him','his','home','hope','how','house',
+    'idea','if','important','in','inside','into','is','it','its',
+    'job','join','just','keep','kind','know','known',
+    'land','large','last','later','learn','leave','left','less','let','letter','life','light','like','line','list','little','live','long','look','lost','lot','love','low',
+    'made','make','man','many','may','me','mean','men','might','mile','mind','minute','miss','more','morning','most','mother','move','much','music','must','my',
+    'name','near','need','never','new','next','night','no','not','nothing','now','number',
+    'of','off','often','oil','old','on','once','one','only','open','or','other','our','out','over','own',
+    'page','paper','part','party','pass','past','pay','people','perhaps','person','pick','picture','place','plan','play','point','police','possible','power','practice','prepare','present','press','pretty','probably','problem','process','produce','program','provide','public','pull','purpose','push','put',
+    'question','quick','quiet','quite',
+    'race','radio','rain','raise','range','rate','rather','reach','read','ready','real','reason','receive','record','red','remember','remove','report','require','rest','result','return','rich','ride','right','ring','rise','road','rock','role','room','round','rule','run',
+    'safe','said','same','save','saw','say','school','science','score','sea','season','seat','second','section','see','seem','sell','send','sense','sent','sentence','serve','service','set','several','shall','she','short','should','show','side','sign','since','sing','sit','site','situation','six','size','skill','small','social','society','some','someone','something','sometimes','son','song','soon','sort','sound','source','south','space','speak','special','spend','sport','spring','staff','stage','stand','standard','star','start','state','station','stay','step','still','stock','stop','store','story','street','strong','structure','student','study','stuff','style','subject','success','such','sudden','suffer','suggest','summer','support','sure','system',
+    'table','take','talk','task','teach','teacher','team','technology','tell','ten','term','test','than','thank','that','the','their','them','themselves','then','there','these','they','thing','think','third','this','those','though','thought','thousand','three','through','throughout','throw','thus','time','to','today','together','told','tonight','too','took','top','total','toward','town','trade','traditional','train','travel','treat','tree','trial','trip','trouble','true','truth','try','turn','two','type',
+    'under','understand','unit','until','up','upon','us','use','usually',
+    'value','various','very','view','visit','voice',
+    'wait','walk','wall','want','war','watch','water','way','we','wear','week','weight','well','west','western','what','whatever','when','where','whether','which','while','white','who','whole','why','wide','wife','will','win','wind','window','wish','with','within','without','woman','wonder','word','work','worker','world','worry','would','write','writer','wrong',
+    'yard','yeah','year','yes','yet','you','young','your','yourself',
+    'sita','rita','gita','ram','shyam','mohan','sohan','radha','krishna','hari','arjun'
+  ];
+function getText(){return ta?ta.value:''}
+function setText(s){if(!ta)return;var m=parseInt(ta.getAttribute('maxlength'),10)||180;ta.value=String(s).slice(0,m)}
+function renderWithCursor(){if(!ta)return;var n=ta.value.length;if(cursorPos>n)cursorPos=n;try{ta.setSelectionRange(cursorPos,cursorPos)}catch(e){}ta.dispatchEvent(new Event('input',{bubbles:true}))}
+function scrollToCursor(){}
+function showKeyPopup(keyEl, char) {
+    if (!char || char.length < 1) return;
+    if (char === ' ' || char === '↵' || char === '⌫' || char === '⇧' || char === '123') return;
+
+    // पुराना popup हटाओ
+    hideKeyPopup();
+
+    const popup = document.createElement('div');
+    popup.className = 'key-popup';
+    popup.textContent = char;
+    kbRoot.appendChild(popup);
+    currentPopup = popup;
+
+    const rect = keyEl.getBoundingClientRect();
+    popup.style.left = (rect.left + rect.width / 2) + 'px';
+    popup.style.top = rect.top + 'px';
+
+    // 600ms बाद auto hide
+    popupTimer = setTimeout(function() {
+      hideKeyPopup();
+    }, 600);
+  }
+function hideKeyPopup() {
+    if (popupTimer) { clearTimeout(popupTimer); popupTimer = null; }
+    if (currentPopup) {
+      const p = currentPopup;
+      currentPopup = null;
+      p.classList.add('fade-out');
+      setTimeout(function() { p.remove(); }, 150);
+    }
+  }
+function shouldCap(text) {
+    if (text.length === 0) return true;
+    return /[\s.!?]/.test(text[text.length - 1]);
+  }
+function updateKeyboardCase() {
+    let showUpper = false;
+    if (capsLock) showUpper = true;
+    else if (shiftActive) showUpper = true;
+    else {
+      const text = getText();
+      const before = text.slice(0, cursorPos);
+      showUpper = shouldCap(before);
+    }
+    kbRoot.querySelectorAll('.key[data-key]').forEach(function(k) {
+      const key = k.dataset.key;
+      if (key.length === 1 && /[a-z]/i.test(key)) {
+        k.textContent = showUpper ? key.toUpperCase() : key.toLowerCase();
+      }
+    });
+  }
+function findSuggestions(prefix) {
+    if (!prefix || prefix.length < 1) return [];
+    const p = prefix.toLowerCase();
+    const candidates = [];
+    const seen = new Set();
+    for (let i = 0; i < userHistory.length; i++) {
+      const w = userHistory[i];
+      if (w.toLowerCase().startsWith(p) && w.toLowerCase() !== p && !seen.has(w.toLowerCase())) {
+        candidates.push({ word: w, score: 3000 + (userHistory.length - i) });
+        seen.add(w.toLowerCase());
+      }
+    }
+    for (let i = 0; i < dictionary.length; i++) {
+      const w = dictionary[i];
+      if (w.toLowerCase().startsWith(p) && w.toLowerCase() !== p && !seen.has(w.toLowerCase())) {
+        const freq = wordFrequency[w.toLowerCase()] || 0;
+        candidates.push({ word: w, score: freq * 10 + Math.random() });
+        seen.add(w.toLowerCase());
+      }
+    }
+    candidates.sort(function(a, b) { return b.score - a.score; });
+    return candidates.slice(0, 3).map(function(c) { return c.word; });
+  }
+function getCurrentTypedWord() {
+    const text = getText();
+    const before = text.slice(0, cursorPos);
+    const match = before.match(/[a-zA-Z]+$/);
+    return match ? match[0] : '';
+  }
+function updateReader() {
+    const typed = getCurrentTypedWord();
+    if (!typed || typed.length < 1) {
+      currentSuggestion = '';
+      currentWord = '';
+      readerText.textContent = '✨ Start typing...';
+      readerBtn.classList.remove('has-text');
+      readerBtn.dataset.word = '';
+      return;
+    }
+    currentWord = typed;
+    const suggestions = findSuggestions(typed);
+    if (suggestions.length === 0) {
+      currentSuggestion = '';
+      readerText.innerHTML = '<span class="typed-part">' + escapeHtml(typed) + '</span>';
+      readerBtn.classList.add('has-text');
+      readerBtn.dataset.word = '';
+      return;
+    }
+    currentSuggestion = suggestions[0];
+    const remainder = currentSuggestion.slice(typed.length);
+    readerText.innerHTML =
+      '<span class="typed-part">' + escapeHtml(typed) + '</span>' +
+      '<span class="suggest-part">' + escapeHtml(remainder) + '</span>';
+    readerBtn.classList.add('has-text');
+    readerBtn.dataset.word = currentSuggestion;
+  }
+function addToUserHistory(word) {
+    if (!word || word.length < 2) return;
+    const idx = userHistory.findIndex(function(w) { return w.toLowerCase() === word.toLowerCase(); });
+    if (idx > -1) userHistory.splice(idx, 1);
+    userHistory.unshift(word);
+    if (userHistory.length > 200) userHistory = userHistory.slice(0, 200);
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(userHistory)); } catch(e) {}
+    const key = word.toLowerCase();
+    wordFrequency[key] = (wordFrequency[key] || 0) + 1;
+    try { localStorage.setItem(FREQ_KEY, JSON.stringify(wordFrequency)); } catch(e) {}
+  }
+function startBS(el) {
+    deleteChar();
+    bsTimeout = setTimeout(function() {
+      bsInterval = setInterval(function() {
+        deleteChar();
+        if (el) { el.classList.add('active'); setTimeout(function() { el.classList.remove('active'); }, 12); }
+      }, 12);
+    }, 200);
+  }
+function stopBS() {
+    if (bsTimeout) { clearTimeout(bsTimeout); bsTimeout = null; }
+    if (bsInterval) { clearInterval(bsInterval); bsInterval = null; }
+  }
+function deleteChar() {
+    const text = getText();
+    if (cursorPos === 0) { stopBS(); return; }
+    const before = text.slice(0, cursorPos - 1);
+    const after = text.slice(cursorPos);
+    setText(before + after);
+    cursorPos = Math.max(0, cursorPos - 1);
+    renderWithCursor();
+    scrollToCursor();
+    updateReader();
+    updateKeyboardCase();
+  }
+function bindBS(el) {
+    if (!el) return;
+    el.addEventListener('mousedown', function(e) { e.preventDefault(); startBS(el); });
+    el.addEventListener('mouseup', stopBS);
+    el.addEventListener('mouseleave', stopBS);
+    el.addEventListener('touchstart', function(e) { e.preventDefault(); startBS(el); }, { passive:false });
+    el.addEventListener('touchend', function(e) { e.preventDefault(); stopBS(); });
+    el.addEventListener('touchcancel', stopBS);
+  }
+function jump(el) {
+    if (!el) return;
+    el.classList.remove('jump');
+    void el.offsetWidth;
+    el.classList.add('jump');
+    setTimeout(function() { el.classList.remove('jump'); }, 200);
+  }
+function addChar(char) {
+    const text = getText();
+    let finalChar = char;
+    if (/^[a-zA-Z]$/.test(char)) {
+      if (capsLock) {
+        finalChar = char.toUpperCase();
+      } else if (shiftActive) {
+        finalChar = char.toUpperCase();
+        shiftActive = false;
+        shiftKey.classList.remove('shift-active');
+      } else {
+        const before = text.slice(0, cursorPos);
+        finalChar = shouldCap(before) ? char.toUpperCase() : char.toLowerCase();
+      }
+    }
+    const before = text.slice(0, cursorPos);
+    const after = text.slice(cursorPos);
+    setText(before + finalChar + after);
+    cursorPos = before.length + finalChar.length;
+    renderWithCursor();
+    scrollToCursor();
+    updateReader();
+    updateKeyboardCase();
+  }
+function handleKey(key, keyEl) {
+    if (keyEl) jump(keyEl);
+    if (key === 'Backspace') {
+      deleteChar();
+    } else if (key === 'Enter') {
+      const text = getText();
+      const before = text.slice(0, cursorPos);
+      const after = text.slice(cursorPos);
+      setText(before + '\n' + after);
+      cursorPos = before.length + 1;
+      renderWithCursor();
+      scrollToCursor();
+      updateReader();
+      updateKeyboardCase();
+    } else if (key === ' ') {
+      const text = getText();
+      const before = text.slice(0, cursorPos);
+      const after = text.slice(cursorPos);
+      setText(before + ' ' + after);
+      cursorPos = before.length + 1;
+      renderWithCursor();
+      scrollToCursor();
+      updateReader();
+      updateKeyboardCase();
+    } else if (/^[0-9+\-.]$/.test(key)) {
+      const text = getText();
+      const before = text.slice(0, cursorPos);
+      const after = text.slice(cursorPos);
+      setText(before + key + after);
+      cursorPos = before.length + 1;
+      renderWithCursor();
+      scrollToCursor();
+    } else {
+      // Letter - popup दिखाओ
+      if (keyEl && /^[a-zA-Z]$/.test(key)) {
+        showKeyPopup(keyEl, keyEl.textContent);
+      }
+      addChar(key);
+    }
+  }
+function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, function(m) {
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m];
+    });
+  }
+
+function refresh(){updateReader();updateKeyboardCase()}
+function ensureFocus(){if(ta&&document.activeElement!==ta){try{ta.focus({preventScroll:true})}catch(e){}}}
+function sendNow(){var s=$('prcSend');if(s&&!s.disabled){s.click();setTimeout(function(){cursorPos=0;refresh()},80)}}
+function showPane(n){keysPane.classList.toggle('open',n==='k');numPane.classList.toggle('open',n==='n')}
+function showKb(){if(!ta||shown)return;shown=true;ta.setAttribute('inputmode','none');kbRoot.classList.add('show');showPane('k');cursorPos=ta.value.length;
+ document.documentElement.classList.add('prc-kb-on');document.documentElement.style.setProperty('--prcKb',kbRoot.offsetHeight+'px');ensureFocus();refresh()}
+function hideKb(){if(!shown)return;shown=false;kbRoot.classList.remove('show');document.documentElement.classList.remove('prc-kb-on');document.documentElement.style.setProperty('--prcKb','0px');if(ta)ta.removeAttribute('inputmode');hideKeyPopup();stopBS()}
+function syncPanel(){var open=panelEl.classList.contains('open');if(btn)btn.classList.toggle('on',kbOn);if(open&&kbOn)showKb();else hideKb()}
+function hook(){ta=$('cinemaChatInput');panelEl=$('prcPanel');var fsEl=$('prcFs');if(!ta||!panelEl||!fsEl||hooked)return;hooked=true;
+ btn=document.createElement('button');btn.type='button';btn.id='prcKbBtn';btn.className='prc-b';btn.textContent='⌨️';btn.setAttribute('aria-label','कीबोर्ड बदलें');fsEl.parentNode.insertBefore(btn,fsEl);
+ btn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();kbOn=!kbOn;try{localStorage.setItem(PREF,kbOn?'1':'0')}catch(x){}
+  if(panelEl.classList.contains('open')){if(kbOn){showKb();try{ta.blur()}catch(x){}setTimeout(ensureFocus,40)}else{hideKb();try{ta.blur()}catch(x){}setTimeout(function(){try{ta.focus()}catch(x){}},60)}}btn.classList.toggle('on',kbOn)});
+ new MutationObserver(syncPanel).observe(panelEl,{attributes:true,attributeFilter:['class']});
+ ['click','keyup','touchend','select'].forEach(function(ev){ta.addEventListener(ev,function(){if(!shown)return;setTimeout(function(){cursorPos=ta.selectionStart==null?ta.value.length:ta.selectionStart;refresh()},0)})});
+ ta.addEventListener('input',function(){if(shown&&!ta.value){cursorPos=0;refresh()}});
+ syncPanel()}
+kbRoot.addEventListener('mousedown',function(e){e.preventDefault()});
+kbRoot.addEventListener('touchstart',function(e){var el=e.target.closest&&e.target.closest('.key');if(!el)return;var k=el.dataset.key;if(el.id==='prckb_shiftKey'||k==='Backspace'||k==='num'||k===' '||k==='Enter')return;showKeyPopup(el,el.textContent)},{passive:true});
+bindBS(backspaceKey);bindBS(numpad.querySelector('[data-num="Backspace"]'));
+keyboard.addEventListener('click',function(e){e.stopPropagation();var el=e.target.closest('.key');if(!el)return;var k=el.dataset.key;if(el.id==='prckb_shiftKey'||k==='Backspace'||k==='num')return;ensureFocus();if(k==='Enter'){jump(el);sendNow();return}handleKey(k,el)});
+numpad.addEventListener('click',function(e){e.stopPropagation();var el=e.target.closest('.numpad-key');if(!el)return;var k=el.dataset.num;if(k==='Backspace')return;if(k==='ABC'){jump(el);showPane('k');return}ensureFocus();if(k==='Enter'){jump(el);sendNow();return}handleKey(k,el)});
+numToggleKey.addEventListener('click',function(e){e.stopPropagation();jump(numToggleKey);showPane('n')});
+shiftKey.addEventListener('click',function(e){e.stopPropagation();jump(shiftKey);var now=Date.now(),d=now-lastShiftClick;lastShiftClick=now;
+ if(d<350){capsLock=!capsLock;shiftActive=false;shiftKey.classList.toggle('shift-caps',capsLock);shiftKey.classList.remove('shift-active')}
+ else if(capsLock){capsLock=false;shiftKey.classList.remove('shift-caps');shiftActive=false;shiftKey.classList.remove('shift-active')}
+ else{shiftActive=!shiftActive;shiftKey.classList.toggle('shift-active',shiftActive)}updateKeyboardCase()});
+readerBtn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();jump(readerBtn);var w=readerBtn.dataset.word;if(!w||!currentWord)return;ensureFocus();
+ var t=getText(),before=t.slice(0,cursorPos-currentWord.length),after=t.slice(cursorPos);setText(before+w+' '+after);cursorPos=before.length+w.length+1;addToUserHistory(w);renderWithCursor();refresh()});
+bottomSendBtn.addEventListener('click',function(e){e.stopPropagation();jump(bottomSendBtn);sendNow()});
+setInterval(function(){try{hook();if(shown&&panelEl&&!panelEl.offsetParent)hideKb()}catch(e){}},400);
+
 })();
 </script>
 </body>
