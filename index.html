@@ -12563,7 +12563,26 @@ html body .prc-fly{display:none!important;visibility:hidden!important;pointer-ev
 <style id="ytSeekPadStyle">
 /* YouTube Mode (host): small control pad in the empty space under the room photo, above the seats. */
 #prRoom #ytSeekPad{display:none;position:absolute;left:8px;top:var(--yt-sub-top,70px);height:30px;z-index:61;align-items:center;gap:4px;padding:2px 4px;box-sizing:border-box;border-radius:999px;background:linear-gradient(135deg,rgba(49,27,105,.94),rgba(30,18,75,.94));border:1px solid rgba(167,139,250,.75);box-shadow:0 5px 16px rgba(88,28,135,.35),0 0 0 1px rgba(255,255,255,.05) inset;pointer-events:auto;-webkit-tap-highlight-color:transparent;}
-#prRoom.party-youtube-layout #ytSeekPad.on{display:flex;}
+#prRoom.party-youtube-layout #ytSeekPad.on,
+#prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #ytSeekPad.on,
+#prRoom.party-gaming-layout #ytSeekPad.on{display:flex;}
+
+/* Same existing YouTube control pad, only repositioned per room. */
+#prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #ytSeekPad{
+  left:66px!important;
+  right:auto!important;
+  top:70px!important;
+}
+#prRoom.party-gaming-layout #ytSeekPad{
+  left:auto!important;
+  right:8px!important;
+  top:8px!important;
+  z-index:110!important;
+}
+#prRoom.party-youtube-layout #ytSeekPad{
+  left:8px!important;
+  right:auto!important;
+}
 #ytSeekPad button{border:0;margin:0;padding:0;cursor:pointer;touch-action:manipulation;color:#fff;display:flex;align-items:center;justify-content:center;font:900 10.5px/1 Segoe UI,Arial,sans-serif;transition:transform .12s ease,filter .12s ease,opacity .15s ease;}
 #ytSeekPad button:active{transform:scale(.88);filter:brightness(1.25);}
 #ytSeekPad .ysp-skip{height:24px;min-width:40px;padding:0 8px;gap:3px;border-radius:999px;background:rgba(255,255,255,.1);}
@@ -12619,7 +12638,7 @@ html body .prc-fly{display:none!important;visibility:hidden!important;pointer-ev
     try{
       var p=build(); if(!p)return;
       var r=$('prRoom'), b=br();
-      var show=!!(r&&r.classList.contains('party-youtube-layout')&&b&&(b.canControl?b.canControl():b.host()));
+      var show=!!(r&&(r.classList.contains('party-youtube-layout')||r.classList.contains('party-gaming-layout')||(!r.classList.contains('party-youtube-layout')&&!r.classList.contains('party-gaming-layout')&&!r.classList.contains('party-cinema-layout')))&&b&&(b.canControl?b.canControl():b.host()));
       p.classList.toggle('on',show);
       if(!show)return;
       var i=null; try{i=b.info();}catch(e){}
