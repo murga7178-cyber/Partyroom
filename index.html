@@ -2537,7 +2537,7 @@ async function pkLogout(){
 (function(){
   'use strict';
   var ART=window.PARTY_REACTION_ART||{};
-  var ORDER=['smile','lol','hearteyes','lovely','blush','cool','ok','peace','flex','pray','party','think','giggle','shush','meh','devil','broken','vomit','poop','dislike'];
+  var ORDER=['lol','ok','peace','pray','party','think','giggle','shush','broken','dislike'];
   var LABEL={smile:'Smile',lol:'Laughing',hearteyes:'Heart eyes',lovely:'Lovely',blush:'Blush',cool:'Cool',ok:'OK',peace:'Peace',flex:'Strong',pray:'Please',party:'Party',think:'Thinking',giggle:'Giggle',shush:'Shh',meh:'Meh',devil:'Naughty',broken:'Heartbroken',vomit:'Yuck',poop:'Poop',dislike:'Dislike'};
   function rnd(a,b){return a+Math.random()*(b-a);}
   function mk(box,cls,v){
@@ -2834,7 +2834,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <div class="prc-row">
               <textarea id="cinemaChatInput" maxlength="180" rows="1" placeholder="अपना कमेंट लिखें..." autocomplete="off" enterkeyhint="send" spellcheck="false"></textarea>
               <div class="prc-fs" id="prcFs" role="button" aria-label="उड़ान">🚀</div>
-              <button type="button" class="prc-b" id="prcBe" aria-label="Emoji">☺</button>
               <button type="button" class="prc-b gif" id="prcBg">GIF</button>
               <button type="button" class="prc-send" id="prcSend" aria-label="Send message" disabled>➤</button>
             </div>
@@ -3223,7 +3222,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(!pend[key] && typeof db!=='undefined' && db){
       pend[key]=true;
       db.collection('users').doc(key).get()
-        .then(d=>{ const data=(d&&d.exists&&d.data())||{}; const v=data.photoURL||''; c[key]=cinemaOkPhoto(v)?v:''; window.__partyFrameCache=window.__partyFrameCache||{}; window.__partyFrameCache[key]=String(data.partyEquippedFrame||'none'); })
+        .then(d=>{ const data=(d&&d.exists&&d.data())||{}; const v=data.photoURL||''; c[key]=cinemaOkPhoto(v)?v:''; window.__partyFrameCache=window.__partyFrameCache||{}; window.__partyFrameCache[key]=String(window.partyFrameActiveId?window.partyFrameActiveId(data):(data.partyEquippedFrame||'none')); })
         .catch(()=>{ c[key]=''; })
         .then(()=>{ delete pend[key]; try{ cinemaRenderSeats(window.__cinemaPeople||[]); }catch(e){} try{ const vp=document.getElementById('partyRoomViewersPage'); if(vp && vp.style.display!=='none') cinemaRenderViewerList(window.__cinemaPeople||[]); }catch(e){} });
     }
@@ -3239,7 +3238,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       const pend=window.__pfPend||(window.__pfPend={});
       if(!Object.prototype.hasOwnProperty.call(cache,key) && !pend[key] && typeof db!=='undefined' && db){
         pend[key]=true;
-        db.collection('users').doc(key).get().then(d=>{ const x=(d&&d.exists&&d.data())||{}; cache[key]=String(x.partyEquippedFrame||'none'); }).catch(()=>{})
+        db.collection('users').doc(key).get().then(d=>{ const x=(d&&d.exists&&d.data())||{}; cache[key]=String(window.partyFrameActiveId?window.partyFrameActiveId(x):(x.partyEquippedFrame||'none')); }).catch(()=>{})
           .then(()=>{ delete pend[key]; try{ cinemaRenderSeats(window.__cinemaPeople||[]); }catch(e){} });
       }
     }catch(e){}
@@ -3934,7 +3933,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
         if(panel) panel.classList.add('chat-input-open');
         if(toggle){ toggle.setAttribute('aria-expanded','true'); toggle.classList.add('is-open'); }
         const room=document.getElementById('prRoom'); if(room) room.classList.remove('party-keyboard-open');
-        try{input.blur();}catch(e){}
         const dock=document.getElementById('partyRoomBottomDock');
         if(dock) dock.style.transform='';
       })
@@ -5041,7 +5039,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     }
     box.innerHTML=page(GIFTS,false)+page(GIFTS_BIG,true);
   }
-  function renderBaggagePanel(){var box=$('prBaggagePanel');if(!box)return;var cat=window.PARTY_FRAME_CATALOG||{},owned=window.__partyFrameOwned||{},eq=String(window.__partyEquippedFrame||'none'),items=Object.values(cat);if(!items.length){box.innerHTML='<div style="padding:24px;text-align:center;color:#94a3b8;font-size:12px;">अभी कोई Frame उपलब्ध नहीं है।</div>';return;}box.innerHTML='<div style="font-size:11px;color:#cbd5e1;margin:2px 2px 8px;">🧳 Baggage में आपके Frame और नए premium Frames हैं।</div><div class="pr-baggage-grid">'+items.map(function(f){var price=(typeof coinPrice==='function')?coinPrice(f.rupees):Math.max(1,Math.ceil(Number(f.rupees||0)/.10)),art=(typeof window.partyFrameArt==='function')?window.partyFrameArt(f.id):'',has=owned[f.id]===true,is=eq===f.id,btn=is?'<button type="button" class="pr-baggage-btn equipped" onclick="partyRemoveEquippedFrame();setTimeout(renderBaggagePanel,100)">✓ लगा हुआ</button>':has?'<button type="button" class="pr-baggage-btn owned" onclick="partyEquipFrame(\''+f.id+'\');setTimeout(renderBaggagePanel,120)">✨ फ्रेम लगाएँ</button>':'<button type="button" class="pr-baggage-btn" onclick="partyBuyFrame(\''+f.id+'\');setTimeout(renderBaggagePanel,220)">🪙 '+window.prFmt(price)+' Coins</button>';return '<div class="pr-baggage-item"><div class="pr-baggage-preview">'+(art?'<img src="'+art+'" alt="'+esc(f.name)+'">':'<div style="font-size:42px;">'+esc(f.emoji||'✨')+'</div>')+'</div><div class="pr-baggage-name">'+esc(f.name)+'</div><div class="pr-baggage-price">🪙 '+window.prFmt(price)+' Coins</div>'+btn+'</div>';}).join('')+'</div>'; }
+  function renderBaggagePanel(){var box=$('prBaggagePanel');if(!box)return;var cat=window.PARTY_FRAME_CATALOG||{},owned=window.__partyFrameOwned||{},eq=String(window.__partyEquippedFrame||'none'),items=Object.values(cat);if(!items.length){box.innerHTML='<div style="padding:24px;text-align:center;color:#94a3b8;font-size:12px;">अभी कोई Frame उपलब्ध नहीं है।</div>';return;}box.innerHTML='<div style="font-size:11px;color:#cbd5e1;margin:2px 2px 8px;">🧳 Baggage में आपके Frame और नए premium Frames हैं।</div><div class="pr-baggage-grid">'+items.map(function(f){var price=(typeof coinPrice==='function')?coinPrice(f.rupees):Math.max(1,Math.ceil(Number(f.rupees||0)/.10)),art=(typeof window.partyFrameArt==='function')?window.partyFrameArt(f.id):'',has=(typeof window.partyFrameIsOwned==='function'?window.partyFrameIsOwned(f.id):owned[f.id]===true),is=eq===f.id&&has,vl=has?(window.partyFrameLeftLabel?window.partyFrameLeftLabel(f.id):''):(window.partyFrameValidLabel?window.partyFrameValidLabel(f.id):''),btn=is?'<button type="button" class="pr-baggage-btn equipped" onclick="partyRemoveEquippedFrame();setTimeout(renderBaggagePanel,100)">✓ लगा हुआ</button>':has?'<button type="button" class="pr-baggage-btn owned" onclick="partyEquipFrame(\''+f.id+'\');setTimeout(renderBaggagePanel,120)">✨ फ्रेम लगाएँ</button>':'<button type="button" class="pr-baggage-btn" onclick="partyBuyFrame(\''+f.id+'\');setTimeout(renderBaggagePanel,220)">🪙 '+window.prFmt(price)+' Coins</button>';return '<div class="pr-baggage-item"><div class="pr-baggage-preview">'+(art?'<img src="'+art+'" alt="'+esc(f.name)+'">':'<div style="font-size:42px;">'+esc(f.emoji||'✨')+'</div>')+'</div><div class="pr-baggage-name">'+esc(f.name)+'</div><div class="pr-baggage-price">🪙 '+window.prFmt(price)+' Coins</div>'+(vl?'<div style="font-size:10px;line-height:1.35;margin:2px 0 6px;color:'+(has?'#fcd34d':'#94a3b8')+';">'+vl+'</div>':'')+btn+'</div>';}).join('')+'</div>'; }
+  window.renderBaggagePanel=renderBaggagePanel;
   function showPartyGiftTab(tab){var gifts=tab!=='baggage',gt=$('prGiftGrid'),bp=$('prBaggagePanel'),tabs=document.querySelectorAll('#prGiftCategoryTabs button'),rec=$('prGiftRecipientsWrap'),send=$('prSendInfo'),sendBtn=$('prSendBtn'),hint=document.querySelector('#prGiftSheet .pr-gift-pagehint');tabs.forEach(function(b){b.classList.toggle('active',b.getAttribute('data-pr-gift-tab')===tab);});if(gt)gt.style.display=gifts?'flex':'none';if(bp){bp.style.display=gifts?'none':'block';if(!gifts)renderBaggagePanel();}if(rec)rec.style.display=gifts?'block':'none';if(send)send.style.display=gifts?'block':'none';if(sendBtn)sendBtn.style.display=gifts?'':'none';if(hint)hint.style.display=gifts?'':'none';}
   window.showPartyGiftTab=showPartyGiftTab;
   document.addEventListener('click',function(e){var b=e.target&&e.target.closest?e.target.closest('[data-pr-gift-tab]'):null;if(b){e.preventDefault();e.stopPropagation();showPartyGiftTab(b.getAttribute('data-pr-gift-tab')||'gifts');}},true);
@@ -5286,16 +5285,33 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
 <script>
 (function(){
 const catalog={gold:{id:'gold',name:'Imperial Gold Crown',rupees:10,emoji:'♛'},ruby:{id:'ruby',name:'Royal Ruby Heart',rupees:15,emoji:'♥'},royal:{id:'royal',name:'Purple Royal Aura',rupees:20,emoji:'✦'},diamond:{id:'diamond',name:'Diamond Wing',rupees:50,emoji:'❖'},galaxy:{id:'galaxy',name:'Galaxy Champion',rupees:100,emoji:'✦'},redcrown:{id:'redcrown',name:'Crimson Royal Crown',rupees:25,emoji:'♛'},phoenix:{id:'phoenix',name:'Blue Phoenix Wings',rupees:30,emoji:'🪽'},amethyst:{id:'amethyst',name:'Amethyst Crystal',rupees:35,emoji:'◆'},dragon:{id:'dragon',name:'Azure Dragon',rupees:40,emoji:'🐉'},cosmic:{id:'cosmic',name:'Cosmic Orbit',rupees:45,emoji:'☄'},emerald:{id:'emerald',name:'Emerald Royal Laurel',rupees:50,emoji:'♕'},love:{id:'love',name:'Pink Love Jewel',rupees:55,emoji:'♥'},ice:{id:'ice',name:'Ice Crystal Crown',rupees:60,emoji:'❄'},blackroyal:{id:'blackroyal',name:'Black Gold Emperor',rupees:65,emoji:'♛'},silverwing:{id:'silverwing',name:'Silver Blue Wings',rupees:70,emoji:'✦'},firedragon:{id:'firedragon',name:'Fire Dragon',rupees:75,emoji:'🔥'},butterfly:{id:'butterfly',name:'Purple Butterfly',rupees:80,emoji:'🦋'},forest:{id:'forest',name:'Emerald Flower',rupees:85,emoji:'🌿'},moon:{id:'moon',name:'Moon Galaxy',rupees:90,emoji:'☾'},curtain:{id:'curtain',name:'Red Royal Curtain',rupees:125,emoji:'♛'},futuristic:{id:'futuristic',name:'Blue Future Crystal',rupees:150,emoji:'◇'}};
-window.PARTY_FRAME_CATALOG=catalog; window.__partyFrameOwned=window.__partyFrameOwned||{}; window.__partyEquippedFrame=window.__partyEquippedFrame||'none';
+window.PARTY_FRAME_CATALOG=catalog; window.__partyFrameOwned=window.__partyFrameOwned||{}; window.__partyEquippedFrame=window.__partyEquippedFrame||'none'; window.__partyFrameExpiry=window.__partyFrameExpiry||{};
+/* Frame validity: har frame ke din yahan badal sakte hain, e.g. PARTY_FRAME_DAYS.gold=2 */
+const FRAME_DAYS_DEFAULT=5; window.PARTY_FRAME_DAYS=window.PARTY_FRAME_DAYS||{};
+function frameDays(id){return Math.max(1,Number(window.PARTY_FRAME_DAYS[id])||FRAME_DAYS_DEFAULT)}
+function frameExp(id){return Number((window.__partyFrameExpiry||{})[id])||0}
+function isOwned(id){if((window.__partyFrameOwned||{})[id]!==true)return false;const x=frameExp(id);return !(x&&x<=Date.now())}
+function leftLabel(id){const x=frameExp(id);if(!x)return '';const ms=x-Date.now();if(ms<=0)return '';if(ms<86400000)return '\u23f3 '+Math.max(1,Math.ceil(ms/3600000))+' \u0918\u0902\u091f\u0947 \u092c\u093e\u0915\u0940 \u2022 \u0916\u0924\u094d\u092e \u0939\u094b\u0928\u0947 \u092a\u0930 \u0926\u094b\u092c\u093e\u0930\u093e \u0916\u0930\u0940\u0926\u0928\u093e \u0939\u094b\u0917\u093e';const d=Math.ceil(ms/86400000);return '\u23f3 '+d+' \u0926\u093f\u0928 \u092c\u093e\u0915\u0940 \u2022 '+d+' \u0926\u093f\u0928 \u092c\u093e\u0926 \u0926\u094b\u092c\u093e\u0930\u093e \u0916\u0930\u0940\u0926\u0928\u093e \u0939\u094b\u0917\u093e'}
+function validLabel(id){const d=frameDays(id);return '\u23f3 '+d+' \u0926\u093f\u0928 \u0915\u0940 \u0935\u0948\u0927\u0924\u093e'}
+window.partyFrameIsOwned=isOwned;window.partyFrameLeftLabel=leftLabel;window.partyFrameValidLabel=validLabel;
+window.partyFrameActiveId=function(d){d=d||{};const id=String(d.partyEquippedFrame||'none'),u=Number(d.partyEquippedFrameUntil)||0;return(id!=='none'&&u&&u<=Date.now())?'none':id};
 function coinPrice(r){const rate=(typeof COIN_TO_RUPEE_RATE==='number'&&COIN_TO_RUPEE_RATE>0)?COIN_TO_RUPEE_RATE:.10;return Math.max(1,Math.ceil(Number(r)/rate))}
 function ensureStore(){let e=document.getElementById('partyFrameStore');if(e)return e;e=document.createElement('div');e.id='partyFrameStore';e.className='party-frame-store';e.innerHTML='<div class="party-frame-store-card"><div class="party-frame-store-head"><div><div style="font-size:19px;font-weight:950;">🛍️ Party Frame Store</div><div id="partyFrameStoreBalance" style="font-size:11px;color:#a7f3d0;margin-top:3px;">🪙 0 Game Coins</div></div><button type="button" onclick="closePartyFrameStore()" style="width:38px;height:38px;border:1px solid #334155;border-radius:12px;background:#172033;color:#fff;font-size:22px;font-weight:900;">×</button></div><div style="font-size:11px;color:#94a3b8;margin-bottom:10px;">👑 Crown • 🪽 Phoenix • 💎 Crystal • 🐉 Dragon • 🌌 Galaxy • 🔥 Fire — Frame खरीदने के बाद वह आपके अकाउंट में रहेगा। आप कभी भी उसे लगा या हटा सकते हैं।</div><div id="partyFrameStoreGrid" class="party-frame-grid"></div><div id="partyFrameStoreMsg" style="font-size:11px;min-height:18px;margin-top:9px;text-align:center;color:#fca5a5;"></div></div>';document.body.appendChild(e);return e}
-function refresh(){const e=ensureStore(),g=e.querySelector('#partyFrameStoreGrid');if(!g)return;const owned=window.__partyFrameOwned||{},eq=window.__partyEquippedFrame||'none',bal=Math.floor(Number(gamePoints)||0),b=e.querySelector('#partyFrameStoreBalance');if(b)b.textContent='🪙 '+bal+' Game Coins';g.innerHTML=Object.values(catalog).map(f=>{const c=coinPrice(f.rupees),has=owned[f.id]===true,is=eq===f.id;let a=is?'<button type="button" class="party-frame-store-btn remove" onclick="partyRemoveEquippedFrame()">❌ फ्रेम हटाएँ</button>':has?'<button type="button" class="party-frame-store-btn use" onclick="partyEquipFrame(\''+f.id+'\')">✨ फ्रेम लगाएँ</button>':'<button type="button" class="party-frame-store-btn buy" onclick="partyBuyFrame(\''+f.id+'\')">🪙 '+c+' Coins</button>';return '<div class="party-frame-item"><div class="party-frame-preview" data-frame="'+f.id+'"><div class="pfp-avatar">'+f.emoji+'</div>'+(typeof partyFrameArt==='function'&&partyFrameArt(f.id)?'<img class="party-store-frame-art" alt="" src="'+partyFrameArt(f.id)+'">':'')+'</div><div style="font-size:12px;font-weight:950;">'+f.name+'</div><div style="font-size:10px;color:#c4b5fd;margin:3px 0 8px;">🪙 '+c+' Game Coins</div>'+a+'</div>'}).join('')}
-async function load(){if(!db||!currentUserKey)return;try{const s=await db.collection('users').doc(String(currentUserKey)).get(),d=s.exists?(s.data()||{}):{};window.__partyFrameOwned=d.partyFrameOwned&&typeof d.partyFrameOwned==='object'?d.partyFrameOwned:{};window.__partyEquippedFrame=String(d.partyEquippedFrame||'none'); try{renderOwnProfileFrame();}catch(e){}window.__partyFrameCache=window.__partyFrameCache||{};window.__partyFrameCache[String(currentUserKey)]=window.__partyEquippedFrame;gamePoints=Math.max(0,Number(d.gamePoints)||0);try{prSyncCoinDisplays()}catch(e){}refresh();try{cinemaRenderSeats(window.__cinemaPeople||[])}catch(e){}}catch(e){}}
+function refresh(){const e=ensureStore(),g=e.querySelector('#partyFrameStoreGrid');if(!g)return;const owned=window.__partyFrameOwned||{},eq=window.__partyEquippedFrame||'none',bal=Math.floor(Number(gamePoints)||0),b=e.querySelector('#partyFrameStoreBalance');if(b)b.textContent='🪙 '+bal+' Game Coins';g.innerHTML=Object.values(catalog).map(f=>{const c=coinPrice(f.rupees),has=isOwned(f.id),is=eq===f.id&&has;let a=is?'<button type="button" class="party-frame-store-btn remove" onclick="partyRemoveEquippedFrame()">❌ फ्रेम हटाएँ</button>':has?'<button type="button" class="party-frame-store-btn use" onclick="partyEquipFrame(\''+f.id+'\')">✨ फ्रेम लगाएँ</button>':'<button type="button" class="party-frame-store-btn buy" onclick="partyBuyFrame(\''+f.id+'\')">🪙 '+c+' Coins</button>';return '<div class="party-frame-item"><div class="party-frame-preview" data-frame="'+f.id+'"><div class="pfp-avatar">'+f.emoji+'</div>'+(typeof partyFrameArt==='function'&&partyFrameArt(f.id)?'<img class="party-store-frame-art" alt="" src="'+partyFrameArt(f.id)+'">':'')+'</div><div style="font-size:12px;font-weight:950;">'+f.name+'</div><div style="font-size:10px;color:#c4b5fd;margin:3px 0 4px;">🪙 '+c+' Game Coins</div><div style="font-size:10px;color:'+(has?'#fcd34d':'#94a3b8')+';margin:0 0 8px;line-height:1.35;">'+(has?(leftLabel(f.id)||'\u2714 \u0906\u092a\u0915\u0947 \u092a\u093e\u0938 \u0939\u0948'):validLabel(f.id))+'</div>'+a+'</div>'}).join('')}
+async function load(){if(!db||!currentUserKey)return;try{const s=await db.collection('users').doc(String(currentUserKey)).get(),d=s.exists?(s.data()||{}):{};window.__partyFrameOwned=d.partyFrameOwned&&typeof d.partyFrameOwned==='object'?d.partyFrameOwned:{};window.__partyFrameExpiry=d.partyFrameExpiry&&typeof d.partyFrameExpiry==='object'?d.partyFrameExpiry:{};window.__partyEquippedFrame=String(d.partyEquippedFrame||'none');if(window.__partyEquippedFrame!=='none'&&!isOwned(window.__partyEquippedFrame)){window.__partyEquippedFrame='none';try{db.collection('users').doc(String(currentUserKey)).set({partyEquippedFrame:'none',partyEquippedFrameUntil:0},{merge:true})}catch(e){}} try{renderOwnProfileFrame();}catch(e){}window.__partyFrameCache=window.__partyFrameCache||{};window.__partyFrameCache[String(currentUserKey)]=window.__partyEquippedFrame;gamePoints=Math.max(0,Number(d.gamePoints)||0);try{prSyncCoinDisplays()}catch(e){}refresh();try{cinemaRenderSeats(window.__cinemaPeople||[])}catch(e){}}catch(e){}}
 async function open(){ensureStore().style.display='block';refresh();await load()}
 function close(){const e=document.getElementById('partyFrameStore');if(e)e.style.display='none'}
-async function buy(id){const f=catalog[id];if(!f||!db||!currentUserKey)return;const c=coinPrice(f.rupees);try{const ref=db.collection('users').doc(String(currentUserKey));const r=await db.runTransaction(async tx=>{const s=await tx.get(ref);if(!s.exists)throw Error('user_missing');const d=s.data()||{},bal=Math.max(0,Math.floor(Number(d.gamePoints)||0)),o=d.partyFrameOwned&&typeof d.partyFrameOwned==='object'?Object.assign({},d.partyFrameOwned):{};if(o[id]===true)return {balance:bal,owned:o,equipped:String(d.partyEquippedFrame||'none')};if(bal<c)throw Error('insufficient');o[id]=true;tx.set(ref,{gamePoints:bal-c,partyFrameOwned:o},{merge:true});return {balance:bal-c,owned:o,equipped:String(d.partyEquippedFrame||'none')}});gamePoints=r.balance;window.__partyFrameOwned=r.owned;window.__partyEquippedFrame=r.equipped;window.__partyFrameCache=window.__partyFrameCache||{};window.__partyFrameCache[String(currentUserKey)]=r.equipped;try{saveState()}catch(e){}try{prSyncCoinDisplays()}catch(e){}refresh();cinemaRenderSeats(window.__cinemaPeople||[]);const m=document.getElementById('partyFrameStoreMsg');if(m)m.textContent='✔ '+f.name+' आपके Frame Collection में आ गया।'}catch(e){const m=document.getElementById('partyFrameStoreMsg');if(m)m.textContent=e&&e.message==='insufficient'?'❌ आपके पास इतने Game Coins नहीं हैं।':'❌ Frame खरीद नहीं पाया, दोबारा कोशिश करें।'}}
-async function equip(id){if(!catalog[id]||!db||!currentUserKey||(window.__partyFrameOwned||{})[id]!==true)return;try{await db.collection('users').doc(String(currentUserKey)).set({partyEquippedFrame:id},{merge:true});window.__partyEquippedFrame=id;window.__partyFrameCache=window.__partyFrameCache||{};window.__partyFrameCache[String(currentUserKey)]=id;refresh();cinemaRenderSeats(window.__cinemaPeople||[]);try{renderOwnProfileFrame();}catch(e){}}catch(e){}}
-async function remove(){if(!db||!currentUserKey)return;try{await db.collection('users').doc(String(currentUserKey)).set({partyEquippedFrame:'none'},{merge:true});window.__partyEquippedFrame='none';window.__partyFrameCache=window.__partyFrameCache||{};window.__partyFrameCache[String(currentUserKey)]='none';refresh();cinemaRenderSeats(window.__cinemaPeople||[]);try{renderOwnProfileFrame();}catch(e){}}catch(e){}}
+let buying=false;
+async function buy(id){const f=catalog[id];if(!f||!db||!currentUserKey||buying)return;const c=coinPrice(f.rupees);const before=gamePoints;const m0=document.getElementById('partyFrameStoreMsg');
+if(!isOwned(id)){if(Math.floor(Number(gamePoints)||0)<c){if(m0){m0.style.color='#fca5a5';m0.textContent='\u274c \u0906\u092a\u0915\u0947 \u092a\u093e\u0938 \u0907\u0924\u0928\u0947 Game Coins \u0928\u0939\u0940\u0902 \u0939\u0948\u0902\u0964'}return}
+gamePoints=Math.floor(Number(gamePoints)||0)-c;try{prSyncCoinDisplays()}catch(e){}refresh();try{renderBaggagePanel()}catch(e){}}
+buying=true;
+try{const ref=db.collection('users').doc(String(currentUserKey));const days=frameDays(id);const r=await db.runTransaction(async tx=>{const s=await tx.get(ref);if(!s.exists)throw Error('user_missing');const d=s.data()||{},bal=Math.max(0,Math.floor(Number(d.gamePoints)||0)),o=d.partyFrameOwned&&typeof d.partyFrameOwned==='object'?Object.assign({},d.partyFrameOwned):{},ex=d.partyFrameExpiry&&typeof d.partyFrameExpiry==='object'?Object.assign({},d.partyFrameExpiry):{};const still=o[id]===true&&!(Number(ex[id])&&Number(ex[id])<=Date.now());if(still)return {balance:bal,owned:o,exp:ex,equipped:String(d.partyEquippedFrame||'none')};if(bal<c)throw Error('insufficient');o[id]=true;ex[id]=Date.now()+days*86400000;tx.set(ref,{gamePoints:bal-c,partyFrameOwned:o,partyFrameExpiry:ex,partyEquippedFrame:id,partyEquippedFrameUntil:ex[id]},{merge:true});return {balance:bal-c,owned:o,exp:ex,equipped:id}});
+gamePoints=r.balance;window.__partyFrameOwned=r.owned;window.__partyFrameExpiry=r.exp;window.__partyEquippedFrame=r.equipped;window.__partyFrameCache=window.__partyFrameCache||{};window.__partyFrameCache[String(currentUserKey)]=r.equipped;try{saveState()}catch(e){}try{prSyncCoinDisplays()}catch(e){}refresh();try{renderBaggagePanel()}catch(e){}try{cinemaRenderSeats(window.__cinemaPeople||[])}catch(e){}try{renderOwnProfileFrame()}catch(e){}const m=document.getElementById('partyFrameStoreMsg');if(m){m.style.color='#a7f3d0';m.textContent='\u2714 '+f.name+' \u0932\u0917 \u0917\u092f\u093e \u0939\u0948 \u2022 '+days+' \u0926\u093f\u0928 \u0924\u0915 \u091a\u0932\u0947\u0917\u093e'}}
+catch(e){gamePoints=before;try{prSyncCoinDisplays()}catch(_){}refresh();try{renderBaggagePanel()}catch(_){}const m=document.getElementById('partyFrameStoreMsg');if(m){m.style.color='#fca5a5';m.textContent=e&&e.message==='insufficient'?'\u274c \u0906\u092a\u0915\u0947 \u092a\u093e\u0938 \u0907\u0924\u0928\u0947 Game Coins \u0928\u0939\u0940\u0902 \u0939\u0948\u0902\u0964':'\u274c Frame \u0916\u0930\u0940\u0926 \u0928\u0939\u0940\u0902 \u092a\u093e\u092f\u093e, \u0926\u094b\u092c\u093e\u0930\u093e \u0915\u094b\u0936\u093f\u0936 \u0915\u0930\u0947\u0902\u0964'}}
+finally{buying=false}}
+async function equip(id){if(!catalog[id]||!db||!currentUserKey||!isOwned(id))return;try{await db.collection('users').doc(String(currentUserKey)).set({partyEquippedFrame:id,partyEquippedFrameUntil:frameExp(id)||0},{merge:true});window.__partyEquippedFrame=id;window.__partyFrameCache=window.__partyFrameCache||{};window.__partyFrameCache[String(currentUserKey)]=id;refresh();cinemaRenderSeats(window.__cinemaPeople||[]);try{renderOwnProfileFrame();}catch(e){}}catch(e){}}
+async function remove(){if(!db||!currentUserKey)return;try{await db.collection('users').doc(String(currentUserKey)).set({partyEquippedFrame:'none',partyEquippedFrameUntil:0},{merge:true});window.__partyEquippedFrame='none';window.__partyFrameCache=window.__partyFrameCache||{};window.__partyFrameCache[String(currentUserKey)]='none';refresh();cinemaRenderSeats(window.__cinemaPeople||[]);try{renderOwnProfileFrame();}catch(e){}}catch(e){}}
 window.openPartyFrameStore=open;window.closePartyFrameStore=close;window.partyBuyFrame=buy;window.partyEquipFrame=equip;window.partyRemoveEquippedFrame=remove;
 function renderOwnProfileFrame(){
   const id=String(window.__partyEquippedFrame||'none');
@@ -6684,7 +6700,7 @@ var name=String(d.name||d.displayName||d.fullName||d.username||'User');
     var vip=isVip(d),photo=photoOf(d),level=levelOf(d),pub=String(d.publicUserId||d.userNumber||d.userId||d.uid||currentKey),followers=Array.isArray(d.followers)?d.followers.length:Number(d.followersCount)||0,following=Array.isArray(d.following)?d.following.length:Number(d.followingCount)||0,likes=Number(d.likes||d.likeCount||d.totalLikes)||0,rank=Number(d.rank||d.ranked||d.rankNo||0),items=arrLen(d.items)||arrLen(d.badges)||arrLen(d.achievements)||0,ver=Number(d.verifications||d.verificationCount||0),city=String(d.city||d.location||d.state||'');
     var o=document.getElementById('pkPublicProfileOverlay');if(!o)return;
     var c=document.getElementById('pkPPcover');c.style.backgroundImage=coverOf(d)?'url("'+escUrl(coverOf(d))+'")':'';
-    var av=document.getElementById('pkPPavatar');av.innerHTML=photo?'<img class="pp-photo" src="'+e(photo)+'" alt="">':e((name.trim()[0]||'U').toUpperCase());var fr=String(d.partyEquippedFrame||'none');try{var art=typeof partyFrameArt==='function'?partyFrameArt(fr):'';if(art)av.insertAdjacentHTML('beforeend','<img class="pp-frame" src="'+e(art)+'" alt="">');}catch(_){ }
+    var av=document.getElementById('pkPPavatar');av.innerHTML=photo?'<img class="pp-photo" src="'+e(photo)+'" alt="">':e((name.trim()[0]||'U').toUpperCase());var fr=String(window.partyFrameActiveId?window.partyFrameActiveId(d):(d.partyEquippedFrame||'none'));try{var art=typeof partyFrameArt==='function'?partyFrameArt(fr):'';if(art)av.insertAdjacentHTML('beforeend','<img class="pp-frame" src="'+e(art)+'" alt="">');}catch(_){ }
     document.getElementById('pkPPlevel').textContent='Lv.'+level;
     var topTitle=document.getElementById('pkPPtopTitle');if(topTitle)topTitle.textContent=name;
     document.getElementById('pkPPname').innerHTML=e(name)+(vip?' <span class="pk-vip-badge">👑 VIP</span>':'');
@@ -8361,17 +8377,13 @@ body.pk-game-open #pkUniversalNav{display:none!important}
       if(!dmOpen()){ wasKbDM=0; return; }
       var vv=window.visualViewport;
       var kb=vv?Math.max(0,Math.round(window.innerHeight-(vv.height+vv.offsetTop))):0;
-      if(composeOpenDM() && wasKbDM>120 && kb<60){ setTimeout(function(){ if(typeof window.pkDirectCloseComposeBar==='function') window.pkDirectCloseComposeBar(); },150); }
+      /* auto-close on keyboard-height change removed: it closed the box on some phones while typing */
       wasKbDM=kb;
     }
     setInterval(tickDM,200);
     var vv=window.visualViewport; if(vv){ vv.addEventListener('resize',tickDM); vv.addEventListener('scroll',tickDM); }
     window.addEventListener('resize',tickDM);
-    document.addEventListener('focusout',function(e){
-      if(e.target && e.target.id==='pkDirectInput'){
-        setTimeout(function(){ if(document.activeElement!==document.getElementById('pkDirectInput')) window.pkDirectCloseComposeBar&&window.pkDirectCloseComposeBar(); },200);
-      }
-    });
+    /* auto-close on focus loss removed: the box now closes only with its close button / Back */
   })();
 
   /* ===== FIX 2: Party Room chat always shows the newest message ===== */
@@ -12266,6 +12278,138 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 
 
 
+
+<style id="pkDockStayBottomFix">
+/* Bottom dock must never ride up with the keyboard or float over other pages. */
+#prRoom.party-keyboard-open #partyRoomBottomDock{z-index:70!important;}
+body.pk-dock-away #partyRoomBottomDock,
+body.pk-dock-away #partyRoomBottomDock *{visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
+#partyRoomBottomDock{transition:opacity .12s ease!important;}
+</style>
+<script id="pkDockStayBottomScript">
+(function(){'use strict';
+var stableH=Math.max(window.innerHeight||0,(window.visualViewport&&window.visualViewport.height)||0);
+var OVERLAYS=['pkPublicProfileOverlay','partyRoomViewersPage','partyRoomTopGiftersPage','partyRoomSettingsPage','pkDirectMessageOverlay','pkVisitorsOverlay','partyMoreVideoOverlay','prBrowserOverlay','pkMeProfilePanel','partyGamingModePage'];
+function typing(){var a=document.activeElement;return !!a&&(a.tagName==='TEXTAREA'||(a.tagName==='INPUT'&&!/^(button|checkbox|radio|range|submit|file)$/i.test(a.type||'')));}
+function shown(el){
+  if(!el)return false;
+  var cs=getComputedStyle(el);
+  if(cs.display==='none'||cs.visibility==='hidden'||parseFloat(cs.opacity)<0.05)return false;
+  var r=el.getBoundingClientRect(),w=window.innerWidth,h=window.innerHeight;
+  var iw=Math.max(0,Math.min(r.right,w)-Math.max(r.left,0)),ih=Math.max(0,Math.min(r.bottom,h)-Math.max(r.top,0));
+  return iw*ih>w*h*0.3;
+}
+function tick(){
+  try{
+    var room=document.getElementById('prRoom'),dock=document.getElementById('partyRoomBottomDock');
+    if(!room||!dock)return;
+    var vv=window.visualViewport,vh=vv?vv.height:window.innerHeight;
+    if(!typing()&&window.innerHeight>stableH)stableH=window.innerHeight;
+    var po=document.getElementById('prcPanel');var kb=(stableH-vh>120)||(typing()&&room.contains(document.activeElement))||!!(po&&po.classList.contains('open'));
+    var over=false;
+    for(var i=0;i<OVERLAYS.length;i++){if(shown(document.getElementById(OVERLAYS[i]))){over=true;break;}}
+    document.body.classList.toggle('pk-dock-away',!!(kb||over));document.body.classList.toggle('pk-ovl-open',!!over);
+  }catch(e){}
+}
+setInterval(tick,150);
+if(window.visualViewport){window.visualViewport.addEventListener('resize',tick);window.visualViewport.addEventListener('scroll',tick);}
+window.addEventListener('resize',tick);
+document.addEventListener('focusin',tick);document.addEventListener('focusout',function(){setTimeout(tick,60)});
+})();
+</script>
+
+<style id="pkPrcBubbleStyle">
+/* Comment box = small draggable circle; tap -> full comment box above the keyboard. */
+#prRoom > #prcTrigger.prc-trigger{position:fixed!important;width:54px!important;height:54px!important;min-height:0!important;margin:0!important;padding:0!important;gap:0!important;flex:none!important;order:0!important;border-radius:50%!important;align-items:center!important;justify-content:center!important;z-index:75!important;touch-action:none!important;-webkit-user-select:none!important;user-select:none!important;background:linear-gradient(135deg,#ff6bb5,#e0136f)!important;border:2px solid rgba(255,255,255,.55)!important;box-shadow:0 8px 22px rgba(224,19,111,.55),0 0 0 3px rgba(224,19,111,.18)!important;}
+#prRoom > #prcTrigger .prc-av,#prRoom > #prcTrigger span.t,#prRoom > #prcTrigger span.i{display:none!important;}
+#prRoom > #prcTrigger::before{content:"💬";font-size:25px;line-height:1;}
+#prRoom > #prcTrigger.dragging{transform:scale(1.12);transition:none!important;}
+body.pk-ovl-open #prRoom > #prcTrigger{display:none!important;}
+#prRoom > #prcPanel.prc-panel{position:fixed!important;left:8px!important;right:8px!important;top:auto!important;bottom:var(--pk-prc-bottom,8px)!important;max-width:560px!important;margin:0 auto!important;z-index:80!important;padding:8px 8px 10px!important;border-radius:22px!important;background:rgba(24,4,20,.93)!important;border:1.5px solid rgba(224,19,111,.6)!important;box-shadow:0 -6px 28px rgba(0,0,0,.45)!important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);}
+#prRoom > #prcPanel.prc-panel:not(.open){display:none!important;}
+#prRoom > #prcPanel.prc-panel.open{display:flex!important;}
+/* Keyboard must never shift the screen above. */
+#prRoom.party-keyboard-open #prTop,#prRoom.party-keyboard-open #prSubRow,#prRoom.party-keyboard-open #prTicker,#prRoom.party-keyboard-open #prHostRow,#prRoom.party-keyboard-open #cinemaSeats,#prRoom.party-keyboard-open #cinemaChatPanel{transform:none!important;}
+</style>
+<script id="pkPrcBubbleScript">
+(function(){'use strict';
+var BW=54,stableH=window.innerHeight,lastW=window.innerWidth,dragEnd=0,drag=null;
+function $(i){return document.getElementById(i)}
+function clamp(x,y,w,h){return{x:Math.max(4,Math.min(window.innerWidth-w-4,x)),y:Math.max(66,Math.min(window.innerHeight-h-4,y))}}
+function place(t,x,y){var c=clamp(x,y,t.offsetWidth||BW,t.offsetHeight||BW);t.style.left=c.x+'px';t.style.top=c.y+'px';t.style.right='auto';t.style.bottom='auto'}
+function initPos(t){var x=window.innerWidth-BW-12,y=window.innerHeight-BW-96;
+  try{var s=JSON.parse(localStorage.getItem('pkPrcBubblePos')||'null');if(s&&typeof s.fx==='number'&&typeof s.fy==='number'){x=s.fx*window.innerWidth;y=s.fy*window.innerHeight}}catch(e){}
+  place(t,x,y)}
+function wire(){
+  var room=$('prRoom'),t=$('prcTrigger'),p=$('prcPanel');
+  if(!room||!t||!p)return;
+  if(t.parentNode!==room)room.appendChild(t);
+  if(p.parentNode!==room)room.appendChild(p);
+  if(t.dataset.pkDrag==='1')return;
+  t.dataset.pkDrag='1';
+  initPos(t);
+  t.addEventListener('pointerdown',function(e){
+    if(e.button&&e.button!==0)return;
+    var r=t.getBoundingClientRect();
+    drag={id:e.pointerId,sx:e.clientX,sy:e.clientY,ox:r.left,oy:r.top,moved:false};
+    try{t.setPointerCapture(e.pointerId)}catch(_){}
+  });
+  t.addEventListener('pointermove',function(e){
+    if(!drag||e.pointerId!==drag.id)return;
+    var dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;
+    if(!drag.moved&&Math.abs(dx)+Math.abs(dy)<8)return;
+    drag.moved=true;t.classList.add('dragging');
+    place(t,drag.ox+dx,drag.oy+dy);
+    e.preventDefault();
+  });
+  function end(e){
+    if(!drag||e.pointerId!==drag.id)return;
+    var m=drag.moved;drag=null;t.classList.remove('dragging');
+    if(m){dragEnd=Date.now();var r=t.getBoundingClientRect();
+      try{localStorage.setItem('pkPrcBubblePos',JSON.stringify({fx:r.left/window.innerWidth,fy:r.top/window.innerHeight}))}catch(_){}}
+  }
+  t.addEventListener('pointerup',end);t.addEventListener('pointercancel',end);
+  t.addEventListener('click',function(e){if(Date.now()-dragEnd<400){e.stopImmediatePropagation();e.preventDefault();}},true);
+}
+function tick(){
+  try{
+    wire();
+    var room=$('prRoom');if(!room)return;
+    var v=window.visualViewport,vh=v?v.height:window.innerHeight,off=v?v.offsetTop:0;
+    if(window.innerWidth!==lastW){lastW=window.innerWidth;stableH=window.innerHeight;}
+    var kb=stableH-vh>120;
+    if(!kb)stableH=window.innerHeight;
+    // keep the whole room the same size while the keyboard is up (video + seats stay put)
+    var m=$('cinemaGharModal');
+    if(m){
+      if(kb){m.style.setProperty('height',stableH+'px','important');m.style.setProperty('bottom','auto','important');m.dataset.pkPin='1';}
+      else if(m.dataset.pkPin){m.style.removeProperty('height');m.style.setProperty('bottom','0px');delete m.dataset.pkPin;}
+    }
+    if(room.classList.contains('party-keyboard-open'))room.classList.remove('party-keyboard-open');
+    // comment box sits right above the keyboard
+    var kbH=Math.max(0,Math.round(window.innerHeight-(off+vh)));
+    room.style.setProperty('--pk-prc-bottom',kbH>0?(kbH+8)+'px':'calc(env(safe-area-inset-bottom,0px) + 8px)');
+    // keep the bubble on screen
+    var t=$('prcTrigger');
+    if(t&&!kb&&t.offsetWidth&&!drag){var r=t.getBoundingClientRect();
+      if(r.left<0||r.right>window.innerWidth||r.bottom>window.innerHeight||r.top<60)place(t,r.left,r.top);}
+  }catch(e){}
+}
+var swallow=0;
+document.addEventListener('pointerdown',function(e){
+  var p=$('prcPanel');if(!p||!p.classList.contains('open'))return;
+  if(p.contains(e.target))return;
+  var t=$('prcTrigger');if(t&&t.contains(e.target))return;
+  swallow=Date.now();
+  if(typeof window.partyRoomCloseChatPanel==='function')window.partyRoomCloseChatPanel();
+},true);
+document.addEventListener('click',function(e){if(Date.now()-swallow<500){swallow=0;e.stopPropagation();e.preventDefault();}},true);
+setInterval(tick,150);
+if(window.visualViewport){window.visualViewport.addEventListener('resize',tick);window.visualViewport.addEventListener('scroll',tick);}
+window.addEventListener('resize',tick);
+tick();
+})();
+</script>
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
@@ -13901,8 +14045,8 @@ html body #prRoom > #cinemaChatPanel.prc #cinemaChatMessages{order:1!important;f
 .prc-x{width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,100,180,.25);background:rgba(255,80,160,.15);color:#ff8dc7;font-size:16px;line-height:1;padding:0}
 .prc-prev{display:none;align-items:center;gap:8px;padding:6px 8px;border-radius:14px;background:rgba(255,60,150,.1);border:1px solid rgba(255,100,180,.4);color:#ffd0e8;font-size:12px}
 .prc-prev.show{display:flex}.prc-prev img{width:44px;height:44px;border-radius:8px;object-fit:cover}.prc-prev span{flex:1;text-align:left}
-.prc-row{display:flex;align-items:center;gap:6px;padding:4px 4px 4px 12px;border-radius:26px;background:linear-gradient(135deg,rgba(55,12,45,.94),rgba(40,8,35,.97));border:1px solid rgba(255,100,180,.3)}
-#prRoom .prc-row textarea#cinemaChatInput{flex:1 1 auto;min-width:0;height:38px;max-height:84px;resize:none;outline:0;border:0;background:transparent;color:#ffe0f0;-webkit-text-fill-color:#ffe0f0;font:inherit;font-size:15px;line-height:1.35;padding:8px 0;box-shadow:none}
+.prc-row{display:flex;align-items:center;gap:8px;padding:4px 5px 4px 14px;border-radius:26px;background:linear-gradient(135deg,rgba(55,12,45,.94),rgba(40,8,35,.97));border:2px solid #e0136f;box-shadow:0 0 0 1px rgba(224,19,111,.25),0 0 14px -2px rgba(224,19,111,.55)}
+#prRoom .prc-row textarea#cinemaChatInput{flex:1 1 auto;min-width:0;height:38px;max-height:84px;resize:none;outline:0;border:0;background:transparent;color:#fff;-webkit-text-fill-color:#fff;caret-color:#ff4da0;font:inherit;font-size:15px;line-height:1.35;padding:8px 0;box-shadow:none}
 #prRoom .prc-row textarea#cinemaChatInput::placeholder{color:#a878a0;-webkit-text-fill-color:#a878a0}
 .prc-b{flex:0 0 36px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;padding:0;cursor:pointer;background:rgba(255,100,180,.12);color:#ff8dc7;border:1px solid rgba(255,100,180,.22);font-size:16px;font-weight:800}
 .prc-b.gif{font-size:11px}.prc-b.on{background:linear-gradient(135deg,#ff6bb5,#ff3d8f);color:#fff}
@@ -13948,10 +14092,10 @@ var gifLoaded=false;
 function loadGifs(q){gg.innerHTML='';var lab=document.createElement('div');lab.className='prc-lab';lab.style.gridColumn='1/-1';lab.textContent='⭐ मेरी GIFs';if(!q){gg.appendChild(lab);GIFS.forEach(function(g){gg.appendChild(gifItem(g))})}
  var url='https://api.giphy.com/v1/gifs/'+(q?'search':'trending')+'?api_key=dc6zaTOxFJmzC&limit=18&rating=g'+(q?'&q='+encodeURIComponent(q):'');
  fetch(url).then(function(r){return r.json()}).then(function(j){(j.data||[]).forEach(function(x){gg.appendChild(gifItem({u:x.images.fixed_height.url}))})}).catch(function(){})}
-function tab(which){var same=pick.classList.contains('show')&&pick.dataset.t===which;pick.classList.toggle('show',!same);pick.dataset.t=which;$('prcEmoTab').style.display=which==='e'?'block':'none';$('prcGifTab').style.display=which==='g'?'block':'none';$('prcBe').classList.toggle('on',!same&&which==='e');$('prcBg').classList.toggle('on',!same&&which==='g');if(!same&&which==='g'&&!gifLoaded){gifLoaded=true;loadGifs('')}}
+function tab(which){var same=pick.classList.contains('show')&&pick.dataset.t===which;pick.classList.toggle('show',!same);pick.dataset.t=which;$('prcEmoTab').style.display=which==='e'?'block':'none';$('prcGifTab').style.display=which==='g'?'block':'none';($('prcBe')||{classList:{toggle:function(){},remove:function(){}}}).classList.toggle('on',!same&&which==='e');$('prcBg').classList.toggle('on',!same&&which==='g');if(!same&&which==='g'&&!gifLoaded){gifLoaded=true;loadGifs('')}}
 function doSend(){var t=ta.value.trim();if(!t&&!gif)return;if(typeof window.cinemaSendChat!=='function')return;
  ta.value=(fly?'[[fly:'+style+']]':'')+(gif?'[[gif:'+gif.u+']]':'')+t;window.cinemaSendChat();
- gif=null;showPrev();ta.value='';ta.style.height='auto';pick.classList.remove('show');$('prcBe').classList.remove('on');$('prcBg').classList.remove('on');gg.querySelectorAll('.sel').forEach(function(x){x.classList.remove('sel')});upd();setTimeout(function(){try{ta.focus({preventScroll:true})}catch(e){}},30)}
+ gif=null;showPrev();ta.value='';ta.style.height='auto';pick.classList.remove('show');($('prcBe')||{classList:{toggle:function(){},remove:function(){}}}).classList.remove('on');$('prcBg').classList.remove('on');gg.querySelectorAll('.sel').forEach(function(x){x.classList.remove('sel')});upd();setTimeout(function(){try{ta.focus({preventScroll:true})}catch(e){}},30)}
 function wrapRow(){var o=window.prChatRow;if(typeof o!=='function'||o.__prc)return;var w=function(d){d=d||{};var t=String(d.text||''),g='',f='';
  t=t.replace(/\[\[fly:(\w+)\]\]/,function(_,s){f=s;return ''}).replace(/\[\[gif:(https:\/\/[^\]\s]+)\]\]/,function(_,u){g=u;return ''}).trim();
  var row=o(Object.assign({},d,{text:t}));
@@ -13980,7 +14124,7 @@ function init(){var panelWrap=$('cinemaChatPanel');ta=$('cinemaChatInput');trig=
  trig.onclick=function(){open()};$('prcClose').onclick=close;send.onclick=doSend;
  ta.addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,84)+'px';upd()});
  ta.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!send.disabled)doSend()}});
- $('prcBe').onclick=function(){tab('e')};$('prcBg').onclick=function(){tab('g')};
+ ($('prcBe')||{classList:{toggle:function(){},remove:function(){}}}).onclick=function(){tab('e')};$('prcBg').onclick=function(){tab('g')};
  $('prcGsBtn').onclick=function(){loadGifs($('prcGsIn').value.trim())};$('prcGsIn').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();loadGifs(this.value.trim())}});
  fs.onclick=function(){fly=!fly;fs.classList.toggle('on',fly);st.classList.toggle('show',fly)};
  st.querySelectorAll('button').forEach(function(b){b.onclick=function(){st.querySelectorAll('button').forEach(function(x){x.classList.remove('on')});b.classList.add('on');style=b.dataset.s}});
