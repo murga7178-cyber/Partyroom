@@ -2858,7 +2858,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
 
         <div id="partyRoomBottomDock">
           <div class="prd-group">
-            <button type="button" id="partyRoomFocusChatBtn" style="display:none!important;" aria-hidden="true" tabindex="-1">💬</button>
+            <button type="button" id="partyRoomCommentDockBtn" class="prd-comment" onclick="partyRoomOpenCommentFromDock()" aria-label="कमेंट करें" title="कमेंट करें">💬</button>
             <button type="button" onclick="togglePartyRoomReactionTray()" aria-label="Emoji reactions"><span class="prr-dock-ico"></span></button>
             <button type="button" id="partyRoomInboxBtn" onclick="pkHomeOpenInbox()" aria-label="Messages">✉️<span id="partyRoomInboxBadge" class="prd-badge-inbox">0</span></button>
           </div>
@@ -12558,6 +12558,40 @@ html body #prRoom #partyRoomFocusChatBtn,
 html body #prRoom .pr-msg,
 html body .prc-fly{display:none!important;visibility:hidden!important;pointer-events:none!important;}
 </style>
+<style id="partyRoomCommentDockFinal">
+/* Final Party Room comment dock: Comment → Emoji → Message. The existing HTML comment panel is reused. */
+#partyRoomBottomDock .prd-group:first-child{display:flex!important;align-items:center!important;gap:5px!important;}
+#partyRoomBottomDock .prd-group:first-child #partyRoomCommentDockBtn{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;
+  padding:0!important;border:0!important;border-radius:50%!important;
+  background:linear-gradient(135deg,#ff6bb5,#e0136f)!important;
+  color:#fff!important;font-size:18px!important;line-height:1!important;
+  box-shadow:0 6px 16px rgba(224,19,111,.42)!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+#partyRoomBottomDock .prd-group:first-child #partyRoomCommentDockBtn:active{transform:scale(.92)!important;}
+/* The old draggable bubble is no longer needed in the corner; the dock button is its new cropped/pink home. */
+html body #prRoom > #prcTrigger{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+html body #prRoom > #prcPanel{display:none;}
+html body #prRoom > #prcPanel.open{display:flex!important;visibility:visible!important;pointer-events:auto!important;}
+/* Restore the existing comment/message feed and panel that an older no-comments override hid. */
+html body #prRoom > #cinemaChatPanel{display:block!important;visibility:visible!important;pointer-events:auto!important;}
+html body #prRoom #cinemaChatMessages{display:flex!important;visibility:visible!important;pointer-events:auto!important;}
+html body #prRoom .pr-msg{display:flex!important;visibility:visible!important;}
+html body #prRoom #prcPanel{visibility:visible!important;}
+</style>
+<script id="partyRoomCommentDockFinalScript">
+(function(){
+  function openComment(){
+    var panel=document.getElementById('prcPanel');
+    if(panel && panel.classList.contains('open')) return;
+    if(typeof window.prOpenComposer==='function'){ window.prOpenComposer(); return; }
+    if(typeof window.partyRoomFocusChat==='function') window.partyRoomFocusChat();
+  }
+  window.partyRoomOpenCommentFromDock=openComment;
+})();
+</script>
 <style id="ytSeekPadStyle">
 /* YouTube Mode (host): small control pad in the empty space under the room photo, above the seats. */
 #prRoom #ytSeekPad{display:none;position:absolute;left:8px;top:var(--yt-sub-top,70px);height:30px;z-index:61;align-items:center;gap:4px;padding:2px 4px;box-sizing:border-box;border-radius:999px;background:linear-gradient(135deg,rgba(49,27,105,.94),rgba(30,18,75,.94));border:1px solid rgba(167,139,250,.75);box-shadow:0 5px 16px rgba(88,28,135,.35),0 0 0 1px rgba(255,255,255,.05) inset;pointer-events:auto;-webkit-tap-highlight-color:transparent;}
