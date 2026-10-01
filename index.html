@@ -15092,3 +15092,104 @@ function tick(){
 setInterval(tick,400);
 })();
 </script>
+
+<!-- FINAL COMMENT KEYBOARD OVERRIDE: use ONLY the custom prcKb keyboard from keywords.html. -->
+<style id="finalOnlyCustomCommentKeyboard">
+/* Remove every legacy Party Room comment input/panel from the visible UI. */
+html body #prRoom > #prcTrigger,
+html body #prRoom > #prcPanel,
+html body #prRoom > #cinemaChatComposer,
+html body #prRoom #partyRoomFocusChatBtn,
+html body #prRoom #cinemaChatPanel > #prcTrigger,
+html body #prRoom #cinemaChatPanel > #prcPanel{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+/* The ONLY active comment keyboard is the imported/custom prcKb keyboard. */
+html body #prcKb{z-index:2147483647!important;}
+html body #prcKb:not(.show){display:none!important;}
+html body #prcKb.show{display:block!important;}
+/* Comment button: compact pink icon in the bottom dock. */
+html body #partyRoomBottomDock #partyRoomCommentDockBtn{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  min-height:38px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:linear-gradient(145deg,#ff79bd,#e0136f)!important;
+  color:#fff!important;
+  font-size:0!important;
+  line-height:1!important;
+  box-shadow:0 5px 15px rgba(224,19,111,.42)!important;
+}
+html body #partyRoomBottomDock #partyRoomCommentDockBtn::before{
+  content:'💬';
+  font-size:19px;
+  line-height:1;
+  filter:saturate(1.1);
+}
+html body #partyRoomBottomDock #partyRoomCommentDockBtn:active{transform:scale(.92)!important;}
+/* Keep the native textarea only as a hidden bridge for the custom keyboard -> Firebase sender. */
+html body #prRoom #cinemaChatInput{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  min-height:1px!important;
+  opacity:0!important;
+  pointer-events:none!important;
+  left:-9999px!important;
+  top:-9999px!important;
+}
+</style>
+<script id="finalOnlyCustomCommentKeyboardScript">
+(function(){
+  'use strict';
+  function byId(id){return document.getElementById(id);}
+  function openOnlyCustomKeyboard(){
+    var panel=byId('prcPanel');
+    var kb=byId('prcKb');
+    var ta=byId('cinemaChatInput');
+    if(!kb||!ta)return false;
+    /* Open the hidden legacy panel only as the bridge watched by the custom keyboard. */
+    if(panel)panel.classList.add('open');
+    ta.setAttribute('inputmode','none');
+    ta.setAttribute('autocomplete','off');
+    ta.setAttribute('autocorrect','off');
+    ta.setAttribute('spellcheck','false');
+    /* The keyboard script observes prcPanel.open and activates prcKb. */
+    kb.classList.add('show');
+    document.documentElement.classList.add('prc-kb-on');
+    document.documentElement.style.setProperty('--prcKb',kb.offsetHeight+'px');
+    try{ta.focus({preventScroll:true});}catch(e){try{ta.focus();}catch(_){} }
+    return false;
+  }
+  function closeOnlyCustomKeyboard(){
+    var panel=byId('prcPanel'),kb=byId('prcKb'),ta=byId('cinemaChatInput');
+    if(panel)panel.classList.remove('open');
+    if(kb)kb.classList.remove('show');
+    document.documentElement.classList.remove('prc-kb-on');
+    document.documentElement.style.setProperty('--prcKb','0px');
+    try{if(ta)ta.blur();}catch(e){}
+    return false;
+  }
+  window.partyRoomOpenCommentFromDock=openOnlyCustomKeyboard;
+  window.partyRoomFocusChat=openOnlyCustomKeyboard;
+  window.prOpenComposer=openOnlyCustomKeyboard;
+  window.partyRoomCloseChatPanel=closeOnlyCustomKeyboard;
+  document.addEventListener('DOMContentLoaded',function(){
+    var btn=byId('partyRoomCommentDockBtn');
+    if(btn){btn.onclick=openOnlyCustomKeyboard;}
+  });
+  setTimeout(function(){
+    var btn=byId('partyRoomCommentDockBtn');
+    if(btn)btn.onclick=openOnlyCustomKeyboard;
+  },500);
+})();
+</script>
