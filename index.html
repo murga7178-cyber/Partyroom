@@ -1820,6 +1820,12 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{
 /* ===== End Watch Together ===== */
 </style>
 
+<style id="partyRoomYoutubeBackgroundAudio">
+/* Chat / Gaming mode: the shared YouTube keeps playing but is not visible (audio only). */
+#prRoom.yt-bg:not(.party-youtube-layout) #partyYoutubeStage{display:block!important;position:fixed!important;left:-1000px!important;top:0!important;right:auto!important;bottom:auto!important;width:320px!important;height:180px!important;padding:0!important;opacity:0!important;pointer-events:none!important;z-index:-1!important;overflow:hidden!important;}
+#prRoom.yt-bg:not(.party-youtube-layout) #partyYoutubeStage > *:not(.yt-room-card){display:none!important;}
+#prRoom.yt-bg:not(.party-youtube-layout) #partyYoutubeStage .yt-room-card{width:320px!important;height:180px!important;}
+</style>
 <style id="partyRoomYouTubeSoundOnlyFinal">
 #prRoom.yt-sound-only #partyYoutubeStage .yt-room-card,
 #prRoom.yt-sound-only #ytRoomFrame,
@@ -2780,7 +2786,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
               <button type="button" id="ytRoomUploadBtn" title="गैलरी से Video चलाएँ (अधिकतम 100MB)">📤</button>
               <input type="file" id="ytRoomUploadInput" accept="video/*" style="display:none;">
             </div>
-            <div class="yt-room-input-hint">Host: Load • Viewer: Queue में जोड़ेगा</div>
+            <div class="yt-room-input-hint">Load: सब लोग video चला सकते हैं • Q: queue में जोड़ें</div>
           </div>
           <div class="yt-room-input-tools" id="ytRoomInputTools">
             <div class="yt-room-tools-top">
@@ -2980,16 +2986,18 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       /* YouTube UI/listeners must exist ONLY in YouTube Mode.
          Cinema Mode has its own local-video player and must never inherit
          YouTube's History/Q/URL UI. */
-      if(youtube){
+      if(!cinema){
+        /* YouTube keeps playing for the whole room in Chat / Gaming / YouTube modes.
+           Only the video screen is shown in YouTube mode; elsewhere it runs hidden (audio only). */
         if(window.partyRoomYoutubeEnter) window.partyRoomYoutubeEnter();
       }else{
-        /* YouTube is strictly isolated to YouTube Mode. Never keep audio alive in Chat/Gaming/Cinema. */
+        /* Cinema has its own local-video player: stop YouTube there. */
         if(window.partyRoomYoutubeExit) window.partyRoomYoutubeExit(false);
       }
     }else{
       window.PR_SEATS=[2,4,8,12].includes(Number(window.__chatSeatCount))?Number(window.__chatSeatCount):12;
       try{window.pkCloseJumpGame&&window.pkCloseJumpGame()}catch(e){}
-      if(window.partyRoomYoutubeExit) window.partyRoomYoutubeExit(false);
+      if(window.partyRoomYoutubeEnter) window.partyRoomYoutubeEnter();
       const box=document.getElementById('cinemaSeats'); if(box){box.innerHTML='';box.__sigs=[];}
     }
     try{cinemaRenderSeats(window.__cinemaPeople||[])}catch(e){}
@@ -3015,7 +3023,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   function cinemaApplyRoomMode(mode){
     mode=(mode==='gaming'||mode==='youtube'||mode==='cinema')?mode:'chat'; window.__partyRoomMode=mode;
     /* Any non-YouTube room mode must immediately kill local YouTube playback. */
-    if(mode!=='youtube'){ try{ if(window.partyRoomYoutubeExit) window.partyRoomYoutubeExit(false); }catch(e){} }
+    if(mode==='cinema'){ try{ if(window.partyRoomYoutubeExit) window.partyRoomYoutubeExit(false); }catch(e){} }
     const chatPage=document.getElementById('prRoom'), gamePage=document.getElementById('partyGamingModePage');
     if(chatPage) chatPage.style.display='';
     if(gamePage) gamePage.style.display='none';
@@ -9143,7 +9151,7 @@ input,textarea,select{font-size:16px}
     if(!r||typeof db==='undefined'||!db)return;
     try{musicUn=db.collection('cinemaRooms').doc(r).collection('musicSrc').onSnapshot(function(sn){var a=[];sn.forEach(function(d){a.push(d.data()||{});});musicDocs=a;},function(){});}catch(e){}
   }
-  function playing(){var now=Date.now(),o={};musicDocs.forEach(function(d){if(d&&d.on&&d.sid&&!d.paused&&now-(d.beat||0)<45000)o[String(d.key)]=1;});return o;}
+  function playing(){var now=Date.now(),o={};musicDocs.forEach(function(d){if(d&&d.on&&d.sid&&!d.paused&&now-(d.beat||0)<45000)o[String(d.key)]=1;});try{var yb=window.__ytPlayedByNow&&window.__ytPlayedByNow();if(yb)o[yb]=1;}catch(e){}return o;}
   function level(id){var m=window.__partyVoiceMeters&&window.__partyVoiceMeters[id];return m?(Number(m.level)||0):0;}
   function paint(holder,id,pl,mus){
     var b=null,k;for(k=0;k<holder.children.length;k++){if(holder.children[k].classList&&holder.children[k].classList.contains('pk-vi')){b=holder.children[k];break;}}
@@ -10317,18 +10325,48 @@ function loadStorage(){
   if(volVal)volVal.textContent=volume+'%';
 }
 
-function ytRoomIsActive(){return String(window.__partyRoomMode||'chat')==='youtube';}
+function ytRoomVideoMode(){return String(window.__partyRoomMode||'chat')==='youtube';}
+/* YouTube is shared across the whole room in Chat / Gaming / YouTube modes (not Cinema). */
+function ytRoomInRoom(){try{return !!(typeof cinemaRoomId!=='undefined'&&cinemaRoomId)&&String(window.__partyRoomMode||'chat')!=='cinema';}catch(e){return false;}}
+function ytRoomIsActive(){return ytRoomInRoom();}
+function ytRoomMyKey(){try{return String(typeof currentUserKey!=='undefined'&&currentUserKey?currentUserKey:'');}catch(e){return '';}}
+/* Who started the playing video (for the seat music indicator). Fresh only while the host keeps publishing. */
+window.__ytPlayedByNow=function(){
+  try{
+    var s=window.__ytPlayedByState;
+    if(!s||!s.playing||!s.key)return '';
+    if(Date.now()-(s.at||0)>45000)return '';
+    return String(s.key);
+  }catch(e){return '';}
+};
+/* Hidden (audio-only) stage while the room is in Chat/Gaming mode. */
+function ytRoomBgSync(){
+  try{
+    var room=document.getElementById('prRoom'), st=ytRoomStage(); if(!room||!st)return;
+    var bg=ytRoomInRoom()&&!ytRoomVideoMode()&&!!current;
+    room.classList.toggle('yt-bg',bg);
+    if(bg)st.style.display='flex'; else if(!ytRoomVideoMode())st.style.display='none';
+  }catch(e){}
+}
+if(!window.__ytBgTimer)window.__ytBgTimer=setInterval(ytRoomBgSync,1000);
 function ytRoomStage(){return $('partyYoutubeStage');}
 function ytRoomHost(){try{return !!cinemaIsHost;}catch(e){return !!isHost;}}
 function ytRoomRef(){try{if(typeof db!=='undefined'&&db&&cinemaRoomId)return db.collection('cinemaRooms').doc(String(cinemaRoomId));}catch(e){}return null;}
 function ytRoomWriteState(patch){
-  if(!ytRoomHost()||ytRemoteApplying)return;
+  /* Host writes freely (heartbeat/state changes). Everyone else may only publish explicit commands (__cmd). */
+  var cmd=!!(patch&&patch.__cmd);
+  if(patch&&patch.__cmd!==undefined){patch=Object.assign({},patch);delete patch.__cmd;}
+  if((!ytRoomHost()&&!cmd)||ytRemoteApplying)return;
   var ref=ytRoomRef(); if(!ref)return;
   patch=Object.assign({updatedAt:Date.now(),updatedBy:String(typeof currentUserKey!=='undefined'?currentUserKey:'')},patch||{});
+  if(cmd){ patch.cmdAt=Date.now(); patch.cmdBy=ytRoomMyKey(); window.__ytCmdQuietUntil=Date.now()+2500; }
+  if(patch.stopped===true){ patch.playedBy=''; }
+  else if(patch.playedBy===undefined&&current){ patch.playedBy=String(current.byKey||ytRoomMyKey()||''); }
   try{ref.collection('youtube').doc('state').set(patch,{merge:true}).catch(function(){});}catch(e){}
 }
 function ytRoomSyncNow(force){
   if(!ytRoomIsActive()||!ytRoomHost())return;
+  if(!force&&Date.now()<(window.__ytCmdQuietUntil||0))return; /* someone just pressed play/pause/seek */
   if(current&&current.upload){
     var lvS=$('ytRoomLocalVideo'); if(!lvS)return;
     try{
@@ -10344,12 +10382,18 @@ function ytRoomSyncNow(force){
   }catch(e){}
   try{
     var st=window.YT&&ytPlayer.getPlayerState(), playing=st===YT.PlayerState.PLAYING;
+    /* buffering right after a seek must not look like a pause to the room */
+    if(!playing&&st===YT.PlayerState.BUFFERING&&window.__ytLastState&&window.__ytLastState.playing===true)playing=true;
     var ct=ytPlayer.getCurrentTime()||0;
     /* Ads are shorter than the video: remember the longest duration seen; a shorter one means an ad is playing on the host's phone, so do not send its time to viewers. */
     var dur=0; try{dur=ytPlayer.getDuration()||0;}catch(e){}
     if(current&&dur>0&&(!current.__maxDur||dur>current.__maxDur)) current.__maxDur=dur;
     if(current&&current.__maxDur&&dur>0&&dur<current.__maxDur-1.5) return;
-    if(force||playing) ytRoomWriteState({type:'youtube',playing:playing,currentTime:ct,dur:(current&&current.__maxDur)||0,videoId:current&&current.id||'',listId:current&&current.list||'',title:current&&current.title||'',shorts:!!(current&&current.shorts)});
+    if(force||playing){
+      var pld={type:'youtube',playing:playing,currentTime:ct,dur:(current&&current.__maxDur)||0,videoId:current&&current.id||'',listId:current&&current.list||'',title:current&&current.title||'',shorts:!!(current&&current.shorts)};
+      if(!force)delete pld.playing; /* timer heartbeat only refreshes the clock, never play/pause */
+      ytRoomWriteState(pld);
+    }
   }catch(e){}
 }
 function ytRoomLiveTime(d){
@@ -10364,15 +10408,21 @@ function ytRoomLiveTime(d){
 }
 function ytRoomApplyState(d){
   if(!ytRoomIsActive()||!d)return;
+  /* seat music indicator source of truth (all clients, incl. host) */
+  try{
+    var pbKey=String(d.playedBy||d.updatedBy||'');
+    window.__ytPlayedByState={key:pbKey,playing:!!(!d.stopped&&(d.videoId||d.videoUrl)&&d.playing===true),at:Date.now()};
+  }catch(e){}
   /* Host is the source of truth: for a few seconds after the host drags the timeline,
      older snapshots must not pull the video back to the old position. */
-  if(ytRoomHost()&&Date.now()<(window.__ytHostSeekUntil||0))return;
+  if(d.cmdAt&&d.cmdAt!==window.__ytLastCmdAt){ window.__ytLastCmdAt=d.cmdAt; window.__ytCmdQuietUntil=Date.now()+2500; }
+  if(Date.now()<(window.__ytHostSeekUntil||0))return;
   window.__ytLastState=d;
   ytRemoteApplying=true;
   try{
     if(d.type==='upload'&&d.videoUrl){
       var sameU=!!(current&&current.upload&&current.url===d.videoUrl);
-      if(!sameU){ ytRoomSuppressNextSync=true; playUploadedVideo(d.videoUrl,d.title||'Video',{start:ytRoomLiveTime(d),playing:d.playing!==false,addedBy:d.updatedBy||'Host',remote:true}); }
+      if(!sameU){ ytRoomSuppressNextSync=true; playUploadedVideo(d.videoUrl,d.title||'Video',{start:ytRoomLiveTime(d),playing:d.playing!==false,addedBy:d.updatedBy||'Host',byKey:d.playedBy||d.updatedBy||'',remote:true}); }
       else{
         var lv=$('ytRoomLocalVideo');
         if(lv){
@@ -10386,7 +10436,7 @@ function ytRoomApplyState(d){
     if(d.stopped&&current&&current.upload){ stopVideo(); ytRemoteApplying=false; return; }
     var info=d.videoId?{type:'video',id:String(d.videoId),list:d.listId||'',shorts:!!d.shorts}:null;
     var same=!!(info&&current&&!current.upload&&String(current.id)===String(info.id)&&String(current.list||'')===String(info.list||''));
-    if(info&&!same){ ytRoomSuppressNextSync=true; playInfo(info,d.title||('YouTube • '+info.id),{addedBy:d.updatedBy||'Host',share:false,start:ytRoomLiveTime(d)}); }
+    if(info&&!same){ ytRoomSuppressNextSync=true; playInfo(info,d.title||('YouTube • '+info.id),{addedBy:d.updatedBy||'Host',byKey:d.playedBy||d.updatedBy||'',share:false,start:ytRoomLiveTime(d)}); }
     else if(info&&ytPlayer&&ytReady){
       try{ var vdB=ytPlayer.getVideoData&&ytPlayer.getVideoData(); if(vdB&&current&&current.id&&!current.list&&vdB.video_id&&String(vdB.video_id)!==String(current.id)){ ytRemoteApplying=false; return; } }catch(e){}
       /* If this viewer's own ad is playing (duration shorter than the host's video), leave it alone so Skip works. */
@@ -10412,7 +10462,7 @@ function playUploadedVideo(url,title,opts){
   opts=opts||{};
   destroyPlayer();
   var lv=$('ytRoomLocalVideo'); if(!lv)return;
-  current={id:'',upload:true,url:url,title:title||'Video',addedBy:opts.addedBy||'You',ts:Date.now()};
+  current={id:'',upload:true,url:url,title:title||'Video',addedBy:opts.addedBy||'You',byKey:String(opts.byKey||ytRoomMyKey()||''),ts:Date.now()};
   lv.src=url; lv.style.display='block'; lv.controls=false;
   try{var spv=document.getElementById('ytRoomSpeakerRange');var svv=spv?Math.max(0,Math.min(100,Number(spv.value)||80)):80;lv.volume=spv?svv/100:.8;lv.muted=svv===0;}catch(e){}
   var emp=$('ytRoomEmpty'); if(emp)emp.style.display='none';
@@ -10520,6 +10570,7 @@ function ytRoomStartSync(){
   },500);
 }
 function ytRoomStopSync(){
+  window.__ytSyncRoom='';
   if(ytRoomStateUnsub)try{ytRoomStateUnsub();}catch(e){} ytRoomStateUnsub=null;
   if(ytRoomQueueUnsub)try{ytRoomQueueUnsub();}catch(e){} ytRoomQueueUnsub=null;
   if(ytRoomSyncTimer)clearInterval(ytRoomSyncTimer); ytRoomSyncTimer=null;
@@ -10532,10 +10583,14 @@ function ytRoomUpdateUI(){
   var closeBtnRoom=$('ytRoomCloseVideoBtn'); if(closeBtnRoom)closeBtnRoom.style.display=(h&&current)?'inline-flex':'none';
   var q=$('ytRoomQueueCount'); if(q)q.textContent=String(queue.length);
   var empty=$('ytRoomEmpty'); if(empty)empty.style.display=current?'none':'flex';
-  st.style.display=ytRoomIsActive()?'flex':'none';
+  st.style.display=ytRoomVideoMode()?'flex':((current&&ytRoomInRoom())?'flex':'none');
+  ytRoomBgSync();
 }
 function partyRoomYoutubeEnter(){
-  var st=ytRoomStage(); if(!st)return; st.style.display='flex'; ytRoomUpdateUI(); ytRoomStartSync();
+  var st=ytRoomStage(); if(!st)return; ytRoomUpdateUI();
+  /* Room doc snapshots call this repeatedly: only (re)subscribe when not already synced for this room. */
+  var rid=''; try{rid=String(typeof cinemaRoomId!=='undefined'&&cinemaRoomId?cinemaRoomId:'');}catch(e){}
+  if(!ytRoomStateUnsub||window.__ytSyncRoom!==rid){ ytRoomStartSync(); window.__ytSyncRoom=ytRoomStateUnsub?rid:''; }
   try{refreshHostState();}catch(e){}
 }
 function partyRoomYoutubeExit(keepSound){
@@ -10617,7 +10672,7 @@ function refreshHostState(){
   return isHost;
 }
 function updateHostUI(){
-  if(hostLock)hostLock.style.display=isHost?'none':'flex';
+  if(hostLock)hostLock.style.display='none';
   /* Do not disable Load: Host status can arrive a moment after the room UI.
      handleLoad() performs the authoritative permission check at click time. */
   if(loadBtn){loadBtn.disabled=false;loadBtn.title=isHost?'Video चलाएँ':'सिर्फ Host video चला सकता है';}
@@ -10787,6 +10842,11 @@ window.ytRoomForceSeek=function(target,playing,done){
    and cannot see the private player variables, so it must go through this object. */
 window.ytRoomBridge={
   host:function(){ try{return ytRoomHost();}catch(e){return false;} },
+  /* Everyone in the room may play / pause / seek. */
+  canControl:function(){ try{return !!(ytRoomHost()||ytRoomIsActive());}catch(e){return false;} },
+  /* Where the room really is right now (for non-hosts their own player can lag). */
+  live:function(){ try{ var s=window.__ytLastState; return s?ytRoomLiveTime(s):null; }catch(e){return null;} },
+  roomPlaying:function(){ try{ var s=window.__ytLastState; if(s&&!s.stopped&&(s.videoId||s.videoUrl))return s.playing===true; }catch(e){} return null; },
   info:function(){
     try{
       if(current&&current.upload){
@@ -10828,11 +10888,12 @@ window.ytRoomBridge={
   seek:function(t){
     t=Math.max(0,Number(t)||0);
     try{
-      if(!ytRoomHost())return false; /* only the host controls the timeline */
+      if(!ytRoomHost()&&!ytRoomIsActive())return false;
       if(current&&current.upload){
         var lvS=$('ytRoomLocalVideo'); if(!lvS)return false;
         window.__ytHostSeekUntil=Date.now()+4000;
-        lvS.currentTime=t; /* the 'seeked' listener publishes the new time to everyone */
+        lvS.currentTime=t; /* host: the 'seeked' listener publishes it; others publish a command below */
+        if(!ytRoomHost())ytRoomWriteState({type:'upload',videoUrl:current.url,title:current.title,playing:!lvS.paused,currentTime:t,stopped:false,__cmd:true});
         return true;
       }
       if(!ytPlayer||!ytReady||typeof ytPlayer.seekTo!=='function')return false;
@@ -10841,10 +10902,37 @@ window.ytRoomBridge={
       var stB=ytPlayer.getPlayerState?ytPlayer.getPlayerState():-1;
       window.__ytHostSeekUntil=Date.now()+4000;
       ytPlayer.seekTo(t,true);
-      var playingB=(stB!==2); /* paused stays paused, anything else plays after a seek */
+      var rsB=window.__ytLastState;
+      var playingB=(!ytRoomHost()&&rsB)?(rsB.playing===true):(stB!==2); /* paused stays paused, anything else plays after a seek */
       if(playingB&&stB!==1&&typeof ytPlayer.playVideo==='function')ytPlayer.playVideo();
       /* Publish the chosen time itself (not getCurrentTime, which can still be old for a moment). */
-      ytRoomWriteState({type:'youtube',playing:playingB,currentTime:t,dur:maxDur||myDur||0,videoId:current&&current.id||'',listId:current&&current.list||'',title:current&&current.title||'',shorts:!!(current&&current.shorts)});
+      ytRoomWriteState({type:'youtube',playing:playingB,currentTime:t,dur:maxDur||myDur||0,videoId:current&&current.id||'',listId:current&&current.list||'',title:current&&current.title||'',shorts:!!(current&&current.shorts),__cmd:true});
+      return true;
+    }catch(e){return false;}
+  },
+  /* Play/pause for everyone in the room (control pad, tap on the video). */
+  toggle:function(){
+    try{
+      if(!current)return false;
+      if(!ytRoomHost()&&!ytRoomIsActive())return false;
+      var hostT=ytRoomHost(), rsT=window.__ytLastState;
+      if(current.upload){
+        var lvT=$('ytRoomLocalVideo'); if(!lvT)return false;
+        var wasPl=(!hostT&&rsT)?(rsT.playing===true):!lvT.paused;
+        window.__ytHostSeekUntil=Date.now()+1500;
+        if(wasPl){lvT.pause();} else {var prT=lvT.play(); if(prT&&prT.catch)prT.catch(function(){});}
+        ytRoomWriteState({type:'upload',videoUrl:current.url,title:current.title,playing:!wasPl,currentTime:lvT.currentTime||0,stopped:false,__cmd:true});
+        return true;
+      }
+      if(!ytPlayer||!ytReady)return false;
+      var myDurT=0,maxDurT=current.__maxDur||0; try{myDurT=ytPlayer.getDuration()||0;}catch(e){}
+      if(maxDurT>0&&myDurT>0&&myDurT<maxDurT-1.5)return false; /* an ad is playing */
+      var stT=ytPlayer.getPlayerState?ytPlayer.getPlayerState():-1;
+      var wasPlaying=(!hostT&&rsT&&!rsT.stopped)?(rsT.playing===true):(stT===1);
+      var ctT=(!hostT&&rsT)?ytRoomLiveTime(rsT):(ytPlayer.getCurrentTime()||0);
+      window.__ytHostSeekUntil=Date.now()+1500;
+      if(wasPlaying){ytPlayer.pauseVideo();} else {if(Math.abs((ytPlayer.getCurrentTime()||0)-ctT)>0.75)ytPlayer.seekTo(ctT,true); ytPlayer.playVideo();}
+      ytRoomWriteState({type:'youtube',playing:!wasPlaying,currentTime:ctT,dur:maxDurT||myDurT||0,videoId:current.id||'',listId:current.list||'',title:current.title||'',shorts:!!current.shorts,__cmd:true});
       return true;
     }catch(e){return false;}
   }
@@ -10861,7 +10949,7 @@ function playInfo(info,title,opts){
   /* Inside a Party Room, YouTube playback is allowed only in YouTube Mode.
      This blocks stale/legacy share callbacks from starting hidden audio/video in Chatting/Gaming/Cinema. */
   try{
-    if(typeof cinemaRoomId!=='undefined' && cinemaRoomId && String(window.__partyRoomMode||'chat')!=='youtube'){
+    if(typeof cinemaRoomId!=='undefined' && cinemaRoomId && String(window.__partyRoomMode||'chat')==='cinema'){
       try{destroyPlayer();}catch(e){}
       current=null;
       return;
@@ -10869,12 +10957,12 @@ function playInfo(info,title,opts){
   }catch(e){}
   if(info.type==='playlist'&&!info.id){toast('❌ Playlist नहीं मिली');return;}
   var id=info.id||'';
-  current={id:id,list:info.list||'',shorts:!!info.shorts,title:title||('YouTube • '+id),addedBy:opts.addedBy||'You',ts:Date.now()};
+  current={id:id,list:info.list||'',shorts:!!info.shorts,title:title||('YouTube • '+id),addedBy:opts.addedBy||'You',byKey:String(opts.byKey||ytRoomMyKey()||''),ts:Date.now()};
   if(id){ history=[]; try{localStorage.removeItem(HISTORY_KEY);}catch(e){} }
   loadYTApi(function(){createPlayer(info,opts.start||0);});
   if(soundMode){if(mini)mini.classList.add('open');}else{if(mini)mini.classList.remove('open');}
   if(opts.share!==false&&roomShareEnabled)shareToRoom(current);
-  if(ytRoomIsActive()&&!ytRemoteApplying&&ytRoomHost()) ytRoomWriteState({videoId:current.id,listId:current.list||'',title:current.title,shorts:!!current.shorts,playing:false,currentTime:Number(opts.start)||0,volume:volume,muted:muted,stopped:false});
+  if(ytRoomIsActive()&&!ytRemoteApplying&&(ytRoomHost()||opts.cmd)) ytRoomWriteState({videoId:current.id,listId:current.list||'',title:current.title,shorts:!!current.shorts,playing:false,currentTime:Number(opts.start)||0,volume:volume,muted:muted,stopped:false,__cmd:!!opts.cmd});
   ytRoomUpdateUI();
   toast('🎬 Playing: '+current.title,1600);
   updateBadges();
@@ -10884,8 +10972,8 @@ function handleLoad(){
   refreshHostState();
   var info=getYouTubeInfo(input.value);
   if(!info){toast('❌ सही YouTube URL डालें');return;}
-  if(!isHost){toast('👑 सिर्फ Host video चला सकता है',1800);return;}
-  playInfo(info,null,{addedBy:'You'});
+  if(false){toast('👑 सिर्फ Host video चला सकता है',1800);return;}
+  playInfo(info,null,{addedBy:'You',cmd:true});
 }
 
 function shareToRoom(video){
@@ -10956,8 +11044,8 @@ function renderHistory(){
       var v=history[Number(el.dataset.hidx)];
       if(!v)return;
       refreshHostState();
-      if(!isHost){toast('👑 सिर्फ Host video चला सकता है',1800);return;}
-      playInfo({type:'video',id:v.id,list:v.list||'',shorts:!!v.shorts},v.title,{addedBy:v.addedBy||'You'});
+      if(false){toast('👑 सिर्फ Host video चला सकता है',1800);return;}
+      playInfo({type:'video',id:v.id,list:v.list||'',shorts:!!v.shorts},v.title,{addedBy:v.addedBy||'You',cmd:true});
     });
   });
 }
@@ -11094,7 +11182,7 @@ function ytBottomLoad(){
 window.ytRoomBottomSubmitImpl=function(v){
   v=String(v||'').trim();
   if(!v){toast('🔗 पहले YouTube URL डालें');return;}
-  if(isHost){
+  if(isHost||ytRoomIsActive()){
     input.value=v;
     handleLoad();
     var ri=document.getElementById('ytRoomInput');if(ri)ri.value='';
@@ -11129,8 +11217,8 @@ function renderInlineRoomPanel(name){
     el.addEventListener('click',function(e){
       if(e.target && e.target.closest && e.target.closest('[data-qdel]')) return;
       var v=queue[Number(el.dataset.qidx)]; if(!v)return; refreshHostState();
-      if(!ytRoomHost()){toast('👑 सिर्फ Host video चला सकता है',1800);return;}
-      playInfo({type:'video',id:v.id,list:v.list||'',shorts:!!v.shorts},v.title,{addedBy:v.addedBy||'You'});
+      if(false){toast('👑 सिर्फ Host video चला सकता है',1800);return;}
+      playInfo({type:'video',id:v.id,list:v.list||'',shorts:!!v.shorts},v.title,{addedBy:v.addedBy||'You',byKey:v.addedByKey||'',cmd:true});
     });
   });
 }
@@ -12065,6 +12153,7 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   }
   function bridge(){return window.ytRoomBridge||null;}
   function isHost(){var b=bridge();if(b)return !!b.host();try{return !!cinemaIsHost;}catch(e){return false;}}
+  function canCtl(){var b=bridge();if(b&&b.canControl)return !!b.canControl();return isHost();}
   function stateTime(){
     try{if(typeof ytRoomLiveTime==='function'&&window.__ytLastState)return ytRoomLiveTime(window.__ytLastState);}catch(e){}
     var st=window.__ytLastState;
@@ -12096,7 +12185,8 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
     if(!show)return;
     var host=isHost();
     /* Only the host moves the timeline; everyone else just watches the progress. */
-    if(range.disabled===host)range.disabled=!host;
+    var ctl=canCtl();
+    if(range.disabled===ctl)range.disabled=!ctl;
     var m=mediaInfo(),d=m.d||0,c=m.cur||0;
     var st=window.__ytLastState;
     if(!host&&st&&(st.videoId||st.videoUrl)){
@@ -12122,7 +12212,7 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
   }
   function seekTo(t){
     t=Math.max(0,Number(t)||0);
-    if(!isHost())return;
+    if(!canCtl())return;
     var b=bridge();if(!b)return;
     window.__ytSeekPending={t:t,until:Date.now()+4000};
     try{b.seek(t);}catch(e){}
@@ -12408,6 +12498,100 @@ setInterval(tick,150);
 if(window.visualViewport){window.visualViewport.addEventListener('resize',tick);window.visualViewport.addEventListener('scroll',tick);}
 window.addEventListener('resize',tick);
 tick();
+})();
+</script>
+<style id="partyRoomYoutubeNoComments">
+/* Party Room (all modes): no comment section at all (messages list, comment box/panel, composer, flying comments). */
+html body #prRoom > #cinemaChatPanel,
+html body #prRoom #cinemaChatPanel,
+html body #prRoom #cinemaChatMessages,
+html body #prRoom #prcTrigger,
+html body #prRoom #prcPanel,
+html body #prRoom #cinemaChatComposer,
+html body #prRoom #partyRoomCommentToggle,
+html body #prRoom #partyRoomFocusChatBtn,
+html body #prRoom .pr-msg,
+html body .prc-fly{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+</style>
+<style id="ytSeekPadStyle">
+/* YouTube Mode (host): small control pad in the empty space under the room photo, above the seats. */
+#prRoom #ytSeekPad{display:none;position:absolute;left:8px;top:var(--yt-sub-top,70px);height:30px;z-index:61;align-items:center;gap:4px;padding:2px 4px;box-sizing:border-box;border-radius:999px;background:linear-gradient(135deg,rgba(49,27,105,.94),rgba(30,18,75,.94));border:1px solid rgba(167,139,250,.75);box-shadow:0 5px 16px rgba(88,28,135,.35),0 0 0 1px rgba(255,255,255,.05) inset;pointer-events:auto;-webkit-tap-highlight-color:transparent;}
+#prRoom.party-youtube-layout #ytSeekPad.on{display:flex;}
+#ytSeekPad button{border:0;margin:0;padding:0;cursor:pointer;touch-action:manipulation;color:#fff;display:flex;align-items:center;justify-content:center;font:900 10.5px/1 Segoe UI,Arial,sans-serif;transition:transform .12s ease,filter .12s ease,opacity .15s ease;}
+#ytSeekPad button:active{transform:scale(.88);filter:brightness(1.25);}
+#ytSeekPad .ysp-skip{height:24px;min-width:40px;padding:0 8px;gap:3px;border-radius:999px;background:rgba(255,255,255,.1);}
+#ytSeekPad .ysp-skip svg{width:12px;height:12px;display:block;}
+#ytSeekPad .ysp-play{width:26px;height:26px;border-radius:50%;background:linear-gradient(145deg,#a855f7,#ec4899);box-shadow:0 0 10px rgba(217,70,239,.6),0 0 0 1px rgba(255,255,255,.35) inset;}
+#ytSeekPad .ysp-play svg{width:13px;height:13px;display:block;}
+#ytSeekPad.nov button{opacity:.45;}
+</style>
+<script id="ytSeekPadJs">
+(function(){
+  'use strict';
+  var BACK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 6v12L2.5 12 11 6zm10 0v12l-8.5-6L21 6z" fill="currentColor"/></svg>';
+  var FWD='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 6v12l8.5-6L13 6zM3 6v12l8.5-6L3 6z" fill="currentColor"/></svg>';
+  var PLAY='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7L8 5z" fill="currentColor"/></svg>';
+  var PAUSE='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zm6 0h4v14h-4z" fill="currentColor"/></svg>';
+  var STEP=2, shownPlay=null;
+  function $(id){return document.getElementById(id);}
+  function br(){return window.ytRoomBridge||null;}
+  function build(){
+    var r=$('prRoom'); if(!r)return null;
+    var p=$('ytSeekPad'); if(p)return p;
+    p=document.createElement('div'); p.id='ytSeekPad'; p.setAttribute('role','group'); p.setAttribute('aria-label','Video controls');
+    p.innerHTML='<button type="button" class="ysp-skip" data-a="back" aria-label="2 seconds back" title="2 सेकंड पीछे">'+BACK+'<span>2s</span></button>'+
+                '<button type="button" class="ysp-play" data-a="play" aria-label="Play / Pause" title="Play / Pause">'+PLAY+'</button>'+
+                '<button type="button" class="ysp-skip" data-a="fwd" aria-label="2 seconds forward" title="2 सेकंड आगे"><span>2s</span>'+FWD+'</button>';
+    p.addEventListener('click',function(e){
+      var b=e.target.closest&&e.target.closest('button[data-a]'); if(!b)return;
+      e.preventDefault(); e.stopPropagation();
+      var a=b.getAttribute('data-a');
+      if(a==='back')step(-STEP); else if(a==='fwd')step(STEP); else toggle();
+    });
+    r.appendChild(p);
+    return p;
+  }
+  function step(d){
+    var b=br(); if(!b||!(b.canControl?b.canControl():b.host()))return;
+    var i=null; try{i=b.info();}catch(e){}
+    if(!i||i.ad)return;
+    var pend=window.__ytSeekPending;
+    var live=(b.live&&!b.host())?b.live():null;
+    var base=(pend&&Date.now()<pend.until)?pend.t:((live!==null&&live!==undefined)?live:(Number(i.cur)||0));
+    var t=Math.max(0,base+d);
+    var dur=Number(i.dur)||0; if(dur>0)t=Math.min(t,Math.max(0,dur-0.5));
+    window.__ytSeekPending={t:t,until:Date.now()+4000}; /* the timeline dot follows immediately */
+    try{b.seek(t);}catch(e){}
+  }
+  function toggle(){
+    var b=br(); if(!b||!(b.canControl?b.canControl():b.host()))return;
+    try{b.toggle();}catch(e){}
+    setTimeout(tick,250);
+  }
+  function tick(){
+    try{
+      var p=build(); if(!p)return;
+      var r=$('prRoom'), b=br();
+      var show=!!(r&&r.classList.contains('party-youtube-layout')&&b&&(b.canControl?b.canControl():b.host()));
+      p.classList.toggle('on',show);
+      if(!show)return;
+      var i=null; try{i=b.info();}catch(e){}
+      p.classList.toggle('nov',!i);
+      var rp=(b.roomPlaying&&!b.host())?b.roomPlaying():null;
+      var playing=(rp!==null&&rp!==undefined)?rp:!!(i&&i.state===1);
+      if(playing!==shownPlay){
+        shownPlay=playing;
+        var pb=p.querySelector('.ysp-play'); if(pb)pb.innerHTML=playing?PAUSE:PLAY;
+      }
+    }catch(e){}
+  }
+  function init(){
+    build(); setInterval(tick,400); tick();
+    /* Non-hosts cannot tap the iframe itself (an overlay covers it); a tap on the video toggles play/pause for the room. */
+    var blk=$('ytRoomBlock');
+    if(blk&&!blk.__yspWired){ blk.__yspWired=1; blk.addEventListener('click',function(e){ e.preventDefault(); toggle(); }); }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init); else init();
 })();
 </script>
 </body>
@@ -12703,7 +12887,7 @@ tick();
     window.__partyModeMusicWrapped=true;
     window.setPartyRoomMode=async function(mode){
       var oldMode=String(window.__partyRoomMode||'chat');
-      if(oldMode==='youtube'&&mode!=='youtube'){
+      if(mode==='cinema'){
         try{if(typeof ytRoomWriteState==='function'&&typeof ytRoomHost==='function'&&ytRoomHost()) ytRoomWriteState({videoId:'',listId:'',title:'',playing:false,currentTime:0,stopped:true,closedBy:'mode',closedAt:Date.now()});}catch(e){}
         try{if(typeof destroyPlayer==='function')destroyPlayer();}catch(e){}
       }
@@ -12720,7 +12904,7 @@ tick();
     window.__partyApplyMusicWrapped=true;
     window.cinemaApplyRoomMode=function(mode){
       var oldMode=String(window.__partyRoomMode||'chat');
-      if(oldMode==='youtube'&&mode!=='youtube'){try{if(typeof destroyPlayer==='function')destroyPlayer();}catch(e){}}
+      if(mode==='cinema'){try{if(typeof destroyPlayer==='function')destroyPlayer();}catch(e){}}
       var out=oldApply(mode);try{window.partyChatMusicRefresh&&window.partyChatMusicRefresh();}catch(e){}return out;
     };
   }
