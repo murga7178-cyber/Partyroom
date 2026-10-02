@@ -16079,7 +16079,7 @@ h1{filter:none!important}
     },60);
   };
 })();
-<\/script>
+</script>
 
 <style id="pkDirectChatProfileBlockStyle">
 #pkDirectHeaderAvatar{cursor:pointer;-webkit-tap-highlight-color:transparent;}
@@ -16150,6 +16150,7 @@ h1{filter:none!important}
 
 </body>
 </html>`;
+</script>
   var loaded=false, openState=false;
   function $(id){return document.getElementById(id);}
   function hideLegacy(){
@@ -16889,6 +16890,56 @@ html body #prRoom #cinemaChatPanel .pr-chat-line .pr-bubble{
     var m=byId('pkDirectMoreMenu');
     if(m&&m.classList.contains('open')&&!e.target.closest('#pkDirectMoreMenu')&&!e.target.closest('.pk-direct-head-actions button'))m.classList.remove('open');
   },true);
+})();
+</script>
+
+<!-- FINAL PARTY ROOM OPEN HARDENING -->
+<script id="partyRoomOpenHardeningFinal">
+(function(){
+  'use strict';
+  var original=null;
+  function byId(id){return document.getElementById(id);}
+  function forceLobby(){
+    try{
+      if(typeof window.cinemaEnsureUI==='function') window.cinemaEnsureUI();
+      var m=byId('cinemaGharModal');
+      if(!m) return false;
+      m.style.display='block';
+      m.classList.remove('hidden');
+      m.removeAttribute('aria-hidden');
+      document.body.style.overflow='hidden';
+      var lobby=byId('cinemaLobby'), stage=byId('cinemaRoomStage'), header=byId('cinemaTopHeader');
+      if(lobby) lobby.style.display='block';
+      if(stage) stage.style.display='none';
+      if(header) header.style.display='flex';
+      var title=byId('cinemaHeaderTitle');
+      if(title) title.textContent='🎉 पार्टी रूम';
+      try{ window.cinemaRoomId=''; }catch(e){}
+      try{ if(typeof window.cinemaLobbyMode!=='undefined') window.cinemaLobbyMode=true; }catch(e){}
+      try{ if(typeof window.cinemaLoadRooms==='function') window.cinemaLoadRooms(); }catch(e){}
+      return true;
+    }catch(e){ return false; }
+  }
+  function install(){
+    try{
+      if(typeof window.pkOpenParty!=='function') return;
+      if(window.pkOpenParty.__partyOpenHardened) return;
+      original=window.pkOpenParty;
+      var wrapped=function(){
+        try{ original.apply(this,arguments); }catch(e){}
+        setTimeout(forceLobby,30);
+        setTimeout(forceLobby,180);
+        setTimeout(forceLobby,500);
+      };
+      wrapped.__partyOpenHardened=true;
+      window.pkOpenParty=wrapped;
+    }catch(e){}
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install);
+  else install();
+  setTimeout(install,250);
+  setTimeout(install,1000);
+  window.__partyRoomForceLobby=forceLobby;
 })();
 </script>
 
