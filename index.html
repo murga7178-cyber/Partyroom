@@ -3064,9 +3064,20 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   function cinemaApplyPartyBackground(modal,key,image){
     if(!modal) return;
     modal.style.backgroundImage=image ? 'url("'+String(image).replace(/"/g,'&quot;')+'")' : (PARTY_BG[key]||PARTY_BG.midnight);
-    modal.style.backgroundSize='cover';
+    modal.style.backgroundColor='#000';
     modal.style.backgroundPosition='center center';
     modal.style.backgroundRepeat='no-repeat';
+    modal.style.setProperty('background-size','cover','important');
+    if(image){
+      var __im=new Image();
+      __im.onload=function(){
+        try{
+          var f=(window.__pkBgFit&&window.__pkBgFit(__im))||{mode:'cover'};
+          modal.style.setProperty('background-size',f.size,'important');
+        }catch(e){}
+      };
+      __im.src=String(image);
+    }
   }
   async function setPartyRoomBackground(key){
     if(!cinemaRoomId || !cinemaIsHost || !PARTY_BG[key]) return;
@@ -12392,12 +12403,20 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 </style>
 <style id="pkStatusBarBlend">
 /* Party Room: no extra layer at the top; the strip behind the phone's top bar takes the colour of the room's background photo (set by script below). */
-#cinemaGharModal::before{content:none!important;display:none!important;background:none!important}
+#cinemaGharModal::before{content:""!important;display:block!important;position:absolute;top:0;left:0;right:0;height:46px;background:linear-gradient(180deg,var(--pk-room-top,#1b1740) 0,color-mix(in srgb,var(--pk-room-top,#1b1740) 55%,transparent) 45%,transparent 100%)!important;pointer-events:none;z-index:0}
 html:has(#cinemaGharModal:not([style*="display: none"])),
 html:has(#cinemaGharModal:not([style*="display: none"])) body{background:var(--pk-room-top,#1b1740)!important}
 </style>
 <script id="pkRoomTopColor">
 (function(){
+  /* Photo is never stretched: big enough to fill the screen -> cover; smaller -> shown at its own size (or scaled down to fit), rest black. */
+  window.__pkBgFit=function(img){
+    var vw=window.innerWidth||360, vh=window.innerHeight||640;
+    var iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height;
+    if(iw>=vw && ih>=vh) return {mode:'cover',size:'cover'};
+    if(iw<=vw && ih<=vh) return {mode:'small',size:iw+'px '+ih+'px'};
+    return {mode:'small',size:'contain'};
+  };
   var FALL='#1b1740', last='';
   function setMeta(c){
     try{
@@ -12422,6 +12441,8 @@ html:has(#cinemaGharModal:not([style*="display: none"])) body{background:var(--p
     var img=new Image();
     img.onload=function(){
       try{
+        var fit=window.__pkBgFit(img);
+        if(fit.mode==='small'){ apply('#000'); return; }
         var w=40,h=40,c=document.createElement('canvas');c.width=w;c.height=h;
         var x=c.getContext('2d');x.drawImage(img,0,0,w,h);
         var d=x.getImageData(0,0,w,3).data,r=0,g=0,b=0,n=d.length/4;
