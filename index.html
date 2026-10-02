@@ -6133,7 +6133,7 @@ setInterval(function(){try{
   function show(id,display){var e=document.getElementById(id);if(e)e.style.display=display;}
   function profileVip(d){return !!(d&&(d.vip===true||d.isVip===true||d.vipActive===true||String(d.vipStatus||'').toLowerCase()==='active'||String(d.membership||'').toLowerCase()==='vip'));}
   async function visitorCount(){try{if(!db||!currentUserKey)return 0;var s=await db.collection('users').doc(String(currentUserKey)).collection('profileVisitors').get();var e=document.getElementById('pkVisitorsCount');if(e)e.textContent=s.size;return s.size;}catch(e){return 0;}}
-  window.pkOpenVisitors=async function(){show('pkVisitorsOverlay','flex');document.body.classList.add('pk-visitors-open');var hc=document.getElementById('pkVisitorsHeadCount');if(hc)hc.textContent='…';var box=document.getElementById('pkVisitorsList');if(!box)return;try{var s=await db.collection('users').doc(String(currentUserKey)).collection('profileVisitors').orderBy('visitedAt','desc').limit(50).get();if(s.empty){box.innerHTML='<div style="text-align:center;color:#64748b;padding:25px;">अभी किसी ने आपका प्रोफाइल विजिट नहीं किया।</div>';return;}var arr=[];s.forEach(d=>arr.push(Object.assign({key:d.id},d.data()||{})));var hc=document.getElementById('pkVisitorsHeadCount');if(hc)hc.textContent=String(arr.length);var html='';for(const v of arr){var name=String(v.visitorName||'User'),photo='';try{var u=await db.collection('users').doc(String(v.key)).get();var ud=u.exists?(u.data()||{}):{};name=String(ud.name||ud.displayName||v.visitorName||'User');photo=String(ud.photoURL||'');var vip=profileVip(ud);var frameId=String(ud.partyEquippedFrame||ud.equippedFrame||ud.frameId||v.partyEquippedFrame||v.equippedFrame||v.frameId||'none');var frameSrc='';try{frameSrc=typeof partyFrameArt==='function'?String(partyFrameArt(frameId)||''):'';}catch(e){};html+='<button type="button" class="pk-visitor-row" data-vkey="'+esc(v.key)+'"><div class="pk-visitor-av">'+(photo?'<div class="pk-visitor-photo"><img src="'+esc(photo)+'" alt=""></div>': '<div class="pk-visitor-photo">'+esc((name[0]||'U').toUpperCase())+'</div>')+(frameSrc?'<img class="pk-visitor-frame" src="'+esc(frameSrc)+'" alt="">':'')+'</div><div class="pk-visitor-info"><div class="pk-visitor-name">'+esc(name)+(vip?' <span class="pk-vip-badge">👑 VIP</span>':'')+'</div><div class="pk-visitor-time">'+(v.visitedAt?new Date(v.visitedAt).toLocaleString('hi-IN'):'प्रोफ़ाइल विजिट')+'</div></div><span class="pk-visitor-arrow">›</span></button>';}catch(e){}}box.innerHTML=html||'<div style="text-align:center;color:#64748b;padding:25px;">Visitors नहीं मिले।</div>';box.querySelectorAll('[data-vkey]').forEach(b=>b.onclick=()=>{pkCloseVisitors();if(typeof prOpenUserCard==='function')prOpenUserCard(b.dataset.vkey);});}catch(e){box.innerHTML='<div style="text-align:center;color:#dc2626;padding:25px;">Visitors लोड नहीं हो पाए।</div>';}}
+  window.pkOpenVisitors=async function(){show('pkVisitorsOverlay','flex');document.body.classList.add('pk-visitors-open');var hc=document.getElementById('pkVisitorsHeadCount');if(hc)hc.textContent='…';var box=document.getElementById('pkVisitorsList');if(!box)return;try{var s=await db.collection('users').doc(String(currentUserKey)).collection('profileVisitors').orderBy('visitedAt','desc').limit(50).get();if(s.empty){box.innerHTML='<div style="text-align:center;color:#64748b;padding:25px;">अभी किसी ने आपका प्रोफाइल विजिट नहीं किया।</div>';return;}var arr=[];s.forEach(d=>arr.push(Object.assign({key:d.id},d.data()||{})));var hc=document.getElementById('pkVisitorsHeadCount');if(hc)hc.textContent=String(arr.length);var html='';for(const v of arr){var name=String(v.visitorName||'User'),photo='';try{var u=await db.collection('users').doc(String(v.key)).get();var ud=u.exists?(u.data()||{}):{};name=String(ud.name||ud.displayName||v.visitorName||'User');photo=String(ud.photoURL||ud.photo||ud.avatar||ud.profilePhoto||ud.picture||v.photoURL||v.photo||'').trim();var vip=profileVip(ud);var frameId=String(ud.partyEquippedFrame||ud.equippedFrame||ud.frameId||v.partyEquippedFrame||v.equippedFrame||v.frameId||'none');var frameSrc='';try{frameSrc=typeof partyFrameArt==='function'?String(partyFrameArt(frameId)||''):'';}catch(e){};html+='<button type="button" class="pk-visitor-row" data-vkey="'+esc(v.key)+'"><div class="pk-visitor-av'+(frameSrc?'':' noframe')+'">'+(photo?'<div class="pk-visitor-photo"><img src="'+esc(photo)+'" alt="" onerror="this.parentNode.textContent=\''+esc((name[0]||'U').toUpperCase())+'\'"></div>': '<div class="pk-visitor-photo">'+esc((name[0]||'U').toUpperCase())+'</div>')+(frameSrc?'<img class="pk-visitor-frame" src="'+esc(frameSrc)+'" alt="">':'')+'</div><div class="pk-visitor-info"><div class="pk-visitor-name">'+esc(name)+(vip?' <span class="pk-vip-badge">👑 VIP</span>':'')+'</div><div class="pk-visitor-time">'+(v.visitedAt?new Date(v.visitedAt).toLocaleString('hi-IN'):'प्रोफ़ाइल विजिट')+'</div></div><span class="pk-visitor-arrow">›</span></button>';}catch(e){}}box.innerHTML=html||'<div style="text-align:center;color:#64748b;padding:25px;">Visitors नहीं मिले।</div>';box.querySelectorAll('[data-vkey]').forEach(b=>b.onclick=()=>{pkCloseVisitors();if(typeof prOpenUserCard==='function')prOpenUserCard(b.dataset.vkey);});}catch(e){box.innerHTML='<div style="text-align:center;color:#dc2626;padding:25px;">Visitors लोड नहीं हो पाए।</div>';}}
   window.pkCloseVisitors=function(){show('pkVisitorsOverlay','none');document.body.classList.remove('pk-visitors-open');};
   visitorCount();
   window.pkGoHomeFromNav=function(){
@@ -6861,7 +6861,7 @@ var name=String(d.name||d.displayName||d.fullName||d.username||'User');
         leaveBtn.style.display=seatedNow?'flex':'none';
       }
       try{var vc=document.getElementById('pkVisitorsCount');var vv=vc?vc.textContent:'0';var ov=document.getElementById('pkPPOwnVisitors');if(ov)ov.textContent=vv;}catch(_){}
-    }else{fb.style.display='block';dbtn.innerHTML='<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 8.7 8.7 0 0 1-3.4-.7L4 20l1.4-3.7A7.3 7.3 0 0 1 4.5 12 7.5 7.5 0 0 1 12 4.5a7.5 7.5 0 0 1 8 7z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg>';dbtn.onclick=function(){pkClosePublicProfile();if(typeof pkOpenDirectMessage==='function')pkOpenDirectMessage(currentKey,name);};var md=ppGet(String(currentUserKey))||await ppFetch(String(currentUserKey));var mf=Array.isArray(md.following)?md.following.map(String):[];var tr=Array.isArray(d.followers)?d.followers.map(String):[];var on=mf.indexOf(currentKey)>=0||tr.indexOf(String(currentUserKey))>=0;fb.textContent=on?'✓ Following':'＋ Follow';fb.classList.toggle('following',on);fb.onclick=function(){toggleFollow(currentKey);};}
+    }else{fb.style.display='block';dbtn.textContent='DM';dbtn.onclick=function(){pkClosePublicProfile();if(typeof pkOpenDirectMessage==='function')pkOpenDirectMessage(currentKey,name);};var md=ppGet(String(currentUserKey))||await ppFetch(String(currentUserKey));var mf=Array.isArray(md.following)?md.following.map(String):[];var tr=Array.isArray(d.followers)?d.followers.map(String):[];var on=mf.indexOf(currentKey)>=0||tr.indexOf(String(currentUserKey))>=0;fb.textContent=on?'✓ Following':'＋ Follow';fb.classList.toggle('following',on);fb.onclick=function(){toggleFollow(currentKey);};}
     try{if(String(currentUserKey)!==currentKey){db.collection('users').doc(currentKey).collection('profileVisitors').doc(String(currentUserKey)).set({visitorKey:String(currentUserKey),visitorName:String(cinemaUserName?cinemaUserName():'User'),visitedAt:Date.now()},{merge:true}).catch(function(){});}}catch(_){ }
     try{window.pkRoomProfileHook&&window.pkRoomProfileHook(currentKey,d);}catch(_){}
     o.classList.add('open');o.setAttribute('aria-hidden','false');document.querySelector('#pkPublicProfileOverlay .pp-scroll').scrollTop=0;
@@ -14688,7 +14688,7 @@ h1,.hint,#commentsList,#bubbleBtn,#backdrop{display:none!important}
   /* ===== Keyboard Case ===== */
   function shouldCap(text) {
     if (text.length === 0) return true;
-    return /[\s.!?]/.test(text[text.length - 1]);
+    return /[\\s.!?]/.test(text[text.length - 1]);
   }
 
   function getText() {
@@ -14703,8 +14703,8 @@ h1,.hint,#commentsList,#bubbleBtn,#backdrop{display:none!important}
     const text = getText();
     const before = text.slice(0, cursorPos);
     const after = text.slice(cursorPos);
-    const beforeHtml = escapeHtml(before).replace(/\n/g, '<br>');
-    const afterHtml = escapeHtml(after).replace(/\n/g, '<br>');
+    const beforeHtml = escapeHtml(before).replace(/\\n/g, '<br>');
+    const afterHtml = escapeHtml(after).replace(/\\n/g, '<br>');
     commentBox.innerHTML = beforeHtml + '<span class="typing-cursor"></span>' + afterHtml;
   }
 
@@ -15175,7 +15175,7 @@ h1,.hint,#commentsList,#bubbleBtn,#backdrop{display:none!important}
       const text = getText();
       const before = text.slice(0, cursorPos);
       const after = text.slice(cursorPos);
-      setText(before + '\n' + after);
+      setText(before + '\\n' + after);
       cursorPos = before.length + 1;
       renderWithCursor();
       scrollToCursor();
@@ -15191,7 +15191,7 @@ h1,.hint,#commentsList,#bubbleBtn,#backdrop{display:none!important}
       scrollToCursor();
       updateReader();
       updateKeyboardCase();
-    } else if (/^[0-9+\-.]$/.test(key)) {
+    } else if (/^[0-9+\\-.]$/.test(key)) {
       const text = getText();
       const before = text.slice(0, cursorPos);
       const after = text.slice(cursorPos);
@@ -15289,7 +15289,7 @@ h1,.hint,#commentsList,#bubbleBtn,#backdrop{display:none!important}
     if (text === '' && !attachedGif) return;
 
     if (text) {
-      const words = text.split(/\s+/).filter(function(w) { return w.length >= 2; });
+      const words = text.split(/\\s+/).filter(function(w) { return w.length >= 2; });
       words.forEach(function(w) {
         const clean = w.replace(/[^a-zA-Z]/g, '');
         if (clean.length >= 2) addToUserHistory(clean);
@@ -17665,3 +17665,46 @@ html body #pkGamingRanking.open{display:flex!important;}
 html body #pkGamingRanking .pkr-card{width:100vw!important;height:100dvh!important;min-height:100dvh!important;max-height:none!important;border-radius:0!important;box-shadow:none!important;}
 html body #pkGamingRanking .pkr-list{flex:1 1 auto!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;}
 </style>
+
+<style id="pkProfileVisitorFixes2">
+#pkPublicProfileOverlay:not(.own-view) #pkPPTopGifter,
+#pkPublicProfileOverlay:not(.own-view) #pkPPEditTop,
+#pkPublicProfileOverlay:not(.own-view) #pkPPGifterCard,
+#pkPublicProfileOverlay:not(.own-view) #pkPPVisCard{display:none!important}
+#pkPublicProfileOverlay .pp-message-icon{width:auto!important;max-width:none!important;min-width:84px!important;flex:0 0 auto!important;border-radius:25px!important;padding:0 22px!important;font-size:16px!important;font-weight:900!important;letter-spacing:.3px}
+.pk-visitor-av .pk-visitor-photo{display:grid;place-items:center;font-weight:900;font-size:22px;color:#596176;inset:3px!important}
+.pk-visitor-av.noframe .pk-visitor-photo{inset:0!important}
+.pk-visitor-av .pk-visitor-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%}
+</style>
+
+<style id="pkKbChatLiftFix">
+/* Keyboard open: comments stay visible, sitting just above the keyboard (below the seats, never on top of them) */
+html body.pk-kbhost-open #prRoom #cinemaChatPanel.prc#cinemaChatPanel,html body.pk-kbhost-open #prRoom #cinemaChatPanel#cinemaChatPanel{position:fixed!important;left:8px!important;right:8px!important;top:auto!important;bottom:312px!important;height:104px!important;min-height:0!important;margin:0!important;z-index:2147483000!important;pointer-events:none!important;display:block!important}
+html body.pk-kbhost-open #prRoom #cinemaChatPanel#cinemaChatPanel #cinemaChatMessages#cinemaChatMessages{height:104px!important;max-height:104px!important;padding:2px 4px!important;overflow-y:auto!important;justify-content:flex-end!important;-webkit-mask-image:none!important;mask-image:none!important}
+/* keyboard: full last row visible, close button outside the send arrow */
+html body #partyRoomNewKeyboardHost{left:0!important;right:0!important;bottom:0!important;padding-bottom:0!important;height:306px!important;max-height:min(306px,calc(100dvh - 150px))!important;border-radius:14px 14px 0 0!important;overflow:visible!important;contain:none!important}
+html body #partyRoomNewKeyboardFrame{border-radius:14px!important}
+html body #partyRoomNewKeyboardClose{top:-40px!important;right:6px!important;width:32px!important;height:32px!important;background:rgba(20,5,20,.92)!important}
+</style>
+<script id="pkEmojiTrayOutsideClose">
+(function(){
+  function closeIfOutside(e){
+    var tr=document.getElementById('partyRoomReactionTray');
+    if(!tr||getComputedStyle(tr).display==='none')return;
+    var t=e.target;
+    if(t&&t.closest&&(t.closest('#partyRoomReactionTray')||t.closest('[aria-label="Emoji reactions"]')))return;
+    tr.style.display='none';
+  }
+  document.addEventListener('pointerdown',closeIfOutside,true);
+  document.addEventListener('touchstart',closeIfOutside,{capture:true,passive:true});
+})();
+</script>
+
+<script id="pkKbChatLiftScript">
+(function(){
+  function sync(){var h=document.getElementById('partyRoomNewKeyboardHost');document.body.classList.toggle('pk-kbhost-open',!!(h&&h.classList.contains('open')));
+    if(h&&h.classList.contains('open')){var m=document.getElementById('cinemaChatMessages');if(m)m.scrollTop=m.scrollHeight;}}
+  setInterval(sync,200);
+  new MutationObserver(sync).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['class']});
+})();
+</script>
