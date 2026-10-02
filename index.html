@@ -1915,6 +1915,13 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{
 #partyYoutubeStage .yt-room-card:has(#ytRoomLocalVideo[style*="block"])::before,
 #partyYoutubeStage .yt-room-card:has(#ytRoomLocalVideo[style*="block"])::after{display:none!important;}
 </style>
+
+<style id="pkVisitorProfileSurfaceFinal">
+#prUserCard{display:none!important;pointer-events:none!important;}
+#pkPublicProfileOverlay:not(.own-view) .pp-actions{display:flex!important;}
+#pkPublicProfileOverlay:not(.own-view) .pp-message-icon{display:grid!important;}
+#pkPublicProfileOverlay:not(.own-view) .pp-follow{display:flex!important;align-items:center!important;justify-content:center!important;}
+</style>
 </head>
 
 <body>
@@ -13557,7 +13564,10 @@ function hook(){ta=$('cinemaChatInput');panelEl=$('prcPanel');var fsEl=$('prcFs'
  ['click','keyup','touchend','select'].forEach(function(ev){ta.addEventListener(ev,function(){if(!shown)return;setTimeout(function(){cursorPos=ta.selectionStart==null?ta.value.length:ta.selectionStart;refresh()},0)})});
  ta.addEventListener('input',function(){if(shown&&!ta.value){cursorPos=0;refresh()}});
  syncPanel()}
-kbRoot.addEventListener('mousedown',function(e){e.preventDefault()});
+/* Do not cancel mousedown on the keyboard root: on Android that can suppress the synthetic click/tap events that drive the custom keys. */
+kbRoot.addEventListener('mousedown',function(e){
+  /* intentionally no preventDefault */
+});
 kbRoot.addEventListener('touchstart',function(e){var el=e.target.closest&&e.target.closest('.key');if(!el)return;var k=el.dataset.key;if(el.id==='prckb_shiftKey'||k==='Backspace'||k==='num'||k===' '||k==='Enter')return;showKeyPopup(el,el.textContent)},{passive:true});
 bindBS(backspaceKey);bindBS(numpad.querySelector('[data-num="Backspace"]'));
 keyboard.addEventListener('click',function(e){e.stopPropagation();var el=e.target.closest('.key');if(!el)return;var k=el.dataset.key;if(el.id==='prckb_shiftKey'||k==='Backspace'||k==='num')return;ensureFocus();if(k==='Enter'){jump(el);sendNow();return}handleKey(k,el)});
@@ -13610,6 +13620,7 @@ html body .prc-fly,html body .pr-fly,html body .pr-fly-to,html body .pr-fly-rewa
 #partyRoomNewKeyboardHost{position:fixed!important;left:6px!important;right:6px!important;bottom:calc(env(safe-area-inset-bottom,0px) + 54px)!important;height:292px!important;max-height:min(292px,calc(100dvh - 150px))!important;z-index:2147483001!important;display:none!important;background:linear-gradient(160deg,rgba(17,12,27,.995),rgba(10,10,20,.995))!important;border:1px solid rgba(255,255,255,.12)!important;border-radius:14px!important;overflow:hidden!important;box-shadow:0 18px 55px rgba(0,0,0,.72),0 8px 28px rgba(255,20,147,.10)!important;contain:layout paint size!important;isolation:isolate!important;}
 #partyRoomNewKeyboardHost.open{display:block!important;}
 #partyRoomNewKeyboardFrame{position:relative!important;z-index:1!important;width:100%!important;height:100%!important;min-height:0!important;max-height:100%!important;border:0!important;display:block!important;background:transparent!important;overflow:hidden!important;}
+#partyRoomNewKeyboardFrame{touch-action:manipulation!important;-webkit-user-select:none!important;user-select:none!important;}
 #partyRoomNewKeyboardClose{position:absolute!important;right:7px!important;top:6px!important;width:30px!important;height:30px!important;border:1px solid rgba(255,255,255,.28)!important;border-radius:50%!important;background:rgba(20,5,20,.72)!important;color:#fff!important;font-size:20px!important;font-weight:900!important;z-index:2147483005!important;display:grid!important;place-items:center!important;pointer-events:auto!important;}
 </style>
 <div id="partyRoomNewKeyboardHost" aria-hidden="true">
