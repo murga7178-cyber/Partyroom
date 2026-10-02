@@ -9303,8 +9303,6 @@ input,textarea,select{font-size:16px}
   setInterval(function(){
     var r=document.getElementById('prRoom');
     var vis=!!(r&&r.offsetParent!==null&&getComputedStyle(r).display!=='none'&&getComputedStyle(r).visibility!=='hidden');
-    x.style.display=vis?'block':'none';
-    v.style.display=vis?'flex':'none';
     try{
       var count=document.getElementById('cinemaViewerCount');
       var out=document.getElementById('pkRoomViewerCount');
@@ -16903,23 +16901,20 @@ html body #prRoom #cinemaChatPanel .pr-chat-line .pr-bubble{
   function sync(){
     var room=document.getElementById('prRoom'),badge=document.getElementById('prRoomLevelBadge'),v=document.getElementById('pkRoomViewerBtn'),x=document.getElementById('pkRoomX');
     if(!room||!badge||!v||!x)return;
-    var roomVisible=shown(room), badgeVisible=shown(badge);
-    /* Viewer + Room Exit follow the Room Level/XP badge. If Level/XP is hidden
-       (for example Game or another full-screen Party Room page), hide both too. */
-    var on=roomVisible && badgeVisible;
+    var roomVisible=shown(room), labelVisible=shown(badge), blocked=pageOpen();
+    var on=roomVisible&&labelVisible&&!blocked;
     v.classList.toggle('pr-room-sync-visible',on);v.classList.toggle('pr-room-sync-hidden',!on);
     x.classList.toggle('pr-room-sync-visible',on);x.classList.toggle('pr-room-sync-hidden',!on);
     if(!on)return;
     /* Put Viewer immediately to the right of the Room Level/XP label. */
-    var br=badge.getBoundingClientRect();
-    var vw=v.offsetWidth||30,vh=v.offsetHeight||30,xw=x.offsetWidth||22,xh=x.offsetHeight||22;
-    var top=Math.round(br.top+(br.height-Math.max(vh,xh))/2);
-    var left=Math.round(br.right+6);
-    var gap=5;
-    var maxRight=window.innerWidth-4;
-    if(left+vw+gap+xw>maxRight){ left=Math.max(3,maxRight-vw-gap-xw); }
+    var br=badge.getBoundingClientRect(),xr=x.getBoundingClientRect();
+    var vw=v.offsetWidth||30,vh=v.offsetHeight||30;
+    var left=Math.round(br.right+6), top=Math.round(br.top+(br.height-vh)/2);
+    var maxRight=Math.round(xr.left-6);
+    if(left+vw>maxRight) left=Math.max(3,maxRight-vw);
+    if(left+vw>window.innerWidth-3) left=Math.max(3,window.innerWidth-3-vw);
+    if(left<3)left=3;
     v.style.left=left+'px';v.style.right='auto';v.style.top=Math.max(2,top)+'px';v.style.bottom='auto';
-    x.style.left=(left+vw+gap)+'px';x.style.right='auto';x.style.top=Math.max(2,top)+'px';x.style.bottom='auto';
   }
   function boot(){
     sync();
@@ -16935,43 +16930,6 @@ html body #prRoom #cinemaChatPanel .pr-chat-line .pr-bubble{
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
 </script>
-
-<style id="partyRoomTopViewerExitPermanentFix">
-/* FINAL: Viewer + Room Exit are a permanent pair while Party Room is open. */
-#pkRoomViewerBtn.pr-room-sync-visible,
-#pkRoomViewerBtn:not(.pr-room-sync-hidden){
-  position:fixed!important;
-  top:calc(env(safe-area-inset-top,0px) + 4px)!important;
-  right:42px!important;
-  left:auto!important;
-  bottom:auto!important;
-  z-index:2147483646!important;
-  display:flex!important;
-  visibility:visible!important;
-  pointer-events:auto!important;
-}
-#pkRoomX.pr-room-sync-visible,
-#pkRoomX:not(.pr-room-sync-hidden){
-  position:fixed!important;
-  top:calc(env(safe-area-inset-top,0px) + 4px)!important;
-  right:8px!important;
-  left:auto!important;
-  bottom:auto!important;
-  z-index:2147483647!important;
-  display:block!important;
-  visibility:visible!important;
-  pointer-events:auto!important;
-}
-/* These two are hidden only by JS when Party Room itself is closed. */
-#pkRoomViewerBtn.pr-room-sync-hidden,
-#pkRoomX.pr-room-sync-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
-@media(max-width:430px){
-  #pkRoomViewerBtn.pr-room-sync-visible,
-  #pkRoomViewerBtn:not(.pr-room-sync-hidden){right:38px!important;}
-  #pkRoomX.pr-room-sync-visible,
-  #pkRoomX:not(.pr-room-sync-hidden){right:6px!important;}
-}
-</style>
 </html>
 
 <script id="partyRoomYoutubeHideExtrasScript">/* Replaced by final Q-only YouTube controls. */</script>
@@ -18681,7 +18639,6 @@ html body #prRoom.party-youtube-layout > #cinemaChatPanel.prc #cinemaChatMessage
 
 <style id="partyRoomLevelViewerExitSyncUltimate">
 #pkRoomViewerBtn.pr-room-sync-visible{left:var(--pr-sync-viewer-left,3px)!important;top:var(--pr-sync-viewer-top,3px)!important;right:auto!important;bottom:auto!important;display:flex!important;visibility:visible!important;pointer-events:auto!important;}
-#pkRoomX.pr-room-sync-visible{left:var(--pr-sync-exit-left,auto)!important;top:var(--pr-sync-exit-top,3px)!important;right:auto!important;bottom:auto!important;}
 #pkRoomViewerBtn.pr-room-sync-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
 #pkRoomX.pr-room-sync-visible{display:block!important;visibility:visible!important;pointer-events:auto!important;}
 #pkRoomX.pr-room-sync-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
@@ -18695,21 +18652,17 @@ html body #prRoom.party-youtube-layout > #cinemaChatPanel.prc #cinemaChatMessage
   function sync(){
     var room=document.getElementById('prRoom'),b=document.getElementById('prRoomLevelBadge'),v=document.getElementById('pkRoomViewerBtn'),x=document.getElementById('pkRoomX');
     if(!room||!b||!v||!x)return;
-    /* Viewer + Room Exit follow the Room Level/XP badge visibility.
-       The parent cinemaGharModal may stay open while the Level/XP badge is hidden. */
-    var on=shown(room) && shown(b);
+    var on=shown(room)&&shown(b)&&!blocked();
     v.classList.toggle('pr-room-sync-visible',on);v.classList.toggle('pr-room-sync-hidden',!on);
     x.classList.toggle('pr-room-sync-visible',on);x.classList.toggle('pr-room-sync-hidden',!on);
     if(!on)return;
-    var br=b.getBoundingClientRect(),vw=v.offsetWidth||30,vh=v.offsetHeight||30,xw=x.offsetWidth||22,xh=x.offsetHeight||22;
-    var top=Math.round(br.top+(br.height-Math.max(vh,xh))/2);
-    var left=Math.round(br.right+6),gap=5,maxRight=innerWidth-4;
-    if(left+vw+gap+xw>maxRight)left=Math.max(3,maxRight-vw-gap-xw);
+    var br=b.getBoundingClientRect(),xr=x.getBoundingClientRect(),vw=v.offsetWidth||30,vh=v.offsetHeight||30;
+    var left=Math.round(br.right+6),top=Math.round(br.top+(br.height-vh)/2),maxRight=Math.round(xr.left-6);
+    if(left+vw>maxRight)left=Math.max(3,maxRight-vw);
+    if(left+vw>innerWidth-3)left=Math.max(3,innerWidth-3-vw);
     if(left<3)left=3;
     document.documentElement.style.setProperty('--pr-sync-viewer-left',left+'px');
     document.documentElement.style.setProperty('--pr-sync-viewer-top',Math.max(2,top)+'px');
-    document.documentElement.style.setProperty('--pr-sync-exit-left',(left+vw+gap)+'px');
-    document.documentElement.style.setProperty('--pr-sync-exit-top',Math.max(2,top)+'px');
   }
   function boot(){sync();setInterval(sync,250);addEventListener('resize',sync,{passive:true});addEventListener('scroll',sync,{passive:true});if(window.MutationObserver){new MutationObserver(sync).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style','aria-hidden']});}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
@@ -19074,8 +19027,8 @@ html body #prRoom #prRoomAvatar{flex:0 0 auto!important;}
 #prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prTopRight #prCloseBtn{display:none!important;}
 /* EVERY Party Room mode: Viewer sits right beside (left of) the red ✕. Visibility stays tied to the Room Level label by the existing sync (pr-room-sync-visible/hidden). */
 #pkRoomViewerBtn,#pkRoomViewerBtn.pr-room-sync-visible{
-  left:auto!important;right:auto!important;
-  top:auto!important;
+  left:auto!important;right:38px!important;
+  top:calc(env(safe-area-inset-top,0px) + 4px)!important;
   height:22px!important;min-width:38px!important;width:auto!important;
   padding:0 7px!important;line-height:20px!important;font-size:10px!important;
   border-radius:11px!important;box-sizing:border-box!important;
@@ -19180,36 +19133,4 @@ html body #prRoom.party-gaming-layout:has(#partyGamingCenter.pgc-playing) > #cin
 #prRoom.party-gaming-layout #cinemaSeats .psf-frame-wrap[data-frame]:not([data-frame="none"]) .psf-avatar{width:26px!important;height:26px!important;left:4px!important;top:4px!important;}
 #prRoom.party-gaming-layout #cinemaSeats .psf-frame-wrap[data-frame]:not([data-frame="none"]) .psf-frame-art{width:34px!important;height:34px!important;}
 #prRoom.party-gaming-layout #cinemaSeats .psf-core{font-size:12px!important;}
-</style>
-
-<style id="partyRoomLevelViewerExitVisibilityFinal">
-/* Final authority: controls follow the visible Room Level/XP badge, and sit beside it. */
-html body #pkRoomViewerBtn.pr-room-sync-visible{
-  position:fixed!important;
-  left:auto!important;
-  top:calc(env(safe-area-inset-top,0px) + 4px)!important;
-  right:42px!important;
-  bottom:auto!important;
-  display:flex!important;
-  visibility:visible!important;
-  pointer-events:auto!important;
-  z-index:2147483646!important;
-}
-html body #pkRoomX.pr-room-sync-visible{
-  position:fixed!important;
-  left:auto!important;
-  top:calc(env(safe-area-inset-top,0px) + 4px)!important;
-  right:8px!important;
-  bottom:auto!important;
-  display:block!important;
-  visibility:visible!important;
-  pointer-events:auto!important;
-  z-index:2147483647!important;
-}
-html body #pkRoomViewerBtn.pr-room-sync-hidden,
-html body #pkRoomX.pr-room-sync-hidden{
-  display:none!important;
-  visibility:hidden!important;
-  pointer-events:none!important;
-}
 </style>
