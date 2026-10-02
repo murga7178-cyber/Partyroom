@@ -13902,6 +13902,8 @@ function updateKeyboardCase() {
       const before = text.slice(0, cursorPos);
       showUpper = shouldCap(before);
     }
+    if (window.__prcLastUpper === showUpper) return;
+    window.__prcLastUpper = showUpper;
     kbRoot.querySelectorAll('.key[data-key]').forEach(function(k) {
       const key = k.dataset.key;
       if (key.length === 1 && /[a-z]/i.test(key)) {
@@ -13912,6 +13914,8 @@ function updateKeyboardCase() {
 function findSuggestions(prefix) {
     if (!prefix || prefix.length < 1) return [];
     const p = prefix.toLowerCase();
+    const ck = p + '|' + userHistory.length;
+    if (findSuggestions._k === ck) return findSuggestions._v;
     const candidates = [];
     const seen = new Set();
     for (let i = 0; i < userHistory.length; i++) {
@@ -13923,14 +13927,16 @@ function findSuggestions(prefix) {
     }
     for (let i = 0; i < dictionary.length; i++) {
       const w = dictionary[i];
-      if (w.toLowerCase().startsWith(p) && w.toLowerCase() !== p && !seen.has(w.toLowerCase())) {
-        const freq = wordFrequency[w.toLowerCase()] || 0;
-        candidates.push({ word: w, score: freq * 10 + Math.random() });
-        seen.add(w.toLowerCase());
+      if (w.startsWith(p) && w !== p && !seen.has(w)) {
+        const freq = wordFrequency[w] || 0;
+        candidates.push({ word: w, score: freq * 10 + (dictionary.length - i) / 100000 });
+        seen.add(w);
       }
     }
     candidates.sort(function(a, b) { return b.score - a.score; });
-    return candidates.slice(0, 3).map(function(c) { return c.word; });
+    const out = candidates.slice(0, 3).map(function(c) { return c.word; });
+    findSuggestions._k = ck; findSuggestions._v = out;
+    return out;
   }
 function getCurrentTypedWord() {
     const text = getText();
@@ -14012,10 +14018,9 @@ function bindBS(el) {
   }
 function jump(el) {
     if (!el) return;
-    el.classList.remove('jump');
-    void el.offsetWidth;
+    if (el.__jt) clearTimeout(el.__jt);
     el.classList.add('jump');
-    setTimeout(function() { el.classList.remove('jump'); }, 200);
+    el.__jt = setTimeout(function() { el.classList.remove('jump'); }, 110);
   }
 function addChar(char) {
     const text = getText();
@@ -14075,7 +14080,7 @@ function handleKey(key, keyEl) {
       scrollToCursor();
     } else {
       // Letter - popup दिखाओ
-      if (keyEl && /^[a-zA-Z]$/.test(key)) {
+      if (keyEl && /^[a-zA-Z]$/.test(key) && !(Date.now() - (window.__prcTp || 0) < 700)) {
         showKeyPopup(keyEl, keyEl.textContent);
       }
       addChar(key);
@@ -14107,10 +14112,10 @@ function hook(){ta=$('cinemaChatInput');panelEl=$('prcPanel');var fsEl=$('prcFs'
 kbRoot.addEventListener('mousedown',function(e){
   /* intentionally no preventDefault */
 });
-kbRoot.addEventListener('touchstart',function(e){var el=e.target.closest&&e.target.closest('.key');if(!el)return;var k=el.dataset.key;if(el.id==='prckb_shiftKey'||k==='Backspace'||k==='num'||k===' '||k==='Enter')return;showKeyPopup(el,el.textContent)},{passive:true});
+kbRoot.addEventListener('touchstart',function(e){var L=e.changedTouches||[];for(var i=0;i<L.length;i++){var tg=L[i].target;if(!tg||!tg.closest)continue;var el=tg.closest('.key');if(el){var k=el.dataset.key;if(!k||el.id==='prckb_shiftKey'||k==='Backspace'||k==='num'||k==='Enter')continue;if(k!==' '){window.__prcTp=Date.now();showKeyPopup(el,el.textContent)}el.__tsAt=Date.now();ensureFocus();handleKey(k,el);continue}var nk=tg.closest('.numpad-key');if(nk){var d=nk.dataset.num;if(!d||d==='Backspace'||d==='ABC'||d==='Enter')continue;nk.__tsAt=Date.now();ensureFocus();handleKey(d,nk)}}},{passive:true});
 bindBS(backspaceKey);bindBS(numpad.querySelector('[data-num="Backspace"]'));
-keyboard.addEventListener('click',function(e){e.stopPropagation();var el=e.target.closest('.key');if(!el)return;var k=el.dataset.key;if(el.id==='prckb_shiftKey'||k==='Backspace'||k==='num')return;ensureFocus();if(k==='Enter'){jump(el);sendNow();return}handleKey(k,el)});
-numpad.addEventListener('click',function(e){e.stopPropagation();var el=e.target.closest('.numpad-key');if(!el)return;var k=el.dataset.num;if(k==='Backspace')return;if(k==='ABC'){jump(el);showPane('k');return}ensureFocus();if(k==='Enter'){jump(el);sendNow();return}handleKey(k,el)});
+keyboard.addEventListener('click',function(e){e.stopPropagation();var el=e.target.closest('.key');if(!el)return;var k=el.dataset.key;if(el.id==='prckb_shiftKey'||k==='Backspace'||k==='num')return;if(el.__tsAt&&Date.now()-el.__tsAt<800){el.__tsAt=0;return}ensureFocus();if(k==='Enter'){jump(el);sendNow();return}handleKey(k,el)});
+numpad.addEventListener('click',function(e){e.stopPropagation();var el=e.target.closest('.numpad-key');if(!el)return;var k=el.dataset.num;if(k==='Backspace')return;if(el.__tsAt&&Date.now()-el.__tsAt<800){el.__tsAt=0;return}if(k==='ABC'){jump(el);showPane('k');return}ensureFocus();if(k==='Enter'){jump(el);sendNow();return}handleKey(k,el)});
 numToggleKey.addEventListener('click',function(e){e.stopPropagation();jump(numToggleKey);showPane('n')});
 shiftKey.addEventListener('click',function(e){e.stopPropagation();jump(shiftKey);var now=Date.now(),d=now-lastShiftClick;lastShiftClick=now;
  if(d<350){capsLock=!capsLock;shiftActive=false;shiftKey.classList.toggle('shift-caps',capsLock);shiftKey.classList.remove('shift-active')}
@@ -19013,25 +19018,121 @@ html body #prRoom #prRoomAvatar{flex:0 0 auto!important;}
 </script>
 
 <style id="partyRoomChatSketchLayout">
-/* Chat mode only: layout per user's sketch. Row1: viewer | room level | X. Row2: DP | Chat/Game/YouTube | Top Gifter. Row3: More Video. 8 seats, no host seat. Dock: comment, emoji, inbox | gift, mic, music. */
-#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prTop{display:grid!important;grid-template-columns:40px minmax(0,1fr) 40px!important;grid-template-rows:auto auto!important;column-gap:8px!important;row-gap:8px!important;align-items:center!important;justify-content:stretch!important;padding:0!important;background:none!important;border:0!important;filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
-#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prTopRight{display:contents!important;position:static!important;width:auto!important;}
-#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prRoomLevelBadge{grid-column:2!important;grid-row:1!important;margin:0!important;justify-self:stretch!important;justify-content:center!important;height:30px!important;box-sizing:border-box!important;font-size:11px!important;}
-#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prTopRight #prCloseBtn{grid-column:3!important;grid-row:1!important;justify-self:end!important;position:static!important;width:34px!important;height:34px!important;min-width:34px!important;flex:none!important;}
-#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prRoomPill{grid-column:1!important;grid-row:2!important;width:40px!important;min-width:0!important;max-width:40px!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
-#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prRoomPill .pr-pill-txt{display:none!important;}
-#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prRoomAvatar{width:40px!important;height:40px!important;min-width:40px!important;}
-#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prModeSegment{grid-column:2!important;grid-row:2!important;min-width:0!important;width:100%!important;}
-#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) .pr-seg-mode{padding:0 6px!important;font-size:11px!important;}
-#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prTopRight #prTopGiftersBtn{display:inline-flex!important;grid-column:3!important;grid-row:2!important;justify-self:end!important;position:static!important;width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important;flex:none!important;padding:0!important;gap:0!important;border-radius:50%!important;align-items:center!important;justify-content:center!important;}
-#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prTopRight #prTopGiftersBtn span{display:none!important;}
-#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prTopRight #prSeatQuickBtn,
-#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prTopRight #prCornerProfile{display:none!important;}
-#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prSubRow{display:flex!important;justify-content:flex-end!important;margin-top:8px!important;}
-#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prSubRow #cinemaViewerBtn,
-#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prSubRow #prTicker{display:none!important;}
-#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prSubRow #prMoreVideoBtn{display:inline-flex!important;}
+/* Chat mode: top part is the SAME as YouTube mode (default header + More Video row). No host seat. Dock: comment, emoji, inbox | gift, mic, music. */
 #prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prHostRow{display:none!important;}
 #prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #partyRoomBottomDock #partyRoomYouTubeBtn,
 #prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #partyRoomBottomDock button[aria-label="More"]{display:none!important;}
+</style>
+
+<style id="partyRoomViewerLeftOfExitYT">
+/* Chat mode: keep the old in-bar close hidden; the red fixed ✕ (#pkRoomX) is the only exit. */
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prTopRight #prCloseBtn{display:none!important;}
+/* EVERY Party Room mode: Viewer sits right beside (left of) the red ✕. Visibility stays tied to the Room Level label by the existing sync (pr-room-sync-visible/hidden). */
+#pkRoomViewerBtn,#pkRoomViewerBtn.pr-room-sync-visible{
+  left:auto!important;right:38px!important;
+  top:calc(env(safe-area-inset-top,0px) + 4px)!important;
+  height:22px!important;min-width:38px!important;width:auto!important;
+  padding:0 7px!important;line-height:20px!important;font-size:10px!important;
+  border-radius:11px!important;box-sizing:border-box!important;
+}
+/* Also hide Viewer + ✕ whenever Viewers / Top Gifter / Settings page is open over the room. */
+body.pr-ve-hide #pkRoomViewerBtn,body.pr-ve-hide #pkRoomX{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+</style>
+<script id="partyRoomViewerExitPageGuard">
+(function(){
+  var ids=['partyRoomViewersPage','partyRoomTopGiftersPage','partyRoomSettingsPage'];
+  function up(el){if(!el)return false;var c=getComputedStyle(el),r=el.getBoundingClientRect();return c.display!=='none'&&c.visibility!=='hidden'&&r.width>0&&r.height>0;}
+  function chk(){var on=false;for(var i=0;i<ids.length;i++){if(up(document.getElementById(ids[i]))){on=true;break;}}document.body.classList.toggle('pr-ve-hide',on);}
+  setInterval(chk,250);
+})();
+</script>
+
+<style id="partyChatNameHostFinal">
+/* Comment header: black background only behind the NAME (does not grow with the comment); HOST tag separate, bright & shiny, right beside it. */
+html body #prRoom #cinemaChatPanel .pr-chat-line .pr-chat-head{
+  display:flex!important;flex-direction:row!important;align-items:center!important;align-self:flex-start!important;
+  width:auto!important;max-width:100%!important;min-height:0!important;height:auto!important;
+  gap:6px!important;padding:0!important;margin:0!important;
+  background:none!important;border:0!important;box-shadow:none!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;overflow:visible!important;
+}
+html body #prRoom #cinemaChatPanel .pr-chat-line .pr-chat-head .pr-n,
+html body #prRoom #cinemaChatPanel .pr-chat-line .pr-n{
+  display:inline-flex!important;align-items:center!important;flex:0 1 auto!important;
+  width:auto!important;max-width:60vw!important;min-height:20px!important;height:20px!important;
+  padding:0 9px!important;margin:0!important;border:0!important;border-radius:8px!important;
+  background:#000!important;color:#fff!important;box-shadow:none!important;
+  font-size:12px!important;line-height:20px!important;font-weight:900!important;
+  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;text-shadow:none!important;
+}
+html body #prRoom #cinemaChatPanel .pr-chat-line .pr-role-host{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;
+  height:18px!important;min-height:18px!important;margin:0!important;padding:0 7px!important;
+  border:1px solid #fff6b0!important;border-radius:6px!important;
+  color:#3b1f00!important;font-size:8.5px!important;font-weight:950!important;letter-spacing:.7px!important;line-height:16px!important;text-shadow:none!important;
+  background:linear-gradient(110deg,#ffe53b 0%,#ffb300 35%,#fff4a0 50%,#ff8a00 70%,#ffd000 100%)!important;
+  background-size:220% 100%!important;
+  box-shadow:0 0 8px rgba(255,200,40,.85),0 0 16px rgba(255,140,0,.45),inset 0 1px 0 rgba(255,255,255,.7)!important;
+  animation:prHostShine 2.2s linear infinite!important;
+}
+@keyframes prHostShine{0%{background-position:120% 0}100%{background-position:-120% 0}}
+</style>
+
+<style id="partyChatAdminShiny">
+/* ADMIN tag: same shiny style as HOST, different colour (cyan-violet). */
+html body #prRoom #cinemaChatPanel .pr-chat-line .pr-role-admin{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;
+  height:18px!important;min-height:18px!important;margin:0!important;padding:0 7px!important;
+  border:1px solid #d9fbff!important;border-radius:6px!important;
+  color:#06143a!important;font-size:8.5px!important;font-weight:950!important;letter-spacing:.7px!important;line-height:16px!important;text-shadow:none!important;
+  background:linear-gradient(110deg,#22e6ff 0%,#6a7bff 35%,#e4fbff 50%,#b04dff 70%,#22d3ee 100%)!important;
+  background-size:220% 100%!important;
+  box-shadow:0 0 8px rgba(70,200,255,.85),0 0 16px rgba(140,80,255,.45),inset 0 1px 0 rgba(255,255,255,.7)!important;
+  animation:prHostShine 2.2s linear infinite!important;
+}
+</style>
+
+<style id="prcKeyboardSpeedFix">
+#prcKb,#prcKb *{touch-action:manipulation!important;-webkit-tap-highlight-color:transparent!important;-webkit-user-select:none!important;user-select:none!important;}
+#prcKb,#prcKb .key,#prcKb .numpad-key{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+#prcKb .key,#prcKb .numpad-key{transition:none!important;}
+</style>
+
+<style id="partyChatScrollAndGamingFit">
+/* Comments scroll smoothly (touch) in EVERY Party Room mode. */
+html body #prRoom #cinemaChatPanel #cinemaChatMessages{
+  overflow-y:auto!important;overflow-x:hidden!important;
+  -webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;
+  touch-action:pan-y!important;pointer-events:auto!important;
+  scrollbar-width:none!important;
+}
+html body #prRoom #cinemaChatPanel #cinemaChatMessages>.pr-msg{pointer-events:auto!important;touch-action:pan-y!important;}
+html body #prRoom #cinemaChatPanel{pointer-events:auto!important;}
+html body #prRoom #cinemaChatPanel #cinemaChatMessages::-webkit-scrollbar{display:none!important;}
+
+/* Gaming mode: room for 2-3 comments, scrollable. */
+html body #prRoom.party-gaming-layout > #cinemaChatPanel.prc{
+  height:128px!important;min-height:128px!important;max-height:128px!important;
+  bottom:64px!important;top:auto!important;overflow:hidden!important;
+}
+html body #prRoom.party-gaming-layout > #cinemaChatPanel.prc #cinemaChatMessages{
+  flex:1 1 auto!important;height:128px!important;min-height:128px!important;max-height:128px!important;
+  padding:4px 8px!important;box-sizing:border-box!important;
+}
+/* While a game is running, keep it smaller so the game stays visible (still scrolls). */
+html body #prRoom.party-gaming-layout:has(#partyGamingCenter.pgc-playing) > #cinemaChatPanel.prc,
+html body #prRoom.party-gaming-layout:has(#partyGamingCenter.pgc-playing) > #cinemaChatPanel.prc #cinemaChatMessages{
+  height:92px!important;min-height:92px!important;max-height:92px!important;
+}
+
+/* Gaming mode seats: smaller so nothing collides. */
+#prRoom.party-gaming-layout #cinemaSeats{grid-template-columns:repeat(4,30px)!important;gap:6px!important;height:34px!important;}
+#prRoom.party-gaming-layout #cinemaSeats.pr-two-seat-mode{grid-template-columns:repeat(2,34px)!important;gap:10px!important;}
+#prRoom.party-gaming-layout #cinemaSeats > *{width:30px!important;height:34px!important;min-width:30px!important;min-height:34px!important;flex:0 0 30px!important;}
+#prRoom.party-gaming-layout #cinemaSeats .psf-avatar,
+#prRoom.party-gaming-layout #cinemaSeats .psf-frame-wrap{width:30px!important;height:30px!important;flex-basis:30px!important;}
+#prRoom.party-gaming-layout #cinemaSeats .psf-frame-wrap[data-frame]:not([data-frame="none"]){width:34px!important;height:34px!important;flex-basis:34px!important;}
+#prRoom.party-gaming-layout #cinemaSeats .psf-frame-wrap[data-frame]:not([data-frame="none"]) .psf-avatar{width:26px!important;height:26px!important;left:4px!important;top:4px!important;}
+#prRoom.party-gaming-layout #cinemaSeats .psf-frame-wrap[data-frame]:not([data-frame="none"]) .psf-frame-art{width:34px!important;height:34px!important;}
+#prRoom.party-gaming-layout #cinemaSeats .psf-core{font-size:12px!important;}
 </style>
