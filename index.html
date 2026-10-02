@@ -12391,9 +12391,56 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 #partyYoutubeStage.yt-nonhost .yt-room-block{clip-path:polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,56% 30%,100% 30%,100% 84%,56% 84%,56% 30%)!important;}
 </style>
 <style id="pkStatusBarBlend">
-/* Blend the room's top edge into the phone's top bar (bar colour set to #1b1740 in WebToApk). Works with any room background photo. */
-#cinemaGharModal::before{content:"";position:absolute;top:0;left:0;right:0;height:26px;background:linear-gradient(180deg,#1b1740 0,rgba(27,23,64,.55) 45%,rgba(27,23,64,0) 100%);pointer-events:none;z-index:0}
+/* Party Room: no extra layer at the top; the strip behind the phone's top bar takes the colour of the room's background photo (set by script below). */
+#cinemaGharModal::before{content:none!important;display:none!important;background:none!important}
+html:has(#cinemaGharModal:not([style*="display: none"])),
+html:has(#cinemaGharModal:not([style*="display: none"])) body{background:var(--pk-room-top,#1b1740)!important}
 </style>
+<script id="pkRoomTopColor">
+(function(){
+  var FALL='#1b1740', last='';
+  function setMeta(c){
+    try{
+      var m=document.querySelector('meta[name="theme-color"]');
+      if(!m){m=document.createElement('meta');m.name='theme-color';document.head.appendChild(m);}
+      m.content=c;
+    }catch(e){}
+  }
+  function apply(c){
+    document.documentElement.style.setProperty('--pk-room-top',c);
+    setMeta(c);
+  }
+  function fromCss(bg){
+    var m=String(bg||'').match(/#[0-9a-f]{3,8}|rgba?\([^)]+\)/i);
+    return m?m[0]:FALL;
+  }
+  function update(modal){
+    var bg=modal.style.backgroundImage||'';
+    if(bg===last) return; last=bg;
+    var u=bg.match(/url\(["']?(.*?)["']?\)/);
+    if(!u){ apply(fromCss(bg)); return; }
+    var img=new Image();
+    img.onload=function(){
+      try{
+        var w=40,h=40,c=document.createElement('canvas');c.width=w;c.height=h;
+        var x=c.getContext('2d');x.drawImage(img,0,0,w,h);
+        var d=x.getImageData(0,0,w,3).data,r=0,g=0,b=0,n=d.length/4;
+        for(var i=0;i<d.length;i+=4){r+=d[i];g+=d[i+1];b+=d[i+2];}
+        apply('rgb('+Math.round(r/n)+','+Math.round(g/n)+','+Math.round(b/n)+')');
+      }catch(e){ apply(FALL); }
+    };
+    img.onerror=function(){ apply(FALL); };
+    img.src=u[1].replace(/&quot;/g,'"');
+  }
+  function hook(){
+    var m=document.getElementById('cinemaGharModal');
+    if(!m){ setTimeout(hook,500); return; }
+    update(m);
+    new MutationObserver(function(){update(m);}).observe(m,{attributes:true,attributeFilter:['style']});
+  }
+  hook();
+})();
+</script>
 
 <style id="partyRoomJoinNoticeBottomFinal">
 /* Room entry notices stay inside the normal bottom comment stream. */
