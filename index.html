@@ -4726,7 +4726,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       if(mine) row.classList.add('pr-mine');
       else if(me && text.indexOf('@'+me)>=0) row.classList.add('pr-me');
       var gifHtml=gifUrl&&/^https:\/\//i.test(gifUrl)?'<img class="prc-gif" alt="GIF" loading="lazy" src="'+esc(gifUrl)+'">':'';
-      row.innerHTML=avatar+'<span class="pr-chat-body"><b class="pr-n" data-pr-act="mention" data-name="'+nm+'">'+nm+'</b>'+roleTag+'<span class="pr-bubble"><span class="pr-t"'+(text?'':' style="display:none"')+'>'+esc(text)+'</span>'+gifHtml+'</span></span>';
+      row.innerHTML=avatar+'<span class="pr-chat-body"><span class="pr-chat-head"><b class="pr-n" data-pr-act="mention" data-name="'+nm+'">'+nm+'</b>'+roleTag+'</span><span class="pr-bubble"><span class="pr-t"'+(text?'':' style="display:none"')+'>'+esc(text)+'</span>'+gifHtml+'</span></span>';
     }
     return row;
   };
@@ -9021,7 +9021,29 @@ input,textarea,select{font-size:16px}
 (function(){
   var x=document.createElement('button');x.id='pkRoomX';x.type='button';x.textContent='✕';x.setAttribute('aria-label','रूम से बाहर');
   x.onclick=function(){try{if(window.closeCinemaGhar)window.closeCinemaGhar();}catch(e){}};document.body.appendChild(x);
-  setInterval(function(){var r=document.getElementById('prRoom');var vis=!!(r&&r.offsetParent!==null&&getComputedStyle(r).display!=='none'&&getComputedStyle(r).visibility!=='hidden');x.style.display=vis?'block':'none';},600);
+
+  /* Single Party Room Viewer control: fixed immediately to the LEFT of the red room-close button.
+     It stays in the same place in Chat/Game/YouTube modes and is visible to everyone. */
+  var v=document.createElement('button');
+  v.id='pkRoomViewerBtn';
+  v.type='button';
+  v.innerHTML='👁 <span id="pkRoomViewerCount">0</span>';
+  v.setAttribute('aria-label','Active Viewers');
+  v.setAttribute('title','Active Viewers');
+  v.onclick=function(){try{if(window.openPartyRoomViewers)window.openPartyRoomViewers();}catch(e){}};
+  document.body.appendChild(v);
+
+  setInterval(function(){
+    var r=document.getElementById('prRoom');
+    var vis=!!(r&&r.offsetParent!==null&&getComputedStyle(r).display!=='none'&&getComputedStyle(r).visibility!=='hidden');
+    x.style.display=vis?'block':'none';
+    v.style.display=vis?'flex':'none';
+    try{
+      var count=document.getElementById('cinemaViewerCount');
+      var out=document.getElementById('pkRoomViewerCount');
+      if(out && count) out.textContent=count.textContent||'0';
+    }catch(e){}
+  },600);
   function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   document.addEventListener('click',function(ev){
     var st=ev.target.closest&&ev.target.closest('#pkPPstats .pp-stat');if(!st)return;
@@ -13023,9 +13045,18 @@ tick();
 
 /* Same existing YouTube control pad, only repositioned per room. */
 #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #ytSeekPad{
-  left:66px!important;
-  right:auto!important;
+  /* Chat Mode: replace the removed Viewer spot with the same 2s / Play / 2s control.
+     More Video stays immediately to its right. */
+  left:auto!important;
+  right:112px!important;
   top:70px!important;
+  display:flex!important;
+}
+#prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #ytSeekPad.on{display:flex!important;}
+@media(max-width:430px){
+  #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #ytSeekPad{
+    right:108px!important;
+  }
 }
 #prRoom.party-gaming-layout #ytSeekPad{
   left:auto!important;
@@ -13843,9 +13874,12 @@ setInterval(function(){try{hook();if(shown&&panelEl&&!(panelEl.classList.contain
 
 <style id="pkGamingSeekPadPlace">
 /* Gaming mode: the play / ±2s pad sits under the seats, just above the 4 games */
-#prRoom.party-gaming-layout #ytSeekPad{left:50%!important;right:auto!important;top:114px!important;transform:translateX(-50%)!important}
-/* While a game is running keep the top/centre clear so Level, score and wind stay visible: small pad on the left, below them */
-#prRoom.party-gaming-layout:has(#partyGamingCenter.pgc-playing) #ytSeekPad{left:8px!important;transform:none!important;top:185px!important}
+/* Gaming Mode: keep the same YouTube 2s / Play / 2s controller at the exact
+   spot used while the Jumping Game is open. It remains there even before a game starts. */
+#prRoom.party-gaming-layout #ytSeekPad{left:8px!important;right:auto!important;top:185px!important;transform:none!important;display:flex!important}
+#prRoom.party-gaming-layout #ytSeekPad.on{display:flex!important}
+/* While a game is running keep the same fixed position. */
+#prRoom.party-gaming-layout:has(#partyGamingCenter.pgc-playing) #ytSeekPad{left:8px!important;right:auto!important;transform:none!important;top:185px!important;display:flex!important}
 </style>
 <style id="pkCommentsVisibleFinal">
 html body #prRoom #cinemaChatPanel.prc #cinemaChatMessages .pr-msg{display:flex!important;visibility:visible!important;opacity:1!important}
@@ -16219,6 +16253,105 @@ html body #prRoom #cinemaChatInput{
   setTimeout(kill,100);setTimeout(kill,500);setTimeout(kill,1500);
 })();
 </script>
+
+<style id="partyChatNameHeaderFinalFix">
+/* Chat layout: framed DP first; name sits directly to its right at the same height.
+   Role stays on the same line as the name, while the comment remains underneath. */
+html body #prRoom #cinemaChatPanel .pr-chat-line{
+  align-items:flex-start!important;
+  gap:8px!important;
+}
+html body #prRoom #cinemaChatPanel .pr-chat-line .pr-chat-avatar{
+  flex:0 0 auto!important;
+  align-self:flex-start!important;
+  margin-top:0!important;
+}
+html body #prRoom #cinemaChatPanel .pr-chat-line .pr-chat-body{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  justify-content:flex-start!important;
+  min-width:0!important;
+  max-width:calc(100% - 50px)!important;
+  gap:3px!important;
+  padding-top:0!important;
+}
+html body #prRoom #cinemaChatPanel .pr-chat-line .pr-chat-head{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:6px!important;
+  min-width:0!important;
+  width:100%!important;
+  min-height:42px!important;
+  line-height:1!important;
+}
+html body #prRoom #cinemaChatPanel .pr-chat-line .pr-n{
+  display:block!important;
+  flex:0 1 auto!important;
+  min-width:0!important;
+  max-width:none!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  color:#ffffff!important;
+  font-size:13px!important;
+  line-height:18px!important;
+  font-weight:900!important;
+  letter-spacing:.1px!important;
+  text-shadow:0 1px 5px rgba(0,0,0,.48)!important;
+}
+html body #prRoom #cinemaChatPanel .pr-chat-line .pr-role-tag{
+  display:inline-flex!important;
+  flex:0 0 auto!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:0!important;
+  height:auto!important;
+  margin:0!important;
+  padding:1px 5px!important;
+  border:0!important;
+  border-radius:6px!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  font-size:8px!important;
+  line-height:12px!important;
+  font-weight:800!important;
+  letter-spacing:.45px!important;
+  opacity:.68!important;
+  text-shadow:0 1px 3px rgba(0,0,0,.35)!important;
+}
+html body #prRoom #cinemaChatPanel .pr-chat-line .pr-role-host{
+  color:#ffd978!important;
+  background:rgba(255,215,120,.10)!important;
+}
+html body #prRoom #cinemaChatPanel .pr-chat-line .pr-role-admin{
+  color:#c9d7ff!important;
+  background:rgba(201,215,255,.10)!important;
+}
+html body #prRoom #cinemaChatPanel .pr-chat-line .pr-bubble{
+  align-self:flex-start!important;
+  margin-top:0!important;
+  max-width:100%!important;
+}
+@media(max-width:430px){
+  html body #prRoom #cinemaChatPanel .pr-chat-line .pr-n{
+    font-size:12.5px!important;
+    line-height:18px!important;
+  }
+  html body #prRoom #cinemaChatPanel .pr-chat-line .pr-chat-head{
+    gap:5px!important;
+  }
+}
+</style>
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
@@ -16679,6 +16812,43 @@ html body #prRoom #cinemaChatInput{
   document.addEventListener('DOMContentLoaded',function(){syncMode();syncProfile();});
 })();
 </script>
+
+<style id="partyRoomSingleViewerControl">
+/* Single Viewer control: only the fixed button beside the red room-close X remains. */
+#prRoom #prFloatingViewerBtn,
+#prRoom #cinemaViewerBtn,
+#prRoom .pr-inline-viewers,
+#prRoom #prInlineViewerCount{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+#pkRoomViewerBtn{
+  position:fixed;
+  top:calc(env(safe-area-inset-top,0px) + 4px);
+  right:calc(10px + 22px + 6px);
+  z-index:100015;
+  width:30px;
+  height:30px;
+  min-width:30px;
+  padding:0;
+  border:1px solid rgba(255,255,255,.35);
+  border-radius:50%;
+  background:linear-gradient(145deg,#312e81,#4c1d95);
+  color:#fff;
+  font:900 11px/28px system-ui,Arial,sans-serif;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  gap:1px;
+  box-shadow:0 2px 8px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.08) inset;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+#pkRoomViewerBtn:active{transform:scale(.92);}
+#pkRoomViewerCount{font-size:9px;font-weight:1000;line-height:1;}
+@media(max-width:430px){
+  #pkRoomViewerBtn{right:38px;width:28px;height:28px;min-width:28px;font-size:10px;line-height:26px;}
+  #pkRoomViewerCount{font-size:8px;}
+}
+</style>
 
 <style id="partyRoomRemoveProfileAndClose">
 /* Party Room: remove the duplicate profile/viewer photo and close button only. */
