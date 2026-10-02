@@ -9303,6 +9303,8 @@ input,textarea,select{font-size:16px}
   setInterval(function(){
     var r=document.getElementById('prRoom');
     var vis=!!(r&&r.offsetParent!==null&&getComputedStyle(r).display!=='none'&&getComputedStyle(r).visibility!=='hidden');
+    /* Visibility is controlled only by the existing Room Level/XP sync below.
+       This helper only refreshes the viewer count, so it cannot race that sync. */
     try{
       var count=document.getElementById('cinemaViewerCount');
       var out=document.getElementById('pkRoomViewerCount');
@@ -16883,7 +16885,8 @@ html body #prRoom #cinemaChatPanel .pr-chat-line .pr-bubble{
     'pkPublicProfileOverlay','pkMeProfilePanel','pkInboxOverlay','pkDirectMessageOverlay',
     'pkDirectCallOverlay','pkIncomingCallOverlay','pkVisitorsOverlay','pkEditProfile',
     'pkGlobalSearch','pkGamingRanking','cinemaGharModal','pkWalletPanel','prHostSettingsPage',
-    'prBrowserOverlay','partyMoreVideoOverlay','partyRoomLevelOverlay'
+    'prBrowserOverlay','partyMoreVideoOverlay','partyRoomLevelOverlay','prGiftSheet','prUserCard',
+    'partyRoomGiftTray','partyRoomReactionTray'
   ];
   function shown(el){
     if(!el)return false;
@@ -18646,7 +18649,7 @@ html body #prRoom.party-youtube-layout > #cinemaChatPanel.prc #cinemaChatMessage
 <script id="partyRoomLevelViewerExitSyncUltimateScript">
 (function(){
   'use strict';
-  var ids=['pkPublicProfileOverlay','pkMeProfilePanel','pkInboxOverlay','pkDirectMessageOverlay','pkDirectCallOverlay','pkIncomingCallOverlay','pkVisitorsOverlay','pkEditProfile','pkGlobalSearch','pkGamingRanking','cinemaGharModal','pkWalletPanel','prHostSettingsPage','prBrowserOverlay','partyMoreVideoOverlay','partyRoomLevelOverlay'];
+  var ids=['pkPublicProfileOverlay','pkMeProfilePanel','pkInboxOverlay','pkDirectMessageOverlay','pkDirectCallOverlay','pkIncomingCallOverlay','pkVisitorsOverlay','pkEditProfile','pkGlobalSearch','pkGamingRanking','cinemaGharModal','pkWalletPanel','prHostSettingsPage','prBrowserOverlay','partyMoreVideoOverlay','partyRoomLevelOverlay','prGiftSheet','prUserCard','partyRoomGiftTray','partyRoomReactionTray'];
   function shown(el){if(!el)return false;var c=getComputedStyle(el),r=el.getBoundingClientRect();return c.display!=='none'&&c.visibility!=='hidden'&&parseFloat(c.opacity||'1')>0&&r.width>0&&r.height>0;}
   function blocked(){for(var i=0;i<ids.length;i++){var e=document.getElementById(ids[i]);if(!e)continue;if(e.classList.contains('open')||((e.id==='pkMeProfilePanel'||e.id==='pkVisitorsOverlay'||e.id==='pkEditProfile')&&shown(e)))return true;}return false;}
   function sync(){
