@@ -16023,134 +16023,8 @@ h1{filter:none!important}
   updateKeyboardCase();
 <\/script>
 
-<style id="pkVisitedProfilePremiumWhiteFinal">
-/* Visiting another person's profile: clean white, full-screen, reference-style layout. */
-#pkPublicProfileOverlay{background:#fff!important;color:#171717!important;}
-#pkPublicProfileOverlay .pp-scroll{background:#fff!important;}
-#pkPublicProfileOverlay .pp-hero{height:178px!important;background:#fff!important;overflow:visible!important;}
-#pkPublicProfileOverlay .pp-cover{background:#fff!important;opacity:1!important;}
-#pkPublicProfileOverlay .pp-cover:after,#pkPublicProfileOverlay .pp-hero-glow{display:none!important;}
-#pkPublicProfileOverlay .pp-topbar{padding:12px 14px!important;}
-#pkPublicProfileOverlay .pp-topbar button{background:#f4f4f7!important;color:#20222a!important;box-shadow:none!important;border:1px solid #e8e8ed!important;}
-#pkPublicProfileOverlay .pp-main{margin-top:0!important;background:#fff!important;border-radius:0!important;padding:0 18px 92px!important;min-height:calc(100vh - 178px)!important;}
-#pkPublicProfileOverlay .pp-avatar-wrap{width:112px!important;height:112px!important;margin:-56px 0 8px 8px!important;border-radius:50%!important;overflow:visible!important;}
-#pkPublicProfileOverlay .pp-avatar{width:112px!important;height:112px!important;border-radius:50%!important;overflow:hidden!important;background:#f1f1f4!important;border:4px solid #fff!important;box-shadow:0 3px 14px rgba(0,0,0,.16)!important;}
-#pkPublicProfileOverlay .pp-avatar img.pp-photo{width:100%!important;height:100%!important;border-radius:50%!important;object-fit:cover!important;display:block!important;}
-#pkPublicProfileOverlay .pp-frame{width:126px!important;height:126px!important;left:50%!important;top:50%!important;inset:auto!important;transform:translate(-50%,-50%)!important;object-fit:contain!important;z-index:5!important;}
-#pkPublicProfileOverlay .pp-level{right:-5px!important;bottom:2px!important;}
-#pkPublicProfileOverlay .pp-name{text-align:left!important;margin:-108px 0 0 138px!important;min-height:34px!important;font-size:24px!important;color:#111!important;line-height:1.15!important;}
-#pkPublicProfileOverlay .pp-sub{text-align:left!important;margin:5px 0 0 138px!important;color:#777!important;min-height:18px!important;}
-#pkPublicProfileOverlay .pp-idline{text-align:left!important;margin:7px 0 0 138px!important;color:#30343b!important;}
-#pkPublicProfileOverlay .pp-info-row{margin-top:18px!important;}
-#pkPublicProfileOverlay .pp-stats{background:#fff!important;border:0!important;border-top:1px solid #ececf1!important;border-bottom:1px solid #ececf1!important;border-radius:0!important;box-shadow:none!important;padding:15px 0!important;margin:8px 0 15px!important;}
-#pkPublicProfileOverlay .pp-stat{color:#222!important;}
-#pkPublicProfileOverlay .pp-stat span{color:#777!important;}
-#pkPublicProfileOverlay .pp-actions{background:#fff!important;border-top:1px solid #ececf0!important;box-shadow:0 -5px 18px rgba(0,0,0,.06)!important;padding:10px 18px calc(10px + env(safe-area-inset-bottom,0px))!important;align-items:center!important;gap:10px!important;}
-#pkPublicProfileOverlay .pp-follow{height:48px!important;border-radius:25px!important;flex:1!important;background:#ff4b55!important;color:#fff!important;box-shadow:none!important;font-size:16px!important;}
-#pkPublicProfileOverlay .pp-follow.following{background:#fff!important;color:#333!important;border:1px solid #d9d9df!important;box-shadow:none!important;}
-#pkPublicProfileOverlay .pp-message-icon{width:50px!important;max-width:50px!important;flex:0 0 50px!important;height:48px!important;border-radius:50%!important;background:#fff!important;color:#333!important;border:1px solid #d9d9df!important;box-shadow:none!important;display:grid!important;place-items:center!important;padding:0!important;}
-#pkPublicProfileOverlay .pp-message-icon:active{background:#f5f5f7!important;transform:scale(.96);}
-#pkPublicProfileOverlay.own-view #pkPPVisitActions{display:none!important;}
-</style>
-<script id="partyRoomOpenRecoveryFinal">
-(function(){
-  /* Final safety net: Home -> Party Room must always open the Party Room lobby,
-     even if a refresh/optional module throws an error. */
-  var oldOpen=window.pkOpenParty;
-  window.pkOpenParty=function(){
-    try{ if(typeof oldOpen==='function') oldOpen(); }catch(e){}
-    setTimeout(function(){
-      try{
-        var m=document.getElementById('cinemaGharModal');
-        if(m){
-          m.style.display='block';
-          m.classList.remove('hidden');
-          document.body.style.overflow='hidden';
-          var lobby=document.getElementById('cinemaLobby');
-          var stage=document.getElementById('cinemaRoomStage');
-          if(lobby) lobby.style.display='block';
-          if(stage) stage.style.display='none';
-          var h=document.getElementById('cinemaTopHeader');
-          if(h) h.style.display='flex';
-          try{ if(typeof cinemaLobbyMode!=='undefined') cinemaLobbyMode=true; }catch(_){}
-          try{ if(typeof cinemaLoadRooms==='function') cinemaLoadRooms(); }catch(_){}
-        }
-      }catch(e){}
-    },60);
-  };
-})();
-</script>
-
-<style id="pkDirectChatProfileBlockStyle">
-#pkDirectHeaderAvatar{cursor:pointer;-webkit-tap-highlight-color:transparent;}
-#pkDirectHeaderAvatar:active{transform:scale(.96);}
-#pkDirectMoreMenu{position:fixed;z-index:2147483646;min-width:170px;padding:6px;border-radius:14px;background:#fff;box-shadow:0 14px 40px rgba(0,0,0,.22);border:1px solid #e5e7eb;display:none;}
-#pkDirectMoreMenu.open{display:block;}
-#pkDirectMoreMenu button{width:100%;border:0;background:transparent;text-align:left;padding:11px 12px;border-radius:10px;font-size:13px;font-weight:850;color:#111827;}
-#pkDirectMoreMenu button:active{background:#f1f5f9;}
-#pkDirectMoreMenu .danger{color:#dc2626;}
-</style>
-
-<script id="pkDirectChatProfileBlockFix">
-(function(){
-  function byId(id){return document.getElementById(id);}
-  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
-  function menu(){
-    var m=byId('pkDirectMoreMenu');
-    if(!m){
-      m=document.createElement('div');m.id='pkDirectMoreMenu';
-      m.innerHTML='<button type="button" id="pkDmBlockAction" class="danger">🚫 Block</button><button type="button" id="pkDmCloseMenu">Cancel</button>';
-      document.body.appendChild(m);
-      m.addEventListener('click',function(e){
-        if(e.target.id==='pkDmCloseMenu'){m.classList.remove('open');return;}
-        if(e.target.id==='pkDmBlockAction'){directToggleBlock();}
-      });
-    }
-    return m;
-  }
-  async function blockState(key){
-    if(!key||typeof db==='undefined'||typeof currentUserKey==='undefined'||!currentUserKey)return false;
-    try{var s=await db.collection('users').doc(String(currentUserKey)).get(),d=s.exists?(s.data()||{}):{},a=Array.isArray(d.blockedUsers)?d.blockedUsers.map(String):[];return a.indexOf(String(key))>=0;}catch(e){return false;}
-  }
-  async function directToggleBlock(){
-    var m=menu(),key=String(window.__pkDmOpenKey||'');
-    if(!key||typeof db==='undefined'||typeof currentUserKey==='undefined'||!currentUserKey){m.classList.remove('open');return;}
-    try{
-      var ref=db.collection('users').doc(String(currentUserKey)),snap=await ref.get(),d=snap.exists?(snap.data()||{}):{},a=Array.isArray(d.blockedUsers)?d.blockedUsers.map(String):[];
-      var has=a.indexOf(key)>=0,na=has?a.filter(function(x){return x!==key; }):Array.from(new Set(a.concat(key)));
-      await ref.set({blockedUsers:na,updatedAt:Date.now()},{merge:true});
-      window.__blockedUsers=na;
-      var b=byId('pkDmBlockAction');if(b)b.textContent=has?'🚫 Block':'✅ Unblock';
-      m.classList.remove('open');
-      if(typeof toast==='function')toast(has?'User unblocked':'User blocked');
-    }catch(e){if(typeof toast==='function')toast('Block setting save नहीं हुई');}
-  }
-  window.pkDirectMessageMore=function(){
-    var m=menu(),key=String(window.__pkDmOpenKey||'');
-    if(!key)return;
-    var b=byId('pkDmBlockAction');
-    blockState(key).then(function(has){if(b)b.textContent=has?'🚫 Unblock':'🚫 Block';});
-    var head=byId('pkDirectHeaderAvatar');
-    if(head){var r=head.getBoundingClientRect();m.style.top=Math.max(8,r.bottom+7)+'px';m.style.right=Math.max(8,window.innerWidth-r.right)+'px';m.style.left='auto';}
-    m.classList.add('open');
-  };
-  document.addEventListener('click',function(e){
-    var a=e.target.closest&&e.target.closest('#pkDirectHeaderAvatar');
-    if(a){
-      e.preventDefault();e.stopPropagation();
-      var k=String(window.__pkDmOpenKey||'');
-      if(k&&typeof window.prOpenUserCard==='function'){try{window.prOpenUserCard(k);}catch(_){} }
-      return;
-    }
-    var m=byId('pkDirectMoreMenu');
-    if(m&&m.classList.contains('open')&&!e.target.closest('#pkDirectMoreMenu')&&!e.target.closest('.pk-direct-head-actions button'))m.classList.remove('open');
-  },true);
-})();
-<\/script>
-
 </body>
 </html>`;
-</script>
   var loaded=false, openState=false;
   function $(id){return document.getElementById(id);}
   function hideLegacy(){
@@ -16796,6 +16670,35 @@ html body #prRoom #cinemaChatPanel .pr-chat-line .pr-bubble{
 #cinemaChatPanel .pr-chat-line .pr-t{font-size:12.5px!important;line-height:17px!important;}
 #cinemaChatPanel .pr-chat-line .pr-chat-avatar{width:40px!important;height:40px!important;min-width:40px!important;}
 @media(max-width:430px){#cinemaChatPanel .pr-chat-line .pr-chat-body{max-width:calc(100% - 47px)!important;}#cinemaChatPanel .pr-chat-line .pr-n{font-size:10.5px!important;}#cinemaChatPanel .pr-chat-line .pr-t{font-size:12px!important;line-height:16px!important;}}
+</style>
+<style id="pkVisitedProfilePremiumWhiteFinal">
+/* Visiting another person's profile: clean white, full-screen, reference-style layout. */
+#pkPublicProfileOverlay{background:#fff!important;color:#171717!important;}
+#pkPublicProfileOverlay .pp-scroll{background:#fff!important;}
+#pkPublicProfileOverlay .pp-hero{height:178px!important;background:#fff!important;overflow:visible!important;}
+#pkPublicProfileOverlay .pp-cover{background:#fff!important;opacity:1!important;}
+#pkPublicProfileOverlay .pp-cover:after,#pkPublicProfileOverlay .pp-hero-glow{display:none!important;}
+#pkPublicProfileOverlay .pp-topbar{padding:12px 14px!important;}
+#pkPublicProfileOverlay .pp-topbar button{background:#f4f4f7!important;color:#20222a!important;box-shadow:none!important;border:1px solid #e8e8ed!important;}
+#pkPublicProfileOverlay .pp-main{margin-top:0!important;background:#fff!important;border-radius:0!important;padding:0 18px 92px!important;min-height:calc(100vh - 178px)!important;}
+#pkPublicProfileOverlay .pp-avatar-wrap{width:112px!important;height:112px!important;margin:-56px 0 8px 8px!important;border-radius:50%!important;overflow:visible!important;}
+#pkPublicProfileOverlay .pp-avatar{width:112px!important;height:112px!important;border-radius:50%!important;overflow:hidden!important;background:#f1f1f4!important;border:4px solid #fff!important;box-shadow:0 3px 14px rgba(0,0,0,.16)!important;}
+#pkPublicProfileOverlay .pp-avatar img.pp-photo{width:100%!important;height:100%!important;border-radius:50%!important;object-fit:cover!important;display:block!important;}
+#pkPublicProfileOverlay .pp-frame{width:126px!important;height:126px!important;left:50%!important;top:50%!important;inset:auto!important;transform:translate(-50%,-50%)!important;object-fit:contain!important;z-index:5!important;}
+#pkPublicProfileOverlay .pp-level{right:-5px!important;bottom:2px!important;}
+#pkPublicProfileOverlay .pp-name{text-align:left!important;margin:-108px 0 0 138px!important;min-height:34px!important;font-size:24px!important;color:#111!important;line-height:1.15!important;}
+#pkPublicProfileOverlay .pp-sub{text-align:left!important;margin:5px 0 0 138px!important;color:#777!important;min-height:18px!important;}
+#pkPublicProfileOverlay .pp-idline{text-align:left!important;margin:7px 0 0 138px!important;color:#30343b!important;}
+#pkPublicProfileOverlay .pp-info-row{margin-top:18px!important;}
+#pkPublicProfileOverlay .pp-stats{background:#fff!important;border:0!important;border-top:1px solid #ececf1!important;border-bottom:1px solid #ececf1!important;border-radius:0!important;box-shadow:none!important;padding:15px 0!important;margin:8px 0 15px!important;}
+#pkPublicProfileOverlay .pp-stat{color:#222!important;}
+#pkPublicProfileOverlay .pp-stat span{color:#777!important;}
+#pkPublicProfileOverlay .pp-actions{background:#fff!important;border-top:1px solid #ececf0!important;box-shadow:0 -5px 18px rgba(0,0,0,.06)!important;padding:10px 18px calc(10px + env(safe-area-inset-bottom,0px))!important;align-items:center!important;gap:10px!important;}
+#pkPublicProfileOverlay .pp-follow{height:48px!important;border-radius:25px!important;flex:1!important;background:#ff4b55!important;color:#fff!important;box-shadow:none!important;font-size:16px!important;}
+#pkPublicProfileOverlay .pp-follow.following{background:#fff!important;color:#333!important;border:1px solid #d9d9df!important;box-shadow:none!important;}
+#pkPublicProfileOverlay .pp-message-icon{width:50px!important;max-width:50px!important;flex:0 0 50px!important;height:48px!important;border-radius:50%!important;background:#fff!important;color:#333!important;border:1px solid #d9d9df!important;box-shadow:none!important;display:grid!important;place-items:center!important;padding:0!important;}
+#pkPublicProfileOverlay .pp-message-icon:active{background:#f5f5f7!important;transform:scale(.96);}
+#pkPublicProfileOverlay.own-view #pkPPVisitActions{display:none!important;}
 </style>
 <script id="partyRoomOpenRecoveryFinal">
 (function(){
