@@ -16937,26 +16937,39 @@ html body #prRoom #cinemaChatPanel .pr-chat-line .pr-bubble{
 </script>
 
 <style id="partyRoomTopViewerExitPermanentFix">
-/* FINAL: Viewer + Room Exit are visible only while the Room Level/XP badge is visible.
-   Their exact position is calculated from that badge by the sync script. */
-#pkRoomViewerBtn.pr-room-sync-visible{
+/* FINAL: Viewer + Room Exit are a permanent pair while Party Room is open. */
+#pkRoomViewerBtn.pr-room-sync-visible,
+#pkRoomViewerBtn:not(.pr-room-sync-hidden){
   position:fixed!important;
+  top:calc(env(safe-area-inset-top,0px) + 4px)!important;
+  right:42px!important;
+  left:auto!important;
+  bottom:auto!important;
   z-index:2147483646!important;
   display:flex!important;
   visibility:visible!important;
   pointer-events:auto!important;
 }
-#pkRoomX.pr-room-sync-visible{
+#pkRoomX.pr-room-sync-visible,
+#pkRoomX:not(.pr-room-sync-hidden){
   position:fixed!important;
+  top:calc(env(safe-area-inset-top,0px) + 4px)!important;
+  right:8px!important;
+  left:auto!important;
+  bottom:auto!important;
   z-index:2147483647!important;
   display:block!important;
   visibility:visible!important;
   pointer-events:auto!important;
 }
-#pkRoomViewerBtn.pr-room-sync-hidden,#pkRoomX.pr-room-sync-hidden{
-  display:none!important;
-  visibility:hidden!important;
-  pointer-events:none!important;
+/* These two are hidden only by JS when Party Room itself is closed. */
+#pkRoomViewerBtn.pr-room-sync-hidden,
+#pkRoomX.pr-room-sync-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+@media(max-width:430px){
+  #pkRoomViewerBtn.pr-room-sync-visible,
+  #pkRoomViewerBtn:not(.pr-room-sync-hidden){right:38px!important;}
+  #pkRoomX.pr-room-sync-visible,
+  #pkRoomX:not(.pr-room-sync-hidden){right:6px!important;}
 }
 </style>
 </html>
