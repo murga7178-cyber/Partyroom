@@ -4941,7 +4941,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     page.setAttribute('aria-hidden','false');
     document.body.classList.add('pr-topgifter-open');
     var dock=document.getElementById('partyRoomBottomDock'); if(dock) dock.style.display='none';
-    setTimeout(function(){try{page.style.display='block';page.setAttribute('aria-hidden','false');document.body.classList.add('pr-topgifter-open');var n=document.getElementById('pkUniversalNav');if(n)n.style.display='none';}catch(_){}},0);
   };
   window.closePartyRoomTopGifters=function(){
     var page=document.getElementById('partyRoomTopGiftersPage');
@@ -6191,23 +6190,6 @@ setInterval(function(){try{
         }catch(e){ msg.style.color='#dc2626'; msg.textContent='सेव नहीं हो पाया, फिर कोशिश करें।'; }
       };
     }
-    /* Direct Room Display DP opener: use both a real handler and delegated fallback so the top-left DP opens reliably on mobile. */
-    window.prOpenRoomDisplay=function(){
-      try{ openDlg(); }catch(err){}
-    };
-    try{
-      var roomAvatarEl=document.getElementById('prRoomAvatar');
-      if(roomAvatarEl){
-        roomAvatarEl.onclick=function(ev){
-          try{ if(ev){ev.preventDefault();ev.stopPropagation();} }catch(_){}
-          window.prOpenRoomDisplay();
-        };
-        roomAvatarEl.setAttribute('role','button');
-        roomAvatarEl.setAttribute('tabindex','0');
-        roomAvatarEl.setAttribute('aria-label','Room Display Photo');
-      }
-    }catch(_){}
-
     function prRoomAvatarOpenFromEvent(e){
       var a=e&&e.target&&e.target.closest&&e.target.closest('#prRoomAvatar');
       if(!a) return;
@@ -6282,6 +6264,7 @@ setInterval(function(){try{
  document.getElementById('prhsPassSave').onclick=async function(){var v=document.getElementById('prhsPassInput').value.trim();var m=document.getElementById('prhsMsg');if(!/^\d{4}(?:\d{2})?$/.test(v)){m.textContent='पासवर्ड 4 या 6 अंकों का होना चाहिए।';return;}try{var h=await cinemaHashPassword(v);await db.collection('cinemaRooms').doc(cinemaRoomId).set({passwordProtected:true,passwordHash:h,updatedAt:Date.now()},{merge:true});window.__prPasswordProtected=true;document.getElementById('prhsPassBox').style.display='none';document.getElementById('prhsPassInput').value='';m.textContent='✅ पासवर्ड सेव हो गया।';render();}catch(e){m.textContent='पासवर्ड सेव नहीं हो पाया।';}};
  document.getElementById('prhsPassRemove').onclick=async function(){try{await db.collection('cinemaRooms').doc(cinemaRoomId).set({passwordProtected:false,passwordHash:firebase.firestore.FieldValue.delete(),updatedAt:Date.now()},{merge:true});window.__prPasswordProtected=false;document.getElementById('prhsMsg').textContent='✅ पासवर्ड हटा दिया गया।';render();}catch(e){document.getElementById('prhsMsg').textContent='पासवर्ड हट नहीं पाया।';}};
 })();
+</script>
 </script>
 <script id="pkStandaloneBoot">
 // ---- Standalone glue: leaving a room -> back to the lobby; leaving the lobby -> home screen ----
@@ -6636,14 +6619,14 @@ window.pkOpenDirectMessage=async function(key,name){var inbox=document.getElemen
     style.textContent='#pkDirectMessageOverlay .pk-compose-icon.pk-compose-gift{width:34px;height:36px;border-radius:50%;background:linear-gradient(145deg,#fff0b8,#ffd1e2)!important;color:#b42368!important;font-size:19px!important;box-shadow:0 2px 8px rgba(190,55,120,.18)}'
       +'#pkDirectGiftSheet{position:absolute;inset:0;z-index:100010;display:none;align-items:flex-end;justify-content:center;box-sizing:border-box;background:rgba(26,18,38,.42);padding:8px 8px 0}'
       +'#pkDirectGiftSheet.open{display:flex}'
-      +'#pkDirectGiftSheet .pk-dm-gift-panel{width:min(100%,560px);height:min(52dvh,430px);max-height:52dvh;display:flex;flex-direction:column;gap:10px;box-sizing:border-box;overflow:hidden;padding:15px 14px calc(env(safe-area-inset-bottom,0px) + 12px);border-radius:22px 22px 0 0;background:#fff;color:#211a2d;box-shadow:0 -12px 42px rgba(18,10,34,.22)}'
+      +'#pkDirectGiftSheet .pk-dm-gift-panel{width:min(100%,560px);max-height:86dvh;display:flex;flex-direction:column;gap:12px;box-sizing:border-box;overflow:hidden;padding:18px 16px calc(env(safe-area-inset-bottom,0px) + 14px);border-radius:24px 24px 0 0;background:#fff;color:#211a2d;box-shadow:0 -12px 42px rgba(18,10,34,.22)}'
       +'#pkDirectGiftSheet .pk-dm-gift-header{display:flex;align-items:center;justify-content:space-between;gap:12px}'
       +'#pkDirectGiftSheet .pk-dm-gift-heading{font-size:19px;font-weight:850;color:#32164b}'
       +'#pkDirectGiftSheet .pk-dm-gift-to{font-size:12px;color:#786b87;margin-top:3px}'
       +'#pkDirectGiftSheet .pk-dm-gift-close{width:36px;height:36px;border:0;border-radius:50%;background:#f2eef7;color:#49365c;font-size:22px;cursor:pointer}'
       +'#pkDirectGiftSheet .pk-dm-gift-balance{padding:10px 12px;border-radius:12px;background:#f7f1ff;color:#5b3b7d;font-size:13px;font-weight:750}'
-      +'#pkDirectGiftSheet .pk-dm-gift-grid{display:flex;align-items:stretch;gap:9px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;overscroll-behavior-y:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;scrollbar-width:none;padding:3px 2px 6px;min-height:0;flex:1 1 auto;touch-action:pan-x;scroll-behavior:smooth}'+'#pkDirectGiftSheet .pk-dm-gift-grid::-webkit-scrollbar{display:none}'
-      +'#pkDirectGiftSheet .pk-dm-gift-item{flex:0 0 78px;width:78px;min-width:78px;min-height:92px;height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:7px 4px;border:1px solid #ece6f3;border-radius:11px;background:#fbf9fd;color:#30253b;cursor:pointer;scroll-snap-align:start;touch-action:manipulation}'
+      +'#pkDirectGiftSheet .pk-dm-gift-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;overflow:auto;overscroll-behavior:contain;padding:2px;min-height:0;flex:1 1 auto}'
+      +'#pkDirectGiftSheet .pk-dm-gift-item{min-width:0;min-height:84px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:7px 4px;border:1px solid #ece6f3;border-radius:11px;background:#fbf9fd;color:#30253b;cursor:pointer}'
       +'#pkDirectGiftSheet .pk-dm-gift-item.selected{border-color:#b13fe0;background:linear-gradient(145deg,#fbf0ff,#fff1f5);box-shadow:0 0 0 2px rgba(177,63,224,.12)}'
       +'#pkDirectGiftSheet .pk-dm-gift-item .emoji{font-size:24px;line-height:1.1}'
       +'#pkDirectGiftSheet .pk-dm-gift-item .name{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:800}'
@@ -6659,7 +6642,7 @@ window.pkOpenDirectMessage=async function(key,name){var inbox=document.getElemen
       +'#pkDirectMessages .pk-dm-gift-copy{display:flex;flex-direction:column;gap:3px}'
       +'#pkDirectMessages .pk-dm-gift-copy b{font-size:14px}'
       +'#pkDirectMessages .pk-dm-gift-copy small{font-size:11px;opacity:.75}'
-      +'@media(max-width:360px){#pkDirectGiftSheet .pk-dm-gift-item{flex-basis:72px;width:72px;min-width:72px}}';
+      +'@media(max-width:360px){#pkDirectGiftSheet .pk-dm-gift-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}';
     document.head.appendChild(style);
   }
   function dmGiftBalance(){
@@ -7050,12 +7033,6 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
 #pkProfileManageSheet .pm-actions .danger{background:#fff1f2;color:#be123c;border-color:#fecdd3;}
 #pkProfileManageSheet .pm-actions .admin{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;}
 </style>
-<style id="pkProfileIdCopyGreenTick">
-#pkPublicProfileOverlay .pk-profile-copy-id{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:22px!important;height:22px!important;margin-left:4px!important;padding:0!important;border:0!important;border-radius:7px!important;background:#eef2f7!important;color:#475569!important;font-size:12px!important;line-height:1!important;vertical-align:-5px!important;cursor:pointer!important;touch-action:manipulation!important;}
-#pkPublicProfileOverlay .pk-profile-copy-id.done{background:#dcfce7!important;color:#16a34a!important;}
-#pkPublicProfileOverlay .pk-profile-copy-id.done::after{content:'✓ Copied';font-size:9px;font-weight:900;white-space:nowrap;margin-left:3px;color:#16a34a;}
-#pkPublicProfileOverlay .pk-profile-copy-id.done{width:auto!important;padding:0 6px!important;border-radius:8px!important;}
-</style>
 <style id="pkBottomNavFinalFix">
 .pkh-home-nav-icon{display:flex!important;align-items:center;justify-content:center}
 .pkh-home-nav-icon svg{display:block}
@@ -7102,7 +7079,6 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
     document.body.classList.add('pr-topgifter-open');
   }catch(e){try{console.error('Top Gifter open failed',e);if(typeof toast==='function')toast('Top Gifter नहीं खुल पाया, दोबारा टैप करें');}catch(_){} }};
   window.pkPublicProfileShare=function(){try{var n=document.getElementById('pkPPname')?.textContent||'Profile';var id=document.getElementById('pkPPid')?.textContent||'';var txt=n+' '+id;if(navigator.share){navigator.share({title:n,text:txt}).catch(function(){});}else if(navigator.clipboard){navigator.clipboard.writeText(txt).then(function(){if(typeof toast==='function')toast('Profile details copied');}).catch(function(){if(typeof toast==='function')toast('Share उपलब्ध नहीं है');});}else if(typeof toast==='function')toast('Share उपलब्ध नहीं है');}catch(e){}};
-  document.addEventListener('click',function(ev){var b=ev.target.closest&&ev.target.closest('#pkPublicProfileOverlay .pk-profile-copy-id');if(!b)return;ev.preventDefault();ev.stopPropagation();var v=String(b.getAttribute('data-copy-id')||'');if(!v)return;function ok(){b.classList.add('done');b.innerHTML='<span style="font-size:12px">✓</span>';setTimeout(function(){if(b&&b.isConnected){b.classList.remove('done');b.innerHTML='<span class="pk-copy-icon">📋</span>'; }},1400);}function fail(){b.classList.add('done');b.innerHTML='<span style="font-size:12px">✓</span>';setTimeout(function(){if(b&&b.isConnected){b.classList.remove('done');b.innerHTML='<span class="pk-copy-icon">📋</span>'; }},1400);}try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(v).then(ok).catch(function(){try{var ta=document.createElement('textarea');ta.value=v;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();ok();}catch(_){fail();}});}else{var ta2=document.createElement('textarea');ta2.value=v;ta2.style.position='fixed';ta2.style.opacity='0';document.body.appendChild(ta2);ta2.select();document.execCommand('copy');ta2.remove();ok();}}catch(_){fail();}},true);
   async function toggleFollow(target){
     if(!db||!currentUserKey||String(target)===String(currentUserKey))return;
     var btn=document.getElementById('pkPPfollowBtn'); if(btn&&btn.__pkBusy)return;
@@ -7156,7 +7132,7 @@ var name=String(d.name||d.displayName||d.fullName||d.username||'User');
     var topTitle=document.getElementById('pkPPtopTitle');if(topTitle)topTitle.textContent=name;
     document.getElementById('pkPPname').innerHTML=e(name)+(vip?' <span class="pk-vip-badge">👑 VIP</span>':'');
     document.getElementById('pkPPsub').textContent=String(d.bio||d.signature||'');
-    document.getElementById('pkPPid').innerHTML='ID: '+e(pub)+' <button type="button" class="pk-profile-copy-id" data-copy-id="'+e(pub)+'" aria-label="Copy ID" title="Copy ID"><span class="pk-copy-icon">📋</span></button>';
+    document.getElementById('pkPPid').innerHTML='ID: '+e(pub)+' <span class="copy"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></span>';
     var gp=Math.max(0,Math.floor(Number(d.gamePoints)||0)),gli=(typeof window.pkGamingLabelInfo==='function'?window.pkGamingLabelInfo(gp):null);
     var genderRaw=String(d.gender||'').trim().toLowerCase();
     var genderChip=genderRaw==='male'?'<span class="pp-chip">👨 Male</span>':genderRaw==='female'?'<span class="pp-chip">👩 Female</span>':'';
@@ -8016,7 +7992,6 @@ var name=String(d.name||d.displayName||d.fullName||d.username||'User');
   window.pkOpenGamingRanking=async function(){
     var o=document.getElementById('pkGamingRanking'),box=document.getElementById('pkGamingRankingList');if(!o||!box)return;
     o.classList.add('open');o.setAttribute('aria-hidden','false');
-    o.style.display='flex';
     box.innerHTML='<div class="pkr-loading">🏆 रैंकिंग लोड हो रही है…</div>';
     try{
       var sn=await db.collection('users').get(),arr=[];
@@ -8089,7 +8064,6 @@ var name=String(d.name||d.displayName||d.fullName||d.username||'User');
     }
   }
   function sync(){
-    if(document.body.classList.contains('pr-topgifter-open')){ var _tg=document.getElementById('partyRoomTopGiftersPage'); if(_tg){_tg.style.display='block';_tg.setAttribute('aria-hidden','false');} var _nv=document.getElementById('pkUniversalNav'); if(_nv)_nv.style.display='none'; return; }
     function vis(el){ if(!el)return false; try{ return getComputedStyle(el).display!=='none'; }catch(_){ return false; } }
     var nav=document.getElementById('pkUniversalNav');if(!nav)return;
     var home=document.getElementById('pkHomeScreen');
@@ -8176,15 +8150,11 @@ var name=String(d.name||d.displayName||d.fullName||d.username||'User');
 #pkPullRefreshIndicator.on{visibility:visible;opacity:1}
 #pkPullRefreshIndicator svg{display:block;width:34px;height:34px;overflow:visible}
 #pkPullRefreshIndicator .pr-ring{fill:none;stroke:#ff4fa3;stroke-width:3.1;stroke-linecap:round;stroke-dasharray:88 88;stroke-dashoffset:88;transform:rotate(-90deg);transform-origin:50% 50%}
-#pkPullRefreshIndicator .pr-arrow{fill:none;stroke:#ff4fa3;stroke-width:2.7;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+#pkPullRefreshIndicator .pr-arrow{fill:none;stroke:#ff4fa3;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round;opacity:0}
 #pkPullRefreshIndicator.refreshing .pr-ring{stroke-dashoffset:0;animation:pkPullSpin .82s linear infinite}
 #pkPullRefreshIndicator.refreshing .pr-arrow{opacity:1;animation:pkPullArrow .82s linear infinite}
 @keyframes pkPullSpin{to{transform:rotate(270deg)}}
-@keyframes pkPullArrow{to{transform:rotate(360deg);transform-origin:50% 50%}}
-/* Daily check-in opens only after the overlay is stable; the page itself never shifts. */
-#pkDailyCheckin{will-change:opacity}
-#pkDailyCheckin .dc-card{opacity:0;transform:translate3d(0,10px,0) scale(.985);transition:opacity .24s ease,transform .28s cubic-bezier(.22,.8,.25,1)}
-#pkDailyCheckin.dc-ready .dc-card{opacity:1;transform:translate3d(0,0,0) scale(1)}
+@keyframes pkPullArrow{0%,100%{transform:rotate(0deg);transform-origin:50% 50%}50%{transform:rotate(180deg);transform-origin:50% 50%}}
 </style>
 <script id="pkPullToRefresh">
 (function(){
@@ -8192,7 +8162,7 @@ var name=String(d.name||d.displayName||d.fullName||d.username||'User');
   function getIndicator(){
     if(indicator)return indicator;
     indicator=document.createElement('div'); indicator.id='pkPullRefreshIndicator';
-    indicator.innerHTML='<svg viewBox="0 0 34 34" aria-hidden="true"><circle class="pr-ring" cx="17" cy="17" r="14"></circle><path class="pr-arrow" d="M17 5.8v7.2m0 0-3.6-3.6m3.6 3.6 3.6-3.6"></path></svg>';
+    indicator.innerHTML='<svg viewBox="0 0 34 34" aria-hidden="true"><circle class="pr-ring" cx="17" cy="17" r="14"></circle><path class="pr-arrow" d="M17 7v7m0 0-4-4m4 4 4-4"></path></svg>';
     (document.body||document.documentElement).appendChild(indicator); return indicator;
   }
   function setIndicator(dy,refreshing){
@@ -10261,21 +10231,16 @@ input,textarea,select{font-size:16px}
   }
 
   async function open(){
-    var m=build();
-    m.classList.remove('dc-ready');
-    m.style.display='flex';
+    var m=build(); m.style.display='flex';
     render(0,false); $('pkDcBtn').disabled=true; $('pkDcBtn').textContent='लोड हो रहा है…';
-    /* Let the fixed overlay settle for one frame before revealing the card. */
-    await new Promise(function(resolve){requestAnimationFrame(function(){requestAnimationFrame(resolve);});});
     try{
       var s=await loadState();
       render(s.done,s.claimedToday);
       markDot(!s.claimedToday);
       if(s.offline){ $('pkDcBtn').disabled=true; $('pkDcSub').textContent='चेक-इन के लिए लॉगिन करें।'; }
     }catch(e){ render(0,false); $('pkDcBtn').disabled=true; $('pkDcBtn').textContent='दोबारा कोशिश करें'; toast('इंटरनेट जाँचें'); }
-    requestAnimationFrame(function(){ if(m.style.display!=='none') m.classList.add('dc-ready'); });
   }
-  function close(){ var m=$('pkDailyCheckin'); if(m){ m.classList.remove('dc-ready'); m.style.display='none'; } }
+  function close(){ var m=$('pkDailyCheckin'); if(m) m.style.display='none'; }
 
   async function claim(){
     if(busy) return;
@@ -16051,102 +16016,6 @@ h1{filter:none!important}
 #pkPublicProfileOverlay .pp-message-icon:active{background:#f5f5f7!important;transform:scale(.96);}
 #pkPublicProfileOverlay.own-view #pkPPVisitActions{display:none!important;}
 </style>
-<script id="partyRoomOpenRecoveryFinal">
-(function(){
-  /* Final safety net: Home -> Party Room must always open the Party Room lobby,
-     even if a refresh/optional module throws an error. */
-  var oldOpen=window.pkOpenParty;
-  window.pkOpenParty=function(){
-    try{ if(typeof oldOpen==='function') oldOpen(); }catch(e){}
-    setTimeout(function(){
-      try{
-        var m=document.getElementById('cinemaGharModal');
-        if(m){
-          m.style.display='block';
-          m.classList.remove('hidden');
-          document.body.style.overflow='hidden';
-          var lobby=document.getElementById('cinemaLobby');
-          var stage=document.getElementById('cinemaRoomStage');
-          if(lobby) lobby.style.display='block';
-          if(stage) stage.style.display='none';
-          var h=document.getElementById('cinemaTopHeader');
-          if(h) h.style.display='flex';
-          try{ if(typeof cinemaLobbyMode!=='undefined') cinemaLobbyMode=true; }catch(_){}
-          try{ if(typeof cinemaLoadRooms==='function') cinemaLoadRooms(); }catch(_){}
-        }
-      }catch(e){}
-    },60);
-  };
-})();
-</script>
-
-<style id="pkDirectChatProfileBlockStyle">
-#pkDirectHeaderAvatar{cursor:pointer;-webkit-tap-highlight-color:transparent;}
-#pkDirectHeaderAvatar:active{transform:scale(.96);}
-#pkDirectMoreMenu{position:fixed;z-index:2147483646;min-width:170px;padding:6px;border-radius:14px;background:#fff;box-shadow:0 14px 40px rgba(0,0,0,.22);border:1px solid #e5e7eb;display:none;}
-#pkDirectMoreMenu.open{display:block;}
-#pkDirectMoreMenu button{width:100%;border:0;background:transparent;text-align:left;padding:11px 12px;border-radius:10px;font-size:13px;font-weight:850;color:#111827;}
-#pkDirectMoreMenu button:active{background:#f1f5f9;}
-#pkDirectMoreMenu .danger{color:#dc2626;}
-</style>
-
-<script id="pkDirectChatProfileBlockFix">
-(function(){
-  function byId(id){return document.getElementById(id);}
-  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
-  function menu(){
-    var m=byId('pkDirectMoreMenu');
-    if(!m){
-      m=document.createElement('div');m.id='pkDirectMoreMenu';
-      m.innerHTML='<button type="button" id="pkDmBlockAction" class="danger">🚫 Block</button><button type="button" id="pkDmCloseMenu">Cancel</button>';
-      document.body.appendChild(m);
-      m.addEventListener('click',function(e){
-        if(e.target.id==='pkDmCloseMenu'){m.classList.remove('open');return;}
-        if(e.target.id==='pkDmBlockAction'){directToggleBlock();}
-      });
-    }
-    return m;
-  }
-  async function blockState(key){
-    if(!key||typeof db==='undefined'||typeof currentUserKey==='undefined'||!currentUserKey)return false;
-    try{var s=await db.collection('users').doc(String(currentUserKey)).get(),d=s.exists?(s.data()||{}):{},a=Array.isArray(d.blockedUsers)?d.blockedUsers.map(String):[];return a.indexOf(String(key))>=0;}catch(e){return false;}
-  }
-  async function directToggleBlock(){
-    var m=menu(),key=String(window.__pkDmOpenKey||'');
-    if(!key||typeof db==='undefined'||typeof currentUserKey==='undefined'||!currentUserKey){m.classList.remove('open');return;}
-    try{
-      var ref=db.collection('users').doc(String(currentUserKey)),snap=await ref.get(),d=snap.exists?(snap.data()||{}):{},a=Array.isArray(d.blockedUsers)?d.blockedUsers.map(String):[];
-      var has=a.indexOf(key)>=0,na=has?a.filter(function(x){return x!==key; }):Array.from(new Set(a.concat(key)));
-      await ref.set({blockedUsers:na,updatedAt:Date.now()},{merge:true});
-      window.__blockedUsers=na;
-      var b=byId('pkDmBlockAction');if(b)b.textContent=has?'🚫 Block':'✅ Unblock';
-      m.classList.remove('open');
-      if(typeof toast==='function')toast(has?'User unblocked':'User blocked');
-    }catch(e){if(typeof toast==='function')toast('Block setting save नहीं हुई');}
-  }
-  window.pkDirectMessageMore=function(){
-    var m=menu(),key=String(window.__pkDmOpenKey||'');
-    if(!key)return;
-    var b=byId('pkDmBlockAction');
-    blockState(key).then(function(has){if(b)b.textContent=has?'🚫 Unblock':'🚫 Block';});
-    var head=byId('pkDirectHeaderAvatar');
-    if(head){var r=head.getBoundingClientRect();m.style.top=Math.max(8,r.bottom+7)+'px';m.style.right=Math.max(8,window.innerWidth-r.right)+'px';m.style.left='auto';}
-    m.classList.add('open');
-  };
-  document.addEventListener('click',function(e){
-    var a=e.target.closest&&e.target.closest('#pkDirectHeaderAvatar');
-    if(a){
-      e.preventDefault();e.stopPropagation();
-      var k=String(window.__pkDmOpenKey||'');
-      if(k&&typeof window.prOpenUserCard==='function'){try{window.prOpenUserCard(k);}catch(_){} }
-      return;
-    }
-    var m=byId('pkDirectMoreMenu');
-    if(m&&m.classList.contains('open')&&!e.target.closest('#pkDirectMoreMenu')&&!e.target.closest('.pk-direct-head-actions button'))m.classList.remove('open');
-  },true);
-})();
-</script>
-
 </body>
 </html>`;
   var loaded=false, openState=false;
@@ -16795,102 +16664,6 @@ html body #prRoom #cinemaChatPanel .pr-chat-line .pr-bubble{
 #cinemaChatPanel .pr-chat-line .pr-chat-avatar{width:40px!important;height:40px!important;min-width:40px!important;}
 @media(max-width:430px){#cinemaChatPanel .pr-chat-line .pr-chat-body{max-width:calc(100% - 47px)!important;}#cinemaChatPanel .pr-chat-line .pr-n{font-size:10.5px!important;}#cinemaChatPanel .pr-chat-line .pr-t{font-size:12px!important;line-height:16px!important;}}
 </style>
-<script id="partyRoomOpenRecoveryFinal">
-(function(){
-  /* Final safety net: Home -> Party Room must always open the Party Room lobby,
-     even if a refresh/optional module throws an error. */
-  var oldOpen=window.pkOpenParty;
-  window.pkOpenParty=function(){
-    try{ if(typeof oldOpen==='function') oldOpen(); }catch(e){}
-    setTimeout(function(){
-      try{
-        var m=document.getElementById('cinemaGharModal');
-        if(m){
-          m.style.display='block';
-          m.classList.remove('hidden');
-          document.body.style.overflow='hidden';
-          var lobby=document.getElementById('cinemaLobby');
-          var stage=document.getElementById('cinemaRoomStage');
-          if(lobby) lobby.style.display='block';
-          if(stage) stage.style.display='none';
-          var h=document.getElementById('cinemaTopHeader');
-          if(h) h.style.display='flex';
-          try{ if(typeof cinemaLobbyMode!=='undefined') cinemaLobbyMode=true; }catch(_){}
-          try{ if(typeof cinemaLoadRooms==='function') cinemaLoadRooms(); }catch(_){}
-        }
-      }catch(e){}
-    },60);
-  };
-})();
-</script>
-
-<style id="pkDirectChatProfileBlockStyle">
-#pkDirectHeaderAvatar{cursor:pointer;-webkit-tap-highlight-color:transparent;}
-#pkDirectHeaderAvatar:active{transform:scale(.96);}
-#pkDirectMoreMenu{position:fixed;z-index:2147483646;min-width:170px;padding:6px;border-radius:14px;background:#fff;box-shadow:0 14px 40px rgba(0,0,0,.22);border:1px solid #e5e7eb;display:none;}
-#pkDirectMoreMenu.open{display:block;}
-#pkDirectMoreMenu button{width:100%;border:0;background:transparent;text-align:left;padding:11px 12px;border-radius:10px;font-size:13px;font-weight:850;color:#111827;}
-#pkDirectMoreMenu button:active{background:#f1f5f9;}
-#pkDirectMoreMenu .danger{color:#dc2626;}
-</style>
-
-<script id="pkDirectChatProfileBlockFix">
-(function(){
-  function byId(id){return document.getElementById(id);}
-  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
-  function menu(){
-    var m=byId('pkDirectMoreMenu');
-    if(!m){
-      m=document.createElement('div');m.id='pkDirectMoreMenu';
-      m.innerHTML='<button type="button" id="pkDmBlockAction" class="danger">🚫 Block</button><button type="button" id="pkDmCloseMenu">Cancel</button>';
-      document.body.appendChild(m);
-      m.addEventListener('click',function(e){
-        if(e.target.id==='pkDmCloseMenu'){m.classList.remove('open');return;}
-        if(e.target.id==='pkDmBlockAction'){directToggleBlock();}
-      });
-    }
-    return m;
-  }
-  async function blockState(key){
-    if(!key||typeof db==='undefined'||typeof currentUserKey==='undefined'||!currentUserKey)return false;
-    try{var s=await db.collection('users').doc(String(currentUserKey)).get(),d=s.exists?(s.data()||{}):{},a=Array.isArray(d.blockedUsers)?d.blockedUsers.map(String):[];return a.indexOf(String(key))>=0;}catch(e){return false;}
-  }
-  async function directToggleBlock(){
-    var m=menu(),key=String(window.__pkDmOpenKey||'');
-    if(!key||typeof db==='undefined'||typeof currentUserKey==='undefined'||!currentUserKey){m.classList.remove('open');return;}
-    try{
-      var ref=db.collection('users').doc(String(currentUserKey)),snap=await ref.get(),d=snap.exists?(snap.data()||{}):{},a=Array.isArray(d.blockedUsers)?d.blockedUsers.map(String):[];
-      var has=a.indexOf(key)>=0,na=has?a.filter(function(x){return x!==key; }):Array.from(new Set(a.concat(key)));
-      await ref.set({blockedUsers:na,updatedAt:Date.now()},{merge:true});
-      window.__blockedUsers=na;
-      var b=byId('pkDmBlockAction');if(b)b.textContent=has?'🚫 Block':'✅ Unblock';
-      m.classList.remove('open');
-      if(typeof toast==='function')toast(has?'User unblocked':'User blocked');
-    }catch(e){if(typeof toast==='function')toast('Block setting save नहीं हुई');}
-  }
-  window.pkDirectMessageMore=function(){
-    var m=menu(),key=String(window.__pkDmOpenKey||'');
-    if(!key)return;
-    var b=byId('pkDmBlockAction');
-    blockState(key).then(function(has){if(b)b.textContent=has?'🚫 Unblock':'🚫 Block';});
-    var head=byId('pkDirectHeaderAvatar');
-    if(head){var r=head.getBoundingClientRect();m.style.top=Math.max(8,r.bottom+7)+'px';m.style.right=Math.max(8,window.innerWidth-r.right)+'px';m.style.left='auto';}
-    m.classList.add('open');
-  };
-  document.addEventListener('click',function(e){
-    var a=e.target.closest&&e.target.closest('#pkDirectHeaderAvatar');
-    if(a){
-      e.preventDefault();e.stopPropagation();
-      var k=String(window.__pkDmOpenKey||'');
-      if(k&&typeof window.prOpenUserCard==='function'){try{window.prOpenUserCard(k);}catch(_){} }
-      return;
-    }
-    var m=byId('pkDirectMoreMenu');
-    if(m&&m.classList.contains('open')&&!e.target.closest('#pkDirectMoreMenu')&&!e.target.closest('.pk-direct-head-actions button'))m.classList.remove('open');
-  },true);
-})();
-</script>
-
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
