@@ -3853,7 +3853,8 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(box){ box.__ready=false; box.innerHTML='<div style="text-align:center;color:#64748b;font-size:12px;padding:28px 10px;">चैट लोड हो रही है…</div>'; }
     // रूम में हर बार नए सिरे से आने पर पुरानी चैट/गिफ्ट/स्वागत हिस्ट्री बिल्कुल नहीं दिखनी चाहिए —
     // सिर्फ इसी पल के बाद जो भी नई एक्टिविटी (चैट, गिफ्ट, जॉइन) हो वही यहां से आगे दिखे।
-    const joinedAt=Date.now();
+    /* 10s grace: phones' clocks differ a little, and a sender whose clock is slightly behind was being filtered out for everyone else. */
+    const joinedAt=Date.now()-10000;
     cinemaChatUnsub=db.collection('cinemaRooms').doc(listenRoomId).collection('chat').where('createdAt','>=',joinedAt).orderBy('createdAt','asc').limitToLast(100).onSnapshot(snap=>{
       if(String(cinemaRoomId)!==listenRoomId)return;
       const el=document.getElementById('cinemaChatMessages'); if(!el)return;
@@ -6065,7 +6066,7 @@ setInterval(function(){try{
   function show(id,display){var e=document.getElementById(id);if(e)e.style.display=display;}
   function profileVip(d){return !!(d&&(d.vip===true||d.isVip===true||d.vipActive===true||String(d.vipStatus||'').toLowerCase()==='active'||String(d.membership||'').toLowerCase()==='vip'));}
   async function visitorCount(){try{if(!db||!currentUserKey)return 0;var s=await db.collection('users').doc(String(currentUserKey)).collection('profileVisitors').get();var e=document.getElementById('pkVisitorsCount');if(e)e.textContent=s.size;return s.size;}catch(e){return 0;}}
-  window.pkOpenVisitors=async function(){show('pkVisitorsOverlay','flex');var box=document.getElementById('pkVisitorsList');if(!box)return;box.innerHTML='<div style="text-align:center;color:#64748b;padding:25px;">लोड हो रहा है…</div>';try{var s=await db.collection('users').doc(String(currentUserKey)).collection('profileVisitors').orderBy('visitedAt','desc').limit(50).get();if(s.empty){box.innerHTML='<div style="text-align:center;color:#64748b;padding:25px;">अभी किसी ने आपका प्रोफाइल विजिट नहीं किया।</div>';return;}var arr=[];s.forEach(d=>arr.push(Object.assign({key:d.id},d.data()||{})));var html='';for(const v of arr){var name=String(v.visitorName||'User'),photo='';try{var u=await db.collection('users').doc(String(v.key)).get();var ud=u.exists?(u.data()||{}):{};name=String(ud.name||ud.displayName||v.visitorName||'User');photo=String(ud.photoURL||'');var vip=profileVip(ud);html+='<button type="button" class="pk-visitor-row" data-vkey="'+esc(v.key)+'" style="width:100%;border:0;text-align:left;"><div class="pk-visitor-av">'+(photo?'<img src="'+esc(photo)+'">':esc((name[0]||'U').toUpperCase()))+'</div><div style="flex:1"><b>'+esc(name)+'</b>'+(vip?' <span class="pk-vip-badge">👑 VIP</span>':'')+'<div style="font-size:11px;color:#64748b;margin-top:2px;">'+(v.visitedAt?new Date(v.visitedAt).toLocaleString('hi-IN'):'')+'</div></div><span>›</span></button>';}catch(e){}}box.innerHTML=html||'<div style="text-align:center;color:#64748b;padding:25px;">Visitors नहीं मिले।</div>';box.querySelectorAll('[data-vkey]').forEach(b=>b.onclick=()=>{pkCloseVisitors();if(typeof prOpenUserCard==='function')prOpenUserCard(b.dataset.vkey);});}catch(e){box.innerHTML='<div style="text-align:center;color:#dc2626;padding:25px;">Visitors लोड नहीं हो पाए।</div>';}}
+  window.pkOpenVisitors=async function(){show('pkVisitorsOverlay','flex');var box=document.getElementById('pkVisitorsList');if(!box)return;try{var s=await db.collection('users').doc(String(currentUserKey)).collection('profileVisitors').orderBy('visitedAt','desc').limit(50).get();if(s.empty){box.innerHTML='<div style="text-align:center;color:#64748b;padding:25px;">अभी किसी ने आपका प्रोफाइल विजिट नहीं किया।</div>';return;}var arr=[];s.forEach(d=>arr.push(Object.assign({key:d.id},d.data()||{})));var html='';for(const v of arr){var name=String(v.visitorName||'User'),photo='';try{var u=await db.collection('users').doc(String(v.key)).get();var ud=u.exists?(u.data()||{}):{};name=String(ud.name||ud.displayName||v.visitorName||'User');photo=String(ud.photoURL||'');var vip=profileVip(ud);html+='<button type="button" class="pk-visitor-row" data-vkey="'+esc(v.key)+'" style="width:100%;border:0;text-align:left;"><div class="pk-visitor-av">'+(photo?'<img src="'+esc(photo)+'">':esc((name[0]||'U').toUpperCase()))+'</div><div style="flex:1"><b>'+esc(name)+'</b>'+(vip?' <span class="pk-vip-badge">👑 VIP</span>':'')+'<div style="font-size:11px;color:#64748b;margin-top:2px;">'+(v.visitedAt?new Date(v.visitedAt).toLocaleString('hi-IN'):'')+'</div></div><span>›</span></button>';}catch(e){}}box.innerHTML=html||'<div style="text-align:center;color:#64748b;padding:25px;">Visitors नहीं मिले।</div>';box.querySelectorAll('[data-vkey]').forEach(b=>b.onclick=()=>{pkCloseVisitors();if(typeof prOpenUserCard==='function')prOpenUserCard(b.dataset.vkey);});}catch(e){box.innerHTML='<div style="text-align:center;color:#dc2626;padding:25px;">Visitors लोड नहीं हो पाए।</div>';}}
   window.pkCloseVisitors=function(){show('pkVisitorsOverlay','none');};
   visitorCount();
   window.pkGoHomeFromNav=function(){
@@ -6382,7 +6383,7 @@ window.pkOpenDirectMessage=async function(key,name){var inbox=document.getElemen
   dmEnsureGiftUI();
   var dmOldClose=window.pkCloseDirectMessage;
   window.pkCloseDirectMessage=function(){ try{ dmStopRec(false); }catch(e){} try{ dmClosePreview(); }catch(e){} try{dmCloseGift();}catch(e){} return dmOldClose.apply(this,arguments); };
-  async function loadDM(){var box=document.getElementById('pkDirectMessages');if(!box||!db||!currentUserKey||!direct.otherKey)return;box.innerHTML='<div style="text-align:center;color:#9a9a9d;padding:25px;">लोड हो रहा है…</div>';try{var ref=db.collection('directMessages').doc(pair(currentUserKey,direct.otherKey)).collection('items');if(direct.dmUnsub)direct.dmUnsub();direct.dmUnsub=ref.orderBy('createdAt','asc').limitToLast(100).onSnapshot(s=>{
+  async function loadDM(){var box=document.getElementById('pkDirectMessages');if(!box||!db||!currentUserKey||!direct.otherKey)return;try{var ref=db.collection('directMessages').doc(pair(currentUserKey,direct.otherKey)).collection('items');if(direct.dmUnsub)direct.dmUnsub();direct.dmUnsub=ref.orderBy('createdAt','asc').limitToLast(100).onSnapshot(s=>{
       var oldHeight=box.scrollHeight,oldTop=box.scrollTop;
       var nearBottom=(oldHeight-box.clientHeight-oldTop)<80 || !box.dataset.dmRendered;
       var h='',lastDay='';
@@ -9411,8 +9412,37 @@ input,textarea,select{font-size:16px}
     return out;
   }
 
+  /* Fallback: any visible full-screen page/sheet that is not in layers() still closes with phone Back,
+     exactly like tapping its own back/close button (no more "press Back once more" on sub-pages). */
+  function fallbackLayer(){
+    try{
+      var skip={pkHomeScreen:1,cinemaGharModal:1,pkBootScreen:1,pkBoot:1,pkLoginScreen:1,prRoom:1,pkGuestBar:1,partyRoomBottomDock:1};
+      var vw=window.innerWidth,vh=window.innerHeight,best=null,bz=-1;
+      var nodes=document.body.querySelectorAll(':scope > *, :scope > * > *');
+      for(var i=0;i<nodes.length;i++){
+        var el=nodes[i];
+        if(!el||!el.id||skip[el.id]||el.tagName==='SCRIPT'||el.tagName==='STYLE') continue;
+        var cs=getComputedStyle(el);
+        if(cs.position!=='fixed'||cs.display==='none'||cs.visibility==='hidden'||parseFloat(cs.opacity)===0||cs.pointerEvents==='none') continue;
+        var r=el.getBoundingClientRect();
+        if(r.width<vw*0.85||r.height<vh*0.45) continue;
+        if(r.bottom<=0||r.top>=vh||r.left>=vw||r.right<=0) continue;
+        var z=parseInt(cs.zIndex,10); if(isNaN(z)) z=0;
+        if(z>=bz){ bz=z; best=el; }
+      }
+      if(!best) return null;
+      return {id:best.id,z:bz,close:function(){
+        var b=best.querySelector('[data-close],[data-a="close"],[aria-label="Back"],[aria-label="Close"],[aria-label="back"],[aria-label="close"],.back,.close,.pp-topbar button,.wl-back,.pkr-back,button[onclick*="lose"],button[onclick*="Back"]');
+        if(!b){ var bs=best.querySelectorAll('button'); for(var j=0;j<bs.length;j++){ var t=(bs[j].textContent||'').trim(); if(t==='‹'||t==='←'||t==='×'||t==='✕'||t==='✖'||t==='X'||t==='x'){ b=bs[j]; break; } } }
+        if(b){ try{ b.click(); return; }catch(e){} }
+        best.classList.remove('open'); best.style.display='none'; best.setAttribute('aria-hidden','true');
+      }};
+    }catch(e){ return null; }
+  }
+
   function handleBack(){
     var l=layers();
+    if(!l.length){ var fb=fallbackLayer(); if(fb) l=[fb]; }
     if(!l.length) return false;
     l.sort(function(a,b){ return b.z-a.z; });
     try{ l[0].close(); }catch(e){}
@@ -12549,17 +12579,7 @@ window.addEventListener('resize',tick);
 tick();
 })();
 </script>
-<style id="partyRoomYoutubeNoComments">
-/* Party Room (all modes): no comment section at all (messages list, comment box/panel, composer, flying comments). */
-html body #prRoom > #cinemaChatPanel,
-html body #prRoom #cinemaChatPanel,
-html body #prRoom #cinemaChatMessages,
-html body #prRoom #cinemaChatComposer,
-html body #prRoom #partyRoomCommentToggle,
-html body #prRoom #partyRoomFocusChatBtn,
-html body #prRoom .pr-msg,
-html body .prc-fly{display:none!important;visibility:hidden!important;pointer-events:none!important;}
-</style>
+
 <style id="ytSeekPadStyle">
 /* YouTube Mode (host): small control pad in the empty space under the room photo, above the seats. */
 #prRoom #ytSeekPad{display:none;position:absolute;left:8px;top:var(--yt-sub-top,70px);height:30px;z-index:61;align-items:center;gap:4px;padding:2px 4px;box-sizing:border-box;border-radius:999px;background:linear-gradient(135deg,rgba(49,27,105,.94),rgba(30,18,75,.94));border:1px solid rgba(167,139,250,.75);box-shadow:0 5px 16px rgba(88,28,135,.35),0 0 0 1px rgba(255,255,255,.05) inset;pointer-events:auto;-webkit-tap-highlight-color:transparent;}
@@ -12968,8 +12988,8 @@ html.prc-kb-on body #prRoom.party-youtube-layout > #cinemaChatPanel.prc,html.prc
 </style>
 <style id="pkPrcNewPanel">
 /* Comment panel = exact look of keywords.html (Pro Keyboard): emoji | GIF | text | switch | keyboard | send, keyboard right below */
-html body #prRoom > #prcPanel.prc-panel{left:0!important;right:0!important;max-width:none!important;width:100%!important;margin:0!important;padding:10px!important;gap:8px!important;flex-direction:column!important;border-radius:16px 16px 0 0!important;background:linear-gradient(160deg,rgba(45,10,35,.98),rgba(25,5,20,1))!important;border:1.5px solid rgba(255,20,147,.5)!important;border-bottom:0!important;box-shadow:0 -10px 30px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08)!important;bottom:calc(env(safe-area-inset-bottom,0px) + 0px)!important;overflow:visible!important}
-html.prc-kb-on body #prRoom > #prcPanel.prc-panel{bottom:var(--prcKb,0px)!important;border-radius:16px 16px 0 0!important}
+html body #prRoom > #prcPanel.prc-panel{left:0!important;right:0!important;max-width:none!important;width:100%!important;margin:0!important;padding:0 8px 6px!important;gap:6px!important;flex-direction:column!important;border-radius:0!important;background:transparent!important;border:0!important;box-shadow:none!important;bottom:calc(env(safe-area-inset-bottom,0px) + 0px)!important;overflow:visible!important}
+html.prc-kb-on body #prRoom > #prcPanel.prc-panel{bottom:var(--prcKb,0px)!important;border-radius:0!important}
 html.prc-kb-on #prcKb{border-top:0!important;border-radius:0!important;box-shadow:none!important}
 html.prc-kb-on body #prRoom > #prcTrigger{display:none!important}
 #prcPanel .input-row{display:flex;align-items:stretch;gap:0;background:linear-gradient(135deg,rgba(20,5,15,.95),rgba(35,10,28,.95));border:1.5px solid rgba(255,20,147,.5);border-radius:10px;padding:0;box-shadow:inset 0 2px 8px rgba(0,0,0,.5);position:relative;overflow:hidden;min-height:46px;flex-shrink:0}
@@ -13369,6 +13389,32 @@ setInterval(function(){try{hook();if(shown&&panelEl&&!(panelEl.classList.contain
 
 })();
 </script>
+
+<style id="pkPremiumNavAndMeClean">
+/* Premium, slightly smaller bottom bar (Home / Message / Me) on every screen */
+#pkHomeScreen .pkh-bottom,#pkInboxOverlay .pki-bottom-nav,.pk-profile-bottom-nav{height:56px!important;padding-top:2px;background:rgba(255,255,255,.88)!important;backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-top:1px solid rgba(124,58,237,.07)!important;border-radius:20px 20px 0 0!important;box-shadow:0 -6px 22px rgba(60,30,120,.08)!important}
+#pkHomeScreen .pkh-nav,#pkInboxOverlay .pki-bottom-nav .pkh-nav,.pk-profile-bottom-nav .pkh-nav{height:50px!important;min-width:56px!important;font-size:9.5px!important;letter-spacing:.2px;gap:1px}
+#pkHomeScreen .pkh-nav span,#pkInboxOverlay .pki-bottom-nav .pkh-nav span,.pk-profile-bottom-nav .pkh-nav span{width:26px!important;height:26px!important;font-size:16px!important;border-radius:50%;transition:transform .15s,background .2s}
+#pkHomeScreen .pkh-nav span svg,#pkInboxOverlay .pki-bottom-nav .pkh-nav span svg,.pk-profile-bottom-nav .pkh-nav span svg{width:18px!important;height:18px!important}
+#pkInboxOverlay .pki-bottom-nav .pkh-home-icon,.pk-profile-bottom-nav .pkh-home-icon{font-size:19px!important}
+#pkHomeScreen .pkh-nav.active b,.pk-profile-bottom-nav .pkh-nav.active b,.pk-profile-bottom-nav .pkh-nav.active-me b,#pkInboxOverlay .pki-bottom-nav .pkh-nav.active b{font-weight:800}
+#pkHomeScreen .pkh-nav i{margin:0 0 22px 20px!important}
+/* Me page: remove the two unfinished cards (Top gifter / Visitors) between the stats and Frame Store */
+#pkPublicProfileOverlay.own-view #pkPPGifterCard,#pkPublicProfileOverlay.own-view #pkPPVisCard,#pkPublicProfileOverlay.own-view #pkPPspace{display:none!important}
+/* No "loading" text while the app opens */
+#pkBoot .loading-msg{display:none!important}
+</style>
+
+<style id="pkGamingSeekPadPlace">
+/* Gaming mode: the play / ±2s pad sits under the seats, just above the 4 games */
+#prRoom.party-gaming-layout #ytSeekPad{left:50%!important;right:auto!important;top:114px!important;transform:translateX(-50%)!important}
+/* While a game is running keep the top/centre clear so Level, score and wind stay visible: small pad on the left, below them */
+#prRoom.party-gaming-layout:has(#partyGamingCenter.pgc-playing) #ytSeekPad{left:8px!important;transform:none!important;top:185px!important}
+</style>
+<style id="pkCommentsVisibleFinal">
+html body #prRoom #cinemaChatPanel.prc #cinemaChatMessages .pr-msg{display:flex!important;visibility:visible!important;opacity:1!important}
+html body .prc-fly{visibility:visible!important}
+</style>
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
