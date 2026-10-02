@@ -19173,9 +19173,9 @@ html body #prRoom.party-gaming-layout:has(#partyGamingCenter.pgc-playing) > #cin
 /* Final authority: controls follow the visible Room Level/XP badge, and sit beside it. */
 html body #pkRoomViewerBtn.pr-room-sync-visible{
   position:fixed!important;
-  left:var(--pr-sync-viewer-left,3px)!important;
-  top:var(--pr-sync-viewer-top,3px)!important;
-  right:auto!important;
+  left:auto!important;
+  top:calc(env(safe-area-inset-top,0px) + 4px)!important;
+  right:42px!important;
   bottom:auto!important;
   display:flex!important;
   visibility:visible!important;
@@ -19184,9 +19184,9 @@ html body #pkRoomViewerBtn.pr-room-sync-visible{
 }
 html body #pkRoomX.pr-room-sync-visible{
   position:fixed!important;
-  left:var(--pr-sync-exit-left,auto)!important;
-  top:var(--pr-sync-exit-top,3px)!important;
-  right:auto!important;
+  left:auto!important;
+  top:calc(env(safe-area-inset-top,0px) + 4px)!important;
+  right:8px!important;
   bottom:auto!important;
   display:block!important;
   visibility:visible!important;
