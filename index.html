@@ -19011,3 +19011,27 @@ html body #prRoom #prRoomAvatar{flex:0 0 auto!important;}
   window.__partyRoomGiftOverlayEnd=endGift;
 })();
 </script>
+
+<style id="partyRoomChatSketchLayout">
+/* Chat mode only: layout per user's sketch. Row1: viewer | room level | X. Row2: DP | Chat/Game/YouTube | Top Gifter. Row3: More Video. 8 seats, no host seat. Dock: comment, emoji, inbox | gift, mic, music. */
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prTop{display:grid!important;grid-template-columns:40px minmax(0,1fr) 40px!important;grid-template-rows:auto auto!important;column-gap:8px!important;row-gap:8px!important;align-items:center!important;justify-content:stretch!important;padding:0!important;background:none!important;border:0!important;filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prTopRight{display:contents!important;position:static!important;width:auto!important;}
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prRoomLevelBadge{grid-column:2!important;grid-row:1!important;margin:0!important;justify-self:stretch!important;justify-content:center!important;height:30px!important;box-sizing:border-box!important;font-size:11px!important;}
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prTopRight #prCloseBtn{grid-column:3!important;grid-row:1!important;justify-self:end!important;position:static!important;width:34px!important;height:34px!important;min-width:34px!important;flex:none!important;}
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prRoomPill{grid-column:1!important;grid-row:2!important;width:40px!important;min-width:0!important;max-width:40px!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prRoomPill .pr-pill-txt{display:none!important;}
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prRoomAvatar{width:40px!important;height:40px!important;min-width:40px!important;}
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prModeSegment{grid-column:2!important;grid-row:2!important;min-width:0!important;width:100%!important;}
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) .pr-seg-mode{padding:0 6px!important;font-size:11px!important;}
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prTopRight #prTopGiftersBtn{display:inline-flex!important;grid-column:3!important;grid-row:2!important;justify-self:end!important;position:static!important;width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important;flex:none!important;padding:0!important;gap:0!important;border-radius:50%!important;align-items:center!important;justify-content:center!important;}
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prTopRight #prTopGiftersBtn span{display:none!important;}
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prTopRight #prSeatQuickBtn,
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prTopRight #prCornerProfile{display:none!important;}
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prSubRow{display:flex!important;justify-content:flex-end!important;margin-top:8px!important;}
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prSubRow #cinemaViewerBtn,
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prSubRow #prTicker{display:none!important;}
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prSubRow #prMoreVideoBtn{display:inline-flex!important;}
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #prHostRow{display:none!important;}
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #partyRoomBottomDock #partyRoomYouTubeBtn,
+#prRoom:not(.party-gaming-layout):not(.party-youtube-layout) #partyRoomBottomDock button[aria-label="More"]{display:none!important;}
+</style>
