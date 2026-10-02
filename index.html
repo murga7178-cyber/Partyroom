@@ -6672,7 +6672,7 @@ body.pr-topgifter-open #partyRoomBottomSheet{display:none!important;}
       </div>
     </div>
   </div>
-  <div class="pp-actions"><button type="button" class="pp-follow" id="pkPPfollowBtn">＋ Follow</button><button type="button" class="pp-dm" id="pkPPdmBtn">DM</button></div>
+  <div class="pp-actions" id="pkPPVisitActions"><button type="button" class="pp-follow" id="pkPPfollowBtn">＋ Follow</button><button type="button" class="pp-dm pp-message-icon" id="pkPPdmBtn" aria-label="Message" title="Message"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 8.7 8.7 0 0 1-3.4-.7L4 20l1.4-3.7A7.3 7.3 0 0 1 4.5 12 7.5 7.5 0 0 1 12 4.5a7.5 7.5 0 0 1 8 7z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg></button></div>
 </div>
 <div id="pkProfileManageOverlay" aria-hidden="true" onclick="if(event.target===this)pkCloseProfileManage()">
   <div id="pkProfileManageSheet">
@@ -6854,7 +6854,7 @@ var name=String(d.name||d.displayName||d.fullName||d.username||'User');
         leaveBtn.style.display=seatedNow?'flex':'none';
       }
       try{var vc=document.getElementById('pkVisitorsCount');var vv=vc?vc.textContent:'0';var ov=document.getElementById('pkPPOwnVisitors');if(ov)ov.textContent=vv;}catch(_){}
-    }else{fb.style.display='block';dbtn.textContent='DM';dbtn.onclick=function(){pkClosePublicProfile();if(typeof pkOpenDirectMessage==='function')pkOpenDirectMessage(currentKey,name);};var md=ppGet(String(currentUserKey))||await ppFetch(String(currentUserKey));var mf=Array.isArray(md.following)?md.following.map(String):[];var tr=Array.isArray(d.followers)?d.followers.map(String):[];var on=mf.indexOf(currentKey)>=0||tr.indexOf(String(currentUserKey))>=0;fb.textContent=on?'✓ Following':'＋ Follow';fb.classList.toggle('following',on);fb.onclick=function(){toggleFollow(currentKey);};}
+    }else{fb.style.display='block';dbtn.innerHTML='<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 8.7 8.7 0 0 1-3.4-.7L4 20l1.4-3.7A7.3 7.3 0 0 1 4.5 12 7.5 7.5 0 0 1 12 4.5a7.5 7.5 0 0 1 8 7z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg>';dbtn.onclick=function(){pkClosePublicProfile();if(typeof pkOpenDirectMessage==='function')pkOpenDirectMessage(currentKey,name);};var md=ppGet(String(currentUserKey))||await ppFetch(String(currentUserKey));var mf=Array.isArray(md.following)?md.following.map(String):[];var tr=Array.isArray(d.followers)?d.followers.map(String):[];var on=mf.indexOf(currentKey)>=0||tr.indexOf(String(currentUserKey))>=0;fb.textContent=on?'✓ Following':'＋ Follow';fb.classList.toggle('following',on);fb.onclick=function(){toggleFollow(currentKey);};}
     try{if(String(currentUserKey)!==currentKey){db.collection('users').doc(currentKey).collection('profileVisitors').doc(String(currentUserKey)).set({visitorKey:String(currentUserKey),visitorName:String(cinemaUserName?cinemaUserName():'User'),visitedAt:Date.now()},{merge:true}).catch(function(){});}}catch(_){ }
     try{window.pkRoomProfileHook&&window.pkRoomProfileHook(currentKey,d);}catch(_){}
     o.classList.add('open');o.setAttribute('aria-hidden','false');document.querySelector('#pkPublicProfileOverlay .pp-scroll').scrollTop=0;
@@ -13620,10 +13620,1744 @@ html body .prc-fly,html body .pr-fly,html body .pr-fly-to,html body .pr-fly-rewa
 (function(){
   'use strict';
   var HOST='partyRoomNewKeyboardHost', FRAME='partyRoomNewKeyboardFrame', CLOSE='partyRoomNewKeyboardClose', TRIG='prcTrigger';
-  var srcdoc=`<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\">\n<title>Pro Keyboard</title>\n<style>\n  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI','SF Pro Display',system-ui,sans-serif; }\n  html, body { height:100%; overflow-x:hidden; }\n\n  body {\n    min-height:100vh;\n    background:\n      radial-gradient(circle at 15% 20%, rgba(255,20,147,0.12), transparent 45%),\n      radial-gradient(circle at 85% 80%, rgba(180,80,255,0.1), transparent 45%),\n      linear-gradient(135deg,#0a0a14 0%,#1a0a18 50%,#0f0f1a 100%);\n    background-attachment:fixed;\n    color:#fff;\n    padding:20px;\n    display:flex;\n    flex-direction:column;\n    align-items:center;\n    -webkit-font-smoothing:antialiased;\n    -webkit-tap-highlight-color:transparent;\n    overscroll-behavior:none;\n  }\n\n  body::before {\n    content:'';\n    position:fixed; inset:0;\n    background-image:\n      linear-gradient(rgba(255,20,147,0.04) 1px, transparent 1px),\n      linear-gradient(90deg, rgba(255,20,147,0.04) 1px, transparent 1px);\n    background-size:40px 40px;\n    pointer-events:none; z-index:0;\n  }\n\n  h1, .hint, #commentsList { position:relative; z-index:1; }\n\n  h1 {\n    font-size:1.5rem; font-weight:700; text-align:center;\n    margin-bottom:6px;\n    background:linear-gradient(90deg,#ff1493,#ff69b4,#ff1493);\n    -webkit-background-clip:text; background-clip:text;\n    color:transparent; letter-spacing:0.5px;\n    filter:drop-shadow(0 0 20px rgba(255,20,147,0.6));\n  }\n  .hint { color:#9aa0b5; font-size:0.85rem; margin-bottom:20px; text-align:center; }\n\n  @keyframes jumpTap {\n    0%   { transform:translateY(0) scale(1); }\n    25%  { transform:translateY(-5px) scale(1.08); }\n    50%  { transform:translateY(2px) scale(0.96); }\n    75%  { transform:translateY(-2px) scale(1.02); }\n    100% { transform:translateY(0) scale(1); }\n  }\n  .jump { animation:jumpTap 0.15s cubic-bezier(.34,1.56,.64,1); }\n\n  /* ===== KEY POPUP (बड़ा अक्षर उंगली के ऊपर) ===== */\n  .key-popup {\n    position:fixed;\n    z-index:99999;\n    background:linear-gradient(160deg,#ff1493,#b478ff);\n    color:#fff;\n    font-size:1.45rem;\n    font-weight:900;\n    padding:8px 12px;\n    border-radius:11px;\n    border:1px solid rgba(255,255,255,.75);\n    box-shadow:\n      0 8px 30px rgba(0,0,0,0.7),\n      0 0 40px rgba(255,20,147,0.9),\n      0 0 70px rgba(180,120,255,0.6),\n      inset 0 1px 0 rgba(255,255,255,0.4);\n    text-shadow:0 0 7px rgba(255,255,255,.55), 0 0 12px rgba(255,20,147,.45);\n    pointer-events:none;\n    transform:translate(-50%,-100%) translateY(-8px);\n    animation:popupIn 0.12s ease-out;\n    min-width:40px;\n    text-align:center;\n    letter-spacing:1px;\n  }\n  @keyframes popupIn {\n    0%   { opacity:0; transform:translate(-50%,-100%) translateY(-5px) scale(0.6); }\n    100% { opacity:1; transform:translate(-50%,-100%) translateY(-15px) scale(1); }\n  }\n  .key-popup.fade-out {\n    animation:popupOut 0.10s ease forwards;\n  }\n  @keyframes popupOut {\n    0%   { opacity:1; transform:translate(-50%,-100%) translateY(-15px) scale(1); }\n    100% { opacity:0; transform:translate(-50%,-100%) translateY(-25px) scale(0.8); }\n  }\n\n  #sweepBar {\n    position:fixed; top:0; left:-100%;\n    width:100%; height:5px;\n    background:linear-gradient(90deg,transparent,#ff1493,#fff,#ff1493,transparent);\n    box-shadow:0 0 25px #ff1493, 0 0 50px #ff1493;\n    z-index:9999; pointer-events:none;\n  }\n  #sweepBar.run-ltr { animation:sweepLTR 1.4s cubic-bezier(.4,0,.2,1) forwards; }\n  #sweepBar.run-rtl { animation:sweepRTL 1.4s cubic-bezier(.4,0,.2,1) forwards; left:100%; }\n  @keyframes sweepLTR { 0%{left:-100%;opacity:1} 100%{left:100%;opacity:1} }\n  @keyframes sweepRTL { 0%{left:100%;opacity:1} 100%{left:-100%;opacity:1} }\n\n  .feather {\n    position:fixed; top:0; font-size:22px;\n    pointer-events:none; z-index:9998;\n    animation:flyFeather 2s cubic-bezier(.3,.7,.5,1) forwards;\n    filter:drop-shadow(0 0 8px rgba(255,20,147,0.9));\n    will-change:transform,opacity;\n  }\n  @keyframes flyFeather {\n    0%   { transform:translate(0,0) rotate(0deg) scale(0.5); opacity:0; }\n    15%  { opacity:1; }\n    50%  { transform:translate(50vw,-20px) rotate(180deg) scale(1.1); opacity:1; }\n    100% { transform:translate(100vw,-40px) rotate(360deg) scale(0.8); opacity:0; }\n  }\n  .feather.rtl { animation:flyFeatherRTL 2s cubic-bezier(.3,.7,.5,1) forwards; }\n  @keyframes flyFeatherRTL {\n    0%   { transform:translate(0,0) rotate(0deg) scale(0.5); opacity:0; }\n    15%  { opacity:1; }\n    50%  { transform:translate(-50vw,-20px) rotate(-180deg) scale(1.1); opacity:1; }\n    100% { transform:translate(-100vw,-40px) rotate(-360deg) scale(0.8); opacity:0; }\n  }\n\n  .heart {\n    position:fixed; bottom:0;\n    pointer-events:none; z-index:9998;\n    animation:floatHeart 3.5s cubic-bezier(.2,.8,.3,1) forwards;\n    filter:drop-shadow(0 0 10px rgba(255,20,147,0.9));\n    will-change:transform,opacity;\n  }\n  @keyframes floatHeart {\n    0%   { transform:translateY(0) scale(0.4) rotate(0deg); opacity:0; }\n    12%  { opacity:1; }\n    30%  { transform:translateY(-25vh) scale(1.15) rotate(8deg); opacity:1; }\n    60%  { transform:translateY(-55vh) scale(1) rotate(-8deg); opacity:1; }\n    100% { transform:translateY(-95vh) scale(0.5) rotate(15deg); opacity:0; }\n  }\n\n  #bubbleBtn {\n    position:fixed; bottom:25px; right:25px;\n    width:60px; height:60px;\n    border-radius:50%;\n    background:#ffffff;\n    border:none; cursor:pointer;\n    display:flex; align-items:center; justify-content:center;\n    font-size:26px; color:#1a1a2e;\n    box-shadow:0 6px 20px rgba(0,0,0,0.5);\n    transition:transform 0.35s cubic-bezier(.34,1.56,.64,1), box-shadow 0.3s;\n    z-index:1000;\n  }\n  #bubbleBtn:hover {\n    transform:scale(1.1);\n    box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 25px rgba(255,20,147,0.6);\n  }\n\n  #backdrop {\n    position:fixed; inset:0;\n    background:rgba(10,0,8,0.6);\n    backdrop-filter:blur(10px) saturate(140%);\n    -webkit-backdrop-filter:blur(10px) saturate(140%);\n    display:none; z-index:998;\n    animation:fade 0.3s ease;\n  }\n  #backdrop.show { display:block; }\n  @keyframes fade { from{opacity:0} to{opacity:1} }\n\n  #panel {\n    position:fixed; bottom:20px; right:25px;\n    width:420px;\n    max-width:calc(100vw - 40px);\n    background:linear-gradient(160deg, rgba(45,10,35,0.98), rgba(25,5,20,1));\n    backdrop-filter:blur(20px) saturate(160%);\n    -webkit-backdrop-filter:blur(20px) saturate(160%);\n    border:1.5px solid rgba(255,20,147,0.5);\n    border-radius:16px;\n    padding:12px;\n    box-shadow:0 25px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.08);\n    display:none;\n    flex-direction:column;\n    gap:10px;\n    z-index:999;\n    animation:pop 0.35s cubic-bezier(.34,1.56,.64,1);\n    overflow:hidden;\n  }\n  #panel.open { display:flex; }\n  @keyframes pop {\n    from { opacity:0; transform:translateY(30px) scale(0.92); }\n    to   { opacity:1; transform:translateY(0) scale(1); }\n  }\n\n  .input-row {\n    display:flex;\n    align-items:stretch;\n    gap:0;\n    background:linear-gradient(135deg, rgba(20,5,15,0.95), rgba(35,10,28,0.95));\n    border:1.5px solid rgba(255,20,147,0.5);\n    border-radius:10px;\n    padding:0;\n    box-shadow:inset 0 2px 8px rgba(0,0,0,0.5);\n    position:relative;\n    overflow:hidden;\n    min-height:46px;\n    flex-shrink:0;\n  }\n\n  .input-row::before {\n    content:'';\n    position:absolute; inset:0;\n    background:linear-gradient(120deg, transparent 30%, rgba(255,20,147,0.15) 50%, transparent 70%);\n    background-size:200% 100%;\n    animation:shineSlide 3s linear infinite;\n    pointer-events:none;\n  }\n  @keyframes shineSlide {\n    0%   { background-position:200% 0; }\n    100% { background-position:-200% 0; }\n  }\n\n  .input-row.highlight {\n    border-color:#ffd60a;\n    background:linear-gradient(135deg, rgba(60,45,0,0.95), rgba(80,60,0,0.95));\n    box-shadow:inset 0 2px 8px rgba(0,0,0,0.5), 0 0 35px rgba(255,214,10,0.6);\n  }\n\n  .icon-btn {\n    width:38px; min-width:38px;\n    flex-shrink:0;\n    border-radius:0; border:none;\n    background:linear-gradient(135deg,#3a1a2e,#2a0f20);\n    color:#ffb3d9;\n    font-size:1rem; cursor:pointer;\n    display:flex; align-items:center; justify-content:center;\n    position:relative; z-index:1;\n    border-right:1px solid rgba(255,20,147,0.25);\n    -webkit-tap-highlight-color:transparent;\n    padding:0 4px;\n  }\n  .icon-btn .icon-inner {\n    display:flex; align-items:center; justify-content:center;\n    flex-direction:column; gap:1px;\n    width:100%; height:100%;\n    border-radius:6px;\n    position:relative;\n  }\n  .icon-btn .label {\n    font-size:0.5rem; font-weight:700;\n    letter-spacing:0.5px; line-height:1; opacity:0.9;\n  }\n  .icon-btn .emoji-icon { font-size:1rem; line-height:1; }\n  .icon-btn .icon-inner::after {\n    content:''; position:absolute;\n    bottom:2px; left:50%;\n    transform:translateX(-50%);\n    width:0; height:1.5px;\n    background:linear-gradient(90deg,transparent,#ff1493,#ff69b4,transparent);\n    box-shadow:0 0 6px #ff1493;\n    border-radius:2px;\n    opacity:0.7;\n  }\n  .icon-btn.gif-btn .icon-inner::after { width:20px; }\n  .icon-btn.emoji-btn .icon-inner::after { width:16px; }\n  .icon-btn.keyboard-btn .icon-inner::after { width:16px; }\n\n  #commentBox {\n    flex:1; min-width:0;\n    background:transparent; border:none; outline:none;\n    color:#ffffff;\n    font-size:1rem; font-weight:600;\n    padding:12px 10px;\n    cursor:text;\n    position:relative; z-index:1;\n    caret-color:transparent;\n    text-shadow:0 0 8px rgba(255,20,147,0.4);\n    white-space:pre-wrap;\n    word-wrap:break-word;\n    overflow-wrap:break-word;\n    overflow-y:auto;\n    height:48px;\n    min-height:48px;\n    max-height:48px;\n    line-height:1.5;\n    -webkit-overflow-scrolling:touch;\n    scrollbar-width:thin;\n    scrollbar-color: rgba(255,20,147,0.5) transparent;\n  }\n  #commentBox::-webkit-scrollbar { width:5px; }\n  #commentBox::-webkit-scrollbar-thumb { background:rgba(255,20,147,0.5); border-radius:5px; }\n  #commentBox:empty::before {\n    content:\"Type here...\";\n    color:#a88098;\n    font-weight:500;\n    text-shadow:none;\n    pointer-events:none;\n  }\n\n  .typing-cursor {\n    display:inline-block;\n    width:2px;\n    height:1.1em;\n    background:#ff69b4;\n    box-shadow:0 0 8px #ff1493, 0 0 15px #ff1493;\n    vertical-align:text-bottom;\n    animation:blinkCursor 1s step-end infinite;\n    margin-left:-1px;\n    margin-right:-1px;\n    position:relative;\n    top:2px;\n    border-radius:1px;\n  }\n  @keyframes blinkCursor {\n    0%, 50% { opacity:1; }\n    51%, 100% { opacity:0.2; }\n  }\n\n  .switch-wrap {\n    display:flex; align-items:center; justify-content:center;\n    padding:0 6px;\n    border-left:1px solid rgba(255,20,147,0.25);\n    border-right:1px solid rgba(255,20,147,0.25);\n    position:relative; z-index:1;\n    flex-shrink:0;\n  }\n\n  .switch {\n    position:relative;\n    width:34px; height:18px;\n    background:linear-gradient(135deg,#3a1a2e,#2a0f20);\n    border:1px solid rgba(255,20,147,0.4);\n    border-radius:4px; cursor:pointer;\n    box-shadow:inset 0 2px 4px rgba(0,0,0,0.5);\n  }\n  .switch::after {\n    content:''; position:absolute;\n    top:1px; left:1px;\n    width:14px; height:14px;\n    background:linear-gradient(135deg,#fff,#ffb3d9);\n    border-radius:3px;\n    transition:0.35s cubic-bezier(.34,1.56,.64,1);\n    box-shadow:0 2px 5px rgba(0,0,0,0.4);\n  }\n  .switch.on {\n    background:linear-gradient(135deg,#ffd60a,#ffa500);\n    border-color:#ffd60a;\n    box-shadow:0 0 15px rgba(255,214,10,0.7);\n  }\n  .switch.on::after { left:17px; background:#fff; }\n\n  #topSendBtn {\n    width:44px; min-width:44px;\n    flex-shrink:0;\n    border-radius:0; border:none;\n    background:linear-gradient(135deg,#3a1a2e,#2a0f20);\n    color:#ff69b4;\n    font-size:1.3rem; cursor:pointer;\n    display:flex; align-items:center; justify-content:center;\n    font-weight:700;\n    position:relative; z-index:1;\n    -webkit-tap-highlight-color:transparent;\n  }\n  #topSendBtn .icon-inner {\n    display:flex; align-items:center; justify-content:center;\n    width:100%; height:100%;\n    border-radius:6px;\n    color:#ff69b4;\n    text-shadow:0 0 8px rgba(255,20,147,0.6);\n    transition:all 0.25s;\n  }\n  #topSendBtn:active .icon-inner, #topSendBtn.active .icon-inner {\n    color:#fff;\n    text-shadow:0 0 15px #fff, 0 0 30px #ff1493;\n    transform:scale(1.2);\n  }\n\n  .panel-container {\n    position:relative;\n    width:100%;\n    height:300px;\n    min-height:300px;\n    max-height:300px;\n    border-radius:12px;\n    background:linear-gradient(160deg, #2a0a1e, #1a0510);\n    border:1px solid rgba(255,20,147,0.35);\n    overflow:hidden;\n    flex-shrink:0;\n  }\n\n  .bottom-panel {\n    position:absolute; inset:0;\n    padding:10px;\n    display:none;\n    overflow-y:auto;\n    overflow-x:hidden;\n    -webkit-overflow-scrolling:touch;\n    scrollbar-width:thin;\n    scrollbar-color: rgba(255,20,147,0.6) rgba(0,0,0,0.3);\n  }\n  .bottom-panel.open { display:block; animation:fadeIn 0.25s ease; }\n  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }\n\n  .bottom-panel::-webkit-scrollbar { width:8px; }\n  .bottom-panel::-webkit-scrollbar-track { background:rgba(0,0,0,0.3); border-radius:8px; }\n  .bottom-panel::-webkit-scrollbar-thumb {\n    background:linear-gradient(180deg,#ff1493,#ff69b4);\n    border-radius:8px;\n    box-shadow:0 0 8px #ff1493;\n  }\n\n  .emoji-grid {\n    display:grid;\n    grid-template-columns:repeat(8,1fr);\n    gap:4px;\n  }\n  .emoji-grid span {\n    font-size:1.4rem;\n    width:100%; height:38px;\n    display:flex; align-items:center; justify-content:center;\n    cursor:pointer; border-radius:8px;\n    user-select:none;\n    -webkit-tap-highlight-color:transparent;\n  }\n  .emoji-grid span:hover, .emoji-grid span:active {\n    background:rgba(255,20,147,0.2);\n  }\n\n  .gif-grid {\n    display:grid;\n    grid-template-columns:repeat(3,1fr);\n    gap:6px;\n  }\n  .gif-grid img {\n    width:100%; height:80px;\n    object-fit:cover; border-radius:8px;\n    cursor:pointer;\n    border:2px solid transparent;\n    -webkit-tap-highlight-color:transparent;\n    display:block;\n  }\n  .gif-grid img:hover {\n    border-color:#ff1493;\n    box-shadow:0 5px 20px rgba(255,20,147,0.6);\n  }\n\n  #mediaPreview {\n    display:none;\n    position:relative;\n    border-radius:10px;\n    overflow:hidden;\n    box-shadow:0 8px 25px rgba(0,0,0,0.5);\n    flex-shrink:0;\n  }\n  #mediaPreview img {\n    width:100%; border-radius:10px;\n    max-height:120px; object-fit:cover; display:block;\n  }\n  #removeGif {\n    position:absolute; top:8px; right:8px;\n    width:28px; height:28px;\n    border-radius:6px;\n    background:rgba(255,20,147,0.95);\n    color:#fff;\n    border:2px solid rgba(255,255,255,0.3);\n    font-size:0.85rem; cursor:pointer;\n    display:flex; align-items:center; justify-content:center;\n    -webkit-tap-highlight-color:transparent;\n  }\n\n  /* ===== KEYBOARD ===== */\n  .keyboard {\n    display:flex;\n    flex-direction:column;\n    gap:4px;\n    user-select:none;\n    height:100%;\n  }\n\n  .reader-row {\n    display:flex;\n    gap:4px;\n    width:100%;\n    align-items:stretch;\n    flex-shrink:0;\n  }\n\n  .reader-btn {\n    flex:4;\n    background:linear-gradient(160deg,#7a2550,#4a1030);\n    color:#ffffff;\n    border:1.5px solid rgba(255,105,180,0.7);\n    border-radius:8px;\n    padding:12px 12px;\n    font-size:1rem;\n    font-weight:800;\n    cursor:pointer;\n    box-shadow:\n      0 3px 0 #200510,\n      0 4px 12px rgba(0,0,0,0.5),\n      0 0 20px rgba(255,20,147,0.4),\n      inset 0 1px 0 rgba(255,255,255,0.15);\n    text-shadow:0 0 10px rgba(255,20,147,0.8);\n    display:flex;\n    align-items:center;\n    justify-content:center;\n    min-width:0;\n    white-space:nowrap;\n    overflow:hidden;\n    text-overflow:ellipsis;\n    position:relative;\n    -webkit-tap-highlight-color:transparent;\n    letter-spacing:0.3px;\n  }\n  .reader-btn::before {\n    content:''; position:absolute;\n    bottom:0; left:5%;\n    height:2px; width:90%;\n    background:linear-gradient(90deg,transparent,#ff1493,#ff69b4,transparent);\n    box-shadow:0 0 10px #ff1493;\n    border-radius:2px;\n    opacity:0.7;\n    animation:suggestWave 3s ease-in-out infinite;\n  }\n  @keyframes suggestWave {\n    0%, 100% { transform:translateX(-15%); opacity:0.4; }\n    50%      { transform:translateX(15%);  opacity:1; }\n  }\n  .reader-btn .reader-text {\n    overflow:hidden;\n    text-overflow:ellipsis;\n    white-space:nowrap;\n    text-align:center;\n    color:#ffffff;\n    width:100%;\n  }\n  .reader-btn.has-text {\n    background:linear-gradient(160deg,#a0305a,#5a1540);\n    box-shadow:\n      0 3px 0 #200510,\n      0 4px 12px rgba(0,0,0,0.5),\n      0 0 28px rgba(255,20,147,0.8),\n      inset 0 1px 0 rgba(255,255,255,0.2);\n    border-color:rgba(255,140,200,1);\n  }\n  .reader-btn:active, .reader-btn.active {\n    background:linear-gradient(160deg,#ff1493,#ff69b4);\n    color:#fff;\n    box-shadow:0 0 0 #200510, 0 0 30px rgba(255,20,147,1), inset 0 2px 4px rgba(0,0,0,0.3);\n    border-color:#fff;\n  }\n  .reader-btn.jump { animation:jumpTap 0.15s cubic-bezier(.34,1.56,.64,1); }\n\n  .reader-text .typed-part {\n    color:#ff69b4;\n    text-shadow:0 0 10px #ff1493, 0 0 20px rgba(255,20,147,0.6);\n    font-weight:900;\n  }\n  .reader-text .suggest-part {\n    color:#d9b3c8;\n    font-weight:700;\n  }\n\n  .send-arrow-btn {\n    flex:1;\n    background:transparent;\n    border:none;\n    cursor:pointer;\n    display:flex;\n    align-items:center;\n    justify-content:center;\n    padding:0;\n    -webkit-tap-highlight-color:transparent;\n    min-width:48px;\n  }\n  .send-arrow-btn .arrow {\n    font-size:2rem;\n    font-weight:900;\n    color:#ff69b4;\n    text-shadow:\n      0 0 10px rgba(255,20,147,0.8),\n      0 0 20px rgba(255,20,147,0.5),\n      0 0 30px rgba(255,20,147,0.3);\n    display:inline-block;\n    line-height:1;\n    transition:color .12s ease, text-shadow .12s ease, transform .12s ease;\n  }\n  .send-arrow-btn:hover .arrow { color:#fff; text-shadow:0 0 12px #fff, 0 0 25px #ff1493, 0 0 40px #ff1493; }\n  .send-arrow-btn:active .arrow,\n  .send-arrow-btn.active .arrow {\n    color:#fff;\n    text-shadow:0 0 15px #fff, 0 0 30px #ff1493, 0 0 50px #ff1493;\n    transform:scale(1.06);\n  }\n  .send-arrow-btn.jump .arrow { animation:jumpTap 0.15s cubic-bezier(.34,1.56,.64,1); }\n\n  /* ===== KEY ROWS - 4px gap ===== */\n  .key-row { display:flex; justify-content:center; gap:4px; width:100%; }\n  .key-row-2 { padding:0 10px; }\n  .key-row-3 { padding:0 4px; }\n\n  /* सभी keys एक जैसे मोटे */\n  .key {\n    position:relative;\n    background:linear-gradient(160deg,#5a1a3d,#3a0f28);\n    color:#ffffff;\n    border:1px solid rgba(255,20,147,0.5);\n    border-radius:7px;\n    padding:11px 0;\n    min-width:0;\n    text-align:center;\n    font-size:1.02rem; font-weight:750;\n    cursor:pointer;\n    box-shadow:0 2px 0 #200510, 0 3px 8px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.10);\n    flex:1 1 0;\n    overflow:hidden;\n    text-shadow:0 0 4px rgba(255,20,147,0.35);\n    -webkit-tap-highlight-color:transparent;\n    touch-action:manipulation;\n    -webkit-user-select:none; user-select:none;\n    letter-spacing:0.5px;\n  }\n\n  .key::before {\n    content:''; position:absolute;\n    bottom:0; left:0;\n    height:2px; width:40%;\n    background:linear-gradient(90deg,transparent,#ff1493,#ff69b4,transparent);\n    box-shadow:0 0 8px #ff1493;\n    border-radius:2px;\n    animation:softWave 3.5s ease-in-out infinite;\n    opacity:0.7;\n  }\n  .key:nth-child(1)::before  { animation-delay:0s; }\n  .key:nth-child(2)::before  { animation-delay:0.3s; }\n  .key:nth-child(3)::before  { animation-delay:0.6s; }\n  .key:nth-child(4)::before  { animation-delay:0.9s; }\n  .key:nth-child(5)::before  { animation-delay:1.2s; }\n  .key:nth-child(6)::before  { animation-delay:1.5s; }\n  .key:nth-child(7)::before  { animation-delay:1.8s; }\n  .key:nth-child(8)::before  { animation-delay:2.1s; }\n  .key:nth-child(9)::before  { animation-delay:2.4s; }\n  .key:nth-child(10)::before { animation-delay:2.7s; }\n\n  @keyframes softWave {\n    0%   { transform:translateX(-30%); opacity:0.3; }\n    50%  { transform:translateX(180%); opacity:0.9; }\n    100% { transform:translateX(-30%); opacity:0.3; }\n  }\n\n  .key:active, .key.active {\n    background:linear-gradient(160deg,#ff1493,#ff69b4);\n    color:#fff;\n    box-shadow:0 0 0 #200510, 0 0 12px rgba(255,20,147,0.45), inset 0 1px 3px rgba(0,0,0,0.24);\n    border-color:#fff;\n  }\n\n  .key.jump { animation:jumpTap 0.15s cubic-bezier(.34,1.56,.64,1); }\n\n  /* सब keys एक जैसी मोटाई — कोई ज़्यादा wide/wider नहीं */\n  .key.wide { flex:1.5 1 0; }\n  .key.space { flex:5 1 0; font-size:0.9rem; }\n\n  /* Shift और Backspace — दोनों normal keys जितने मोटे */\n  .key.shift-key { flex:1.8 1 0; font-size:1.2rem; }\n  .key.backspace-key { flex:1.8 1 0; font-size:1.3rem; }\n\n  .key.shift-active {\n    background:linear-gradient(160deg,#ff1493,#ff69b4);\n    color:#fff;\n    box-shadow:0 0 0 #200510, 0 0 20px rgba(255,20,147,0.9), 0 0 35px rgba(255,20,147,0.6), inset 0 2px 6px rgba(0,0,0,0.3);\n    border-color:#fff;\n  }\n  .key.shift-caps {\n    background:linear-gradient(160deg,#ffd60a,#ffa500);\n    color:#1a0520;\n    box-shadow:0 0 0 #200510, 0 0 25px rgba(255,214,10,0.9), 0 0 50px rgba(255,165,0,0.6), inset 0 2px 6px rgba(0,0,0,0.3);\n    border-color:#fff;\n  }\n\n  .keyboard-body {\n    display:flex;\n    flex-direction:column;\n    gap:4px;\n    flex:1;\n    justify-content:space-between;\n  }\n\n  .numpad {\n    display:grid;\n    grid-template-columns:repeat(4, 1fr);\n    gap:5px;\n    height:100%;\n    align-content:center;\n  }\n  .numpad-key {\n    background:linear-gradient(160deg,#5a1a3d,#3a0f28);\n    color:#fff;\n    border:1px solid rgba(255,20,147,0.5);\n    border-radius:8px;\n    padding:12px 0;\n    text-align:center;\n    font-size:1.25rem; font-weight:800;\n    cursor:pointer;\n    box-shadow:0 2px 0 #200510, 0 3px 8px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.10);\n    text-shadow:0 0 4px rgba(255,20,147,0.35);\n    -webkit-tap-highlight-color:transparent;\n    user-select:none;\n    touch-action:manipulation;\n    position:relative;\n    overflow:hidden;\n  }\n  .numpad-key::before {\n    content:''; position:absolute;\n    bottom:0; left:0;\n    height:2px; width:35%;\n    background:linear-gradient(90deg,transparent,#ff1493,#ff69b4,transparent);\n    box-shadow:0 0 8px #ff1493;\n    border-radius:2px;\n    animation:softWave 3.5s ease-in-out infinite;\n    opacity:0.6;\n  }\n  .numpad-key:active, .numpad-key.active {\n    background:linear-gradient(160deg,#ff1493,#ff69b4);\n    color:#fff;\n    box-shadow:0 0 0 #200510, 0 0 12px rgba(255,20,147,0.45), inset 0 1px 3px rgba(0,0,0,0.24);\n    border-color:#fff;\n  }\n  .numpad-key.jump { animation:jumpTap 0.15s cubic-bezier(.34,1.56,.64,1); }\n  .numpad-key.action {\n    background:linear-gradient(160deg,#7a2550,#4a1030);\n    font-size:1.1rem;\n  }\n  .numpad-key.zero { grid-column:span 2; }\n\n  #commentsList {\n    width:100%;\n    max-width:440px;\n    margin-top:20px;\n    display:flex;\n    flex-direction:column;\n    align-items:flex-start;\n  }\n  .comment-item {\n    background:linear-gradient(160deg, rgba(45,10,35,0.9), rgba(30,5,22,0.9));\n    backdrop-filter:blur(10px);\n    border:1px solid rgba(255,20,147,0.2);\n    border-left:4px solid #ff1493;\n    padding:12px 15px;\n    border-radius:12px;\n    margin-bottom:10px;\n    font-size:1rem; line-height:1.5;\n    color:#fff;\n    animation:commentIn 0.5s cubic-bezier(.34,1.56,.64,1);\n    word-wrap:break-word;\n    white-space:pre-wrap;\n    box-shadow:0 8px 25px rgba(0,0,0,0.4);\n    display:inline-block;\n    max-width:100%;\n  }\n  .comment-item.highlight {\n    background:linear-gradient(160deg, rgba(70,55,0,0.95), rgba(50,40,0,0.95));\n    border-left-color:#ffd60a;\n    color:#ffe066;\n    box-shadow:0 0 30px rgba(255,214,10,0.4), 0 8px 25px rgba(0,0,0,0.4);\n  }\n  .comment-item img {\n    width:100%; border-radius:10px;\n    margin-top:8px; max-height:160px;\n    object-fit:cover; display:block;\n  }\n  @keyframes commentIn {\n    0%   { opacity:0; transform:translateY(-30px) scale(0.7) rotate(-3deg); }\n    50%  { opacity:1; transform:translateY(8px) scale(1.05) rotate(1deg); }\n    75%  { transform:translateY(-3px) scale(0.98) rotate(-0.5deg); }\n    100% { opacity:1; transform:translateY(0) scale(1) rotate(0deg); }\n  }\n\n  @media (max-width:600px) {\n    body { padding:10px; }\n    h1 { font-size:1.2rem; }\n    .hint { font-size:0.75rem; margin-bottom:12px; }\n    #panel {\n      position:fixed;\n      left:0; right:0; bottom:0;\n      width:100%; max-width:100%;\n      padding:10px;\n      border-radius:16px 16px 0 0;\n      gap:8px;\n      border-left:none; border-right:none; border-bottom:none;\n      border-top:1.5px solid rgba(255,20,147,0.5);\n    }\n    #bubbleBtn { right:15px; bottom:15px; width:54px; height:54px; font-size:24px; }\n    .panel-container { height:290px; min-height:290px; max-height:290px; }\n    .emoji-grid { grid-template-columns:repeat(7,1fr); gap:3px; }\n    .emoji-grid span { font-size:1.3rem; height:36px; }\n    .icon-btn { width:34px; min-width:34px; font-size:0.95rem; padding:0 2px; }\n    .icon-btn .label { font-size:0.45rem; }\n    .icon-btn .emoji-icon { font-size:0.95rem; }\n    #topSendBtn { width:40px; min-width:40px; font-size:1.2rem; }\n    #commentBox { font-size:0.95rem; padding:10px 8px; height:44px; min-height:44px; max-height:44px; }\n    .switch { width:30px; height:16px; }\n    .switch::after { width:12px; height:12px; }\n    .switch.on::after { left:15px; }\n    .key { padding:12px 0; font-size:1rem; border-radius:6px; }\n    .key-row { gap:4px; }\n    .keyboard { gap:4px; }\n    .bottom-panel { padding:8px; }\n    .gif-grid { grid-template-columns:repeat(3,1fr); gap:5px; }\n    .gif-grid img { height:65px; }\n    .reader-btn { padding:10px 10px; font-size:0.95rem; }\n    .send-arrow-btn .arrow { font-size:1.7rem; }\n    .numpad { gap:4px; }\n    .numpad-key { padding:10px 0; font-size:1.1rem; }\n    .key-popup { font-size:2rem; padding:12px 18px; }\n  }\n\n  @media (max-width:360px) {\n    .emoji-grid { grid-template-columns:repeat(6,1fr); }\n    .key { padding:10px 0; font-size:0.9rem; }\n    .panel-container { height:270px; min-height:270px; max-height:270px; }\n    .reader-btn { padding:8px 8px; font-size:0.85rem; }\n    .send-arrow-btn .arrow { font-size:1.5rem; }\n    .key-popup { font-size:1.8rem; padding:10px 16px; }\n  }\n</style>\n</head>\n<body>\n\n<style>\nhtml,body{width:100%!important;height:100%!important;overflow:hidden!important;padding:0!important;margin:0!important;background:transparent!important;}\nbody::before{display:none!important}\nh1,.hint,#commentsList,#bubbleBtn,#backdrop{display:none!important}\n#panel{display:flex!important;position:static!important;left:auto!important;right:auto!important;bottom:auto!important;width:100%!important;max-width:none!important;height:100%!important;max-height:none!important;margin:0!important;padding:6px!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;backdrop-filter:none!important;gap:7px!important;animation:none!important}\n.panel-container{height:300px!important;min-height:300px!important;max-height:300px!important}\n#keyboardPopup{display:block!important;animation:none!important}\n/* Party Room premium keyboard overrides */\n  .key-popup{font-size:1.28rem!important;padding:6px 9px!important;min-width:36px!important;border-radius:9px!important;border-width:1px!important;box-shadow:0 5px 18px rgba(0,0,0,.55),0 0 14px rgba(255,20,147,.28)!important;text-shadow:0 0 5px rgba(255,255,255,.45)!important;transform:translate(-50%,-100%) translateY(-7px)!important;animation:popupIn 0.10s ease-out!important;}\n  @keyframes popupIn{0%{opacity:0;transform:translate(-50%,-100%) translateY(-3px) scale(.94)!important}100%{opacity:1;transform:translate(-50%,-100%) translateY(-7px) scale(1)!important}}\n  .key:active,.key.active{transform:translateY(1px) scale(.985)!important;box-shadow:0 1px 0 #200510,0 2px 6px rgba(0,0,0,.35),inset 0 1px 2px rgba(0,0,0,.22)!important;}\n  .key.jump,.send-arrow-btn.jump .arrow{animation-duration:.10s!important;}\n  .send-arrow-btn:active .arrow,.send-arrow-btn.active .arrow{transform:scale(1.04)!important;}\n  .input-row::before{animation-duration:7s!important;opacity:.55!important;}\n  .feather,.heart,#sweepBar,.key::before{animation:none!important;display:none!important;}\n  .feather,.heart,#sweepBar,.key::before{animation:none!important;display:none!important;}\n  #panel{backdrop-filter:blur(16px) saturate(125%);-webkit-backdrop-filter:blur(16px) saturate(125%);box-shadow:0 18px 48px rgba(0,0,0,.72),0 8px 24px rgba(255,20,147,.08),inset 0 1px 0 rgba(255,255,255,.06);}\n  
+  var srcdoc=`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pro Keyboard</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI','SF Pro Display',system-ui,sans-serif; }
+  html, body { height:100%; overflow-x:hidden; }
 
+  body {
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,20,147,0.12), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(180,80,255,0.1), transparent 45%),
+      linear-gradient(135deg,#0a0a14 0%,#1a0a18 50%,#0f0f1a 100%);
+    background-attachment:fixed;
+    color:#fff;
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    -webkit-font-smoothing:antialiased;
+    -webkit-tap-highlight-color:transparent;
+    overscroll-behavior:none;
+  }
 
-</body>\n</html>`;
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(255,20,147,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,20,147,0.04) 1px, transparent 1px);
+    background-size:40px 40px;
+    pointer-events:none; z-index:0;
+  }
+
+  h1, .hint, #commentsList { position:relative; z-index:1; }
+
+  h1 {
+    font-size:1.5rem; font-weight:700; text-align:center;
+    margin-bottom:6px;
+    background:linear-gradient(90deg,#ff1493,#ff69b4,#ff1493);
+    -webkit-background-clip:text; background-clip:text;
+    color:transparent; letter-spacing:0.5px;
+    filter:drop-shadow(0 0 20px rgba(255,20,147,0.6));
+  }
+  .hint { color:#9aa0b5; font-size:0.85rem; margin-bottom:20px; text-align:center; }
+
+  @keyframes jumpTap {
+    0%   { transform:translateY(0) scale(1); }
+    25%  { transform:translateY(-5px) scale(1.08); }
+    50%  { transform:translateY(2px) scale(0.96); }
+    75%  { transform:translateY(-2px) scale(1.02); }
+    100% { transform:translateY(0) scale(1); }
+  }
+  .jump { animation:jumpTap 0.15s cubic-bezier(.34,1.56,.64,1); }
+
+  /* ===== KEY POPUP (बड़ा अक्षर उंगली के ऊपर) ===== */
+  .key-popup {
+    position:fixed;
+    z-index:99999;
+    background:linear-gradient(160deg,#ff1493,#b478ff);
+    color:#fff;
+    font-size:2.4rem;
+    font-weight:900;
+    padding:14px 22px;
+    border-radius:14px;
+    border:2px solid #fff;
+    box-shadow:
+      0 8px 30px rgba(0,0,0,0.7),
+      0 0 40px rgba(255,20,147,0.9),
+      0 0 70px rgba(180,120,255,0.6),
+      inset 0 1px 0 rgba(255,255,255,0.4);
+    text-shadow:0 0 15px #fff, 0 0 25px rgba(255,20,147,1);
+    pointer-events:none;
+    transform:translate(-50%,-100%) translateY(-15px);
+    animation:popupIn 0.18s cubic-bezier(.34,1.56,.64,1);
+    min-width:56px;
+    text-align:center;
+    letter-spacing:1px;
+  }
+  @keyframes popupIn {
+    0%   { opacity:0; transform:translate(-50%,-100%) translateY(-5px) scale(0.6); }
+    100% { opacity:1; transform:translate(-50%,-100%) translateY(-15px) scale(1); }
+  }
+  .key-popup.fade-out {
+    animation:popupOut 0.15s ease forwards;
+  }
+  @keyframes popupOut {
+    0%   { opacity:1; transform:translate(-50%,-100%) translateY(-15px) scale(1); }
+    100% { opacity:0; transform:translate(-50%,-100%) translateY(-25px) scale(0.8); }
+  }
+
+  #sweepBar {
+    position:fixed; top:0; left:-100%;
+    width:100%; height:5px;
+    background:linear-gradient(90deg,transparent,#ff1493,#fff,#ff1493,transparent);
+    box-shadow:0 0 25px #ff1493, 0 0 50px #ff1493;
+    z-index:9999; pointer-events:none;
+  }
+  #sweepBar.run-ltr { animation:sweepLTR 1.4s cubic-bezier(.4,0,.2,1) forwards; }
+  #sweepBar.run-rtl { animation:sweepRTL 1.4s cubic-bezier(.4,0,.2,1) forwards; left:100%; }
+  @keyframes sweepLTR { 0%{left:-100%;opacity:1} 100%{left:100%;opacity:1} }
+  @keyframes sweepRTL { 0%{left:100%;opacity:1} 100%{left:-100%;opacity:1} }
+
+  .feather {
+    position:fixed; top:0; font-size:22px;
+    pointer-events:none; z-index:9998;
+    animation:flyFeather 2s cubic-bezier(.3,.7,.5,1) forwards;
+    filter:drop-shadow(0 0 8px rgba(255,20,147,0.9));
+    will-change:transform,opacity;
+  }
+  @keyframes flyFeather {
+    0%   { transform:translate(0,0) rotate(0deg) scale(0.5); opacity:0; }
+    15%  { opacity:1; }
+    50%  { transform:translate(50vw,-20px) rotate(180deg) scale(1.1); opacity:1; }
+    100% { transform:translate(100vw,-40px) rotate(360deg) scale(0.8); opacity:0; }
+  }
+  .feather.rtl { animation:flyFeatherRTL 2s cubic-bezier(.3,.7,.5,1) forwards; }
+  @keyframes flyFeatherRTL {
+    0%   { transform:translate(0,0) rotate(0deg) scale(0.5); opacity:0; }
+    15%  { opacity:1; }
+    50%  { transform:translate(-50vw,-20px) rotate(-180deg) scale(1.1); opacity:1; }
+    100% { transform:translate(-100vw,-40px) rotate(-360deg) scale(0.8); opacity:0; }
+  }
+
+  .heart {
+    position:fixed; bottom:0;
+    pointer-events:none; z-index:9998;
+    animation:floatHeart 3.5s cubic-bezier(.2,.8,.3,1) forwards;
+    filter:drop-shadow(0 0 10px rgba(255,20,147,0.9));
+    will-change:transform,opacity;
+  }
+  @keyframes floatHeart {
+    0%   { transform:translateY(0) scale(0.4) rotate(0deg); opacity:0; }
+    12%  { opacity:1; }
+    30%  { transform:translateY(-25vh) scale(1.15) rotate(8deg); opacity:1; }
+    60%  { transform:translateY(-55vh) scale(1) rotate(-8deg); opacity:1; }
+    100% { transform:translateY(-95vh) scale(0.5) rotate(15deg); opacity:0; }
+  }
+
+  #bubbleBtn {
+    position:fixed; bottom:25px; right:25px;
+    width:60px; height:60px;
+    border-radius:50%;
+    background:#ffffff;
+    border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:26px; color:#1a1a2e;
+    box-shadow:0 6px 20px rgba(0,0,0,0.5);
+    transition:transform 0.35s cubic-bezier(.34,1.56,.64,1), box-shadow 0.3s;
+    z-index:1000;
+  }
+  #bubbleBtn:hover {
+    transform:scale(1.1);
+    box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 25px rgba(255,20,147,0.6);
+  }
+
+  #backdrop {
+    position:fixed; inset:0;
+    background:rgba(10,0,8,0.6);
+    backdrop-filter:blur(10px) saturate(140%);
+    -webkit-backdrop-filter:blur(10px) saturate(140%);
+    display:none; z-index:998;
+    animation:fade 0.3s ease;
+  }
+  #backdrop.show { display:block; }
+  @keyframes fade { from{opacity:0} to{opacity:1} }
+
+  #panel {
+    position:fixed; bottom:20px; right:25px;
+    width:420px;
+    max-width:calc(100vw - 40px);
+    background:linear-gradient(160deg, rgba(45,10,35,0.98), rgba(25,5,20,1));
+    backdrop-filter:blur(20px) saturate(160%);
+    -webkit-backdrop-filter:blur(20px) saturate(160%);
+    border:1.5px solid rgba(255,20,147,0.5);
+    border-radius:16px;
+    padding:12px;
+    box-shadow:0 25px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.08);
+    display:none;
+    flex-direction:column;
+    gap:10px;
+    z-index:999;
+    animation:pop 0.35s cubic-bezier(.34,1.56,.64,1);
+    overflow:hidden;
+  }
+  #panel.open { display:flex; }
+  @keyframes pop {
+    from { opacity:0; transform:translateY(30px) scale(0.92); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+  }
+
+  .input-row {
+    display:flex;
+    align-items:stretch;
+    gap:0;
+    background:linear-gradient(135deg, rgba(20,5,15,0.95), rgba(35,10,28,0.95));
+    border:1.5px solid rgba(255,20,147,0.5);
+    border-radius:10px;
+    padding:0;
+    box-shadow:inset 0 2px 8px rgba(0,0,0,0.5);
+    position:relative;
+    overflow:hidden;
+    min-height:46px;
+    flex-shrink:0;
+  }
+
+  .input-row::before {
+    content:'';
+    position:absolute; inset:0;
+    background:linear-gradient(120deg, transparent 30%, rgba(255,20,147,0.15) 50%, transparent 70%);
+    background-size:200% 100%;
+    animation:shineSlide 3s linear infinite;
+    pointer-events:none;
+  }
+  @keyframes shineSlide {
+    0%   { background-position:200% 0; }
+    100% { background-position:-200% 0; }
+  }
+
+  .input-row.highlight {
+    border-color:#ffd60a;
+    background:linear-gradient(135deg, rgba(60,45,0,0.95), rgba(80,60,0,0.95));
+    box-shadow:inset 0 2px 8px rgba(0,0,0,0.5), 0 0 35px rgba(255,214,10,0.6);
+  }
+
+  .icon-btn {
+    width:38px; min-width:38px;
+    flex-shrink:0;
+    border-radius:0; border:none;
+    background:linear-gradient(135deg,#3a1a2e,#2a0f20);
+    color:#ffb3d9;
+    font-size:1rem; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    position:relative; z-index:1;
+    border-right:1px solid rgba(255,20,147,0.25);
+    -webkit-tap-highlight-color:transparent;
+    padding:0 4px;
+  }
+  .icon-btn .icon-inner {
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:1px;
+    width:100%; height:100%;
+    border-radius:6px;
+    position:relative;
+  }
+  .icon-btn .label {
+    font-size:0.5rem; font-weight:700;
+    letter-spacing:0.5px; line-height:1; opacity:0.9;
+  }
+  .icon-btn .emoji-icon { font-size:1rem; line-height:1; }
+  .icon-btn .icon-inner::after {
+    content:''; position:absolute;
+    bottom:2px; left:50%;
+    transform:translateX(-50%);
+    width:0; height:1.5px;
+    background:linear-gradient(90deg,transparent,#ff1493,#ff69b4,transparent);
+    box-shadow:0 0 6px #ff1493;
+    border-radius:2px;
+    opacity:0.7;
+  }
+  .icon-btn.gif-btn .icon-inner::after { width:20px; }
+  .icon-btn.emoji-btn .icon-inner::after { width:16px; }
+  .icon-btn.keyboard-btn .icon-inner::after { width:16px; }
+
+  #commentBox {
+    flex:1; min-width:0;
+    background:transparent; border:none; outline:none;
+    color:#ffffff;
+    font-size:1rem; font-weight:600;
+    padding:12px 10px;
+    cursor:text;
+    position:relative; z-index:1;
+    caret-color:transparent;
+    text-shadow:0 0 8px rgba(255,20,147,0.4);
+    white-space:pre-wrap;
+    word-wrap:break-word;
+    overflow-wrap:break-word;
+    overflow-y:auto;
+    height:48px;
+    min-height:48px;
+    max-height:48px;
+    line-height:1.5;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+    scrollbar-color: rgba(255,20,147,0.5) transparent;
+  }
+  #commentBox::-webkit-scrollbar { width:5px; }
+  #commentBox::-webkit-scrollbar-thumb { background:rgba(255,20,147,0.5); border-radius:5px; }
+  #commentBox:empty::before {
+    content:"Type here...";
+    color:#a88098;
+    font-weight:500;
+    text-shadow:none;
+    pointer-events:none;
+  }
+
+  .typing-cursor {
+    display:inline-block;
+    width:2px;
+    height:1.1em;
+    background:#ff69b4;
+    box-shadow:0 0 8px #ff1493, 0 0 15px #ff1493;
+    vertical-align:text-bottom;
+    animation:blinkCursor 1s step-end infinite;
+    margin-left:-1px;
+    margin-right:-1px;
+    position:relative;
+    top:2px;
+    border-radius:1px;
+  }
+  @keyframes blinkCursor {
+    0%, 50% { opacity:1; }
+    51%, 100% { opacity:0.2; }
+  }
+
+  .switch-wrap {
+    display:flex; align-items:center; justify-content:center;
+    padding:0 6px;
+    border-left:1px solid rgba(255,20,147,0.25);
+    border-right:1px solid rgba(255,20,147,0.25);
+    position:relative; z-index:1;
+    flex-shrink:0;
+  }
+
+  .switch {
+    position:relative;
+    width:34px; height:18px;
+    background:linear-gradient(135deg,#3a1a2e,#2a0f20);
+    border:1px solid rgba(255,20,147,0.4);
+    border-radius:4px; cursor:pointer;
+    box-shadow:inset 0 2px 4px rgba(0,0,0,0.5);
+  }
+  .switch::after {
+    content:''; position:absolute;
+    top:1px; left:1px;
+    width:14px; height:14px;
+    background:linear-gradient(135deg,#fff,#ffb3d9);
+    border-radius:3px;
+    transition:0.35s cubic-bezier(.34,1.56,.64,1);
+    box-shadow:0 2px 5px rgba(0,0,0,0.4);
+  }
+  .switch.on {
+    background:linear-gradient(135deg,#ffd60a,#ffa500);
+    border-color:#ffd60a;
+    box-shadow:0 0 15px rgba(255,214,10,0.7);
+  }
+  .switch.on::after { left:17px; background:#fff; }
+
+  #topSendBtn {
+    width:44px; min-width:44px;
+    flex-shrink:0;
+    border-radius:0; border:none;
+    background:linear-gradient(135deg,#3a1a2e,#2a0f20);
+    color:#ff69b4;
+    font-size:1.3rem; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700;
+    position:relative; z-index:1;
+    -webkit-tap-highlight-color:transparent;
+  }
+  #topSendBtn .icon-inner {
+    display:flex; align-items:center; justify-content:center;
+    width:100%; height:100%;
+    border-radius:6px;
+    color:#ff69b4;
+    text-shadow:0 0 8px rgba(255,20,147,0.6);
+    transition:all 0.25s;
+  }
+  #topSendBtn:active .icon-inner, #topSendBtn.active .icon-inner {
+    color:#fff;
+    text-shadow:0 0 15px #fff, 0 0 30px #ff1493;
+    transform:scale(1.2);
+  }
+
+  .panel-container {
+    position:relative;
+    width:100%;
+    height:300px;
+    min-height:300px;
+    max-height:300px;
+    border-radius:12px;
+    background:linear-gradient(160deg, #2a0a1e, #1a0510);
+    border:1px solid rgba(255,20,147,0.35);
+    overflow:hidden;
+    flex-shrink:0;
+  }
+
+  .bottom-panel {
+    position:absolute; inset:0;
+    padding:10px;
+    display:none;
+    overflow-y:auto;
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+    scrollbar-color: rgba(255,20,147,0.6) rgba(0,0,0,0.3);
+  }
+  .bottom-panel.open { display:block; animation:fadeIn 0.25s ease; }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+  .bottom-panel::-webkit-scrollbar { width:8px; }
+  .bottom-panel::-webkit-scrollbar-track { background:rgba(0,0,0,0.3); border-radius:8px; }
+  .bottom-panel::-webkit-scrollbar-thumb {
+    background:linear-gradient(180deg,#ff1493,#ff69b4);
+    border-radius:8px;
+    box-shadow:0 0 8px #ff1493;
+  }
+
+  .emoji-grid {
+    display:grid;
+    grid-template-columns:repeat(8,1fr);
+    gap:4px;
+  }
+  .emoji-grid span {
+    font-size:1.4rem;
+    width:100%; height:38px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; border-radius:8px;
+    user-select:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .emoji-grid span:hover, .emoji-grid span:active {
+    background:rgba(255,20,147,0.2);
+  }
+
+  .gif-grid {
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:6px;
+  }
+  .gif-grid img {
+    width:100%; height:80px;
+    object-fit:cover; border-radius:8px;
+    cursor:pointer;
+    border:2px solid transparent;
+    -webkit-tap-highlight-color:transparent;
+    display:block;
+  }
+  .gif-grid img:hover {
+    border-color:#ff1493;
+    box-shadow:0 5px 20px rgba(255,20,147,0.6);
+  }
+
+  #mediaPreview {
+    display:none;
+    position:relative;
+    border-radius:10px;
+    overflow:hidden;
+    box-shadow:0 8px 25px rgba(0,0,0,0.5);
+    flex-shrink:0;
+  }
+  #mediaPreview img {
+    width:100%; border-radius:10px;
+    max-height:120px; object-fit:cover; display:block;
+  }
+  #removeGif {
+    position:absolute; top:8px; right:8px;
+    width:28px; height:28px;
+    border-radius:6px;
+    background:rgba(255,20,147,0.95);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.3);
+    font-size:0.85rem; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* ===== KEYBOARD ===== */
+  .keyboard {
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    user-select:none;
+    height:100%;
+  }
+
+  .reader-row {
+    display:flex;
+    gap:4px;
+    width:100%;
+    align-items:stretch;
+    flex-shrink:0;
+  }
+
+  .reader-btn {
+    flex:4;
+    background:linear-gradient(160deg,#7a2550,#4a1030);
+    color:#ffffff;
+    border:1.5px solid rgba(255,105,180,0.7);
+    border-radius:8px;
+    padding:12px 12px;
+    font-size:1rem;
+    font-weight:800;
+    cursor:pointer;
+    box-shadow:
+      0 3px 0 #200510,
+      0 4px 12px rgba(0,0,0,0.5),
+      0 0 20px rgba(255,20,147,0.4),
+      inset 0 1px 0 rgba(255,255,255,0.15);
+    text-shadow:0 0 10px rgba(255,20,147,0.8);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-width:0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    position:relative;
+    -webkit-tap-highlight-color:transparent;
+    letter-spacing:0.3px;
+  }
+  .reader-btn::before {
+    content:''; position:absolute;
+    bottom:0; left:5%;
+    height:2px; width:90%;
+    background:linear-gradient(90deg,transparent,#ff1493,#ff69b4,transparent);
+    box-shadow:0 0 10px #ff1493;
+    border-radius:2px;
+    opacity:0.7;
+    animation:suggestWave 3s ease-in-out infinite;
+  }
+  @keyframes suggestWave {
+    0%, 100% { transform:translateX(-15%); opacity:0.4; }
+    50%      { transform:translateX(15%);  opacity:1; }
+  }
+  .reader-btn .reader-text {
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    text-align:center;
+    color:#ffffff;
+    width:100%;
+  }
+  .reader-btn.has-text {
+    background:linear-gradient(160deg,#a0305a,#5a1540);
+    box-shadow:
+      0 3px 0 #200510,
+      0 4px 12px rgba(0,0,0,0.5),
+      0 0 28px rgba(255,20,147,0.8),
+      inset 0 1px 0 rgba(255,255,255,0.2);
+    border-color:rgba(255,140,200,1);
+  }
+  .reader-btn:active, .reader-btn.active {
+    background:linear-gradient(160deg,#ff1493,#ff69b4);
+    color:#fff;
+    box-shadow:0 0 0 #200510, 0 0 30px rgba(255,20,147,1), inset 0 2px 4px rgba(0,0,0,0.3);
+    border-color:#fff;
+  }
+  .reader-btn.jump { animation:jumpTap 0.15s cubic-bezier(.34,1.56,.64,1); }
+
+  .reader-text .typed-part {
+    color:#ff69b4;
+    text-shadow:0 0 10px #ff1493, 0 0 20px rgba(255,20,147,0.6);
+    font-weight:900;
+  }
+  .reader-text .suggest-part {
+    color:#d9b3c8;
+    font-weight:700;
+  }
+
+  .send-arrow-btn {
+    flex:1;
+    background:transparent;
+    border:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+    -webkit-tap-highlight-color:transparent;
+    min-width:48px;
+  }
+  .send-arrow-btn .arrow {
+    font-size:2rem;
+    font-weight:900;
+    color:#ff69b4;
+    text-shadow:
+      0 0 10px rgba(255,20,147,0.8),
+      0 0 20px rgba(255,20,147,0.5),
+      0 0 30px rgba(255,20,147,0.3);
+    display:inline-block;
+    line-height:1;
+    transition:all 0.2s;
+  }
+  .send-arrow-btn:hover .arrow { color:#fff; text-shadow:0 0 12px #fff, 0 0 25px #ff1493, 0 0 40px #ff1493; }
+  .send-arrow-btn:active .arrow,
+  .send-arrow-btn.active .arrow {
+    color:#fff;
+    text-shadow:0 0 15px #fff, 0 0 30px #ff1493, 0 0 50px #ff1493;
+    transform:scale(1.3);
+  }
+  .send-arrow-btn.jump .arrow { animation:jumpTap 0.15s cubic-bezier(.34,1.56,.64,1); }
+
+  /* ===== KEY ROWS - 4px gap ===== */
+  .key-row { display:flex; justify-content:center; gap:4px; width:100%; }
+  .key-row-2 { padding:0 10px; }
+  .key-row-3 { padding:0 4px; }
+
+  /* सभी keys एक जैसे मोटे */
+  .key {
+    position:relative;
+    background:linear-gradient(160deg,#5a1a3d,#3a0f28);
+    color:#ffffff;
+    border:1px solid rgba(255,20,147,0.5);
+    border-radius:7px;
+    padding:14px 0;
+    min-width:0;
+    text-align:center;
+    font-size:1.15rem; font-weight:800;
+    cursor:pointer;
+    box-shadow:0 3px 0 #200510, 0 4px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12);
+    flex:1 1 0;
+    overflow:hidden;
+    text-shadow:0 0 6px rgba(255,20,147,0.6);
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
+    -webkit-user-select:none; user-select:none;
+    letter-spacing:0.5px;
+  }
+
+  .key::before {
+    content:''; position:absolute;
+    bottom:0; left:0;
+    height:2px; width:40%;
+    background:linear-gradient(90deg,transparent,#ff1493,#ff69b4,transparent);
+    box-shadow:0 0 8px #ff1493;
+    border-radius:2px;
+    animation:softWave 3.5s ease-in-out infinite;
+    opacity:0.7;
+  }
+  .key:nth-child(1)::before  { animation-delay:0s; }
+  .key:nth-child(2)::before  { animation-delay:0.3s; }
+  .key:nth-child(3)::before  { animation-delay:0.6s; }
+  .key:nth-child(4)::before  { animation-delay:0.9s; }
+  .key:nth-child(5)::before  { animation-delay:1.2s; }
+  .key:nth-child(6)::before  { animation-delay:1.5s; }
+  .key:nth-child(7)::before  { animation-delay:1.8s; }
+  .key:nth-child(8)::before  { animation-delay:2.1s; }
+  .key:nth-child(9)::before  { animation-delay:2.4s; }
+  .key:nth-child(10)::before { animation-delay:2.7s; }
+
+  @keyframes softWave {
+    0%   { transform:translateX(-30%); opacity:0.3; }
+    50%  { transform:translateX(180%); opacity:0.9; }
+    100% { transform:translateX(-30%); opacity:0.3; }
+  }
+
+  .key:active, .key.active {
+    background:linear-gradient(160deg,#ff1493,#ff69b4);
+    color:#fff;
+    box-shadow:0 0 0 #200510, 0 0 25px rgba(255,20,147,0.9), inset 0 2px 6px rgba(0,0,0,0.3);
+    border-color:#fff;
+  }
+
+  .key.jump { animation:jumpTap 0.15s cubic-bezier(.34,1.56,.64,1); }
+
+  /* सब keys एक जैसी मोटाई — कोई ज़्यादा wide/wider नहीं */
+  .key.wide { flex:1.5 1 0; }
+  .key.space { flex:5 1 0; font-size:0.9rem; }
+
+  /* Shift और Backspace — दोनों normal keys जितने मोटे */
+  .key.shift-key { flex:1.8 1 0; font-size:1.2rem; }
+  .key.backspace-key { flex:1.8 1 0; font-size:1.3rem; }
+
+  .key.shift-active {
+    background:linear-gradient(160deg,#ff1493,#ff69b4);
+    color:#fff;
+    box-shadow:0 0 0 #200510, 0 0 20px rgba(255,20,147,0.9), 0 0 35px rgba(255,20,147,0.6), inset 0 2px 6px rgba(0,0,0,0.3);
+    border-color:#fff;
+  }
+  .key.shift-caps {
+    background:linear-gradient(160deg,#ffd60a,#ffa500);
+    color:#1a0520;
+    box-shadow:0 0 0 #200510, 0 0 25px rgba(255,214,10,0.9), 0 0 50px rgba(255,165,0,0.6), inset 0 2px 6px rgba(0,0,0,0.3);
+    border-color:#fff;
+  }
+
+  .keyboard-body {
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    flex:1;
+    justify-content:space-between;
+  }
+
+  .numpad {
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:5px;
+    height:100%;
+    align-content:center;
+  }
+  .numpad-key {
+    background:linear-gradient(160deg,#5a1a3d,#3a0f28);
+    color:#fff;
+    border:1px solid rgba(255,20,147,0.5);
+    border-radius:8px;
+    padding:12px 0;
+    text-align:center;
+    font-size:1.25rem; font-weight:800;
+    cursor:pointer;
+    box-shadow:0 3px 0 #200510, 0 4px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12);
+    text-shadow:0 0 6px rgba(255,20,147,0.6);
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+    touch-action:manipulation;
+    position:relative;
+    overflow:hidden;
+  }
+  .numpad-key::before {
+    content:''; position:absolute;
+    bottom:0; left:0;
+    height:2px; width:35%;
+    background:linear-gradient(90deg,transparent,#ff1493,#ff69b4,transparent);
+    box-shadow:0 0 8px #ff1493;
+    border-radius:2px;
+    animation:softWave 3.5s ease-in-out infinite;
+    opacity:0.6;
+  }
+  .numpad-key:active, .numpad-key.active {
+    background:linear-gradient(160deg,#ff1493,#ff69b4);
+    color:#fff;
+    box-shadow:0 0 0 #200510, 0 0 25px rgba(255,20,147,0.9), inset 0 2px 6px rgba(0,0,0,0.3);
+    border-color:#fff;
+  }
+  .numpad-key.jump { animation:jumpTap 0.15s cubic-bezier(.34,1.56,.64,1); }
+  .numpad-key.action {
+    background:linear-gradient(160deg,#7a2550,#4a1030);
+    font-size:1.1rem;
+  }
+  .numpad-key.zero { grid-column:span 2; }
+
+  #commentsList {
+    width:100%;
+    max-width:440px;
+    margin-top:20px;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+  }
+  .comment-item {
+    background:linear-gradient(160deg, rgba(45,10,35,0.9), rgba(30,5,22,0.9));
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(255,20,147,0.2);
+    border-left:4px solid #ff1493;
+    padding:12px 15px;
+    border-radius:12px;
+    margin-bottom:10px;
+    font-size:1rem; line-height:1.5;
+    color:#fff;
+    animation:commentIn 0.5s cubic-bezier(.34,1.56,.64,1);
+    word-wrap:break-word;
+    white-space:pre-wrap;
+    box-shadow:0 8px 25px rgba(0,0,0,0.4);
+    display:inline-block;
+    max-width:100%;
+  }
+  .comment-item.highlight {
+    background:linear-gradient(160deg, rgba(70,55,0,0.95), rgba(50,40,0,0.95));
+    border-left-color:#ffd60a;
+    color:#ffe066;
+    box-shadow:0 0 30px rgba(255,214,10,0.4), 0 8px 25px rgba(0,0,0,0.4);
+  }
+  .comment-item img {
+    width:100%; border-radius:10px;
+    margin-top:8px; max-height:160px;
+    object-fit:cover; display:block;
+  }
+  @keyframes commentIn {
+    0%   { opacity:0; transform:translateY(-30px) scale(0.7) rotate(-3deg); }
+    50%  { opacity:1; transform:translateY(8px) scale(1.05) rotate(1deg); }
+    75%  { transform:translateY(-3px) scale(0.98) rotate(-0.5deg); }
+    100% { opacity:1; transform:translateY(0) scale(1) rotate(0deg); }
+  }
+
+  @media (max-width:600px) {
+    body { padding:10px; }
+    h1 { font-size:1.2rem; }
+    .hint { font-size:0.75rem; margin-bottom:12px; }
+    #panel {
+      position:fixed;
+      left:0; right:0; bottom:0;
+      width:100%; max-width:100%;
+      padding:10px;
+      border-radius:16px 16px 0 0;
+      gap:8px;
+      border-left:none; border-right:none; border-bottom:none;
+      border-top:1.5px solid rgba(255,20,147,0.5);
+    }
+    #bubbleBtn { right:15px; bottom:15px; width:54px; height:54px; font-size:24px; }
+    .panel-container { height:290px; min-height:290px; max-height:290px; }
+    .emoji-grid { grid-template-columns:repeat(7,1fr); gap:3px; }
+    .emoji-grid span { font-size:1.3rem; height:36px; }
+    .icon-btn { width:34px; min-width:34px; font-size:0.95rem; padding:0 2px; }
+    .icon-btn .label { font-size:0.45rem; }
+    .icon-btn .emoji-icon { font-size:0.95rem; }
+    #topSendBtn { width:40px; min-width:40px; font-size:1.2rem; }
+    #commentBox { font-size:0.95rem; padding:10px 8px; height:44px; min-height:44px; max-height:44px; }
+    .switch { width:30px; height:16px; }
+    .switch::after { width:12px; height:12px; }
+    .switch.on::after { left:15px; }
+    .key { padding:12px 0; font-size:1rem; border-radius:6px; }
+    .key-row { gap:4px; }
+    .keyboard { gap:4px; }
+    .bottom-panel { padding:8px; }
+    .gif-grid { grid-template-columns:repeat(3,1fr); gap:5px; }
+    .gif-grid img { height:65px; }
+    .reader-btn { padding:10px 10px; font-size:0.95rem; }
+    .send-arrow-btn .arrow { font-size:1.7rem; }
+    .numpad { gap:4px; }
+    .numpad-key { padding:10px 0; font-size:1.1rem; }
+    .key-popup { font-size:2rem; padding:12px 18px; }
+  }
+
+  @media (max-width:360px) {
+    .emoji-grid { grid-template-columns:repeat(6,1fr); }
+    .key { padding:10px 0; font-size:0.9rem; }
+    .panel-container { height:270px; min-height:270px; max-height:270px; }
+    .reader-btn { padding:8px 8px; font-size:0.85rem; }
+    .send-arrow-btn .arrow { font-size:1.5rem; }
+    .key-popup { font-size:1.8rem; padding:10px 16px; }
+  }
+</style>
+<style id="partyRoomEmbeddedKeyboardOverrides">
+html,body{width:100%!important;height:100%!important;overflow:hidden!important;padding:0!important;margin:0!important;background:transparent!important;}
+body::before{display:none!important}
+h1,.hint,#commentsList,#bubbleBtn,#backdrop{display:none!important}
+#panel{display:flex!important;position:static!important;width:100%!important;max-width:none!important;height:100%!important;max-height:none!important;margin:0!important;padding:6px!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;backdrop-filter:none!important;gap:7px!important;animation:none!important}
+.panel-container{height:230px!important;min-height:230px!important;max-height:230px!important}
+#keyboardPopup{display:block!important;animation:none!important}
+.key-popup{font-size:1.15rem!important;padding:5px 8px!important;min-width:32px!important;border-radius:8px!important;box-shadow:0 5px 15px rgba(0,0,0,.5),0 0 12px rgba(255,20,147,.25)!important;transform:translate(-50%,-100%) translateY(-6px)!important;}
+@keyframes popupIn{0%{opacity:0;transform:translate(-50%,-100%) translateY(-3px) scale(.96)}100%{opacity:1;transform:translate(-50%,-100%) translateY(-6px) scale(1)}}
+.key:active,.key.active{transform:translateY(1px) scale(.985)!important;}
+.key.jump,.send-arrow-btn.jump .arrow{animation-duration:.08s!important;}
+.send-arrow-btn:active .arrow,.send-arrow-btn.active .arrow{transform:scale(1.03)!important;}
+.feather,.heart,#sweepBar{animation:none!important;display:none!important;}
+@media(max-width:520px){body{padding:5px!important}.panel-container{height:230px!important;min-height:230px!important;max-height:230px!important}.key{font-size:.92rem!important;padding:8px 0!important}.reader-btn{padding:7px 8px!important;font-size:.85rem!important}.send-arrow-btn .arrow{font-size:1.5rem!important}.emoji-grid span{height:32px!important;font-size:1.15rem!important}.gif-grid img{height:56px!important}.numpad-key{padding:8px 0!important;font-size:1rem!important}}
+</style>
+</head>
+<body>
+
+  <h1>⌨️ Pro Keyboard</h1>
+  <p class="hint">Type fast • English reader • Auto-capitalize ✨</p>
+
+  <div id="sweepBar"></div>
+  <div id="commentsList"></div>
+  <div id="backdrop"></div>
+
+  <button id="bubbleBtn">💬</button>
+
+  <div id="panel">
+    <div class="input-row" id="inputRow">
+      <button class="icon-btn emoji-btn" id="emojiBtn" title="Emoji">
+        <span class="icon-inner"><span class="emoji-icon">😀</span></span>
+      </button>
+      <button class="icon-btn gif-btn" id="gifBtn" title="GIF">
+        <span class="icon-inner">
+          <span class="emoji-icon">🎞️</span>
+          <span class="label">GIF</span>
+        </span>
+      </button>
+      <div id="commentBox" contenteditable="true" inputmode="none" spellcheck="false" autocorrect="off" autocapitalize="off"></div>
+      <div class="switch-wrap">
+        <div class="switch" id="highlightSwitch" title="Highlight"></div>
+      </div>
+      <button class="icon-btn keyboard-btn" id="keyboardBtn" title="Keyboard">
+        <span class="icon-inner"><span class="emoji-icon">⌨️</span></span>
+      </button>
+      <button id="topSendBtn" title="Send"><span class="icon-inner">➤</span></button>
+    </div>
+
+    <div id="mediaPreview">
+      <img id="gifPreview" src="" alt="GIF">
+      <button id="removeGif">✕</button>
+    </div>
+
+    <div class="panel-container">
+      <div class="bottom-panel" id="emojiPopup">
+        <div class="emoji-grid" id="emojiGrid"></div>
+      </div>
+
+      <div class="bottom-panel" id="gifPopup">
+        <div class="gif-grid" id="gifGrid"></div>
+      </div>
+
+      <div class="bottom-panel" id="keyboardPopup">
+        <div class="keyboard" id="keyboard">
+          <div class="reader-row">
+            <div class="reader-btn" id="readerBtn">
+              <span class="reader-text" id="readerText">✨ Start typing...</span>
+            </div>
+            <button class="send-arrow-btn" id="bottomSendBtn" title="Send">
+              <span class="arrow">➤</span>
+            </button>
+          </div>
+
+          <div class="keyboard-body">
+            <div class="key-row">
+              <div class="key" data-key="q">Q</div>
+              <div class="key" data-key="w">W</div>
+              <div class="key" data-key="e">E</div>
+              <div class="key" data-key="r">R</div>
+              <div class="key" data-key="t">T</div>
+              <div class="key" data-key="y">Y</div>
+              <div class="key" data-key="u">U</div>
+              <div class="key" data-key="i">I</div>
+              <div class="key" data-key="o">O</div>
+              <div class="key" data-key="p">P</div>
+            </div>
+            <div class="key-row key-row-2">
+              <div class="key" data-key="a">A</div>
+              <div class="key" data-key="s">S</div>
+              <div class="key" data-key="d">D</div>
+              <div class="key" data-key="f">F</div>
+              <div class="key" data-key="g">G</div>
+              <div class="key" data-key="h">H</div>
+              <div class="key" data-key="j">J</div>
+              <div class="key" data-key="k">K</div>
+              <div class="key" data-key="l">L</div>
+            </div>
+            <div class="key-row key-row-3">
+              <div class="key shift-key" data-key="Shift" id="shiftKey">⇧</div>
+              <div class="key" data-key="z">Z</div>
+              <div class="key" data-key="x">X</div>
+              <div class="key" data-key="c">C</div>
+              <div class="key" data-key="v">V</div>
+              <div class="key" data-key="b">B</div>
+              <div class="key" data-key="n">N</div>
+              <div class="key" data-key="m">M</div>
+              <div class="key backspace-key" data-key="Backspace" id="backspaceKey">⌫</div>
+            </div>
+            <div class="key-row">
+              <div class="key wide" data-key="num" id="numToggleKey">123</div>
+              <div class="key space" data-key=" ">Space</div>
+              <div class="key wide" data-key="Enter">↵</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom-panel" id="numPopup">
+        <div class="numpad" id="numpad">
+          <div class="numpad-key" data-num="1">1</div>
+          <div class="numpad-key" data-num="2">2</div>
+          <div class="numpad-key" data-num="3">3</div>
+          <div class="numpad-key action" data-num="-">−</div>
+          <div class="numpad-key" data-num="4">4</div>
+          <div class="numpad-key" data-num="5">5</div>
+          <div class="numpad-key" data-num="6">6</div>
+          <div class="numpad-key action" data-num="+">+</div>
+          <div class="numpad-key" data-num="7">7</div>
+          <div class="numpad-key" data-num="8">8</div>
+          <div class="numpad-key" data-num="9">9</div>
+          <div class="numpad-key action" data-num=".">.</div>
+          <div class="numpad-key zero" data-num="0">0</div>
+          <div class="numpad-key action" data-num="Backspace">⌫</div>
+          <div class="numpad-key action" data-num="Enter">↵</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const bubbleBtn = document.getElementById('bubbleBtn');
+  const panel = document.getElementById('panel');
+  const backdrop = document.getElementById('backdrop');
+  const commentBox = document.getElementById('commentBox');
+  const keyboard = document.getElementById('keyboard');
+  const topSendBtn = document.getElementById('topSendBtn');
+  const bottomSendBtn = document.getElementById('bottomSendBtn');
+  const highlightSwitch = document.getElementById('highlightSwitch');
+  const commentsList = document.getElementById('commentsList');
+  const inputRow = document.getElementById('inputRow');
+  const sweepBar = document.getElementById('sweepBar');
+  const backspaceKey = document.getElementById('backspaceKey');
+  const numToggleKey = document.getElementById('numToggleKey');
+  const shiftKey = document.getElementById('shiftKey');
+  const readerBtn = document.getElementById('readerBtn');
+  const readerText = document.getElementById('readerText');
+
+  const emojiBtn = document.getElementById('emojiBtn');
+  const gifBtn = document.getElementById('gifBtn');
+  const keyboardBtn = document.getElementById('keyboardBtn');
+  const emojiPopup = document.getElementById('emojiPopup');
+  const gifPopup = document.getElementById('gifPopup');
+  const keyboardPopup = document.getElementById('keyboardPopup');
+  const numPopup = document.getElementById('numPopup');
+  const emojiGrid = document.getElementById('emojiGrid');
+  const gifGrid = document.getElementById('gifGrid');
+  const numpad = document.getElementById('numpad');
+  const mediaPreview = document.getElementById('mediaPreview');
+  const gifPreview = document.getElementById('gifPreview');
+  const removeGif = document.getElementById('removeGif');
+
+  let shiftActive = false;
+  let capsLock = false;
+  let lastShiftClick = 0;
+  let highlightMode = false;
+  let attachedGif = null;
+  let sweepDirection = 'ltr';
+  let currentSuggestion = '';
+  let currentWord = '';
+  let cursorPos = 0;
+  let currentPopup = null;
+  let popupTimer = null;
+
+  const HISTORY_KEY = 'proKeyboardHistory_v1';
+  const FREQ_KEY = 'proKeyboardFreq_v1';
+  let userHistory = [];
+  let wordFrequency = {};
+  try {
+    const saved = localStorage.getItem(HISTORY_KEY);
+    if (saved) userHistory = JSON.parse(saved);
+    const freq = localStorage.getItem(FREQ_KEY);
+    if (freq) wordFrequency = JSON.parse(freq);
+  } catch(e) { userHistory = []; wordFrequency = {}; }
+
+  /* ===== KEY POPUP (बड़ा अक्षर) ===== */
+  function showKeyPopup(keyEl, char) {
+    if (!char || char.length < 1) return;
+    if (char === ' ' || char === '↵' || char === '⌫' || char === '⇧' || char === '123') return;
+
+    // पुराना popup हटाओ
+    hideKeyPopup();
+
+    const popup = document.createElement('div');
+    popup.className = 'key-popup';
+    popup.textContent = char;
+    document.body.appendChild(popup);
+    currentPopup = popup;
+
+    const rect = keyEl.getBoundingClientRect();
+    popup.style.left = (rect.left + rect.width / 2) + 'px';
+    popup.style.top = rect.top + 'px';
+
+    // 600ms बाद auto hide
+    popupTimer = setTimeout(function() {
+      hideKeyPopup();
+    }, 600);
+  }
+
+  function hideKeyPopup() {
+    if (popupTimer) { clearTimeout(popupTimer); popupTimer = null; }
+    if (currentPopup) {
+      const p = currentPopup;
+      currentPopup = null;
+      p.classList.add('fade-out');
+      setTimeout(function() { p.remove(); }, 150);
+    }
+  }
+
+  /* ===== Keyboard Case ===== */
+  function shouldCap(text) {
+    if (text.length === 0) return true;
+    return /[\s.!?]/.test(text[text.length - 1]);
+  }
+
+  function getText() {
+    return commentBox.innerText || commentBox.textContent || '';
+  }
+
+  function setText(str) {
+    commentBox.textContent = str;
+  }
+
+  function renderWithCursor() {
+    const text = getText();
+    const before = text.slice(0, cursorPos);
+    const after = text.slice(cursorPos);
+    const beforeHtml = escapeHtml(before).replace(/\n/g, '<br>');
+    const afterHtml = escapeHtml(after).replace(/\n/g, '<br>');
+    commentBox.innerHTML = beforeHtml + '<span class="typing-cursor"></span>' + afterHtml;
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, function(m) {
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m];
+    });
+  }
+
+  function scrollToCursor() {
+    requestAnimationFrame(function() {
+      const cursor = commentBox.querySelector('.typing-cursor');
+      if (cursor && cursor.scrollIntoView) {
+        cursor.scrollIntoView({ block:'nearest', inline:'nearest' });
+      }
+    });
+  }
+
+  function updateKeyboardCase() {
+    let showUpper = false;
+    if (capsLock) showUpper = true;
+    else if (shiftActive) showUpper = true;
+    else {
+      const text = getText();
+      const before = text.slice(0, cursorPos);
+      showUpper = shouldCap(before);
+    }
+    document.querySelectorAll('.key[data-key]').forEach(function(k) {
+      const key = k.dataset.key;
+      if (key.length === 1 && /[a-z]/i.test(key)) {
+        k.textContent = showUpper ? key.toUpperCase() : key.toLowerCase();
+      }
+    });
+  }
+
+  /* ===== Reader ===== */
+  function findSuggestions(prefix) {
+    if (!prefix || prefix.length < 1) return [];
+    const p = prefix.toLowerCase();
+    const candidates = [];
+    const seen = new Set();
+    for (let i = 0; i < userHistory.length; i++) {
+      const w = userHistory[i];
+      if (w.toLowerCase().startsWith(p) && w.toLowerCase() !== p && !seen.has(w.toLowerCase())) {
+        candidates.push({ word: w, score: 3000 + (userHistory.length - i) });
+        seen.add(w.toLowerCase());
+      }
+    }
+    for (let i = 0; i < dictionary.length; i++) {
+      const w = dictionary[i];
+      if (w.toLowerCase().startsWith(p) && w.toLowerCase() !== p && !seen.has(w.toLowerCase())) {
+        const freq = wordFrequency[w.toLowerCase()] || 0;
+        candidates.push({ word: w, score: freq * 10 + Math.random() });
+        seen.add(w.toLowerCase());
+      }
+    }
+    candidates.sort(function(a, b) { return b.score - a.score; });
+    return candidates.slice(0, 3).map(function(c) { return c.word; });
+  }
+
+  function getCurrentTypedWord() {
+    const text = getText();
+    const before = text.slice(0, cursorPos);
+    const match = before.match(/[a-zA-Z]+$/);
+    return match ? match[0] : '';
+  }
+
+  function updateReader() {
+    const typed = getCurrentTypedWord();
+    if (!typed || typed.length < 1) {
+      currentSuggestion = '';
+      currentWord = '';
+      readerText.textContent = '✨ Start typing...';
+      readerBtn.classList.remove('has-text');
+      readerBtn.dataset.word = '';
+      return;
+    }
+    currentWord = typed;
+    const suggestions = findSuggestions(typed);
+    if (suggestions.length === 0) {
+      currentSuggestion = '';
+      readerText.innerHTML = '<span class="typed-part">' + escapeHtml(typed) + '</span>';
+      readerBtn.classList.add('has-text');
+      readerBtn.dataset.word = '';
+      return;
+    }
+    currentSuggestion = suggestions[0];
+    const remainder = currentSuggestion.slice(typed.length);
+    readerText.innerHTML =
+      '<span class="typed-part">' + escapeHtml(typed) + '</span>' +
+      '<span class="suggest-part">' + escapeHtml(remainder) + '</span>';
+    readerBtn.classList.add('has-text');
+    readerBtn.dataset.word = currentSuggestion;
+  }
+
+  readerBtn.addEventListener('click', function(e) {
+    e.preventDefault(); e.stopPropagation(); jump(readerBtn);
+    const word = readerBtn.dataset.word;
+    if (!word || !currentWord) return;
+    const text = getText();
+    const before = text.slice(0, cursorPos - currentWord.length);
+    const after = text.slice(cursorPos);
+    setText(before + word + ' ' + after);
+    cursorPos = before.length + word.length + 1;
+    addToUserHistory(word);
+    renderWithCursor();
+    scrollToCursor();
+    updateReader();
+    updateKeyboardCase();
+  });
+
+  function addToUserHistory(word) {
+    if (!word || word.length < 2) return;
+    const idx = userHistory.findIndex(function(w) { return w.toLowerCase() === word.toLowerCase(); });
+    if (idx > -1) userHistory.splice(idx, 1);
+    userHistory.unshift(word);
+    if (userHistory.length > 200) userHistory = userHistory.slice(0, 200);
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(userHistory)); } catch(e) {}
+    const key = word.toLowerCase();
+    wordFrequency[key] = (wordFrequency[key] || 0) + 1;
+    try { localStorage.setItem(FREQ_KEY, JSON.stringify(wordFrequency)); } catch(e) {}
+  }
+
+  /* ===== Backspace Long Press ===== */
+  let bsTimeout = null, bsInterval = null;
+  function startBS(el) {
+    deleteChar();
+    bsTimeout = setTimeout(function() {
+      bsInterval = setInterval(function() {
+        deleteChar();
+        if (el) { el.classList.add('active'); setTimeout(function() { el.classList.remove('active'); }, 12); }
+      }, 12);
+    }, 200);
+  }
+  function stopBS() {
+    if (bsTimeout) { clearTimeout(bsTimeout); bsTimeout = null; }
+    if (bsInterval) { clearInterval(bsInterval); bsInterval = null; }
+  }
+  function deleteChar() {
+    const text = getText();
+    if (cursorPos === 0) { stopBS(); return; }
+    const before = text.slice(0, cursorPos - 1);
+    const after = text.slice(cursorPos);
+    setText(before + after);
+    cursorPos = Math.max(0, cursorPos - 1);
+    renderWithCursor();
+    scrollToCursor();
+    updateReader();
+    updateKeyboardCase();
+  }
+  function bindBS(el) {
+    if (!el) return;
+    el.addEventListener('mousedown', function(e) { e.preventDefault(); startBS(el); });
+    el.addEventListener('mouseup', stopBS);
+    el.addEventListener('mouseleave', stopBS);
+    el.addEventListener('touchstart', function(e) { e.preventDefault(); startBS(el); }, { passive:false });
+    el.addEventListener('touchend', function(e) { e.preventDefault(); stopBS(); });
+    el.addEventListener('touchcancel', stopBS);
+  }
+  bindBS(backspaceKey);
+  bindBS(numpad.querySelector('[data-num="Backspace"]'));
+
+  commentBox.addEventListener('focus', function() { commentBox.blur(); }, true);
+
+  commentBox.addEventListener('click', function(e) {
+    e.stopPropagation();
+    const text = getText();
+    let range = null;
+    if (document.caretRangeFromPoint) {
+      range = document.caretRangeFromPoint(e.clientX, e.clientY);
+    } else if (document.caretPositionFromPoint) {
+      const pos = document.caretPositionFromPoint(e.clientX, e.clientY);
+      if (pos) {
+        range = document.createRange();
+        range.setStart(pos.offsetNode, pos.offset);
+      }
+    }
+    if (range && commentBox.contains(range.startContainer)) {
+      const preRange = document.createRange();
+      preRange.selectNodeContents(commentBox);
+      preRange.setEnd(range.startContainer, range.startOffset);
+      cursorPos = preRange.toString().length;
+    } else {
+      cursorPos = text.length;
+    }
+    renderWithCursor();
+    scrollToCursor();
+  });
+
+  commentBox.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const text = getText();
+    let range = null;
+    if (document.caretRangeFromPoint) {
+      range = document.caretRangeFromPoint(touch.clientX, touch.clientY);
+    } else if (document.caretPositionFromPoint) {
+      const pos = document.caretPositionFromPoint(touch.clientX, touch.clientY);
+      if (pos) {
+        range = document.createRange();
+        range.setStart(pos.offsetNode, pos.offset);
+      }
+    }
+    if (range && commentBox.contains(range.startContainer)) {
+      const preRange = document.createRange();
+      preRange.selectNodeContents(commentBox);
+      preRange.setEnd(range.startContainer, range.startOffset);
+      cursorPos = preRange.toString().length;
+    } else {
+      cursorPos = text.length;
+    }
+    renderWithCursor();
+    scrollToCursor();
+  }, { passive:false });
+
+  commentBox.addEventListener('keydown', function(e) { e.preventDefault(); });
+
+  function jump(el) {
+    if (!el) return;
+    el.classList.remove('jump');
+    void el.offsetWidth;
+    el.classList.add('jump');
+    setTimeout(function() { el.classList.remove('jump'); }, 200);
+  }
+
+  bubbleBtn.addEventListener('click', function(e) {
+    e.stopPropagation(); jump(bubbleBtn); togglePanel();
+  });
+
+  function togglePanel() {
+    const isOpen = panel.classList.toggle('open');
+    backdrop.classList.toggle('show', isOpen);
+    if (isOpen) {
+      bubbleBtn.style.opacity = '0';
+      bubbleBtn.style.pointerEvents = 'none';
+      showPanel('keyboard');
+      setTimeout(function() { cursorPos = getText().length; renderWithCursor(); updateKeyboardCase(); }, 150);
+    } else {
+      bubbleBtn.style.opacity = '1';
+      bubbleBtn.style.pointerEvents = 'auto';
+      hideAllPanels();
+    }
+  }
+
+  function closePanel() {
+    panel.classList.remove('open');
+    backdrop.classList.remove('show');
+    bubbleBtn.style.opacity = '1';
+    bubbleBtn.style.pointerEvents = 'auto';
+    hideAllPanels();
+  }
+
+  backdrop.addEventListener('click', closePanel);
+  panel.addEventListener('click', function(e) { e.stopPropagation(); });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && panel.classList.contains('open')) closePanel();
+  });
+
+  /* Party Room owns the real Back navigation. Do not create a hidden
+     iframe history entry here: it used to trap Android back/swipe gestures
+     and could produce a second-back/swipe-again-to-exit message. */
+
+  highlightSwitch.addEventListener('click', function(e) {
+    e.stopPropagation(); jump(highlightSwitch);
+    highlightMode = !highlightMode;
+    highlightSwitch.classList.toggle('on', highlightMode);
+    inputRow.classList.toggle('highlight', highlightMode);
+  });
+
+  function hideAllPanels() {
+    emojiPopup.classList.remove('open');
+    gifPopup.classList.remove('open');
+    keyboardPopup.classList.remove('open');
+    numPopup.classList.remove('open');
+  }
+
+  function showPanel(type) {
+    hideAllPanels();
+    if (type === 'emoji') {
+      emojiPopup.classList.add('open');
+    } else if (type === 'gif') {
+      gifPopup.classList.add('open');
+    } else if (type === 'keyboard') {
+      keyboardPopup.classList.add('open');
+      setTimeout(function() { cursorPos = getText().length; renderWithCursor(); updateKeyboardCase(); }, 50);
+    } else if (type === 'num') {
+      numPopup.classList.add('open');
+    }
+  }
+
+  function togglePanelView(type) {
+    const isSameOpen =
+      (type === 'emoji' && emojiPopup.classList.contains('open')) ||
+      (type === 'gif' && gifPopup.classList.contains('open')) ||
+      (type === 'keyboard' && keyboardPopup.classList.contains('open')) ||
+      (type === 'num' && numPopup.classList.contains('open'));
+    if (isSameOpen) return;
+    showPanel(type);
+  }
+
+  emojiBtn.addEventListener('click', function(e) {
+    e.stopPropagation(); jump(emojiBtn);
+    if (emojiPopup.classList.contains('open')) {
+      hideAllPanels();
+    } else {
+      togglePanelView('emoji');
+    }
+  });
+
+  // Close the emoji picker whenever the user taps anywhere else on the keyboard/display.
+  // Taps inside the picker are allowed so the selected emoji is inserted normally.
+  document.addEventListener('click', function(e) {
+    if (!emojiPopup.classList.contains('open')) return;
+    var t = e.target;
+    if (emojiPopup.contains(t) || emojiBtn.contains(t)) return;
+    hideAllPanels();
+  }, true);
+
+  gifBtn.addEventListener('click', function(e) {
+    e.stopPropagation(); jump(gifBtn); togglePanelView('gif');
+  });
+  keyboardBtn.addEventListener('click', function(e) {
+    e.stopPropagation(); jump(keyboardBtn); togglePanelView('keyboard');
+  });
+  numToggleKey.addEventListener('click', function(e) {
+    e.stopPropagation(); jump(numToggleKey); togglePanelView('num');
+  });
+
+  function addChar(char) {
+    const text = getText();
+    let finalChar = char;
+    if (/^[a-zA-Z]$/.test(char)) {
+      if (capsLock) {
+        finalChar = char.toUpperCase();
+      } else if (shiftActive) {
+        finalChar = char.toUpperCase();
+        shiftActive = false;
+        shiftKey.classList.remove('shift-active');
+      } else {
+        const before = text.slice(0, cursorPos);
+        finalChar = shouldCap(before) ? char.toUpperCase() : char.toLowerCase();
+      }
+    }
+    const before = text.slice(0, cursorPos);
+    const after = text.slice(cursorPos);
+    setText(before + finalChar + after);
+    cursorPos = before.length + finalChar.length;
+    renderWithCursor();
+    scrollToCursor();
+    updateReader();
+    updateKeyboardCase();
+  }
+
+  shiftKey.addEventListener('click', function(e) {
+    e.stopPropagation();
+    jump(shiftKey);
+    const now = Date.now();
+    const timeSinceLastClick = now - lastShiftClick;
+    lastShiftClick = now;
+    if (timeSinceLastClick < 350) {
+      capsLock = !capsLock;
+      shiftActive = false;
+      if (capsLock) {
+        shiftKey.classList.add('shift-caps');
+        shiftKey.classList.remove('shift-active');
+      } else {
+        shiftKey.classList.remove('shift-caps');
+        shiftKey.classList.remove('shift-active');
+      }
+    } else {
+      if (capsLock) {
+        capsLock = false;
+        shiftKey.classList.remove('shift-caps');
+        shiftActive = false;
+        shiftKey.classList.remove('shift-active');
+      } else {
+        shiftActive = !shiftActive;
+        shiftKey.classList.toggle('shift-active', shiftActive);
+      }
+    }
+    updateKeyboardCase();
+  });
+
+  const emojis = ['😀','😂','😍','🥰','😎','🤔','😢','😡','👍','👎','❤️','🔥','🎉','✨','💯','🙏','😴','🤩','😅','🥳','😇','🤗','😜','🤝','👏','💪','🌟','🎯','🚀','☕','🍕','🎵','🌈','⚡','💎','🌸','🐱','🐶','🍀','🎁','🎈','🎂','🍔','🍟','🍦','🍩','🎊','🏆','⚽','🏀','🎮','🎧','🎤','🎸','🌺','🌻','🌷','🌹','⭐','💫'];
+  emojis.forEach(function(e) {
+    const span = document.createElement('span');
+    span.textContent = e;
+    span.addEventListener('click', function(ev) {
+      ev.stopPropagation(); jump(span);
+      const text = getText();
+      const before = text.slice(0, cursorPos);
+      const after = text.slice(cursorPos);
+      setText(before + e + after);
+      cursorPos += e.length;
+      renderWithCursor();
+      scrollToCursor();
+    });
+    emojiGrid.appendChild(span);
+  });
+
+  const gifUrls = [
+    'https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif',
+    'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif',
+    'https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif',
+    'https://media.giphy.com/media/3oz8xRF0v9WMAUVLNK/giphy.gif',
+    'https://media.giphy.com/media/xT0xeJpnrWC4XWblEk/giphy.gif',
+    'https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif',
+    'https://media.giphy.com/media/26BRv0ThflsHCqDrG/giphy.gif',
+    'https://media.giphy.com/media/3o7TKSjRrfIPjeiVyM/giphy.gif',
+    'https://media.giphy.com/media/l4FGI8GoTL7N4DsyI/giphy.gif'
+  ];
+  gifUrls.forEach(function(url) {
+    const img = document.createElement('img');
+    img.src = url;
+    img.loading = 'lazy';
+    img.addEventListener('click', function(ev) {
+      ev.stopPropagation(); jump(img);
+      attachedGif = url;
+      gifPreview.src = url;
+      mediaPreview.style.display = 'block';
+    });
+    gifGrid.appendChild(img);
+  });
+
+  removeGif.addEventListener('click', function(e) {
+    e.stopPropagation(); jump(removeGif);
+    attachedGif = null;
+    gifPreview.src = '';
+    mediaPreview.style.display = 'none';
+  });
+
+  keyboard.addEventListener('click', function(e) {
+    e.stopPropagation();
+    const keyEl = e.target.closest('.key');
+    if (!keyEl) return;
+    if (keyEl.id === 'shiftKey') return;
+    if (keyEl.dataset.key === 'Backspace') return;
+    if (keyEl.dataset.key === 'num') return;
+    handleKey(keyEl.dataset.key, keyEl);
+  });
+
+  // Touch events भी popup के लिए
+  keyboard.addEventListener('touchstart', function(e) {
+    const keyEl = e.target.closest('.key');
+    if (!keyEl) return;
+    if (keyEl.id === 'shiftKey') return;
+    if (keyEl.dataset.key === 'Backspace') return;
+    if (keyEl.dataset.key === 'num') return;
+    const k = keyEl.dataset.key;
+    if (k === ' ' || k === '↵') return;
+    showKeyPopup(keyEl, keyEl.textContent);
+  }, { passive:true });
+
+  numpad.addEventListener('click', function(e) {
+    e.stopPropagation();
+    const keyEl = e.target.closest('.numpad-key');
+    if (!keyEl) return;
+    if (keyEl.dataset.num === 'Backspace') return;
+    handleKey(keyEl.dataset.num, keyEl);
+  });
+
+  function handleKey(key, keyEl) {
+    if (keyEl) jump(keyEl);
+    if (key === 'Backspace') {
+      deleteChar();
+    } else if (key === 'Enter') {
+      const text = getText();
+      const before = text.slice(0, cursorPos);
+      const after = text.slice(cursorPos);
+      setText(before + '\n' + after);
+      cursorPos = before.length + 1;
+      renderWithCursor();
+      scrollToCursor();
+      updateReader();
+      updateKeyboardCase();
+    } else if (key === ' ') {
+      const text = getText();
+      const before = text.slice(0, cursorPos);
+      const after = text.slice(cursorPos);
+      setText(before + ' ' + after);
+      cursorPos = before.length + 1;
+      renderWithCursor();
+      scrollToCursor();
+      updateReader();
+      updateKeyboardCase();
+    } else if (/^[0-9+\-.]$/.test(key)) {
+      const text = getText();
+      const before = text.slice(0, cursorPos);
+      const after = text.slice(cursorPos);
+      setText(before + key + after);
+      cursorPos = before.length + 1;
+      renderWithCursor();
+      scrollToCursor();
+    } else {
+      // Letter - popup दिखाओ
+      if (keyEl && /^[a-zA-Z]$/.test(key)) {
+        showKeyPopup(keyEl, keyEl.textContent);
+      }
+      addChar(key);
+    }
+  }
+
+  // Dictionary
+  const dictionary = [
+    'a','an','and','are','as','at','all','also','always','am','another','any','around','about','after','again','able','accept','accident','account','across','act','action','activity','actor','actually','add','address','adult','advice','afraid','afternoon','against','age','ago','agree','air','airport','allow','almost','alone','along','already','although','among','amount','ancient','anger','angry','animal','ankle','announce','answer','anybody','anymore','anyone','anything','anyway','anywhere','apart','apartment','appear','apple','apply','area','argue','arm','army','arrange','arrive','art','article','artist','ashamed','ask','asleep','attack','attend','attention','aunt','autumn','available','avoid','awake','away','awful',
+    'be','because','been','before','being','below','best','better','between','big','both','bring','but','buy','by','baby','back','bad','bag','ball','banana','band','bank','bar','baseball','basic','basket','basketball','bath','bathroom','beach','bean','bear','beat','beautiful','bed','bedroom','beer','begin','beginning','behind','believe','bell','belong','belt','bench','bend','beside','beyond','bicycle','bike','bill','bird','birth','birthday','bit','bite','black','blanket','blind','block','blood','blow','blue','board','boat','body','boil','bone','book','border','boring','born','borrow','boss','bother','bottle','bottom','bowl','box','boy','brain','branch','brave','bread','break','breakfast','breath','breathe','brick','bridge','bright','brother','brown','brush','build','building','burn','business','bus','busy','butter','button','bye',
+    'call','can','care','carry','case','catch','change','check','child','children','choose','city','class','clean','clear','close','come','company','could','country','course','cut',
+    'day','did','different','do','does','done','down','during',
+    'each','early','earth','end','even','ever','every',
+    'face','fact','family','far','fast','father','feel','few','find','fire','first','follow','food','for','form','found','friend','from','front','full',
+    'game','gave','get','girl','give','go','going','good','got','government','great','group','grow','guy',
+    'had','half','hand','happen','happy','hard','has','have','he','head','hear','help','her','here','high','him','his','home','hope','how','house',
+    'idea','if','important','in','inside','into','is','it','its',
+    'job','join','just','keep','kind','know','known',
+    'land','large','last','later','learn','leave','left','less','let','letter','life','light','like','line','list','little','live','long','look','lost','lot','love','low',
+    'made','make','man','many','may','me','mean','men','might','mile','mind','minute','miss','more','morning','most','mother','move','much','music','must','my',
+    'name','near','need','never','new','next','night','no','not','nothing','now','number',
+    'of','off','often','oil','old','on','once','one','only','open','or','other','our','out','over','own',
+    'page','paper','part','party','pass','past','pay','people','perhaps','person','pick','picture','place','plan','play','point','police','possible','power','practice','prepare','present','press','pretty','probably','problem','process','produce','program','provide','public','pull','purpose','push','put',
+    'question','quick','quiet','quite',
+    'race','radio','rain','raise','range','rate','rather','reach','read','ready','real','reason','receive','record','red','remember','remove','report','require','rest','result','return','rich','ride','right','ring','rise','road','rock','role','room','round','rule','run',
+    'safe','said','same','save','saw','say','school','science','score','sea','season','seat','second','section','see','seem','sell','send','sense','sent','sentence','serve','service','set','several','shall','she','short','should','show','side','sign','since','sing','sit','site','situation','six','size','skill','small','social','society','some','someone','something','sometimes','son','song','soon','sort','sound','source','south','space','speak','special','spend','sport','spring','staff','stage','stand','standard','star','start','state','station','stay','step','still','stock','stop','store','story','street','strong','structure','student','study','stuff','style','subject','success','such','sudden','suffer','suggest','summer','support','sure','system',
+    'table','take','talk','task','teach','teacher','team','technology','tell','ten','term','test','than','thank','that','the','their','them','themselves','then','there','these','they','thing','think','third','this','those','though','thought','thousand','three','through','throughout','throw','thus','time','to','today','together','told','tonight','too','took','top','total','toward','town','trade','traditional','train','travel','treat','tree','trial','trip','trouble','true','truth','try','turn','two','type',
+    'under','understand','unit','until','up','upon','us','use','usually',
+    'value','various','very','view','visit','voice',
+    'wait','walk','wall','want','war','watch','water','way','we','wear','week','weight','well','west','western','what','whatever','when','where','whether','which','while','white','who','whole','why','wide','wife','will','win','wind','window','wish','with','within','without','woman','wonder','word','work','worker','world','worry','would','write','writer','wrong',
+    'yard','yeah','year','yes','yet','you','young','your','yourself',
+    'sita','rita','gita','ram','shyam','mohan','sohan','radha','krishna','hari','arjun'
+  ];
+
+  function triggerSweep() {
+    sweepDirection = sweepDirection === 'ltr' ? 'rtl' : 'ltr';
+    sweepBar.classList.remove('run-ltr', 'run-rtl');
+    void sweepBar.offsetWidth;
+    sweepBar.classList.add(sweepDirection === 'ltr' ? 'run-ltr' : 'run-rtl');
+    setTimeout(function() { sweepBar.classList.remove('run-ltr', 'run-rtl'); }, 1500);
+  }
+
+  function spawnFeathers(count) {
+    count = count || 5;
+    const f = ['🪶','✨','🪶','✨','🪶'];
+    for (let i = 0; i < count; i++) {
+      (function(idx) {
+        setTimeout(function() {
+          const feather = document.createElement('div');
+          feather.className = 'feather' + (sweepDirection === 'rtl' ? ' rtl' : '');
+          feather.textContent = f[idx % f.length];
+          if (sweepDirection === 'ltr') feather.style.left = '-30px';
+          else feather.style.right = '-30px';
+          feather.style.top = (Math.random() * 30 - 5) + 'px';
+          feather.style.fontSize = (18 + Math.random() * 14) + 'px';
+          feather.style.animationDuration = (1.8 + Math.random() * 0.8) + 's';
+          document.body.appendChild(feather);
+          setTimeout(function() { feather.remove(); }, 3000);
+        }, idx * 150);
+      })(i);
+    }
+  }
+
+  function spawnHearts(count) {
+    count = count || 8;
+    const h = ['❤️','💖','💕','💗','💓','💝','💘'];
+    for (let i = 0; i < count; i++) {
+      (function(idx) {
+        setTimeout(function() {
+          const heart = document.createElement('div');
+          heart.className = 'heart';
+          heart.textContent = h[Math.floor(Math.random() * h.length)];
+          heart.style.left = (Math.random() * 90 + 5) + '%';
+          heart.style.fontSize = (18 + Math.random() * 22) + 'px';
+          heart.style.animationDuration = (3 + Math.random() * 1.5) + 's';
+          document.body.appendChild(heart);
+          setTimeout(function() { heart.remove(); }, 5000);
+        }, idx * 120);
+      })(i);
+    }
+  }
+
+  function sendComment() {
+    const text = getText().trim();
+    if (text === '' && !attachedGif) return;
+
+    if (text) {
+      const words = text.split(/\s+/).filter(function(w) { return w.length >= 2; });
+      words.forEach(function(w) {
+        const clean = w.replace(/[^a-zA-Z]/g, '');
+        if (clean.length >= 2) addToUserHistory(clean);
+      });
+    }
+
+    topSendBtn.classList.add('active');
+    setTimeout(function() { topSendBtn.classList.remove('active'); }, 300);
+    bottomSendBtn.classList.add('active', 'jump');
+    setTimeout(function() { bottomSendBtn.classList.remove('active', 'jump'); }, 300);
+
+    /* Party Room bridge: send through the app chat instead of creating a private
+       keyboard-local comment/flying layer. The keyboard UI and its original
+       emoji/GIF/typing features remain unchanged. */
+    try {
+      window.parent.postMessage({
+        type: 'PARTY_ROOM_KEYBOARD_SEND',
+        text: text,
+        gif: attachedGif || '',
+        highlight: !!highlightMode
+      }, '*');
+    } catch (e) {}
+
+    setText('');
+    cursorPos = 0;
+    renderWithCursor();
+    attachedGif = null;
+    mediaPreview.style.display = 'none';
+    gifPreview.src = '';
+    updateReader();
+    updateKeyboardCase();
+  }
+
+  topSendBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    sendComment();
+  });
+
+  bottomSendBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    sendComment();
+  });
+
+  cursorPos = 0;
+  renderWithCursor();
+  updateKeyboardCase();
+<\/script>
+
+<style id="pkVisitedProfilePremiumWhiteFinal">
+/* Visiting another person's profile: clean white, full-screen, reference-style layout. */
+#pkPublicProfileOverlay{background:#fff!important;color:#171717!important;}
+#pkPublicProfileOverlay .pp-scroll{background:#fff!important;}
+#pkPublicProfileOverlay .pp-hero{height:178px!important;background:#fff!important;overflow:visible!important;}
+#pkPublicProfileOverlay .pp-cover{background:#fff!important;opacity:1!important;}
+#pkPublicProfileOverlay .pp-cover:after,#pkPublicProfileOverlay .pp-hero-glow{display:none!important;}
+#pkPublicProfileOverlay .pp-topbar{padding:12px 14px!important;}
+#pkPublicProfileOverlay .pp-topbar button{background:#f4f4f7!important;color:#20222a!important;box-shadow:none!important;border:1px solid #e8e8ed!important;}
+#pkPublicProfileOverlay .pp-main{margin-top:0!important;background:#fff!important;border-radius:0!important;padding:0 18px 92px!important;min-height:calc(100vh - 178px)!important;}
+#pkPublicProfileOverlay .pp-avatar-wrap{width:112px!important;height:112px!important;margin:-56px 0 8px 8px!important;border-radius:50%!important;overflow:visible!important;}
+#pkPublicProfileOverlay .pp-avatar{width:112px!important;height:112px!important;border-radius:50%!important;overflow:hidden!important;background:#f1f1f4!important;border:4px solid #fff!important;box-shadow:0 3px 14px rgba(0,0,0,.16)!important;}
+#pkPublicProfileOverlay .pp-avatar img.pp-photo{width:100%!important;height:100%!important;border-radius:50%!important;object-fit:cover!important;display:block!important;}
+#pkPublicProfileOverlay .pp-frame{width:126px!important;height:126px!important;left:50%!important;top:50%!important;inset:auto!important;transform:translate(-50%,-50%)!important;object-fit:contain!important;z-index:5!important;}
+#pkPublicProfileOverlay .pp-level{right:-5px!important;bottom:2px!important;}
+#pkPublicProfileOverlay .pp-name{text-align:left!important;margin:-108px 0 0 138px!important;min-height:34px!important;font-size:24px!important;color:#111!important;line-height:1.15!important;}
+#pkPublicProfileOverlay .pp-sub{text-align:left!important;margin:5px 0 0 138px!important;color:#777!important;min-height:18px!important;}
+#pkPublicProfileOverlay .pp-idline{text-align:left!important;margin:7px 0 0 138px!important;color:#30343b!important;}
+#pkPublicProfileOverlay .pp-info-row{margin-top:18px!important;}
+#pkPublicProfileOverlay .pp-stats{background:#fff!important;border:0!important;border-top:1px solid #ececf1!important;border-bottom:1px solid #ececf1!important;border-radius:0!important;box-shadow:none!important;padding:15px 0!important;margin:8px 0 15px!important;}
+#pkPublicProfileOverlay .pp-stat{color:#222!important;}
+#pkPublicProfileOverlay .pp-stat span{color:#777!important;}
+#pkPublicProfileOverlay .pp-actions{background:#fff!important;border-top:1px solid #ececf0!important;box-shadow:0 -5px 18px rgba(0,0,0,.06)!important;padding:10px 18px calc(10px + env(safe-area-inset-bottom,0px))!important;align-items:center!important;gap:10px!important;}
+#pkPublicProfileOverlay .pp-follow{height:48px!important;border-radius:25px!important;flex:1!important;background:#ff4b55!important;color:#fff!important;box-shadow:none!important;font-size:16px!important;}
+#pkPublicProfileOverlay .pp-follow.following{background:#fff!important;color:#333!important;border:1px solid #d9d9df!important;box-shadow:none!important;}
+#pkPublicProfileOverlay .pp-message-icon{width:50px!important;max-width:50px!important;flex:0 0 50px!important;height:48px!important;border-radius:50%!important;background:#fff!important;color:#333!important;border:1px solid #d9d9df!important;box-shadow:none!important;display:grid!important;place-items:center!important;padding:0!important;}
+#pkPublicProfileOverlay .pp-message-icon:active{background:#f5f5f7!important;transform:scale(.96);}
+#pkPublicProfileOverlay.own-view #pkPPVisitActions{display:none!important;}
+</style>
+</body>
+</html>`;
   var loaded=false, openState=false;
   function $(id){return document.getElementById(id);}
   function hideLegacy(){
