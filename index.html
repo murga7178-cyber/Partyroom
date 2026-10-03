@@ -2947,7 +2947,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <div class="pgc-badge">🎮</div>
             <div class="pgc-headtxt"><div class="pgc-title" id="pgcTitle">Gaming Room</div><div class="pgc-sub" id="pgcSub">दोस्तों के साथ गेम खेलें</div></div>
             <button type="button" id="pgcChatModeBtn" class="pgc-btn pgc-primary" style="display:none;" onclick="setPartyRoomMode('chat')">💬 चैट मोड</button>
-            <button type="button" class="pgc-btn pgc-gear" onclick="openPartyRoomSettings()" aria-label="सेटिंग">⚙️</button>
           </div>
           <div class="pgc-grid">
             <div class="pgc-tile"><div class="ic">🎲</div><div class="nm">Ludo</div><div class="soon">जल्द आ रहा है</div></div>
@@ -3005,7 +3004,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
             <button type="button" class="prd-gift" onclick="togglePartyRoomGiftTray()" aria-label="Gifts">🎁</button>
             <button type="button" class="prd-youtube" id="partyRoomYouTubeBtn" onclick="if(window.openPartyRoomYouTube)window.openPartyRoomYouTube();return false;" aria-label="YouTube" title="YouTube">▶️<span class="yt-mini-label">YT</span><span id="partyRoomYoutubeBadge" class="prd-badge">0</span></button>
             <button type="button" class="prd-mic prd-mic-indicator" id="partyRoomMuteDockBtn" onclick="cinemaToggleMute()" aria-label="Mute audio" title="Mute"><svg class="pm-mic-svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 11.5v0.5a6.5 6.5 0 0 0 13 0v-0.5"/><path d="M12 18.5V21.5"/><path d="M8.5 21.5h7"/><path class="pm-mic-slash" d="M4 4L20 20" stroke="#e11d48" stroke-width="2.2"/></svg></button>
-            <button type="button" onclick="openPartyRoomSettings()" aria-label="More">⋮⋮</button>
           </div>
         </div>
 
@@ -5463,7 +5461,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
       '<div class="uc-row">'+
         (me?'':'<button type="button" data-pr-act="follow" data-key="'+esc(key)+'" style="background:'+(isFollowing?'rgba(34,197,94,.22)':'linear-gradient(135deg,#7c3aed,#db2777)')+';">'+(isFollowing?'✓ Following':'＋ Follow')+'</button>')+
         '<button type="button" data-pr-act="close">बंद करें</button></div>'+
-      ((me && String(window.__cinemaHostKey||'')===String(key)) ? '<button type="button" class="pr-host-settings-open" data-pr-host-settings="1">⚙️ Settings</button>' : '')+
+      
       seatAction;
     try{
       var canMg=!me && typeof window.pkCanManage==='function' && window.pkCanManage() && key!==String(window.__cinemaHostKey||'');
@@ -6058,6 +6056,7 @@ setInterval(function(){try{
     +'#prDpEdit .pde-sw button{flex:1 1 0;min-width:0;height:46px;padding:0;border-radius:12px;border:2px solid transparent;color:#fff;font-size:10px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.8);display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px}'
     +'#prDpEdit .pde-sw button.on{border-color:#22c55e}'
     +'#prDpEdit .pde-gal{width:100%;margin-top:10px;background:#f0eaf9;color:#4a148c;flex:none}'
+    +'#prDpEdit .pde-manage{width:100%;flex:none;margin:12px 0 4px;padding:12px;border:0;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;color:#fff;background:linear-gradient(135deg,#4c1d95,#7c3aed)}'
     +'#prDpEdit .pde-bgh{font-size:11px;color:#8a7fa3;margin-top:6px}'+'#prDpEdit .pde-pass{margin:14px 0 4px;padding:12px;border-radius:11px;background:#f7f3fc;border:1px solid #e3d8f3;text-align:left}'+'#prDpEdit .pde-pass-title{font-size:13px;font-weight:900;color:#4a148c;margin-bottom:7px}'+'#prDpEdit .pde-pass input{width:100%;box-sizing:border-box;padding:11px 12px;border:1.5px solid #d9cbea;border-radius:11px;background:#fff;color:#21162f;font-size:15px;letter-spacing:4px;outline:none}'+'#prDpEdit .pde-pass-hint{font-size:10px;color:#8a7fa3;margin-top:6px;line-height:1.4}'+'#prDpEdit .pde-pass-status{font-size:10px;color:#4a148c;margin-top:5px;font-weight:700}'+'#prDpEdit .pde-pass-actions{display:flex;gap:7px;margin-top:5px}'+'#prDpEdit .pde-pass-actions button{flex:1;padding:9px 7px;border-radius:10px;border:1px solid #ddd0ee;font-size:11px;font-weight:850;cursor:pointer}'+'#prDpEdit .pde-pass-set{background:#eee5fb;color:#4a148c}'+'#prDpEdit .pde-pass-remove{background:#fff0f0;color:#c62828;border-color:#f1c7c7!important}'+'#prDpEdit .pde-pass-save{width:100%;margin-top:9px;padding:10px;border:0;border-radius:11px;background:linear-gradient(135deg,#8a2be2,#6a1b9a);color:#fff;font-size:12px;font-weight:900;cursor:pointer}'+'#cinemaRoomPasswordPopup{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(3,7,18,.58);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);font-family:Segoe UI,Arial,sans-serif}'+'#cinemaRoomPasswordPopup .crpp-box{position:relative;width:min(340px,100%);box-sizing:border-box;padding:24px 20px 20px;border-radius:26px;background:linear-gradient(145deg,#fff,#f7f1ff);color:#21162f;box-shadow:0 24px 70px rgba(0,0,0,.45);text-align:center}'+'#cinemaRoomPasswordPopup .crpp-close{position:absolute;right:10px;top:10px;width:36px;height:36px;border:0;border-radius:50%;background:#eee6f7;color:#4a148c;font-size:25px;line-height:1;cursor:pointer}'+'#cinemaRoomPasswordPopup .crpp-photo{width:82px;height:82px;margin:2px auto 10px;border-radius:23px;overflow:hidden;background:linear-gradient(135deg,#7c3aed,#ec4899);display:grid;place-items:center;box-shadow:0 10px 25px rgba(124,58,237,.28);font-size:34px}'+'#cinemaRoomPasswordPopup .crpp-photo img{width:100%;height:100%;object-fit:cover}'+'#cinemaRoomPasswordPopup .crpp-title{font-size:18px;font-weight:950;color:#4a148c}'+'#cinemaRoomPasswordPopup .crpp-name{font-size:15px;font-weight:850;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+'#cinemaRoomPasswordPopup .crpp-hint{font-size:11px;color:#766987;line-height:1.45;margin:8px 4px 13px}'+'#cinemaRoomPasswordPopup .crpp-input{width:100%;box-sizing:border-box;padding:13px 12px;border:1.5px solid #d8c8eb;border-radius:13px;background:#fff;color:#21162f;font-size:20px;letter-spacing:8px;text-align:center;outline:none}'+'#cinemaRoomPasswordPopup .crpp-input:focus{border-color:#8a2be2;box-shadow:0 0 0 3px rgba(138,43,226,.10)}'+'#cinemaRoomPasswordPopup .crpp-error{min-height:18px;margin-top:7px;font-size:11px;color:#dc2626;font-weight:700}'+'#cinemaRoomPasswordPopup .crpp-enter{width:100%;margin-top:3px;padding:13px;border:0;border-radius:11px;background:linear-gradient(135deg,#8a2be2,#6a1b9a);color:#fff;font-size:15px;font-weight:900;cursor:pointer;box-shadow:0 9px 20px rgba(106,27,154,.25)}'+'#cinemaRoomPasswordPopup .crpp-enter:disabled{opacity:.65;cursor:default}';
     document.head.appendChild(st);
 
@@ -6091,6 +6090,7 @@ setInterval(function(){try{
         +'<input type="file" id="pdeBgFile" accept="image/*" style="display:none">'
         +'<div class="pde-pass"><div class="pde-pass-title">🔐 रूम पासवर्ड</div><div class="pde-pass-status" id="pdePasswordStatus"></div><div class="pde-pass-actions"><button type="button" id="pdePassSetBtn" class="pde-pass-set">🔑 पासवर्ड लगाएँ</button><button type="button" id="pdePassRemoveBtn" class="pde-pass-remove">🗑️ पासवर्ड हटाएँ</button></div><div id="pdePassEditor" style="display:none"><input type="password" id="pdePassword" inputmode="numeric" maxlength="6" placeholder="4 या 6 अंक डालें" autocomplete="off"><div class="pde-pass-hint">4 या 6 अंकों का नया पासवर्ड डालें। इसे अलग से सेव किया जाएगा।</div><button type="button" id="pdePassSaveBtn" class="pde-pass-save">💾 पासवर्ड सेव करें</button></div></div>'
         +'<div class="pde-msg" id="pdeMsg"></div>'
+        +'<button type="button" class="pde-manage" id="pdeManage" onclick="var d=document.getElementById(\'prDpEdit\');if(d)d.remove();if(window.prOpenHostSettings)window.prOpenHostSettings();">⚙️ Manage / Settings</button>'
         +'<div class="pde-row"><button type="button" class="pde-save">सेव करें</button></div>'
         +'<input type="file" id="pdeFile" accept="image/*" style="display:none"></div>';
       window.__prDpOpenedAt=Date.now();document.body.appendChild(o);
@@ -6239,6 +6239,7 @@ setInterval(function(){try{
  <div class="prhs-body">
   <div class="prhs-card"><h3>✏️ Room Display Name</h3><div class="prhs-sub">रूम का दिखने वाला नाम यहाँ बदलें। नाम सेव होते ही पूरे रूम में अपडेट होगा।</div><input id="prhsNameInput" type="text" maxlength="30" placeholder="रूम का नाम" style="width:100%;box-sizing:border-box;padding:12px;border-radius:11px;border:1px solid rgba(255,255,255,.18);background:#fff;color:#111;font-size:15px;font-weight:800"><button type="button" class="prhs-action prhs-primary" id="prhsNameSave">✓ नाम सेव करें</button></div>
   <div class="prhs-card"><h3>🖼️ Room Background</h3><div class="prhs-sub">फोटो या थीम चुनते ही तुरंत पूरे रूम में लागू होगी। अलग से Save जरूरी नहीं है।</div><div class="prhs-bg-grid" id="prhsBgGrid"></div><button type="button" class="prhs-action prhs-primary" id="prhsGallery">📷 Gallery से फोटो लगाएँ</button><input id="prhsBgFile" type="file" accept="image/*" style="display:none"></div>
+  <div class="prhs-card"><h3>🪑 सीटें और Room Mode</h3><div class="prhs-sub">सीटों की संख्या और Chat / Gaming / YouTube मोड यहाँ से बदलें।</div><button type="button" class="prhs-action" onclick="window.prCloseHostSettings&&window.prCloseHostSettings();window.openPartyRoomSettings&&window.openPartyRoomSettings();">खोलें</button></div>
   <div class="prhs-card"><h3>🔐 Room Password</h3><div class="prhs-status" id="prhsPassStatus"></div><button type="button" class="prhs-action" id="prhsPassSet">🔑 पासवर्ड लगाएँ / बदलें</button><button type="button" class="prhs-action" id="prhsPassRemove" style="display:none;background:rgba(239,68,68,.18)">🗑️ पासवर्ड हटाएँ</button><div class="prhs-pass" id="prhsPassBox"><input id="prhsPassInput" type="password" inputmode="numeric" maxlength="6" placeholder="4 या 6 अंक"><button type="button" class="prhs-action prhs-primary" id="prhsPassSave">💾 पासवर्ड सेव करें</button></div></div>
   <div class="prhs-card"><h3>🚫 Block List</h3><div class="prhs-sub">यहाँ से ब्लॉक किए गए लोगों को रूम की सूची से हटाया जा सकता है।</div><div class="prhs-list" id="prhsBlockList"></div><div class="prhs-msg" id="prhsMsg"></div></div>
  </div>
@@ -16657,6 +16658,17 @@ html body #prRoom #cinemaChatPanel .pr-chat-line .pr-bubble{
 #cinemaChatPanel .pr-chat-line .pr-t{font-size:12.5px!important;line-height:17px!important;}
 #cinemaChatPanel .pr-chat-line .pr-chat-avatar{width:40px!important;height:40px!important;min-width:40px!important;}
 @media(max-width:430px){#cinemaChatPanel .pr-chat-line .pr-chat-body{max-width:calc(100% - 47px)!important;}#cinemaChatPanel .pr-chat-line .pr-n{font-size:10.5px!important;}#cinemaChatPanel .pr-chat-line .pr-t{font-size:12px!important;line-height:16px!important;}}
+</style>
+<style id="partyGamingSeatsBelowPad">
+/* Gaming Mode: seats sit clearly below the play/pause + ±2s pad so they never touch it. */
+html body #prRoom.party-gaming-layout #cinemaSeats,
+html body #prRoom.party-gaming-layout #cinemaSeats.pr-two-seat-mode{top:128px!important;}
+html body #prRoom.party-gaming-layout #partyGamingCenter:not(.pgc-playing) .pgc-grid{padding-top:146px!important;}
+@media(max-height:700px){
+  html body #prRoom.party-gaming-layout #cinemaSeats,
+  html body #prRoom.party-gaming-layout #cinemaSeats.pr-two-seat-mode{top:122px!important;}
+  html body #prRoom.party-gaming-layout #partyGamingCenter:not(.pgc-playing) .pgc-grid{padding-top:140px!important;}
+}
 </style>
 </body>
 
