@@ -6239,7 +6239,7 @@ setInterval(function(){try{
  <div class="prhs-body">
   <div class="prhs-card"><h3>✏️ Room Display Name</h3><div class="prhs-sub">रूम का दिखने वाला नाम यहाँ बदलें। नाम सेव होते ही पूरे रूम में अपडेट होगा।</div><input id="prhsNameInput" type="text" maxlength="30" placeholder="रूम का नाम" style="width:100%;box-sizing:border-box;padding:12px;border-radius:11px;border:1px solid rgba(255,255,255,.18);background:#fff;color:#111;font-size:15px;font-weight:800"><button type="button" class="prhs-action prhs-primary" id="prhsNameSave">✓ नाम सेव करें</button></div>
   <div class="prhs-card"><h3>🖼️ Room Background</h3><div class="prhs-sub">फोटो या थीम चुनते ही तुरंत पूरे रूम में लागू होगी। अलग से Save जरूरी नहीं है।</div><div class="prhs-bg-grid" id="prhsBgGrid"></div><button type="button" class="prhs-action prhs-primary" id="prhsGallery">📷 Gallery से फोटो लगाएँ</button><input id="prhsBgFile" type="file" accept="image/*" style="display:none"></div>
-  <div class="prhs-card"><h3>🪑 सीटें और Room Mode</h3><div class="prhs-sub">सीटों की संख्या और Chat / Gaming / YouTube मोड यहाँ से बदलें।</div><button type="button" class="prhs-action" onclick="window.prCloseHostSettings&&window.prCloseHostSettings();window.openPartyRoomSettings&&window.openPartyRoomSettings();">खोलें</button></div>
+  <div class="prhs-card" id="prhsSeatCard"><h3>🪑 सीटों की संख्या</h3><div class="prhs-sub">जितनी सीटें चाहिए उस पर टैप करें, अपने-आप लग जाएँगी।</div><div id="prhsSeatBtns" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0 4px"></div><div id="prhsSeatMsg" style="min-height:20px;margin-top:8px;font-size:13px;font-weight:800;color:#86efac;text-align:center"></div></div>
   <div class="prhs-card"><h3>🔐 Room Password</h3><div class="prhs-status" id="prhsPassStatus"></div><button type="button" class="prhs-action" id="prhsPassSet">🔑 पासवर्ड लगाएँ / बदलें</button><button type="button" class="prhs-action" id="prhsPassRemove" style="display:none;background:rgba(239,68,68,.18)">🗑️ पासवर्ड हटाएँ</button><div class="prhs-pass" id="prhsPassBox"><input id="prhsPassInput" type="password" inputmode="numeric" maxlength="6" placeholder="4 या 6 अंक"><button type="button" class="prhs-action prhs-primary" id="prhsPassSave">💾 पासवर्ड सेव करें</button></div></div>
   <div class="prhs-card"><h3>🚫 Block List</h3><div class="prhs-sub">यहाँ से ब्लॉक किए गए लोगों को रूम की सूची से हटाया जा सकता है।</div><div class="prhs-list" id="prhsBlockList"></div><div class="prhs-msg" id="prhsMsg"></div></div>
  </div>
@@ -6266,6 +6266,48 @@ setInterval(function(){try{
  document.getElementById('prhsPassSet').onclick=function(){document.getElementById('prhsPassBox').style.display='block';document.getElementById('prhsPassInput').focus();};
  document.getElementById('prhsPassSave').onclick=async function(){var v=document.getElementById('prhsPassInput').value.trim();var m=document.getElementById('prhsMsg');if(!/^\d{4}(?:\d{2})?$/.test(v)){m.textContent='पासवर्ड 4 या 6 अंकों का होना चाहिए।';return;}try{var h=await cinemaHashPassword(v);await db.collection('cinemaRooms').doc(cinemaRoomId).set({passwordProtected:true,passwordHash:h,updatedAt:Date.now()},{merge:true});window.__prPasswordProtected=true;document.getElementById('prhsPassBox').style.display='none';document.getElementById('prhsPassInput').value='';m.textContent='✅ पासवर्ड सेव हो गया।';render();}catch(e){m.textContent='पासवर्ड सेव नहीं हो पाया।';}};
  document.getElementById('prhsPassRemove').onclick=async function(){try{await db.collection('cinemaRooms').doc(cinemaRoomId).set({passwordProtected:false,passwordHash:firebase.firestore.FieldValue.delete(),updatedAt:Date.now()},{merge:true});window.__prPasswordProtected=false;document.getElementById('prhsMsg').textContent='✅ पासवर्ड हटा दिया गया।';render();}catch(e){document.getElementById('prhsMsg').textContent='पासवर्ड हट नहीं पाया।';}};
+})();
+</script>
+<script id="prHostSeatCountLogic">
+(function(){
+  var busy=false;
+  function mode(){return String(window.__partyRoomMode||'chat');}
+  function opts(){return mode()==='gaming'?[2,4]:[2,4,8,12];}
+  function cur(){
+    var m=mode();
+    var v=m==='gaming'?window.__gamingSeatCount:(m==='youtube'?window.__youtubeSeatCount:window.__chatSeatCount);
+    v=Number(v); return opts().indexOf(v)>=0?v:Number(window.PR_SEATS)||opts()[opts().length-1];
+  }
+  function render(msg){
+    var box=document.getElementById('prhsSeatBtns'); if(!box) return;
+    var c=cur(); box.innerHTML='';
+    opts().forEach(function(n){
+      var b=document.createElement('button'); b.type='button'; b.setAttribute('data-n',n);
+      var on=(n===c);
+      b.style.cssText='position:relative;padding:14px 4px;border-radius:12px;font-weight:950;font-size:15px;color:#fff;cursor:pointer;touch-action:manipulation;border:2px solid '+(on?'#22c55e':'#475569')+';background:'+(on?'linear-gradient(145deg,#14532d,#166534)':'#172033');
+      b.innerHTML=n+' सीट'+(on?'<span style="position:absolute;top:-7px;right:-5px;width:20px;height:20px;border-radius:50%;background:#22c55e;color:#fff;font-size:12px;line-height:20px;box-shadow:0 0 0 2px #0b1020">✓</span>':'');
+      b.onclick=function(){pick(n);};
+      box.appendChild(b);
+    });
+    var m=document.getElementById('prhsSeatMsg'); if(m) m.textContent=msg||'';
+  }
+  async function pick(n){
+    if(busy||n===cur()) return;
+    busy=true;
+    var m=document.getElementById('prhsSeatMsg'); if(m){m.style.color='#cbd5e1';m.textContent='…';}
+    try{
+      if(typeof window.setPartySeatCount==='function') await window.setPartySeatCount(n);
+      render('✅ '+n+' सीटें कर दी गईं');
+    }catch(e){
+      render('');
+      if(m){m.style.color='#fca5a5';m.textContent='सीटें नहीं बदल पाईं, फिर कोशिश करें।';}
+    }
+    if(m && m.textContent.indexOf('✅')===0) m.style.color='#86efac';
+    busy=false;
+  }
+  var prev=window.prOpenHostSettings;
+  window.prOpenHostSettings=function(){var r=prev?prev.apply(this,arguments):undefined; try{render('');}catch(e){} return r;};
+  window.prRenderSeatCount=render;
 })();
 </script>
 <script id="pkStandaloneBoot">
