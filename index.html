@@ -6074,7 +6074,7 @@ setInterval(function(){try{
 
     function closeDlg(){ var o=$('prDpEdit'); if(o) o.remove(); }
     function openDlg(){
-      if(!cinemaIsHost||!cinemaRoomId||!db) return;
+      if(!(cinemaIsHost||window.cinemaIsHost||String(window.__cinemaHostKey||'')===String(typeof currentUserKey!=='undefined'&&currentUserKey||'__none__'))||!cinemaRoomId||!db) return;
       closeDlg();
       var newPhoto='';
       var o=document.createElement('div'); o.id='prDpEdit';
@@ -6093,7 +6093,7 @@ setInterval(function(){try{
         +'<div class="pde-msg" id="pdeMsg"></div>'
         +'<div class="pde-row"><button type="button" class="pde-save">सेव करें</button></div>'
         +'<input type="file" id="pdeFile" accept="image/*" style="display:none"></div>';
-      document.body.appendChild(o);
+      window.__prDpOpenedAt=Date.now();document.body.appendChild(o);
       var ph=$('pdePh'),nameI=$('pdeName'),msg=$('pdeMsg'),file=$('pdeFile'),photoCard=$('pdePhotoCard'),nameCard=$('pdeNameCard'),photoCardTick=$('pdePhotoCardTick'),nameCardTick=$('pdeNameCardTick');
       var passI=$('pdePassword'), passEditor=$('pdePassEditor'), passStatus=$('pdePasswordStatus'), passSet=$('pdePassSetBtn'), passRemove=$('pdePassRemoveBtn'), passSave=$('pdePassSaveBtn');
       var passBusy=false;
@@ -6167,7 +6167,7 @@ setInterval(function(){try{
         catch(e){ msg.textContent='यह फ़ोटो नहीं लग पाई।'; }
         file.value='';
       };
-      o.addEventListener('click',function(e){ if(e.target===o) closeDlg(); });
+      o.addEventListener('click',function(e){ if(e.target===o && Date.now()-(window.__prDpOpenedAt||0)>600) closeDlg(); });
       $('pdeX').onclick=closeDlg;
       o.querySelector('.pde-save').onclick=async function(){
         var nm=nameI.value.trim();
@@ -6193,7 +6193,8 @@ setInterval(function(){try{
     function prRoomAvatarOpenFromEvent(e){
       var a=e&&e.target&&e.target.closest&&e.target.closest('#prRoomAvatar');
       if(!a) return;
-      var canHost=!!cinemaIsHost || !!window.cinemaIsHost;
+      var canHost=!!cinemaIsHost || !!window.cinemaIsHost || String(window.__cinemaHostKey||'')===String(typeof currentUserKey!=='undefined'&&currentUserKey||'__none__');
+      if(canHost && document.getElementById('prDpEdit')){ if(e&&e.stopPropagation)e.stopPropagation(); return; }
       if(canHost && cinemaRoomId && db){
         if(e&&e.preventDefault)e.preventDefault();
         if(e&&e.stopPropagation)e.stopPropagation();
@@ -8144,70 +8145,116 @@ var name=String(d.name||d.displayName||d.fullName||d.username||'User');
 
 
 
+<style id="pkPtrStyle">
+/* Pull-to-refresh: page never moves; only a round arrow draws itself at the top-centre. */
+#pkHomeScroll,#pkPublicProfileOverlay .pp-scroll,#pkInboxOverlay .pki-list{overscroll-behavior-y:contain;}
+#pkPtr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 58px);width:42px;height:42px;margin-left:-21px;border-radius:50%;background:#fff;box-shadow:0 4px 16px rgba(60,20,110,.28),0 0 0 1px rgba(124,58,237,.12);z-index:2147483600;pointer-events:none;opacity:0;transform:translateY(-8px) scale(.6);will-change:transform,opacity;display:grid;place-items:center;}
+#pkPtr svg{width:26px;height:26px;display:block;overflow:visible;}
+#pkPtr .ring{fill:none;stroke:#7c3aed;stroke-width:2.6;stroke-linecap:round;}
+#pkPtr .head{fill:#7c3aed;}
+#pkPtr.spin svg{animation:pkPtrSpin .6s linear infinite;}
+#pkPtr.out{transition:opacity .22s ease,transform .22s ease;opacity:0!important;transform:translateY(-6px) scale(.6)!important;}
+@keyframes pkPtrSpin{to{transform:rotate(360deg)}}
+</style>
 <script id="pkPullToRefresh">
 (function(){
-  var startY=0,startX=0,armed=false,busy=false;
-  var pullTarget=null,pullActive=false;
-  function setPullVisual(target,dy){
-    if(!target)return;
-    pullTarget=target; pullActive=true;
-    var y=Math.min(58,Math.max(0,Math.round(dy*.55)));
-    target.style.transition='none';
-    target.style.transform='translate3d(0,'+y+'px,0)';
+  'use strict';
+  var C=2*Math.PI*9, DIST=85, MAXARC=330;
+  var el=null,ring=null,head=null,startY=0,startX=0,target=null,armed=false,pulling=false,busy=false,prog=0;
+  function build(){
+    if(el)return;
+    el=document.createElement('div');el.id='pkPtr';
+    el.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle class="ring" cx="12" cy="12" r="9" transform="rotate(-90 12 12)" stroke-dasharray="'+C+'" stroke-dashoffset="'+C+'"/><g class="hg" transform="rotate(0 12 12)"><path class="head" d="M15.6 3 L11.4 .6 L11.4 5.4 Z"/></g></svg>';
+    document.body.appendChild(el);
+    ring=el.querySelector('.ring');head=el.querySelector('.hg');
   }
-  function clearPullVisual(){
-    if(!pullTarget)return;
-    var t=pullTarget; pullTarget=null; pullActive=false;
-    t.style.transition='transform .28s ease-out';
-    t.style.transform='translate3d(0,0,0)';
-    setTimeout(function(){try{t.style.transition='';t.style.transform='';}catch(e){}},320);
+  function vis(x){try{return !!x&&getComputedStyle(x).display!=='none'&&getComputedStyle(x).visibility!=='hidden';}catch(e){return false;}}
+  function pickTarget(t){
+    var room=document.getElementById('cinemaGharModal');
+    if(vis(room))return null;
+    var p=document.getElementById('pkPublicProfileOverlay'),i=document.getElementById('pkInboxOverlay'),h=document.getElementById('pkHomeScreen');
+    if(p&&p.classList.contains('open')){
+      if(!p.contains(t))return null;
+      return {kind:'profile',root:p,scroll:p.querySelector('.pp-scroll')||p};
+    }
+    if(i&&i.classList.contains('open')){
+      if(!i.contains(t))return null;
+      return {kind:'inbox',root:i,scroll:i.querySelector('.pki-list')||i};
+    }
+    if(h&&h.style.display!=='none'&&vis(h)){
+      var hs=document.getElementById('pkHomeScroll')||h;
+      if(!hs.contains(t))return null;
+      /* another full overlay on top of home (search, profile edit, chat, etc.) -> do nothing */
+      var ids=['pkEditProfile','pkGlobalSearch','pkDirectMessageOverlay','pkVisitorsOverlay','pkGamingRanking','pkWalletPanel','pkMeProfilePanel','partyMoreVideoOverlay'];
+      for(var k=0;k<ids.length;k++){var o=document.getElementById(ids[k]);if(o&&(o.classList.contains('open')||(o.id!=='pkEditProfile'&&vis(o))))return null;}
+      return {kind:'home',root:h,scroll:hs};
+    }
+    return null;
   }
-  function refreshCurrent(){
-    if(busy)return;busy=true;
-    var p=document.getElementById('pkPublicProfileOverlay');
-    var inbox=document.getElementById('pkInboxOverlay');
-    var home=document.getElementById('pkHomeScreen');
-    var target=null;
-    if(p&&p.classList.contains('open')) target=p.querySelector('.pp-scroll')||p;
-    else if(inbox&&inbox.classList.contains('open')) target=inbox.querySelector('.pki-list')||inbox;
-    else if(home&&home.style.display!=='none') target=document.getElementById('pkHomeScroll')||home;
-    try{if(typeof toast==='function')toast('↻ ताज़ा किया जा रहा है…');}catch(_){}
+  function draw(p){
+    prog=p;
+    var a=Math.max(0,Math.min(1,p));
+    ring.setAttribute('stroke-dashoffset',String(C*(1-a*MAXARC/360)));
+    head.setAttribute('transform','rotate('+(a*MAXARC)+' 12 12)');
+    head.style.opacity=a<.04?0:1;
+    el.style.opacity=String(Math.min(1,a*1.6));
+    el.style.transform='translateY('+(a*16-8)+'px) scale('+(.6+.4*a)+')';
+  }
+  function hide(){
+    if(!el)return;
+    el.classList.remove('spin');el.classList.add('out');
+    setTimeout(function(){if(el){el.classList.remove('out');el.style.opacity='0';}},260);
+  }
+  function runRefresh(kind){
     var job;
     try{
-      if(target&&target===document.getElementById('pkHomeScroll')&&typeof window.pkHomeRefresh==='function')job=window.pkHomeRefresh();
-      else if(p&&p.classList.contains('open')&&typeof window.currentKeyForProfile==='function'&&typeof window.prOpenUserCard==='function')job=window.prOpenUserCard(window.currentKeyForProfile());
-      else if(inbox&&inbox.classList.contains('open')&&typeof window.pkHomeOpenInbox==='function')job=window.pkHomeOpenInbox();
-      else job=Promise.resolve();
-    }catch(e){job=Promise.resolve();}
-    Promise.resolve(job).finally(function(){
-      /* Keep the pull/stretch visible until the actual refresh work finishes. */
-      clearPullVisual();
-      setTimeout(function(){busy=false;},700);
+      if(kind==='home'&&typeof window.pkHomeRefresh==='function')job=window.pkHomeRefresh();
+      else if(kind==='profile'&&typeof window.currentKeyForProfile==='function'&&typeof window.prOpenUserCard==='function')job=window.prOpenUserCard(window.currentKeyForProfile());
+      else if(kind==='inbox'&&typeof window.pkHomeOpenInbox==='function')job=window.pkHomeOpenInbox();
+    }catch(e){}
+    return Promise.resolve(job).catch(function(){});
+  }
+  function release(kind){
+    busy=true;
+    /* hold full circle, spin, then refresh quickly */
+    ring.setAttribute('stroke-dashoffset',String(C*.25));
+    head.style.opacity=0;
+    el.style.opacity='1';el.style.transform='translateY(8px) scale(1)';
+    el.classList.add('spin');
+    var t0=Date.now();
+    var timeout=new Promise(function(r){setTimeout(r,3500);});
+    Promise.race([runRefresh(kind),timeout]).then(function(){
+      var wait=Math.max(0,550-(Date.now()-t0));
+      setTimeout(function(){hide();setTimeout(function(){busy=false;},300);},wait);
     });
   }
   document.addEventListener('touchstart',function(e){
-    if(e.touches.length!==1)return;
-    var t=e.touches[0];startY=t.clientY;startX=t.clientX;armed=false;
-    var p=document.getElementById('pkPublicProfileOverlay'),i=document.getElementById('pkInboxOverlay'),h=document.getElementById('pkHomeScreen');
-    var target=p&&p.classList.contains('open')?(p.querySelector('.pp-scroll')||p):i&&i.classList.contains('open')?(i.querySelector('.pki-list')||i):h&&h.style.display!=='none'?(document.getElementById('pkHomeScroll')||h):null;
-    if(target){try{armed=(target.scrollTop<=2);}catch(_){}}
-  },{passive:true});
-  document.addEventListener('touchend',function(){
-    if(!busy && pullActive) clearPullVisual();
-  },{passive:true});
-  document.addEventListener('touchcancel',function(){
-    if(!busy && pullActive) clearPullVisual();
+    if(busy||e.touches.length!==1){armed=false;return;}
+    build();
+    var t=e.touches[0];startY=t.clientY;startX=t.clientX;pulling=false;armed=false;prog=0;
+    target=pickTarget(e.target);
+    if(target){try{armed=(target.scroll.scrollTop<=1);}catch(_){armed=false;}}
   },{passive:true});
   document.addEventListener('touchmove',function(e){
-    if(!armed||e.touches.length!==1)return;
-    var dy=e.touches[0].clientY-startY,dx=e.touches[0].clientX-startX;
-    if(dy>8&&Math.abs(dy)>Math.abs(dx)*1.15){
-      var p=document.getElementById('pkPublicProfileOverlay'),i=document.getElementById('pkInboxOverlay'),h=document.getElementById('pkHomeScreen');
-      var target=p&&p.classList.contains('open')?(p.querySelector('.pp-scroll')||p):i&&i.classList.contains('open')?(i.querySelector('.pki-list')||i):h&&h.style.display!=='none'?(document.getElementById('pkHomeScroll')||h):null;
-      setPullVisual(target,dy);
+    if(!armed||busy||e.touches.length!==1)return;
+    var t=e.touches[0],dy=t.clientY-startY,dx=t.clientX-startX;
+    if(!pulling){
+      if(dy<=6||Math.abs(dy)<=Math.abs(dx)*1.2){if(Math.abs(dx)>Math.abs(dy)*1.2&&Math.abs(dx)>10)armed=false;return;}
+      try{if(target.scroll.scrollTop>1){armed=false;return;}}catch(_){}
+      pulling=true;
     }
-    if(dy>75&&Math.abs(dy)>Math.abs(dx)*1.25){armed=false;refreshCurrent();}
-  },{passive:true});
+    if(dy<=0){draw(0);return;}
+    if(e.cancelable)e.preventDefault();
+    draw(dy/DIST);
+  },{passive:false});
+  function end(){
+    if(!pulling){armed=false;return;}
+    var kind=target&&target.kind,ok=prog>=1;
+    pulling=false;armed=false;
+    if(ok&&kind)release(kind);else hide();
+  }
+  document.addEventListener('touchend',end,{passive:true});
+  document.addEventListener('touchcancel',function(){if(pulling){pulling=false;armed=false;hide();}},{passive:true});
 })();
 </script>
 
@@ -8215,34 +8262,7 @@ var name=String(d.name||d.displayName||d.fullName||d.username||'User');
 #pkHomeScreen.pr-pull-active{transform:translateY(var(--pr-pull-y,0px));transition:none!important}
 #pkHomeScreen.pr-pull-release{transition:transform .22s ease-out!important}
 </style>
-<script id="pkHomePullRefresh">
-(function(){
-  var sy=0,sx=0,pulling=false,locked=false,home=null;
-  function getHome(){return document.getElementById('pkHomeScreen')}
-  document.addEventListener('touchstart',function(e){
-    if(e.touches.length!==1)return;
-    home=getHome(); if(!home||home.style.display==='none')return;
-    var t=e.touches[0]; sy=t.clientY; sx=t.clientX; pulling=false; locked=false;
-    try{ locked=(window.scrollY||document.documentElement.scrollTop||0)<=2 && (!document.getElementById('pkHomeScroll') || document.getElementById('pkHomeScroll').scrollTop<=2); }catch(_){locked=true}
-  },{passive:true,capture:true});
-  document.addEventListener('touchmove',function(e){
-    if(!home||!locked||e.touches.length!==1)return;
-    var t=e.touches[0],dy=t.clientY-sy,dx=t.clientX-sx;
-    if(dy<=0||Math.abs(dy)<=Math.abs(dx)*1.15)return;
-    pulling=true;
-    var y=Math.min(62,dy*.32);
-    home.style.setProperty('--pr-pull-y',y+'px'); home.classList.add('pr-pull-active');
-  },{passive:true,capture:true});
-  document.addEventListener('touchend',function(){
-    if(!home||!pulling)return;
-    var y=parseFloat(getComputedStyle(home).getPropertyValue('--pr-pull-y'))||0;
-    home.classList.remove('pr-pull-active'); home.classList.add('pr-pull-release'); home.style.setProperty('--pr-pull-y','0px');
-    setTimeout(function(){home&&home.classList.remove('pr-pull-release')},240);
-    pulling=false; locked=false;
-    if(y>=28){setTimeout(function(){try{if(typeof refreshCurrent==='function')refreshCurrent();else if(typeof window.pkHomeRefresh==='function')window.pkHomeRefresh();}catch(_){try{location.reload()}catch(e){}}},90)}
-  },{passive:true,capture:true});
-})();
-</script>
+<script id="pkHomePullRefresh">/* replaced by pkPullToRefresh (round arrow indicator; page no longer moves). */</script>
 
 <style id="pkRoomFixV1">
 /* ===== pkRoomFixV1 ===== */
@@ -9303,8 +9323,8 @@ input,textarea,select{font-size:16px}
   setInterval(function(){
     var r=document.getElementById('prRoom');
     var vis=!!(r&&r.offsetParent!==null&&getComputedStyle(r).display!=='none'&&getComputedStyle(r).visibility!=='hidden');
-    /* Visibility is controlled only by the existing Room Level/XP sync below.
-       This helper only refreshes the viewer count, so it cannot race that sync. */
+    x.style.display=vis?'block':'none';
+    v.style.display=vis?'flex':'none';
     try{
       var count=document.getElementById('cinemaViewerCount');
       var out=document.getElementById('pkRoomViewerCount');
@@ -16881,12 +16901,34 @@ html body #prRoom #cinemaChatPanel .pr-chat-line .pr-bubble{
 <script id="partyRoomLevelViewerExitSyncFinalScript">
 (function(){
   'use strict';
+  /* Any full-page overlay (More Video, Settings, Viewers, Top Gifter, profile, etc.) sitting on top of the room corner => Viewer + X hide. */
+  window.__prFullPageCovered=function(){
+    try{
+      var room=document.getElementById('prRoom');if(!room)return false;
+      var x=document.getElementById('pkRoomX'),v=document.getElementById('pkRoomViewerBtn');
+      var px=innerWidth-21,py=18,xr=x&&x.getBoundingClientRect();
+      if(xr&&xr.width>0){px=xr.left+xr.width/2;py=xr.top+xr.height/2;}
+      var list=document.elementsFromPoint(px,py),W=innerWidth,H=innerHeight;
+      for(var i=0;i<list.length;i++){
+        var el=list[i];
+        if(el===x||el===v||(x&&x.contains(el))||(v&&v.contains(el)))continue;
+        if(el===room||room.contains(el))return false;
+        if(el.contains(room))continue;
+        var r=el.getBoundingClientRect();
+        if(r.width>=W*.9&&r.height>=H*.85){
+          var cs=getComputedStyle(el),m=String(cs.backgroundColor).match(/rgba?\(([^)]+)\)/),a=0;
+          if(m){var p=m[1].split(/[ ,\/]+/).filter(Boolean);a=p.length>3?parseFloat(p[3]):1;if(isNaN(a))a=1;}
+          if(a>=.5||(cs.backgroundImage&&cs.backgroundImage!=='none'))return true;
+        }
+      }
+      return false;
+    }catch(e){return false;}
+  };
   var overlayIds=[
     'pkPublicProfileOverlay','pkMeProfilePanel','pkInboxOverlay','pkDirectMessageOverlay',
     'pkDirectCallOverlay','pkIncomingCallOverlay','pkVisitorsOverlay','pkEditProfile',
     'pkGlobalSearch','pkGamingRanking','cinemaGharModal','pkWalletPanel','prHostSettingsPage',
-    'prBrowserOverlay','partyMoreVideoOverlay','partyRoomLevelOverlay','prGiftSheet','prUserCard',
-    'partyRoomGiftTray','partyRoomReactionTray'
+    'prBrowserOverlay','partyMoreVideoOverlay','partyRoomLevelOverlay'
   ];
   function shown(el){
     if(!el)return false;
@@ -16903,12 +16945,12 @@ html body #prRoom #cinemaChatPanel .pr-chat-line .pr-bubble{
   }
   function sync(){
     var room=document.getElementById('prRoom'),badge=document.getElementById('prRoomLevelBadge'),v=document.getElementById('pkRoomViewerBtn'),x=document.getElementById('pkRoomX');
-    if(!room||!badge||!v||!x)return;
-    var roomVisible=shown(room), labelVisible=shown(badge), blocked=pageOpen();
-    var on=roomVisible&&labelVisible&&!blocked;
+    if(!room||!v||!x)return;
+    var roomVisible=shown(room), labelVisible=true, blocked=pageOpen();
+    var on=roomVisible&&labelVisible&&!blocked&&!window.__prFullPageCovered();
     v.classList.toggle('pr-room-sync-visible',on);v.classList.toggle('pr-room-sync-hidden',!on);
     x.classList.toggle('pr-room-sync-visible',on);x.classList.toggle('pr-room-sync-hidden',!on);
-    if(!on)return;
+    if(!on||!badge)return;
     /* Put Viewer immediately to the right of the Room Level/XP label. */
     var br=badge.getBoundingClientRect(),xr=x.getBoundingClientRect();
     var vw=v.offsetWidth||30,vh=v.offsetHeight||30;
@@ -18649,16 +18691,16 @@ html body #prRoom.party-youtube-layout > #cinemaChatPanel.prc #cinemaChatMessage
 <script id="partyRoomLevelViewerExitSyncUltimateScript">
 (function(){
   'use strict';
-  var ids=['pkPublicProfileOverlay','pkMeProfilePanel','pkInboxOverlay','pkDirectMessageOverlay','pkDirectCallOverlay','pkIncomingCallOverlay','pkVisitorsOverlay','pkEditProfile','pkGlobalSearch','pkGamingRanking','cinemaGharModal','pkWalletPanel','prHostSettingsPage','prBrowserOverlay','partyMoreVideoOverlay','partyRoomLevelOverlay','prGiftSheet','prUserCard','partyRoomGiftTray','partyRoomReactionTray'];
+  var ids=['pkPublicProfileOverlay','pkMeProfilePanel','pkInboxOverlay','pkDirectMessageOverlay','pkDirectCallOverlay','pkIncomingCallOverlay','pkVisitorsOverlay','pkEditProfile','pkGlobalSearch','pkGamingRanking','cinemaGharModal','pkWalletPanel','prHostSettingsPage','prBrowserOverlay','partyMoreVideoOverlay','partyRoomLevelOverlay'];
   function shown(el){if(!el)return false;var c=getComputedStyle(el),r=el.getBoundingClientRect();return c.display!=='none'&&c.visibility!=='hidden'&&parseFloat(c.opacity||'1')>0&&r.width>0&&r.height>0;}
   function blocked(){for(var i=0;i<ids.length;i++){var e=document.getElementById(ids[i]);if(!e)continue;if(e.classList.contains('open')||((e.id==='pkMeProfilePanel'||e.id==='pkVisitorsOverlay'||e.id==='pkEditProfile')&&shown(e)))return true;}return false;}
   function sync(){
     var room=document.getElementById('prRoom'),b=document.getElementById('prRoomLevelBadge'),v=document.getElementById('pkRoomViewerBtn'),x=document.getElementById('pkRoomX');
-    if(!room||!b||!v||!x)return;
-    var on=shown(room)&&shown(b)&&!blocked();
+    if(!room||!v||!x)return;
+    var on=shown(room)&&!blocked()&&!(window.__prFullPageCovered&&window.__prFullPageCovered());
     v.classList.toggle('pr-room-sync-visible',on);v.classList.toggle('pr-room-sync-hidden',!on);
     x.classList.toggle('pr-room-sync-visible',on);x.classList.toggle('pr-room-sync-hidden',!on);
-    if(!on)return;
+    if(!on||!b)return;
     var br=b.getBoundingClientRect(),xr=x.getBoundingClientRect(),vw=v.offsetWidth||30,vh=v.offsetHeight||30;
     var left=Math.round(br.right+6),top=Math.round(br.top+(br.height-vh)/2),maxRight=Math.round(xr.left-6);
     if(left+vw>maxRight)left=Math.max(3,maxRight-vw);
@@ -19137,3 +19179,179 @@ html body #prRoom.party-gaming-layout:has(#partyGamingCenter.pgc-playing) > #cin
 #prRoom.party-gaming-layout #cinemaSeats .psf-frame-wrap[data-frame]:not([data-frame="none"]) .psf-frame-art{width:34px!important;height:34px!important;}
 #prRoom.party-gaming-layout #cinemaSeats .psf-core{font-size:12px!important;}
 </style>
+
+<style id="partyRoomChatSeatsDownGamingSmallFinal">
+/* CHAT MODE: header -> [2s/Play/2s (left)  +  More Video (right)] -> 8 seats -> comments (comments stay anchored at the bottom).
+   Positions come from --pc-btn-top / --pc-seat-top (set by the script below from the real header height).
+   NOTE: the 8/12-seat ':has()' rules used to out-rank the plain seat rule, so the seats never moved down in 8-seat mode. */
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #prSubRow{top:var(--pc-btn-top,78px)!important;right:8px!important;left:auto!important;}
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #ytSeekPad{top:var(--pc-btn-top,78px)!important;left:8px!important;right:auto!important;}
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats{top:var(--pc-seat-top,120px)!important;}
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout):has(#cinemaSeats.pr-eight-seat-mode) #cinemaSeats,
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout):has(#cinemaSeats.pr-twelve-seat-mode) #cinemaSeats,
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout):has(#cinemaSeats.pr-six-seat-mode) #cinemaSeats,
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout):has(#cinemaSeats.pr-two-seat-mode) #cinemaSeats{top:var(--pc-seat-top,120px)!important;}
+@media(max-height:700px){
+  html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats{top:var(--pc-seat-top,120px)!important;}
+  html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout):has(#cinemaSeats.pr-eight-seat-mode) #cinemaSeats,
+  html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout):has(#cinemaSeats.pr-twelve-seat-mode) #cinemaSeats{top:var(--pc-seat-top,120px)!important;}
+}
+
+/* GAMING MODE: small seats only. */
+html body #prRoom.party-gaming-layout #cinemaSeats{grid-template-columns:repeat(4,26px)!important;gap:6px!important;height:30px!important;}
+html body #prRoom.party-gaming-layout #cinemaSeats.pr-two-seat-mode{grid-template-columns:repeat(2,30px)!important;gap:10px!important;}
+html body #prRoom.party-gaming-layout #cinemaSeats > *,
+html body #prRoom.party-gaming-layout #cinemaSeats > .psf-seat[data-seat-style]{width:26px!important;height:30px!important;min-width:26px!important;min-height:30px!important;max-width:26px!important;flex:0 0 26px!important;padding:0!important;}
+html body #prRoom.party-gaming-layout #cinemaSeats .psf-seat .psf-avatar,
+html body #prRoom.party-gaming-layout #cinemaSeats .psf-seat .psf-frame-wrap,
+html body #prRoom.party-gaming-layout #cinemaSeats .psf-seat[data-seat-style] .psf-avatar,
+html body #prRoom.party-gaming-layout #cinemaSeats .psf-seat[data-seat-style] .psf-frame-wrap{width:26px!important;height:26px!important;min-width:26px!important;min-height:26px!important;flex-basis:26px!important;}
+html body #prRoom.party-gaming-layout #cinemaSeats .psf-seat .psf-frame-wrap[data-frame]:not([data-frame="none"]){width:30px!important;height:30px!important;min-width:30px!important;min-height:30px!important;flex-basis:30px!important;}
+html body #prRoom.party-gaming-layout #cinemaSeats .psf-seat .psf-frame-wrap[data-frame]:not([data-frame="none"]) .psf-avatar{width:22px!important;height:22px!important;min-width:22px!important;min-height:22px!important;left:4px!important;top:4px!important;}
+html body #prRoom.party-gaming-layout #cinemaSeats .psf-seat .psf-frame-wrap[data-frame]:not([data-frame="none"]) .psf-frame-art{width:30px!important;height:30px!important;}
+html body #prRoom.party-gaming-layout #cinemaSeats .psf-core{font-size:11px!important;}
+html body #prRoom.party-gaming-layout #cinemaSeats .psf-label,
+html body #prRoom.party-gaming-layout #cinemaSeats .pr-giftpill,
+html body #prRoom.party-gaming-layout #cinemaSeats .psf-voice-pct,
+html body #prRoom.party-gaming-layout #cinemaSeats .psf-sp{display:none!important;}
+</style>
+<script id="partyRoomChatSeatsDownScript">
+(function(){
+  'use strict';
+  var last=-1;
+  function tick(){
+    try{
+      var r=document.getElementById('prRoom'),t=document.getElementById('prTop');
+      if(!r||!t)return;
+      if(r.classList.contains('party-youtube-layout')||r.classList.contains('party-gaming-layout'))return;
+      var rr=r.getBoundingClientRect(),tb=t.getBoundingClientRect();
+      if(!rr.height||!tb.height)return;
+      var hb=Math.round(tb.bottom-rr.top);
+      if(hb<40||hb>220)return;
+      var b=hb+8;
+      if(b===last)return;
+      last=b;
+      r.style.setProperty('--pc-btn-top',b+'px');
+      r.style.setProperty('--pc-seat-top',(b+30+12)+'px');
+    }catch(e){}
+  }
+  function init(){
+    var r=document.getElementById('prRoom');
+    if(!r){setTimeout(init,500);return;}
+    try{new MutationObserver(function(){last=-1;tick();}).observe(r,{attributes:true,attributeFilter:['class']});}catch(e){}
+    try{if(window.ResizeObserver)new ResizeObserver(tick).observe(document.getElementById('prTop')||r);}catch(e){}
+    window.addEventListener('resize',function(){last=-1;tick();},{passive:true});
+    setInterval(tick,400);tick();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
+<script id="partyRoomWindowBridgeScript">
+/* cinemaIsHost / cinemaRoomId / cinemaRoomName / db are top-level let/const, so they are NOT on window.
+   The Settings page (Name, Background, Password, Block List) reads window.cinemaIsHost etc. and silently did nothing.
+   These accessors expose the real values to window.* */
+(function(){
+  function bridge(name,get,set){
+    try{
+      if(Object.getOwnPropertyDescriptor(window,name))return;
+      Object.defineProperty(window,name,{configurable:true,enumerable:true,get:get,set:set||function(){}});
+    }catch(e){}
+  }
+  bridge('cinemaIsHost',function(){try{return cinemaIsHost;}catch(e){return false;}},function(v){try{cinemaIsHost=v;}catch(e){}});
+  bridge('cinemaRoomId',function(){try{return cinemaRoomId;}catch(e){return '';}},function(v){try{cinemaRoomId=v;}catch(e){}});
+  bridge('cinemaRoomName',function(){try{return cinemaRoomName;}catch(e){return '';}},function(v){try{cinemaRoomName=v;}catch(e){}});
+  bridge('db',function(){try{return db;}catch(e){return undefined;}});
+})();
+</script>
+
+<style id="partyRoomSettingsBgPassStyle">
+/* Background + Password now live in Room Settings (Seat Settings button); removed from the room-DP popup. */
+#prDpEdit .pde-bgt,#prDpEdit .pde-sw,#prDpEdit .pde-gal,#prDpEdit .pde-bgh,#prDpEdit .pde-pass{display:none!important;}
+#prsBgPassWrap .prs-card{background:#111827;border:1px solid #26354d;border-radius:18px;padding:14px;margin-bottom:12px;text-align:left;}
+#prsBgPassWrap .prs-t{font-size:15px;font-weight:950;margin-bottom:6px;color:#fff;}
+#prsBgPassWrap .prs-s{font-size:11px;color:#94a3b8;margin-bottom:10px;line-height:1.45;}
+#prsBgPassWrap .prs-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px;}
+#prsBgPassWrap .prs-grid button{height:44px;border-radius:11px;border:2px solid transparent;color:#fff;font-weight:900;font-size:12px;cursor:pointer;touch-action:manipulation;text-shadow:0 1px 3px rgba(0,0,0,.6);}
+#prsBgPassWrap .prs-grid button.on{border-color:#fff;box-shadow:0 0 0 2px #7c3aed;}
+#prsBgPassWrap .prs-btn{width:100%;padding:13px 8px;border-radius:11px;border:1px solid #475569;background:#172033;color:#fff;font-weight:950;cursor:pointer;margin-bottom:8px;touch-action:manipulation;}
+#prsBgPassWrap .prs-btn.pri{background:linear-gradient(135deg,#7c3aed,#db2777);border:0;}
+#prsBgPassWrap .prs-btn.del{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.5);}
+#prsBgPassWrap .prs-in{width:100%;box-sizing:border-box;padding:12px;border-radius:11px;border:1px solid #475569;background:#fff;color:#111;font-size:18px;letter-spacing:6px;text-align:center;margin-bottom:8px;}
+#prsBgPassWrap .prs-msg{min-height:16px;font-size:11px;font-weight:800;text-align:center;color:#a7f3d0;}
+</style>
+<script id="partyRoomSettingsBgPassScript">
+(function(){
+  'use strict';
+  function $(id){return document.getElementById(id);}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];});}
+  var NAMES={midnight:'रात',purple:'बैंगनी',sunset:'शाम',neon:'नीयॉन',bloom:'ब्लूम'};
+  function isHost(){try{return !!(cinemaIsHost||window.cinemaIsHost);}catch(e){return false;}}
+  function say(t,bad){var m=$('prsMsg');if(m){m.style.color=bad?'#fca5a5':'#a7f3d0';m.textContent=t;}}
+  function build(){
+    var page=$('partyRoomSettingsPage');
+    if(!page||$('prsBgPassWrap'))return !!$('prsBgPassWrap');
+    var inner=page.firstElementChild&&page.firstElementChild.firstElementChild;
+    if(!inner)return false;
+    var w=document.createElement('div');w.id='prsBgPassWrap';
+    w.innerHTML=
+      '<div class="prs-card"><div class="prs-t">🖼️ Room Background</div><div class="prs-s">थीम या फोटो चुनते ही पूरे रूम में तुरंत लागू हो जाती है। अलग से Save नहीं करना।</div>'
+      +'<div class="prs-grid" id="prsBgGrid"></div>'
+      +'<button type="button" class="prs-btn pri" id="prsGallery">📷 Gallery से फोटो लगाएँ</button>'
+      +'<input type="file" id="prsBgFile" accept="image/*" style="display:none"></div>'
+      +'<div class="prs-card"><div class="prs-t">🔐 Room Password</div><div class="prs-s" id="prsPassStatus"></div>'
+      +'<button type="button" class="prs-btn" id="prsPassSet">🔑 पासवर्ड लगाएँ / बदलें</button>'
+      +'<button type="button" class="prs-btn del" id="prsPassRemove" style="display:none">🗑️ पासवर्ड हटाएँ</button>'
+      +'<div id="prsPassBox" style="display:none"><input class="prs-in" id="prsPassInput" type="password" inputmode="numeric" maxlength="6" placeholder="4 या 6 अंक" autocomplete="off"><button type="button" class="prs-btn pri" id="prsPassSave">💾 पासवर्ड सेव करें</button></div></div>'
+      +'<div class="prs-msg" id="prsMsg"></div>';
+    inner.appendChild(w);
+    $('prsGallery').onclick=function(){if(!isHost())return say('सिर्फ़ Host बदल सकता है।',1);$('prsBgFile').click();};
+    $('prsBgFile').onchange=async function(){var f=this.files&&this.files[0];if(!f)return;try{await window.setPartyRoomGalleryBackground(f);say('✅ Gallery photo तुरंत लागू हो गई।');}catch(e){say('फोटो नहीं लग पाई।',1);}this.value='';};
+    $('prsPassSet').onclick=function(){if(!isHost())return say('सिर्फ़ Host बदल सकता है।',1);$('prsPassBox').style.display='block';$('prsPassInput').focus();};
+    $('prsPassSave').onclick=async function(){
+      var v=$('prsPassInput').value.trim();
+      if(!/^\d{4}(?:\d{2})?$/.test(v))return say('पासवर्ड 4 या 6 अंकों का होना चाहिए।',1);
+      try{
+        var h=await cinemaHashPassword(v);
+        await db.collection('cinemaRooms').doc(cinemaRoomId).set({passwordProtected:true,passwordHash:h,updatedAt:Date.now()},{merge:true});
+        window.__prPasswordProtected=true;$('prsPassBox').style.display='none';$('prsPassInput').value='';say('✅ पासवर्ड सेव हो गया।');paint();
+      }catch(e){say('पासवर्ड सेव नहीं हो पाया।',1);}
+    };
+    $('prsPassRemove').onclick=async function(){
+      try{
+        await db.collection('cinemaRooms').doc(cinemaRoomId).set({passwordProtected:false,passwordHash:firebase.firestore.FieldValue.delete(),updatedAt:Date.now()},{merge:true});
+        window.__prPasswordProtected=false;say('✅ पासवर्ड हटा दिया गया।');paint();
+      }catch(e){say('पासवर्ड हट नहीं पाया।',1);}
+    };
+    return true;
+  }
+  function paint(){
+    if(!$('prsBgPassWrap'))return;
+    var g=$('prsBgGrid'),BG=window.__PARTY_BG||{};
+    if(g){
+      g.innerHTML='';
+      Object.keys(BG).forEach(function(k){
+        var b=document.createElement('button');b.type='button';b.textContent=NAMES[k]||k;b.style.background=BG[k];
+        if(window.__partyRoomBackgroundKey===k)b.className='on';
+        b.onclick=async function(){
+          if(!isHost())return say('सिर्फ़ Host बदल सकता है।',1);
+          try{await window.setPartyRoomBackground(k);g.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});b.classList.add('on');say('✅ बैकग्राउंड तुरंत बदल गई।');}
+          catch(e){say('बैकग्राउंड नहीं बदल पाई।',1);}
+        };
+        g.appendChild(b);
+      });
+    }
+    var locked=!!window.__prPasswordProtected;
+    $('prsPassStatus').textContent=locked?'🔒 पासवर्ड लगा हुआ है':'🔓 अभी कोई पासवर्ड नहीं है';
+    $('prsPassRemove').style.display=locked?'block':'none';
+    $('prsPassSet').textContent=locked?'🔑 पासवर्ड बदलें':'🔑 पासवर्ड लगाएँ';
+  }
+  function init(){
+    if(!build()){setTimeout(init,500);return;}
+    paint();
+    var page=$('partyRoomSettingsPage');
+    try{new MutationObserver(function(){if(page.style.display!=='none')paint();}).observe(page,{attributes:true,attributeFilter:['style']});}catch(e){}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
