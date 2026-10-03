@@ -6206,6 +6206,7 @@ setInterval(function(){try{
     document.addEventListener('touchend',prRoomAvatarOpenFromEvent,true);
   })();
 })();
+</script>
 <style id="prHostSettingsPageStyle">
 #prHostSettingsPage{position:fixed;inset:0;z-index:2147483000;display:none;background:linear-gradient(180deg,#0b0620 0%,#170b35 45%,#090513 100%);color:#fff;font-family:Segoe UI,Arial,sans-serif;overflow:hidden}
 #prHostSettingsPage.open{display:block}
@@ -6265,7 +6266,6 @@ setInterval(function(){try{
  document.getElementById('prhsPassSave').onclick=async function(){var v=document.getElementById('prhsPassInput').value.trim();var m=document.getElementById('prhsMsg');if(!/^\d{4}(?:\d{2})?$/.test(v)){m.textContent='पासवर्ड 4 या 6 अंकों का होना चाहिए।';return;}try{var h=await cinemaHashPassword(v);await db.collection('cinemaRooms').doc(cinemaRoomId).set({passwordProtected:true,passwordHash:h,updatedAt:Date.now()},{merge:true});window.__prPasswordProtected=true;document.getElementById('prhsPassBox').style.display='none';document.getElementById('prhsPassInput').value='';m.textContent='✅ पासवर्ड सेव हो गया।';render();}catch(e){m.textContent='पासवर्ड सेव नहीं हो पाया।';}};
  document.getElementById('prhsPassRemove').onclick=async function(){try{await db.collection('cinemaRooms').doc(cinemaRoomId).set({passwordProtected:false,passwordHash:firebase.firestore.FieldValue.delete(),updatedAt:Date.now()},{merge:true});window.__prPasswordProtected=false;document.getElementById('prhsMsg').textContent='✅ पासवर्ड हटा दिया गया।';render();}catch(e){document.getElementById('prhsMsg').textContent='पासवर्ड हट नहीं पाया।';}};
 })();
-</script>
 </script>
 <script id="pkStandaloneBoot">
 // ---- Standalone glue: leaving a room -> back to the lobby; leaving the lobby -> home screen ----
@@ -6911,6 +6911,7 @@ window.pkOpenDirectMessage=async function(key,name){var inbox=document.getElemen
 #pkPublicProfileOverlay.own-view .pp-actions{display:none}
 #pkPublicProfileOverlay.own-view .pp-main{padding-bottom:35px}
 @media(max-width:430px){#pkPublicProfileOverlay .pp-hero{height:235px}#pkPublicProfileOverlay .pp-main{padding-left:16px;padding-right:16px}#pkPublicProfileOverlay .pp-name{font-size:25px}#pkPublicProfileOverlay .pp-stat b{font-size:22px}#pkPublicProfileOverlay .pp-actions button{font-size:17px;height:52px}}
+</style>
 <style id="partyTopGifterFullScreenFinal">
 /* Top Gifter: independent, reliable white full-screen page. */
 #partyRoomTopGiftersPage{position:fixed!important;inset:0!important;z-index:2147483000!important;width:100vw!important;height:100dvh!important;min-height:100vh!important;background:#fff!important;color:#111827!important;box-sizing:border-box!important;display:none;overflow:hidden!important;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;}
