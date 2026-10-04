@@ -5587,7 +5587,7 @@ function niceName(f){ return String(f&&f.name||'Song').replace(/\.[a-z0-9]{2,5}$
 /* ---------- styles + UI ---------- */
 var st=document.createElement('style');
 st.textContent=
-'#partyMusicBackdrop{position:fixed;inset:0;z-index:2147479998;display:none;background:rgba(12,8,28,.20);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);touch-action:none}'+
+'#partyMusicBackdrop{position:fixed;inset:0;z-index:2147479998;display:none;background:transparent;touch-action:none}'+
 '#partyMusicPanel{position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);z-index:2147483000;display:none;max-width:460px;margin:0 auto;padding:12px;border-radius:20px;background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(255,255,255,.07)),rgba(24,12,52,.58);backdrop-filter:blur(22px) saturate(135%);-webkit-backdrop-filter:blur(22px) saturate(135%);border:1px solid rgba(255,255,255,.24);box-shadow:0 18px 50px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.14);color:#fff;text-align:left;font-family:inherit}'+
 '#partyMusicPanel .pm-head{display:flex;align-items:center;justify-content:space-between;font-weight:800;font-size:15px}'+
 '#partyMusicPanel button{border:0;color:#fff;cursor:pointer;font-family:inherit}'+
@@ -5596,7 +5596,10 @@ st.textContent=
 '#partyMusicPanel .pm-ctl{display:flex;justify-content:center;gap:10px;margin:6px 0}'+
 '#partyMusicPanel .pm-ctl button{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.12);font-size:19px}'+
 '#pmPlay{background:linear-gradient(145deg,#ff5fa2,#9b4dff)!important}'+
-'#pmVolRow{display:flex;align-items:center;gap:8px;font-size:16px;margin:6px 0}#pmVol{flex:1}'+
+'#partyMusicPanel .pm-head > span:first-child{white-space:nowrap}'+
+'#pmVolRow{display:flex;align-items:center;gap:4px;font-size:12px;margin:0 0 0 14px;flex:0 0 auto}#pmVol{width:62px;height:16px;margin:0}'+
+'#pmClose{margin-left:auto;flex:0 0 auto}'+
+'#pmSeekRow{display:flex;align-items:center;gap:8px;font-size:11px;color:#e9ddff;margin:6px 0 8px;font-variant-numeric:tabular-nums}#pmSeek{flex:1;min-width:0;margin:0}#pmSeekRow span{min-width:32px;text-align:center}'+
 '#pmPick{display:block;box-sizing:border-box;width:100%;padding:11px;border-radius:12px;background:linear-gradient(135deg,#8a2be2,#6a1b9a);font-weight:800;font-size:14px;text-align:center;cursor:pointer;touch-action:manipulation}'+
 '#pmList{max-height:110px;overflow:auto;margin-top:8px}'+
 '#pmList button{display:block;width:100%;text-align:left;padding:7px 9px;margin-top:4px;border-radius:9px;background:rgba(255,255,255,.07);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
@@ -5613,10 +5616,10 @@ function buildUI(){
   var back=document.createElement('div'); back.id='partyMusicBackdrop';
   document.body.appendChild(back);
   var p=document.createElement('div'); p.id='partyMusicPanel';
-  p.innerHTML='<div class="pm-head"><span>🎵 पार्टी म्यूज़िक</span><button type="button" id="pmClose">✕</button></div>'+
+  p.innerHTML='<div class="pm-head"><span>🎵 पार्टी म्यूज़िक</span><div id="pmVolRow">🔈<input id="pmVol" type="range" min="0" max="100" value="100">🔊</div><button type="button" id="pmClose">✕</button></div>'+
     '<div id="pmTitle">कोई गाना नहीं चल रहा</div>'+
     '<div class="pm-ctl"><button type="button" id="pmPrev">⏮</button><button type="button" id="pmPlay">▶️</button><button type="button" id="pmNext">⏭</button><button type="button" id="pmStop">⏹</button></div>'+
-    '<div id="pmVolRow">🔈<input id="pmVol" type="range" min="0" max="100" value="100">🔊</div>'+
+    '<div id="pmSeekRow"><span id="pmCur">0:00</span><input id="pmSeek" type="range" min="0" max="1000" value="0"><span id="pmDur">0:00</span></div>'+
     '<label id="pmPick" for="pmFile" role="button" tabindex="0">📂 फ़ोन से गाना चुनें</label>'+
     '<div id="pmList"></div>'+
     '<div id="pmNote">आप जो गाना चलाएँगे वो रूम में सबको सुनाई देगा। एक समय में एक ही व्यक्ति गाना चला सकता है।</div>'+
@@ -5650,7 +5653,20 @@ function buildUI(){
   $('pmPrev').onclick=function(){ var H=S.host; if(!H.audio||H.idx<0) return; if(H.audio.currentTime>3||H.idx===0){H.audio.currentTime=0;} else playIndex(H.idx-1); };
   $('pmStop').onclick=function(){ hostStop(); toast('म्यूज़िक बंद किया'); };
   $('pmVol').oninput=function(e){ if(S.host.gain) S.host.gain.gain.value=Number(e.target.value)/100; };
+  var sk=$('pmSeek');
+  sk.addEventListener('input',function(){ S.seeking=true; var a=S.host.audio; if(a&&isFinite(a.duration)&&a.duration>0){ $('pmCur').textContent=fmtT(a.duration*Number(sk.value)/1000); } });
+  sk.addEventListener('change',function(){ var a=S.host.audio; if(a&&isFinite(a.duration)&&a.duration>0){ try{ a.currentTime=a.duration*Number(sk.value)/1000; }catch(_){} } S.seeking=false; });
+  ['touchend','mouseup','pointerup','touchcancel'].forEach(function(ev){ sk.addEventListener(ev,function(){ setTimeout(function(){ S.seeking=false; syncSeek(); },60); }); });
   $('pmPillBtn').onclick=function(){ var a=S.lis.audio; if(!a) return; if(a.paused){ a.muted=false; a.play().catch(function(){}); } else { a.muted=!a.muted; } syncPillBtn(); };
+}
+function fmtT(t){ t=Math.max(0,Math.floor(t||0)); var m=Math.floor(t/60),s=t%60; return m+':'+(s<10?'0':'')+s; }
+function syncSeek(){
+  var sk=$('pmSeek'); if(!sk||S.seeking) return;
+  var a=S.host.audio, ok=a&&S.host.idx>=0&&isFinite(a.duration)&&a.duration>0;
+  sk.disabled=!ok;
+  sk.value=ok?Math.round(a.currentTime/a.duration*1000):0;
+  $('pmCur').textContent=ok?fmtT(a.currentTime):'0:00';
+  $('pmDur').textContent=ok?fmtT(a.duration):'0:00';
 }
 function toast(msg){ var t=$('pmToast'); if(!t) return; t.textContent=msg; t.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(function(){t.style.display='none';},2200); }
 
@@ -5679,6 +5695,7 @@ function renderPanel(){
   var H=S.host; if(!$('pmTitle')) return;
   var f=H.files[H.idx];
   $('pmTitle').textContent=f?('🎶 '+niceName(f)):'कोई गाना नहीं चल रहा';
+  syncSeek();
   $('pmPlay').textContent=(H.audio&&!H.audio.paused)?'⏸':'▶️';
   var list=$('pmList'); list.textContent='';
   H.files.forEach(function(file,i){
@@ -5705,6 +5722,7 @@ function ensureAudio(){
     /* Song पूरा होते ही session पूरी तरह STOP हो — अगला song अपने-आप न चले। */
     hostStop();
   });
+  ['timeupdate','loadedmetadata','durationchange','seeked'].forEach(function(ev){ H.audio.addEventListener(ev,syncSeek); });
   H.audio.addEventListener('play',function(){ syncPartyMusicIndicator(); publish(); renderPanel(); });
   H.audio.addEventListener('pause',function(){ syncPartyMusicIndicator(); if(!H.audio.ended){ publish(); renderPanel(); } });
   H.audio.addEventListener('error',function(){ toast('यह फ़ाइल चल नहीं सकी'); if(H.idx+1<H.files.length) playIndex(H.idx+1); });
@@ -8154,7 +8172,7 @@ var name=String(d.name||d.displayName||d.fullName||d.username||'User');
     var c=document.getElementById('partyGamingCenter'), st=document.getElementById('pgcStage');
     if(!c||!st) return;
     if(!frame){
-      var html=new TextDecoder('utf-8').decode(Uint8Array.from(atob(B64),function(ch){return ch.charCodeAt(0)}));
+      var html=patchJump(rawGame(),true);
       frame=document.createElement('iframe');
       frame.title='Sky Jump'; frame.setAttribute('scrolling','no'); frame.setAttribute('allowfullscreen','');
       frame.srcdoc=html;
@@ -8163,7 +8181,20 @@ var name=String(d.name||d.displayName||d.fullName||d.username||'User');
     c.classList.add('pgc-playing');
     txt('pgcTitle','जंपिंग'); txt('pgcSub','🐥 Sky Jump • Ocean');
   };
-  function decodeGame(){ return new TextDecoder('utf-8').decode(Uint8Array.from(atob(B64),function(ch){return ch.charCodeAt(0)})); }
+  function rawGame(){ return new TextDecoder('utf-8').decode(Uint8Array.from(atob(B64),function(ch){return ch.charCodeAt(0)})); }
+  /* Coins only: no Score / Best / Jump anywhere. room=true -> in-game HUD fully hidden (coin pill is drawn by the room). */
+  function patchJump(h,room){
+    var css='<style id="pkCoinOnly">'+(room
+      ? '#hud{display:none!important}#hint{bottom:84px!important}'
+      : '#hud{right:auto!important;justify-content:flex-start!important}#hud .card:not(:last-child){display:none!important}#hud .card:last-child{flex:0 0 auto!important;min-width:96px}')+'</style>';
+    h=h.replace('</head>',css+'</head>');
+    h=h.split('Score: ${Math.floor(score)} \u2022 Jumps: ${jumps}').join('\u{1FA99} ${sessionCoins}');
+    h=h.split(' \u2022 Score: ${Math.floor(score)}').join('');
+    h=h.replace('function hud(){','function hud(){try{parent.postMessage({type:"pkJumpCoinsView",coins:sessionCoins},"*")}catch(e){}');
+    h=h.replace('sessionCoins+=d;','sessionCoins+=d;try{parent.postMessage({type:"pkJumpCoinsView",coins:sessionCoins},"*")}catch(e){}');
+    return h;
+  }
+  function decodeGame(){ return patchJump(rawGame(),false); }
   var homeOv=null;
   function setGameOpen(on){
     document.body.classList.toggle('pk-game-open',!!on);
@@ -9941,7 +9972,11 @@ input,textarea,select{font-size:16px}
   var RATE=1;            /* 1 सिक्का (गेम) = 1 गेम पॉइंट */
   var MAX_PER_ZONE=300;  /* एक बार में ज़्यादा से ज़्यादा पॉइंट (सुरक्षा के लिए) */
   var roomFrame=null,pend=0,timer=null;
-  function decodeGame(){ return new TextDecoder('utf-8').decode(Uint8Array.from(atob(B64),function(ch){return ch.charCodeAt(0)})); }
+  function decodeGame(){
+    var h=new TextDecoder('utf-8').decode(Uint8Array.from(atob(B64),function(ch){return ch.charCodeAt(0)}));
+    /* Coins only: hide the "best / सबसे ज़्यादा" rows. */
+    return h.replace('</head>','<style id="pkCoinOnly">.stat:has(#bestMenu),.stat:has(#endBest){display:none!important}</style></head>');
+  }
   function txt(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; }
   function ours(src){
     var f=document.getElementsByTagName('iframe');
@@ -15330,7 +15365,7 @@ body::before{display:none!important}
 h1,.hint,#commentsList,#bubbleBtn,#backdrop{display:none!important}
 #panel{display:flex!important;position:static!important;width:100%!important;max-width:none!important;height:100%!important;max-height:none!important;margin:0!important;padding:6px!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;backdrop-filter:none!important;gap:7px!important;animation:none!important}
 .panel-container{height:230px!important;min-height:230px!important;max-height:230px!important}
-#keyboardPopup{display:block!important;animation:none!important}
+#keyboardPopup{display:block!important;animation:none!important}.panel-container:has(#emojiPopup.open,#gifPopup.open,#numPopup.open) #keyboardPopup,body.pk-sub #keyboardPopup{display:none!important}
 .key-popup{font-size:1.15rem!important;padding:5px 8px!important;min-width:32px!important;border-radius:8px!important;box-shadow:0 5px 15px rgba(0,0,0,.5),0 0 12px rgba(255,20,147,.25)!important;transform:translate(-50%,-100%) translateY(-6px)!important;}
 @keyframes popupIn{0%{opacity:0;transform:translate(-50%,-100%) translateY(-3px) scale(.96)}100%{opacity:1;transform:translate(-50%,-100%) translateY(-6px) scale(1)}}
 .key:active,.key.active{transform:translateY(1px) scale(.985)!important;}
@@ -15921,10 +15956,12 @@ h1{filter:none!important}
     gifPopup.classList.remove('open');
     keyboardPopup.classList.remove('open');
     numPopup.classList.remove('open');
+    document.body.classList.remove('pk-sub');
   }
 
   function showPanel(type) {
     hideAllPanels();
+    document.body.classList.toggle('pk-sub', type === 'emoji' || type === 'gif' || type === 'num');
     if (type === 'emoji') {
       emojiPopup.classList.add('open');
     } else if (type === 'gif') {
@@ -15950,7 +15987,7 @@ h1{filter:none!important}
   emojiBtn.addEventListener('click', function(e) {
     e.stopPropagation(); jump(emojiBtn);
     if (emojiPopup.classList.contains('open')) {
-      hideAllPanels();
+      showPanel('keyboard');
     } else {
       togglePanelView('emoji');
     }
@@ -15962,11 +15999,11 @@ h1{filter:none!important}
     if (!emojiPopup.classList.contains('open')) return;
     var t = e.target;
     if (emojiPopup.contains(t) || emojiBtn.contains(t)) return;
-    hideAllPanels();
+    showPanel('keyboard');
   }, true);
 
   gifBtn.addEventListener('click', function(e) {
-    e.stopPropagation(); jump(gifBtn); togglePanelView('gif');
+    e.stopPropagation(); jump(gifBtn); if (gifPopup.classList.contains('open')) { showPanel('keyboard'); } else { togglePanelView('gif'); }
   });
   keyboardBtn.addEventListener('click', function(e) {
     e.stopPropagation(); jump(keyboardBtn); togglePanelView('keyboard');
@@ -16984,7 +17021,7 @@ html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSe
 }
 html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode > *{flex:0 0 112px!important;width:112px!important;min-width:112px!important;max-width:112px!important;margin:0!important;padding:0!important;}
 html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode .psf-frame-wrap,html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode .psf-avatar{width:104px!important;height:104px!important;min-width:104px!important;min-height:104px!important;flex-basis:104px!important;margin-left:auto!important;margin-right:auto!important;}
-html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode .psf-avatar{box-shadow:0 0 0 3px rgba(255,160,210,.65),0 0 24px rgba(255,90,165,.55)!important;animation:prCoupleGlow 2.6s ease-in-out infinite;}
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode .psf-avatar{box-shadow:0 0 0 3px rgba(255,160,210,.65),0 0 14px rgba(255,90,165,.45)!important;animation:none!important;opacity:1!important;}
 html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode .psf-core{font-size:34px!important;}
 html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode .psf-frame-wrap[data-frame]:not([data-frame="none"]){width:114px!important;height:114px!important;min-width:114px!important;min-height:114px!important;flex-basis:114px!important;}
 html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode .psf-frame-wrap[data-frame]:not([data-frame="none"]) .psf-avatar{width:92px!important;height:92px!important;min-width:92px!important;min-height:92px!important;left:11px!important;top:11px!important;}
@@ -16992,12 +17029,9 @@ html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSe
 html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode .psf-label{font-size:13px!important;max-width:112px!important;margin-top:6px!important;}
 html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode .pr-giftpill{font-size:11px!important;}
 /* connecting line between the two avatars */
-html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode::before{content:"";position:absolute;left:50%;top:66px;width:76px;height:4px;transform:translateX(-50%);border-radius:4px;
-  background:linear-gradient(90deg,rgba(255,150,205,0),rgba(255,120,185,.95) 30%,rgba(190,130,255,.95) 70%,rgba(190,130,255,0));
-  box-shadow:0 0 12px rgba(255,110,180,.75);pointer-events:none;z-index:1;}
-/* heart on the line */
-html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode::after{content:"\1F496";position:absolute;left:50%;top:68px;font-size:30px;line-height:1;pointer-events:none;z-index:2;
-  filter:drop-shadow(0 0 8px rgba(255,90,170,.9));animation:prCoupleBeat 1.5s ease-in-out infinite;}
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode::before{content:"";position:absolute;left:50%;top:52px;width:84px;height:28px;transform:translateX(-50%);background:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 84 28'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1'%3E%3Cstop offset='0' stop-color='%23ff8ccf'/%3E%3Cstop offset='.5' stop-color='%23e9d5ff'/%3E%3Cstop offset='1' stop-color='%23a78bfa'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M6 14H19L25 5L32 23L39 7L46 22L53 6L59 14H78' fill='none' stroke='%23c084fc' stroke-opacity='.28' stroke-width='7' stroke-linejoin='round' stroke-linecap='round'/%3E%3Cpath d='M6 14H19L25 5L32 23L39 7L46 22L53 6L59 14H78' fill='none' stroke='url(%23g)' stroke-opacity='.75' stroke-width='3.4' stroke-linejoin='round' stroke-linecap='round'/%3E%3Cpath d='M6 14H19L25 5L32 23L39 7L46 22L53 6L59 14H78' fill='none' stroke='%23ffffff' stroke-width='1.3' stroke-linejoin='round' stroke-linecap='round'/%3E%3Ccircle cx='5' cy='14' r='4' fill='%23ff7ab8' stroke='%23ffffff' stroke-width='1.4'/%3E%3Ccircle cx='79' cy='14' r='4' fill='%23a78bfa' stroke='%23ffffff' stroke-width='1.4'/%3E%3C/svg%3E") center/100% 100% no-repeat;pointer-events:none;z-index:1;animation:none!important;}
+/* static electric wire only: no heart, no animation (saves battery) */
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode::after{content:none!important;display:none!important;animation:none!important;}
 </style>
 </body>
 
@@ -19002,6 +19036,189 @@ html body #prRoom.party-youtube-layout > #cinemaChatPanel.prc #cinemaChatMessage
 }
 </style>
 
+<style id="partyRoomGamingControlsStable">
+/* Gaming Mode: 2s / Play / 2s pad and More button stay on ONE fixed line (no jumping, also while a game is running). */
+html body #prRoom.party-gaming-layout #ytSeekPad,
+html body #prRoom.party-gaming-layout:has(#partyGamingCenter.pgc-playing) #ytSeekPad{
+  left:8px!important;right:auto!important;transform:none!important;
+  top:var(--pg-ctl-top,78px)!important;display:flex!important;z-index:111!important;
+}
+html body #prRoom.party-gaming-layout #prSubRow,
+html body #prRoom.party-gaming-layout:has(#partyGamingCenter.pgc-playing) #prSubRow{
+  position:absolute!important;left:auto!important;right:8px!important;
+  top:var(--pg-ctl-top,78px)!important;transform:none!important;margin:0!important;
+}
+</style>
+<script id="partyRoomGamingControlsStableScript">
+(function(){
+  'use strict';
+  var last=null;
+  function tick(){
+    try{
+      var r=document.getElementById('prRoom'),t=document.getElementById('prTop');
+      if(!r||!t||!r.classList.contains('party-gaming-layout'))return;
+      var hb=Math.round(t.getBoundingClientRect().bottom-r.getBoundingClientRect().top);
+      if(hb<40||hb>220)return;              /* ignore half-rendered / transitional values */
+      var v=hb+8;
+      if(v===last)return;
+      last=v; r.style.setProperty('--pg-ctl-top',v+'px');
+    }catch(e){}
+  }
+  function init(){
+    var r=document.getElementById('prRoom');
+    if(!r){setTimeout(init,500);return;}
+    try{new MutationObserver(function(){last=null;tick();}).observe(r,{attributes:true,attributeFilter:['class']});}catch(e){}
+    window.addEventListener('resize',function(){last=null;tick();},{passive:true});
+    setInterval(tick,700);tick();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+<style id="partyRoomGamingCoinPill">
+/* Gaming Mode (Jump game): only the coin count, small, right under the More Video button. */
+#pgcCoinPill{display:none;position:absolute;right:8px;top:calc(var(--pg-ctl-top,78px) + 34px);height:26px;padding:0 10px;
+  align-items:center;gap:5px;box-sizing:border-box;border-radius:999px;z-index:112;pointer-events:none;
+  background:linear-gradient(135deg,rgba(49,27,105,.94),rgba(30,18,75,.94));border:1px solid rgba(250,204,21,.75);
+  box-shadow:0 4px 12px rgba(0,0,0,.3);color:#fde68a;font:900 13px/1 system-ui,Segoe UI,Arial,sans-serif;font-variant-numeric:tabular-nums;}
+html body #prRoom.party-gaming-layout:has(#partyGamingCenter.pgc-playing):not(:has(#partyGamingCenter.pgc-luteri)) #pgcCoinPill{display:flex!important;}
+</style>
+<script id="partyRoomGamingCoinPillScript">
+(function(){
+  'use strict';
+  function pill(){
+    var r=document.getElementById('prRoom'); if(!r) return null;
+    var p=document.getElementById('pgcCoinPill');
+    if(!p){ p=document.createElement('div'); p.id='pgcCoinPill'; p.innerHTML='<span>\u{1FA99}</span><b id="pgcCoinNum">0</b>'; r.appendChild(p); }
+    return p;
+  }
+  window.addEventListener('message',function(e){
+    var m=e.data; if(!m||m.type!=='pkJumpCoinsView') return;
+    var p=pill(); if(!p) return;
+    var n=document.getElementById('pgcCoinNum'); if(n) n.textContent=String(Math.floor(Number(m.coins)||0));
+  });
+  function init(){ if(!pill()) setTimeout(init,500); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+<style id="partyRoomSeatCoinsStyle">
+/* Gaming Mode: seats spread out so each player's coin count fits under the seat (up to 5 digits). */
+html body #prRoom.party-gaming-layout #cinemaSeats{grid-template-columns:repeat(4,66px)!important;gap:0!important;justify-items:center!important;}
+html body #prRoom.party-gaming-layout #cinemaSeats.pr-two-seat-mode{grid-template-columns:repeat(2,86px)!important;gap:0!important;justify-items:center!important;}
+.pg-seatcoin{display:none;position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:3px;z-index:5;pointer-events:none;
+  padding:1px 6px;border-radius:999px;white-space:nowrap;line-height:14px;height:16px;box-sizing:border-box;
+  background:rgba(30,18,75,.92);border:1px solid rgba(250,204,21,.7);color:#fde68a;font:900 10px/14px system-ui,Segoe UI,Arial,sans-serif;font-variant-numeric:tabular-nums;}
+html body #prRoom.party-gaming-layout #cinemaSeats .psf-seat .pg-seatcoin{display:block!important;}
+/* Own seat shows my coins, so the fallback pill under More Video is only for people not on a seat. */
+html body #prRoom.pg-self-seated.party-gaming-layout:has(#partyGamingCenter.pgc-playing):not(:has(#partyGamingCenter.pgc-luteri)) #pgcCoinPill{display:none!important;}
+</style>
+<script id="partyRoomSeatCoinsScript">
+(function(){
+  'use strict';
+  var raw=0,base=0,lastSince=null,lastFrame=null,pubOn=false,lastVal=null,lastPub=0;
+  var docs={},rcv={},unsub=null,subRoom='';
+  function me(){return String((typeof currentUserKey!=='undefined'&&currentUserKey)||'');}
+  function rid(){return (typeof cinemaRoomId!=='undefined'&&cinemaRoomId)?String(cinemaRoomId):'';}
+  function people(){return Array.isArray(window.__cinemaPeople)?window.__cinemaPeople:[];}
+  function jumpFrame(){return document.querySelector('#pgcStage iframe[title="Sky Jump"]');}
+  function col(){return db.collection('cinemaRooms').doc(rid()).collection('gameCoins');}
+  window.addEventListener('message',function(e){
+    var m=e.data; if(!m||m.type!=='pkJumpCoinsView') return;
+    var f=jumpFrame(); if(!f||e.source!==f.contentWindow) return;
+    raw=Math.floor(Number(m.coins)||0);
+  });
+  function publish(on,val,since){
+    try{
+      if(!rid()||typeof db==='undefined'||!db||!me()) return;
+      lastPub=Date.now(); pubOn=!!on; lastVal=on?val:null;
+      var d=on?{key:me(),coins:val,since:since,on:true,updatedAt:Date.now()}:{on:false,updatedAt:Date.now()};
+      col().doc(me()).set(d,{merge:true}).catch(function(){});
+    }catch(e){}
+  }
+  function paint(){
+    try{
+      var list=people(), now=Date.now();
+      var seats=document.querySelectorAll('#cinemaSeats .psf-seat.psf-occ[data-user-key]');
+      for(var i=0;i<seats.length;i++){
+        var st=seats[i], k=st.dataset.userKey, d=docs[k], person=null;
+        for(var j=0;j<list.length;j++){ if(list[j].key===k){person=list[j];break;} }
+        var ok=!!(d&&d.on&&person&&Number.isInteger(person.seat)&&Number(d.since)===(Number(person.seatSince)||0)&&(now-(rcv[k]||0))<75000);
+        var el=st.querySelector('.pg-seatcoin');
+        if(ok){
+          if(!el){ el=document.createElement('div'); el.className='pg-seatcoin'; st.appendChild(el); }
+          var t='\u{1FA99} '+Math.floor(Number(d.coins)||0);
+          if(el.textContent!==t) el.textContent=t;
+        } else if(el){ el.remove(); }
+      }
+    }catch(e){}
+  }
+  function subscribe(){
+    var r=rid();
+    if(r===subRoom) return;
+    try{ unsub&&unsub(); }catch(e){} unsub=null; subRoom=r; docs={}; rcv={};
+    if(!r||typeof db==='undefined'||!db) return;
+    try{
+      unsub=col().onSnapshot(function(sn){
+        var now=Date.now(), seen={};
+        sn.forEach(function(doc){
+          var d=doc.data()||{}, k=doc.id; seen[k]=1;
+          if(!docs[k]||docs[k].updatedAt!==d.updatedAt){
+            var fresh=(now-(Number(d.updatedAt)||0))<300000;
+            rcv[k]=(docs[k]||fresh)?now:0;
+          }
+          docs[k]=d;
+        });
+        Object.keys(docs).forEach(function(k){ if(!seen[k]){ delete docs[k]; delete rcv[k]; } });
+        paint();
+      },function(){});
+    }catch(e){}
+  }
+  function tick(){
+    try{
+      var r=document.getElementById('prRoom'); if(!r) return;
+      subscribe();
+      var f=jumpFrame();
+      if(f!==lastFrame){ lastFrame=f; raw=0; base=0; lastSince=null; }
+      var key=me(), p=null, list=people();
+      for(var i=0;i<list.length;i++){ if(list[i].key===key&&Number.isInteger(list[i].seat)){p=list[i];break;} }
+      r.classList.toggle('pg-self-seated',!!p);
+      var gc=document.getElementById('partyGamingCenter');
+      var playing=!!(f&&gc&&r.classList.contains('party-gaming-layout')&&gc.classList.contains('pgc-playing')&&!gc.classList.contains('pgc-luteri'));
+      if(!p) lastSince=null;
+      if(!p||!playing){ if(pubOn) publish(false); paint(); return; }
+      var since=Number(p.seatSince)||0;
+      if(lastSince!==since){ lastSince=since; base=raw; }   /* sat down (again) -> start from 0 */
+      var val=raw-base;
+      if(!pubOn||val!==lastVal||Date.now()-lastPub>20000) publish(true,val,since);
+      paint();
+    }catch(e){}
+  }
+  function init(){
+    var box=document.getElementById('cinemaSeats');
+    if(!box){ setTimeout(init,500); return; }
+    try{ new MutationObserver(paint).observe(box,{childList:true}); }catch(e){}
+    setInterval(tick,500); tick();
+  }
+  window.addEventListener('pagehide',function(){ if(pubOn) publish(false); });
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+<style id="partyRoomChatBubbleReadable">
+/* Live comments: every message sits on a solid background so the text is clear on any room background.
+   No blur / no animation (saves battery). Overrides the older conflicting bubble + text colour rules. */
+html body #prRoom #cinemaChatPanel .pr-chat-line:not(.pr-mine):not(.pr-me) .pr-bubble{
+  background:rgba(22,15,52,.90)!important;border:1px solid rgba(255,255,255,.16)!important;
+  box-shadow:0 2px 8px rgba(0,0,0,.35)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+html body #prRoom #cinemaChatPanel .pr-chat-line:not(.pr-mine):not(.pr-me) .pr-t{
+  color:#fff!important;-webkit-text-fill-color:#fff!important;}
+html body #prRoom #cinemaChatPanel .pr-chat-line.pr-mine .pr-bubble,
+html body #prRoom #cinemaChatPanel .pr-chat-line.pr-me .pr-bubble{
+  background:rgba(155,233,79,.97)!important;border:1px solid rgba(220,255,190,.7)!important;
+  box-shadow:0 2px 8px rgba(0,0,0,.28)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+html body #prRoom #cinemaChatPanel .pr-chat-line.pr-mine .pr-t,
+html body #prRoom #cinemaChatPanel .pr-chat-line.pr-me .pr-t{
+  color:#0f1f00!important;-webkit-text-fill-color:#0f1f00!important;}
+html body #prRoom #cinemaChatPanel .pr-chat-line .pr-n{text-shadow:0 1px 3px rgba(0,0,0,.85)!important;}
+</style>
 <style id="partyRoomViewerOnePlaceFinal">
 /* FINAL: Party Room has exactly ONE Viewer control, fixed to the mobile top-left corner. */
 #prRoom #prFloatingViewerBtn,
