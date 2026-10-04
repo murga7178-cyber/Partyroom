@@ -10169,7 +10169,7 @@ input,textarea,select{font-size:16px}
       if(hb){var hp=pl.find(function(x){return String(x&&x.key||'')===host&&x.hostSeated===true;});paint(hb,hp?host:'',pl,mus);}
     }catch(e){}
   }
-  setInterval(tick,60);
+  setInterval(tick,120);
 })();
 </script>
 <script id="pkBackNavJs">
@@ -10516,7 +10516,10 @@ input,textarea,select{font-size:16px}
   '#pkDailyBtn{position:relative}'+
   '#pkDailyBtn .pkdc-dot{position:absolute;top:1px;right:1px;width:10px;height:10px;border-radius:50%;background:#ef4444;border:1px solid rgba(255,255,255,.75);display:none}'+
   '#pkDailyBtn.has-new .pkdc-dot{display:block}'+
-  '#pkDailyCheckin{position:fixed;inset:0;z-index:2147483000;background:rgba(12,7,28,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;font-family:Segoe UI,Arial,sans-serif}'+
+  '#pkDailyCheckin{position:fixed;inset:0;z-index:2147483000;background:rgba(12,7,28,.72);display:none;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;font-family:Segoe UI,Arial,sans-serif;opacity:0;pointer-events:none;transition:opacity .22s ease;will-change:opacity}'+
+  '#pkDailyCheckin.open{opacity:1;pointer-events:auto}'+
+  '#pkDailyCheckin .dc-card{transform:translate3d(0,22px,0) scale(.95);transition:transform .28s cubic-bezier(.2,.9,.3,1);will-change:transform;-webkit-overflow-scrolling:touch}'+
+  '#pkDailyCheckin.open .dc-card{transform:translate3d(0,0,0) scale(1)}'+
   '#pkDailyCheckin .dc-card{width:100%;max-width:380px;max-height:92dvh;overflow:auto;background:#fff;color:#20243a;border-radius:24px;padding:18px 14px 16px;box-shadow:0 24px 60px rgba(0,0,0,.4)}'+
   '#pkDailyCheckin .dc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}'+
   '#pkDailyCheckin .dc-head b{font-size:19px;font-weight:900}'+
@@ -10584,17 +10587,45 @@ input,textarea,select{font-size:16px}
     return {done:(last===yest?streak%7:0),claimedToday:false};
   }
 
-  async function open(){
-    var m=build(); m.style.display='flex';
-    render(0,false); $('pkDcBtn').disabled=true; $('pkDcBtn').textContent='लोड हो रहा है…';
-    try{
-      var s=await loadState();
-      render(s.done,s.claimedToday);
-      markDot(!s.claimedToday);
-      if(s.offline){ $('pkDcBtn').disabled=true; $('pkDcSub').textContent='चेक-इन के लिए लॉगिन करें।'; }
-    }catch(e){ render(0,false); $('pkDcBtn').disabled=true; $('pkDcBtn').textContent='दोबारा कोशिश करें'; toast('इंटरनेट जाँचें'); }
+  /* Smooth open: card is built ahead of time, shows the last known state at once, data starts loading on finger-down and is applied only if it changed. */
+  var last=null, pre=null, preAt=0, closeT=0;
+  function sig(s){ return s.done+'|'+(s.claimedToday?1:0)+'|'+(s.offline?1:0); }
+  function prefetch(){
+    if(pre && Date.now()-preAt<4000) return pre;
+    preAt=Date.now();
+    pre=loadState(); pre.catch(function(){ pre=null; });
+    return pre;
   }
-  function close(){ var m=$('pkDailyCheckin'); if(m) m.style.display='none'; }
+  function applyState(s){
+    if(!last || last.day!==dayStr(0) || sig(last)!==sig(s)){
+      render(s.done,s.claimedToday);
+      if(s.offline){ $('pkDcBtn').disabled=true; $('pkDcSub').textContent='चेक-इन के लिए लॉगिन करें।'; }
+    }
+    last={done:s.done,claimedToday:s.claimedToday,offline:s.offline,day:dayStr(0)};
+    markDot(!s.claimedToday);
+  }
+  async function open(){
+    clearTimeout(closeT);
+    var m=build();
+    if(last && last.day===dayStr(0)) render(last.done,last.claimedToday);
+    else { last=null; render(0,false); $('pkDcBtn').disabled=true; $('pkDcBtn').textContent='लोड हो रहा है…'; }
+    var p=prefetch();
+    m.style.display='flex';
+    void m.offsetWidth;
+    requestAnimationFrame(function(){ m.classList.add('open'); });
+    try{
+      var s=await p; pre=null;
+      applyState(s);
+    }catch(e){ if(!last){ render(0,false); $('pkDcBtn').disabled=true; $('pkDcBtn').textContent='दोबारा कोशिश करें'; } toast('इंटरनेट जाँचें'); }
+  }
+  function close(){
+    var m=$('pkDailyCheckin'); if(!m) return;
+    m.classList.remove('open'); clearTimeout(closeT);
+    closeT=setTimeout(function(){ if(!m.classList.contains('open')) m.style.display='none'; },240);
+  }
+  /* start loading as soon as the finger touches the button, and build the card once the app is idle */
+  document.addEventListener('pointerdown',function(e){ if(e.target.closest&&e.target.closest('#pkDailyBtn')){ try{ prefetch(); }catch(_){} } },{passive:true});
+  setTimeout(function(){ try{ build(); }catch(_){} },1500);
 
   async function claim(){
     if(busy) return;
@@ -10616,6 +10647,7 @@ input,textarea,select{font-size:16px}
       try{ if(typeof pkWalletPaint==='function') pkWalletPaint(); }catch(e){}
       try{ if(typeof prSyncCoinDisplays==='function') prSyncCoinDisplays(); }catch(e){}
       cacheSet(today); markDot(false);
+      last={done:r.day,claimedToday:true,day:today};
       render(r.day,true);
       toast(r.already?'आज का इनाम पहले ही मिल चुका है':'🪙 +'+fmt(r.reward)+' कॉइन आपके वॉलेट में जुड़ गए!');
     }catch(e){
@@ -13786,7 +13818,7 @@ tick();
     try{
       var p=build(); if(!p)return;
       var r=$('prRoom'), b=br();
-      var show=!!(r&&(r.classList.contains('party-youtube-layout')||r.classList.contains('party-gaming-layout')||(!r.classList.contains('party-youtube-layout')&&!r.classList.contains('party-gaming-layout')&&!r.classList.contains('party-cinema-layout')))&&b&&(b.canControl?b.canControl():b.host()));
+      var show=!!(r&&(r.classList.contains('party-youtube-layout')||(!r.classList.contains('party-youtube-layout')&&!r.classList.contains('party-gaming-layout')&&!r.classList.contains('party-cinema-layout')))&&b&&(b.canControl?b.canControl():b.host()));
       p.classList.toggle('on',show);
       placeSw(p,show);
       if(!show)return;
@@ -19501,7 +19533,7 @@ html body #prRoom #cinemaChatPanel .pr-chat-line .pr-n{text-shadow:0 1px 3px rgb
       var _ib=document.getElementById('pkInboxOverlay');if(k&&roomOpen()&&!(_ib&&_ib.classList.contains('open'))){open(k);return true;}
       return old.apply(this,arguments);
     };
-    wrapped.__partyVisitorRoute=true;wrapped.__oldPartyVisitorRoute=old;window.prOpenUserCard=wrapped;
+    wrapped.__partyVisitorRoute=true;wrapped.__pkLoader=true;wrapped.__oldPartyVisitorRoute=old;window.prOpenUserCard=wrapped;
     window.prOpenRoomCard=wrapped;
   }
   document.addEventListener('DOMContentLoaded',installRoute);setTimeout(installRoute,0);setInterval(installRoute,1000);
@@ -19966,3 +19998,14 @@ html body #prRoom.party-gaming-layout #cinemaSeats .psf-sp{display:none!importan
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
+<style id="pkGamingNoPadExitLower">
+/* Gaming Mode: no play / ±2s pad and no Auto Play switch (Chat and YouTube keep them). */
+html body #prRoom.party-gaming-layout:has(#partyGamingCenter.pgc-playing,#partyGamingCenter) #ytSeekPad,
+html body #prRoom.party-gaming-layout:has(#partyGamingCenter.pgc-playing,#partyGamingCenter) #ytSeekPad.on,
+html body #prRoom.party-gaming-layout #ytSeekPad.on,
+html body #prRoom.party-gaming-layout #ytAutoSw,
+html body #prRoom.party-gaming-layout #ytAutoSw.show{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+/* Exit-game button sits a little lower so it is fully visible. */
+html body #prRoom.party-gaming-layout #partyGamingCenter.pgc-playing #pgcExitBtn,
+html body #prRoom.party-gaming-layout #partyGamingCenter.pgc-luteri #pgcExitBtn{top:calc(var(--pg-ctl-top,78px) + 46px)!important;}
+</style>
