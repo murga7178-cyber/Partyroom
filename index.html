@@ -6310,6 +6310,193 @@ setInterval(function(){try{
   window.prRenderSeatCount=render;
 })();
 </script>
+<style id="prShareRoomStyle">
+html body #pkRoomShareBtn{position:fixed!important;z-index:2147483640!important;display:none;align-items:center;justify-content:center;height:22px;padding:0 9px;border:0;border-radius:11px;box-sizing:border-box;font-size:10px;font-weight:800;line-height:22px;color:#fff;cursor:pointer;background:linear-gradient(135deg,#7c3aed,#ec4899);box-shadow:0 2px 8px rgba(0,0,0,.35);touch-action:manipulation;}
+html body #pkRoomShareBtn:active{transform:scale(.94);}
+#prShareOverlay{position:fixed;inset:0;z-index:2147483646;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;}
+#prShareOverlay .prs-sheet{width:100%;max-width:560px;max-height:78vh;display:flex;flex-direction:column;background:#fff;color:#111827;border-radius:22px 22px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));box-sizing:border-box;box-shadow:0 -10px 30px rgba(0,0,0,.35);}
+#prShareOverlay .prs-sheet,#prShareOverlay .prs-sheet *{text-align:left;}
+#prShareOverlay .prs-empty{text-align:center!important;}
+#prShareOverlay .prs-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+#prShareOverlay .prs-head b{flex:1;font-size:16px;color:#4a148c;}
+#prShareOverlay .prs-x{width:34px;height:34px;border:0;border-radius:50%;background:#f1ebfb;color:#4a148c;font-size:18px;font-weight:800;cursor:pointer;}
+#prShareOverlay .prs-room{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:linear-gradient(135deg,#f3e8ff,#ffe4f1);margin-bottom:10px;}
+#prShareOverlay .prs-room span{font-size:26px;}
+#prShareOverlay .prs-room div{min-width:0;}
+#prShareOverlay .prs-room b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#prShareOverlay .prs-room small{font-size:11px;color:#6b7280;}
+#prShareOverlay .prs-find{display:flex;gap:8px;margin-bottom:8px;}
+#prShareOverlay .prs-find input{flex:1;min-width:0;padding:10px 12px;border:1px solid #e5def5;border-radius:12px;font-size:14px;background:#faf7ff;color:#111827;}
+#prShareOverlay .prs-find button{padding:0 14px;border:0;border-radius:12px;background:#7c3aed;color:#fff;font-weight:800;cursor:pointer;}
+#prShareOverlay .prs-list{flex:1;min-height:90px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+#prShareOverlay .prs-row{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid #f3f0fa;}
+#prShareOverlay .prs-av{width:42px;height:42px;flex:none;border-radius:50%;overflow:hidden;display:grid;place-items:center;color:#fff;font-weight:800;background:linear-gradient(145deg,#c9b8ff,#ff9fce);}
+#prShareOverlay .prs-av img{width:100%;height:100%;object-fit:cover;display:block;}
+#prShareOverlay .prs-mid{flex:1;min-width:0;}
+#prShareOverlay .prs-mid b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#prShareOverlay .prs-mid small{display:block;font-size:11px;color:#8a8f9c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#prShareOverlay .prs-send{flex:none;padding:8px 16px;border:0;border-radius:999px;background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;font-weight:800;font-size:13px;cursor:pointer;}
+#prShareOverlay .prs-send.done{background:#16a34a;}
+#prShareOverlay .prs-send[disabled]{opacity:.75;}
+#prShareOverlay .prs-empty{padding:26px 10px;text-align:center;color:#8a8f9c;font-size:13px;}
+#prShareOverlay .prs-pick{width:100%;display:flex;align-items:center;gap:10px;padding:12px;margin-bottom:8px;border:1px solid #e5def5;border-radius:14px;background:#faf7ff;color:#111827;font-size:14px;font-weight:700;text-align:left;cursor:pointer;}
+#prShareOverlay .prs-pick span{font-size:24px;}
+#prShareOverlay .prs-pick small{display:block;font-weight:500;color:#6b7280;font-size:11px;}
+#pkDirectMessages .pk-dm-room-card{min-width:190px;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;cursor:pointer;}
+#pkDirectMessages .pk-dm-room-emoji{font-size:30px;line-height:1;}
+#pkDirectMessages .pk-dm-room-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+#pkDirectMessages .pk-dm-room-copy b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#pkDirectMessages .pk-dm-room-copy small{font-size:11px;opacity:.85;}
+#pkDirectMessages .pk-dm-room-join{flex:none;padding:6px 12px;border-radius:999px;background:#fff;color:#7c3aed;font-weight:800;font-size:12px;}
+</style>
+<script id="prShareRoomLogic">
+(function(){
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function me(){try{return String(currentUserKey||'');}catch(e){return '';}}
+  function curRoom(){
+    try{var id=String(cinemaRoomId||'');if(id)return {id:id,name:String(cinemaRoomName||'Party Room')};}catch(e){}
+    return null;
+  }
+  function toastMsg(m){try{if(typeof toast==='function')return toast(m);}catch(e){} try{if(typeof toastMsg2==='function')return toastMsg2(m);}catch(e){} alert(m);}
+  function pairId(a,b){return [String(a),String(b)].sort().join('_');}
+  function close(){var o=document.getElementById('prShareOverlay');if(o)o.remove();}
+
+  /* ---- send a Party Room card into someone's personal message ---- */
+  window.pkSendRoomShare=async function(otherKey,otherName,roomId,roomName){
+    var m=me();
+    if(!db||!m||!otherKey||!roomId)return false;
+    try{
+      roomName=String(roomName||'Party Room').slice(0,60);
+      await db.collection('directMessages').doc(pairId(m,otherKey)).collection('items').add({from:m,to:String(otherKey),text:'🎉 Party Room: '+roomName,type:'room',roomId:String(roomId),roomName:roomName,createdAt:Date.now()});
+      try{window.pkDmInboxWrite&&window.pkDmInboxWrite(String(otherKey),String(otherName||'User'),'🎉 Party Room: '+roomName);}catch(e){}
+      return true;
+    }catch(e){return false;}
+  };
+
+  /* ---- share sheet: choose who gets the room ---- */
+  function rowHtml(k,n,sub){
+    return '<div class="prs-row" data-k="'+esc(k)+'" data-n="'+esc(n)+'"><div class="prs-av" data-av>'+esc((String(n||k).trim()[0]||'U').toUpperCase())+'</div><div class="prs-mid"><b>'+esc(n||k)+'</b><small>'+esc(sub||('ID: '+k))+'</small></div><button type="button" class="prs-send">भेजें</button></div>';
+  }
+  async function fillPhoto(row){
+    try{var s=await db.collection('users').doc(row.getAttribute('data-k')).get();var d=s.exists?(s.data()||{}):{};var p=String(d.photoURL||d.photo||d.avatar||'');
+      if(p&&/^(data:image\/|https?:)/.test(p)){var av=row.querySelector('[data-av]');if(av)av.innerHTML='<img alt="" src="'+esc(p)+'">';}}catch(e){}
+  }
+  window.prOpenShareRoom=async function(room){
+    room=room||curRoom();
+    if(!room){toastMsg('पहले किसी Party Room में जाएँ।');return;}
+    close();
+    var o=document.createElement('div');o.id='prShareOverlay';
+    o.innerHTML='<div class="prs-sheet"><div class="prs-head"><b>🎉 Party Room शेयर करें</b><button type="button" class="prs-x" aria-label="बंद करें">✕</button></div>'
+      +'<div class="prs-room"><span>🎉</span><div><b>'+esc(room.name)+'</b><small>जिसे भेजेंगे वह टैप करके सीधे जुड़ सकेगा</small></div></div>'
+      +'<div class="prs-find"><input type="text" id="prsFindInput" placeholder="User ID से ढूँढें" autocomplete="off" autocapitalize="off"><button type="button" id="prsFindBtn">ढूँढें</button></div>'
+      +'<div class="prs-list" id="prsList"><div class="prs-empty">लोड हो रहा है…</div></div></div>';
+    document.body.appendChild(o);
+    o.addEventListener('click',function(e){
+      if(e.target===o||e.target.closest('.prs-x')){close();return;}
+      var b=e.target.closest('.prs-send');if(!b||b.disabled)return;
+      var row=b.closest('.prs-row');if(!row)return;
+      b.disabled=true;b.textContent='…';
+      window.pkSendRoomShare(row.getAttribute('data-k'),row.getAttribute('data-n'),room.id,room.name).then(function(ok){
+        if(ok){b.textContent='✓ भेजा';b.classList.add('done');}
+        else{b.disabled=false;b.textContent='फिर भेजें';toastMsg('भेजा नहीं जा सका।');}
+      });
+    });
+    var list=o.querySelector('#prsList'),inp=o.querySelector('#prsFindInput');
+    async function find(){
+      var k=String(inp.value||'').trim();if(!k)return;
+      if(k===me()){toastMsg('यह आपकी अपनी ID है।');return;}
+      try{
+        var s=await db.collection('users').doc(k).get();
+        if(!s.exists){toastMsg('यह User ID नहीं मिली।');return;}
+        var d=s.data()||{},nm=String(d.name||d.displayName||d.fullName||d.username||k);
+        var old=list.querySelector('.prs-row[data-k="'+k.replace(/"/g,'')+'"]');if(old)old.remove();
+        var emp=list.querySelector('.prs-empty');if(emp)emp.remove();
+        list.insertAdjacentHTML('afterbegin',rowHtml(k,nm,'ID: '+k));
+        fillPhoto(list.firstElementChild);
+      }catch(e){toastMsg('खोज नहीं हो पाई।');}
+    }
+    o.querySelector('#prsFindBtn').onclick=find;
+    inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();find();}});
+    try{
+      var qs=await db.collection('users').doc(me()).collection('dmInbox').orderBy('lastAt','desc').limit(30).get();
+      var h='';qs.forEach(function(d){var x=d.data()||{},k=String(x.otherKey||d.id||'');if(k&&k!==me())h+=rowHtml(k,String(x.otherName||'User'),String(x.lastText||'').slice(0,40));});
+      list.innerHTML=h||'<div class="prs-empty">अभी कोई चैट नहीं है।<br>ऊपर User ID डालकर किसी को भी भेज सकते हैं।</div>';
+      list.querySelectorAll('.prs-row').forEach(fillPhoto);
+    }catch(e){list.innerHTML='<div class="prs-empty">चैट लिस्ट लोड नहीं हुई।<br>ऊपर User ID डालकर भेजें।</div>';}
+  };
+
+  /* ---- tap on a shared room card inside a personal chat: go join ---- */
+  window.pkJoinSharedRoom=function(id,name){
+    if(!id)return;
+    try{window.pkCloseDirectMessage&&window.pkCloseDirectMessage();}catch(e){}
+    var inbox=document.getElementById('pkInboxOverlay');if(inbox)inbox.classList.remove('open');
+    var cur=curRoom();
+    if(cur&&cur.id===String(id))return;
+    try{if(cur&&typeof window.closeCinemaGhar==='function')window.closeCinemaGhar();}catch(e){}
+    setTimeout(function(){try{if(typeof window.pkHomeJoin==='function')window.pkHomeJoin(id,name);else if(typeof cinemaJoinRoom==='function')cinemaJoinRoom(id,name);}catch(e){}},cur?350:0);
+  };
+  document.addEventListener('click',function(e){
+    var c=e.target.closest&&e.target.closest('.pk-dm-room-card');
+    if(c){e.preventDefault();window.pkJoinSharedRoom(c.getAttribute('data-room-id'),c.getAttribute('data-room-name'));}
+  });
+
+  /* ---- DM "+" menu: Photo or Party Room ---- */
+  window.prShowDmAttachMenu=function(openPhoto){
+    close();
+    var o=document.createElement('div');o.id='prShareOverlay';
+    o.innerHTML='<div class="prs-sheet"><div class="prs-head"><b>भेजें</b><button type="button" class="prs-x" aria-label="बंद करें">✕</button></div>'
+      +'<button type="button" class="prs-pick" data-act="photo"><span>🖼️</span><div>फोटो<small>गैलरी से फोटो भेजें</small></div></button>'
+      +'<button type="button" class="prs-pick" data-act="room"><span>🎉</span><div>Party Room शेयर करें<small>अभी का रूम या आपका अपना रूम</small></div></button></div>';
+    document.body.appendChild(o);
+    o.addEventListener('click',async function(e){
+      if(e.target===o||e.target.closest('.prs-x')){close();return;}
+      var b=e.target.closest('.prs-pick');if(!b)return;
+      var act=b.getAttribute('data-act');
+      if(act==='photo'){close();try{openPhoto();}catch(x){}return;}
+      /* room: pick which one */
+      var opts=[],cur=curRoom();
+      if(cur)opts.push({id:cur.id,name:cur.name,tag:'अभी आप इसमें हैं'});
+      try{
+        var sid=String(localStorage.getItem('pk_myRoomId_'+me())||window.__myRoomId||'').trim(),mine=null;
+        if(sid){var s=await db.collection('cinemaRooms').doc(sid).get();if(s.exists){var d=s.data()||{};if(String(d.ownerKey||d.hostKey||'')===me())mine={id:s.id,name:String(d.roomName||'Party Room')};}}
+        if(!mine){var q=await db.collection('cinemaRooms').where('ownerKey','==',me()).limit(1).get();q.forEach(function(x){var d=x.data()||{};mine={id:x.id,name:String(d.roomName||'Party Room')};});}
+        if(mine&&!(cur&&cur.id===mine.id))opts.push({id:mine.id,name:mine.name,tag:'आपका रूम'});
+      }catch(err){}
+      if(!opts.length){toastMsg('शेयर करने के लिए पहले किसी Party Room में जाएँ या अपना रूम बनाएँ।');close();return;}
+      var key=String(window.__pkDmOpenKey||''),nm=String((document.getElementById('pkDirectTitle')||{}).textContent||'User');
+      if(!key){close();return;}
+      var sheet=o.querySelector('.prs-sheet');
+      sheet.innerHTML='<div class="prs-head"><b>कौन-सा रूम भेजना है?</b><button type="button" class="prs-x" aria-label="बंद करें">✕</button></div>'
+        +opts.map(function(r,i){return '<button type="button" class="prs-pick" data-i="'+i+'"><span>🎉</span><div>'+esc(r.name)+'<small>'+esc(r.tag)+' • '+esc(nm)+' को भेजें</small></div></button>';}).join('');
+      sheet.addEventListener('click',async function(ev){
+        var p=ev.target.closest('.prs-pick');if(!p)return;
+        var r=opts[Number(p.getAttribute('data-i'))];if(!r)return;
+        p.disabled=true;
+        var ok=await window.pkSendRoomShare(key,nm,r.id,r.name);
+        close();if(!ok)toastMsg('भेजा नहीं जा सका।');
+      });
+    });
+  };
+
+  /* ---- Share button inside the room, just left of the Viewer button ---- */
+  function ensureBtn(){
+    var b=document.getElementById('pkRoomShareBtn');if(b)return b;
+    b=document.createElement('button');b.id='pkRoomShareBtn';b.type='button';b.textContent='🔗 Share';b.setAttribute('aria-label','Party Room शेयर करें');
+    b.onclick=function(){window.prOpenShareRoom();};
+    document.body.appendChild(b);return b;
+  }
+  function place(){
+    var b=ensureBtn(),v=document.getElementById('pkRoomViewerBtn');
+    if(!v||!curRoom()||document.body.classList.contains('pr-ve-hide')){b.style.display='none';return;}
+    var cs=getComputedStyle(v);
+    if(cs.display==='none'||cs.visibility==='hidden'){b.style.display='none';return;}
+    var r=v.getBoundingClientRect();
+    if(!r.width){b.style.display='none';return;}
+    b.style.display='flex';b.style.top=Math.round(r.top)+'px';b.style.height=Math.round(r.height||22)+'px';b.style.right=Math.round(innerWidth-r.left+6)+'px';b.style.left='auto';
+  }
+  setInterval(place,300);
+})();
+</script>
 <script id="pkStandaloneBoot">
 // ---- Standalone glue: leaving a room -> back to the lobby; leaving the lobby -> home screen ----
 (function(){
@@ -6531,6 +6718,9 @@ window.pkOpenDirectMessage=async function(key,name){var inbox=document.getElemen
     if(x.audio) h+='<audio class="pk-dm-audio" controls preload="metadata" src="'+esc(x.audio)+'"></audio>';
     return h;
   }
+  function dmRoomCard(x){
+    return '<div class="pk-dm-room-card" data-room-id="'+esc(x.roomId||'')+'" data-room-name="'+esc(x.roomName||'Party Room')+'"><span class="pk-dm-room-emoji">🎉</span><span class="pk-dm-room-copy"><b>'+esc(x.roomName||'Party Room')+'</b><small>Party Room • जुड़ने के लिए टैप करें</small></span><span class="pk-dm-room-join">Join</span></div>';
+  }
   function dmGiftCard(x){
     return '<div class="pk-dm-gift-card"><span class="pk-dm-gift-emoji">'+esc(x.emoji||'🎁')+'</span><span class="pk-dm-gift-copy"><b>'+esc(x.giftName||'Gift')+'</b><small>🪙 '+esc(x.value||0)+' Coins</small></span></div>';
   }
@@ -6561,7 +6751,7 @@ window.pkOpenDirectMessage=async function(key,name){var inbox=document.getElemen
     document.body.appendChild(dmPhotoInput);
     return dmPhotoInput;
   }
-  window.pkDirectAttach=function(){ dmEnsurePhotoInput().click(); };
+  window.pkDirectAttach=function(){ if(window.prShowDmAttachMenu) window.prShowDmAttachMenu(function(){ dmEnsurePhotoInput().click(); }); else dmEnsurePhotoInput().click(); };
   function dmPreparePhoto(file){
     var r=new FileReader();
     r.onerror=function(){ dmNote('\u092b\u094b\u091f\u094b \u0916\u0941\u0932 \u0928\u0939\u0940\u0902 \u092a\u093e\u0908'); };
@@ -6785,7 +6975,7 @@ window.pkOpenDirectMessage=async function(key,name){var inbox=document.getElemen
       s.forEach(d=>{var x=d.data()||{},mine=String(x.from||'')===String(currentUserKey),dt=x.createdAt?new Date(x.createdAt):new Date(),day=dt.toLocaleDateString('hi-IN',{day:'numeric',month:'short'});
         if(day!==lastDay){h+='<div class="pk-dm-day">'+(dt.toDateString()===new Date().toDateString()?'Today':esc(day))+(x.createdAt?' '+dt.toLocaleTimeString('hi-IN',{hour:'2-digit',minute:'2-digit'}):'')+'</div>';lastDay=day;}
         var photo=mine?direct.myPhoto:direct.otherPhoto,av=photo?'<img src="'+esc(photo)+'" alt="">':esc(((mine?'You':direct.otherName).trim()[0]||'U').toUpperCase());
-         var body=x.type==='gift'?dmGiftCard(x):dmMedia(x)+esc(x.text||'');
+         var body=x.type==='gift'?dmGiftCard(x):(x.type==='room'?dmRoomCard(x):dmMedia(x)+esc(x.text||''));
          h+='<div class="pk-dm-row '+(mine?'mine':'theirs')+'">'+(mine?'':'<div class="pk-dm-avatar">'+av+'</div>')+'<div class="pk-dm '+(mine?'mine':'theirs')+'">'+body+'<div class="pk-dm-time">'+(x.createdAt?dt.toLocaleTimeString('hi-IN',{hour:'2-digit',minute:'2-digit'}):'')+'</div></div>'+(mine?'<div class="pk-dm-avatar">'+av+'</div>':'')+'</div>';
       });
       box.innerHTML=h||'<div style="text-align:center;color:#9a9a9d;padding:35px 15px;">अभी कोई मैसेज नहीं है। पहला मैसेज भेजें 👋</div>';
@@ -9413,6 +9603,71 @@ input,textarea,select{font-size:16px}
       }catch(e){button.textContent=follow?'Follow':'Following';button.classList.toggle('follow',!follow);}
       button.disabled=false;button.__busy=false;
     }
+    function fToast(m){try{if(typeof toast==='function')return toast(m);}catch(e){}try{if(typeof toastMsg==='function')return toastMsg(m);}catch(e){}}
+    function ensureRmCss(){
+      if(document.getElementById('pkFollowRemoveCss'))return;
+      var s=document.createElement('style');s.id='pkFollowRemoveCss';
+      s.textContent='#pkFollowSheet .r{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}'
+        +'#pkFollowSheet .rm-more{flex:0 0 auto;width:34px;height:34px;border:0;border-radius:50%;background:#f3f1f8;color:#3f2a68;font-size:20px;font-weight:900;line-height:1;cursor:pointer;padding:0;}'
+        +'#pkFollowRemoveSheet{position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;text-align:left;}'
+        +'#pkFollowRemoveSheet .b2{width:100%;max-width:560px;background:#fff;color:#171923;border-radius:22px 22px 0 0;padding:18px 16px calc(16px + env(safe-area-inset-bottom,0px));box-sizing:border-box;text-align:center;}'
+        +'#pkFollowRemoveSheet .t1{font-size:17px;font-weight:900;margin-bottom:6px;}'
+        +'#pkFollowRemoveSheet .t2{font-size:13px;color:#6b7280;margin-bottom:14px;line-height:1.4;}'
+        +'#pkFollowRemoveSheet button{display:block;width:100%;padding:13px;border:0;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px;}'
+        +'#pkFollowRemoveSheet .rm{background:#e11d2e;color:#fff;}'
+        +'#pkFollowRemoveSheet .cn{background:#f3f1f8;color:#3f2a68;}';
+      document.head.appendChild(s);
+    }
+    async function removeFollower(target){
+      var me=String(currentUserKey||'');if(!me||!target)return false;
+      try{
+        var meRef=db.collection('users').doc(me),tRef=db.collection('users').doc(String(target));
+        await db.runTransaction(async function(tx){
+          var rs=await Promise.all([tx.get(meRef),tx.get(tRef)]),md=rs[0].exists?(rs[0].data()||{}):{},td=rs[1].exists?(rs[1].data()||{}):{};
+          var r=(Array.isArray(md.followers)?md.followers.map(String):[]).filter(function(x){return x!==String(target);});
+          var f=(Array.isArray(td.following)?td.following.map(String):[]).filter(function(x){return x!==me;});
+          tx.set(meRef,{followers:r,followersCount:r.length,updatedAt:Date.now()},{merge:true});
+          tx.set(tRef,{following:f,followingCount:f.length,updatedAt:Date.now()},{merge:true});
+        });
+        return true;
+      }catch(e){return false;}
+    }
+    function askRemove(row,k,nm){
+      ensureRmCss();
+      var old=document.getElementById('pkFollowRemoveSheet');if(old)old.remove();
+      var s=document.createElement('div');s.id='pkFollowRemoveSheet';
+      s.innerHTML='<div class="b2"><div class="t1">Follower हटाएँ?</div><div class="t2">'+esc(nm)+' आपके Followers से हट जाएगा। उसे इसकी सूचना नहीं जाएगी।</div><button type="button" class="rm">🗑️ Remove</button><button type="button" class="cn">Cancel</button></div>';
+      document.body.appendChild(s);
+      s.addEventListener('click',async function(e){
+        if(e.target===s||e.target.closest('.cn')){s.remove();return;}
+        var b=e.target.closest('.rm');if(!b||b.__busy)return;
+        b.__busy=true;b.textContent='…';
+        var ok=await removeFollower(k);
+        s.remove();
+        if(ok){
+          row.remove();
+          var c=document.getElementById('pkFollowCount'),n=list.querySelectorAll('.r').length;
+          if(c)c.textContent=n+' '+(n===1?'person':'people');
+          if(!n)list.innerHTML='<div class="empty">अभी कोई Follower नहीं है।</div>';
+          fToast('Follower हटा दिया गया');
+        }else fToast('हटाया नहीं जा सका, फिर कोशिश करें।');
+      });
+    }
+    function attachRemove(r,k,nm){
+      ensureRmCss();
+      var more=document.createElement('button');more.type='button';more.className='rm-more';more.setAttribute('aria-label','Remove follower');more.textContent='\u22EF';
+      more.onclick=function(e){e.stopPropagation();askRemove(r,k,nm);};
+      r.appendChild(more);
+      var timer=null,sx=0,sy=0;
+      function clear(){if(timer){clearTimeout(timer);timer=null;}}
+      function start(e){var p=(e.touches&&e.touches[0])||e;sx=p.clientX;sy=p.clientY;clear();timer=setTimeout(function(){timer=null;r.__lp=1;try{if(navigator.vibrate)navigator.vibrate(18);}catch(x){}askRemove(r,k,nm);setTimeout(function(){r.__lp=0;},700);},550);}
+      function move(e){var p=(e.touches&&e.touches[0])||e;if(Math.abs(p.clientX-sx)>10||Math.abs(p.clientY-sy)>10)clear();}
+      r.addEventListener('touchstart',start,{passive:true});
+      r.addEventListener('touchmove',move,{passive:true});
+      r.addEventListener('touchend',clear);r.addEventListener('touchcancel',clear);
+      r.addEventListener('mousedown',start);r.addEventListener('mousemove',move);r.addEventListener('mouseup',clear);r.addEventListener('mouseleave',clear);
+      r.addEventListener('contextmenu',function(e){e.preventDefault();});
+    }
     async function renderList(){
       try{
         var sn=await db.collection('users').doc(String(key)).get(),d=sn.exists?(sn.data()||{}):{};
@@ -9430,8 +9685,9 @@ input,textarea,select{font-size:16px}
           var info=document.createElement('div');info.className='info';info.innerHTML='<div class="name">'+esc(nm)+(d.vip||d.isVip? ' 👑':'')+'</div><div class="uid">ID: '+esc(uid)+'</div>';
           var b=document.createElement('button');b.type='button';b.className='fb '+((isF||isMe)?'':'follow');b.textContent=isMe?'You':(isF?'Following':'Follow');
           if(!isMe)b.onclick=function(e){e.stopPropagation();var now=b.textContent==='Follow';setFollow(k,now,b);};
-          r.appendChild(av);r.appendChild(info);r.appendChild(b);r.onclick=function(e){if(e.target===b)return;o.remove();document.body.classList.remove('pk-follow-list-open');try{if(window.prOpenUserCard)window.prOpenUserCard(k);}catch(e){}};
+          r.appendChild(av);r.appendChild(info);r.appendChild(b);r.onclick=function(e){if(e.target===b||(e.target.closest&&e.target.closest('.rm-more')))return;if(r.__lp){r.__lp=0;return;}o.remove();document.body.classList.remove('pk-follow-list-open');try{if(window.prOpenUserCard)window.prOpenUserCard(k);}catch(e){}};
           list.appendChild(r);
+          if(kind==='followers'&&String(key)===me&&!isMe)attachRemove(r,k,nm);
         });
       }catch(e){list.innerHTML='<div class="empty">लिस्ट अभी लोड नहीं हो पाई। दोबारा खोलें।</div>';}
     }
@@ -16711,6 +16967,37 @@ html body #prRoom.party-gaming-layout #partyGamingCenter:not(.pgc-playing) .pgc-
   html body #prRoom.party-gaming-layout #cinemaSeats.pr-two-seat-mode{top:122px!important;}
   html body #prRoom.party-gaming-layout #partyGamingCenter:not(.pgc-playing) .pgc-grid{padding-top:140px!important;}
 }
+</style>
+<style id="partyChatCoupleSeats">
+/* Chat mode, 2 seats = "Couple" layout: two big seats centred on the screen, joined by a glowing line + heart. */
+@keyframes prCoupleBeat{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.22)}}
+@keyframes prCoupleGlow{0%,100%{opacity:.55}50%{opacity:1}}
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode{
+  display:flex!important;flex-direction:row!important;justify-content:center!important;align-items:flex-start!important;
+  grid-template-columns:none!important;column-gap:64px!important;row-gap:0!important;
+  left:50%!important;right:auto!important;transform:translateX(-50%)!important;
+  width:min(344px,calc(100vw - 20px))!important;box-sizing:border-box!important;
+  margin:0!important;padding:14px 10px 10px!important;border-radius:30px!important;
+  background:radial-gradient(ellipse at 50% 35%,rgba(255,120,185,.22),rgba(150,90,255,.12) 55%,rgba(255,255,255,0) 80%)!important;
+  border:1px solid rgba(255,170,215,.28)!important;
+  box-shadow:0 0 28px rgba(255,100,170,.18),inset 0 0 22px rgba(255,150,205,.10)!important;
+}
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode > *{flex:0 0 112px!important;width:112px!important;min-width:112px!important;max-width:112px!important;margin:0!important;padding:0!important;}
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode .psf-frame-wrap,html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode .psf-avatar{width:104px!important;height:104px!important;min-width:104px!important;min-height:104px!important;flex-basis:104px!important;margin-left:auto!important;margin-right:auto!important;}
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode .psf-avatar{box-shadow:0 0 0 3px rgba(255,160,210,.65),0 0 24px rgba(255,90,165,.55)!important;animation:prCoupleGlow 2.6s ease-in-out infinite;}
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode .psf-core{font-size:34px!important;}
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode .psf-frame-wrap[data-frame]:not([data-frame="none"]){width:114px!important;height:114px!important;min-width:114px!important;min-height:114px!important;flex-basis:114px!important;}
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode .psf-frame-wrap[data-frame]:not([data-frame="none"]) .psf-avatar{width:92px!important;height:92px!important;min-width:92px!important;min-height:92px!important;left:11px!important;top:11px!important;}
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode .psf-frame-wrap[data-frame]:not([data-frame="none"]) .psf-frame-art{width:114px!important;height:114px!important;}
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode .psf-label{font-size:13px!important;max-width:112px!important;margin-top:6px!important;}
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode .pr-giftpill{font-size:11px!important;}
+/* connecting line between the two avatars */
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode::before{content:"";position:absolute;left:50%;top:66px;width:76px;height:4px;transform:translateX(-50%);border-radius:4px;
+  background:linear-gradient(90deg,rgba(255,150,205,0),rgba(255,120,185,.95) 30%,rgba(190,130,255,.95) 70%,rgba(190,130,255,0));
+  box-shadow:0 0 12px rgba(255,110,180,.75);pointer-events:none;z-index:1;}
+/* heart on the line */
+html body #prRoom:not(.party-youtube-layout):not(.party-gaming-layout) #cinemaSeats.pr-two-seat-mode::after{content:"\1F496";position:absolute;left:50%;top:68px;font-size:30px;line-height:1;pointer-events:none;z-index:2;
+  filter:drop-shadow(0 0 8px rgba(255,90,170,.9));animation:prCoupleBeat 1.5s ease-in-out infinite;}
 </style>
 </body>
 
