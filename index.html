@@ -2858,6 +2858,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
           <button type="button" id="prBrowserForward" onclick="prBrowserForward()" aria-label="Forward">▶</button>
           <button type="button" onclick="prBrowserReload()" aria-label="Refresh">⟳</button>
           <button type="button" onclick="prBrowserHome()" aria-label="Home">🏠</button>
+          <button type="button" id="prBrowserShareVideo" onclick="prBrowserShareVideo()" aria-label="सबको वीडियो दिखाएँ" title="इस वीडियो को पूरे रूम में चलाएँ" style="flex:2;background:linear-gradient(135deg,#ef4444,#be123c);font-size:12px;">▶️ सबको दिखाएँ</button>
         </div>
       </div>
       <div id="partyGamingModePage" style="display:none;height:100%;overflow:auto;box-sizing:border-box;background:linear-gradient(180deg,#07111f,#111827);color:#fff;padding:18px;">
@@ -3880,6 +3881,26 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
   }
   function prBrowserStopSync(){ if(prBrowserUnsub){prBrowserUnsub();prBrowserUnsub=null;} prBrowserOpenState=false; const o=document.getElementById('prBrowserOverlay'); if(o)o.classList.remove('open'); }
   document.addEventListener('keydown',e=>{ const o=document.getElementById('prBrowserOverlay'); if(!o||!o.classList.contains('open'))return; if(e.key==='Enter' && document.activeElement?.id==='prBrowserUrl'){e.preventDefault();prBrowserGo();} if(e.key==='Escape'){e.preventDefault();prBrowserClose();} });
+  /* Browser में खुला वीडियो (सिर्फ़ video, web page नहीं) पूरे रूम के YouTube player में चलाएँ। */
+  function prBrowserExtractVideoUrl(u){
+    u=String(u||'');
+    var m=u.match(/(?:youtube\.com\/(?:watch\?(?:[^#]*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/i);
+    if(m) return 'https://www.youtube.com/watch?v='+m[1];
+    try{ var g=new URL(u); var q=g.searchParams.get('q')||g.searchParams.get('url')||''; if(q&&q!==u&&/youtu/i.test(q)) return prBrowserExtractVideoUrl(q); }catch(_){}
+    return '';
+  }
+  function prBrowserShareVideo(){
+    var t=function(x){ if(window.pkRoomToast)pkRoomToast(x); };
+    if(!cinemaIsHost){ t('🌐 सिर्फ़ Host वीडियो शेयर कर सकते हैं।'); return; }
+    var inp=document.getElementById('prBrowserUrl');
+    var url=prBrowserExtractVideoUrl(inp?inp.value:'')||prBrowserExtractVideoUrl(prBrowserCurrentUrl);
+    if(!url){ t('▶️ वीडियो का YouTube लिंक URL बार में डालें, फिर "सबको दिखाएँ" दबाएँ।'); return; }
+    var yi=document.getElementById('ytRoomInput');
+    if(yi){ yi.value=url; try{yi.dispatchEvent(new Event('input',{bubbles:true}));}catch(_){} }
+    prBrowserClose();
+    setTimeout(function(){ try{ if(typeof window.ytRoomBottomSubmit==='function') window.ytRoomBottomSubmit(); else { var b=document.getElementById('ytRoomLoadBtn'); if(b)b.click(); } }catch(_){} },150);
+  }
+  window.prBrowserShareVideo=prBrowserShareVideo;
   window.prBrowserOpen=prBrowserOpen; window.prBrowserClose=prBrowserClose; window.prBrowserGo=prBrowserGo; window.prBrowserTryDownload=prBrowserTryDownload; window.prBrowserBack=prBrowserBack; window.prBrowserForward=prBrowserForward; window.prBrowserReload=prBrowserReload; window.prBrowserHome=prBrowserHome;
 
   function partyRoomHistoryLocalKey(){return 'pk_party_room_history_'+String(currentUserKey||'guest');}
