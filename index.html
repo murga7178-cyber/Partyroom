@@ -17742,6 +17742,93 @@ html body #prRoom.pk-yt-fs.party-youtube-layout #cinemaSeats{top:calc(env(safe-a
   setInterval(wire,1200);
 })();
 </script>
+<style id="pkYtFullCss">
+#pkYtFsOpen{position:absolute;bottom:8px;right:8px;z-index:30;width:36px;height:36px;border:0;border-radius:12px;background:rgba(10,8,25,.66);color:#fff;font-size:19px;line-height:1;display:none;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.4);backdrop-filter:blur(4px);cursor:pointer}
+#prRoom.party-youtube-layout #pkYtFsOpen{display:flex}
+html body #prRoom.pk-yt-full #partyYoutubeStage{position:fixed!important;inset:0!important;top:0!important;bottom:0!important;left:0!important;right:0!important;width:100%!important;height:100%!important;padding:0!important;gap:0!important;margin:0!important;overflow:hidden!important;display:block!important;background:#000!important;z-index:100050!important}
+html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;aspect-ratio:auto!important;margin:0!important;border-radius:0!important;max-width:none!important}
+html body #prRoom.pk-yt-full #partyYoutubeStage > *:not(.yt-room-card):not(#ytRoomViewerSeekBar){display:none!important}
+/* पहले से बना, काम करने वाला वीडियो-टाइमलाइन बार फुल-स्क्रीन में भी वही दिखता है */
+html body #prRoom.pk-yt-full #ytRoomViewerSeekBar{display:flex!important;align-items:center!important;position:absolute!important;left:10px!important;right:10px!important;top:auto!important;bottom:calc(142px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box!important;width:auto!important;max-width:none!important;height:52px!important;min-height:52px!important;padding:6px 14px!important;gap:10px!important;border-radius:16px!important;background:rgba(0,0,0,.55)!important;z-index:5!important;transition:opacity .25s;pointer-events:auto!important}
+html body #prRoom.pk-yt-full #ytRoomViewerSeekRange{height:38px!important;flex:1!important;min-width:0!important}
+html body #prRoom.pk-yt-full #ytRoomViewerTime,html body #prRoom.pk-yt-full #ytRoomViewerDuration{font-size:12px!important;min-width:44px!important;color:#fff!important;font-weight:800!important;text-align:center}
+body.pk-yt-ui-hide #ytRoomViewerSeekBar{opacity:0!important;pointer-events:none!important}
+html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card .yt-room-hostbar,html body #prRoom.pk-yt-full #pkYtFsOpen{display:none!important}
+html body #prRoom.pk-yt-full #cinemaSeats{position:fixed!important;left:0!important;top:env(safe-area-inset-top,0px)!important;width:200%!important;transform:scale(.5)!important;transform-origin:0 0!important;z-index:100060!important;margin:0!important;padding:6px 8px!important;background:transparent!important;pointer-events:none!important}
+/* घुमाकर (आड़ा) देखना: दोनों तरफ़ */
+body.pk-yt-r1 #pkYtFsRot{left:100%;width:100vh;width:100dvh;height:100vw;height:100dvw;transform-origin:0 0;transform:rotate(90deg)}
+body.pk-yt-r2 #pkYtFsRot{left:0;top:100%;width:100vh;width:100dvh;height:100vw;height:100dvw;transform-origin:0 0;transform:rotate(-90deg)}
+html body.pk-yt-r1 #prRoom.pk-yt-full #partyYoutubeStage{inset:auto!important;top:0!important;left:100%!important;width:100vh!important;width:100dvh!important;height:100vw!important;height:100dvw!important;transform-origin:0 0!important;transform:rotate(90deg)!important}
+html body.pk-yt-r2 #prRoom.pk-yt-full #partyYoutubeStage{inset:auto!important;top:100%!important;left:0!important;width:100vh!important;width:100dvh!important;height:100vw!important;height:100dvw!important;transform-origin:0 0!important;transform:rotate(-90deg)!important}
+html body.pk-yt-r1 #prRoom.pk-yt-full #cinemaSeats{top:0!important;left:100%!important;width:200vh!important;width:200dvh!important;transform:rotate(90deg) scale(.5)!important}
+html body.pk-yt-r2 #prRoom.pk-yt-full #cinemaSeats{top:100%!important;left:0!important;width:200vh!important;width:200dvh!important;transform:rotate(-90deg) scale(.5)!important}
+#pkYtFsRotBtn{font-size:16px!important}
+body.pk-yt-fs-on #pkUniversalNav,body.pk-yt-fs-on #pkRoomX,body.pk-yt-fs-on .pr-room-sync-visible{display:none!important}
+#pkYtFsRot{position:fixed;left:0;top:0;width:100%;height:100%;z-index:100065;pointer-events:none;display:none}
+body.pk-yt-fs-on #pkYtFsRot{display:block}
+#pkYtFsRot>*{pointer-events:auto}
+#pkYtFsTap{position:absolute;left:0;right:0;top:0;bottom:210px;background:transparent}
+#pkYtFsBar{position:absolute;left:0;right:0;bottom:0;z-index:2;display:block;padding:26px 14px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(0deg,rgba(0,0,0,.82),rgba(0,0,0,0));color:#fff;font-family:system-ui,"Segoe UI",Arial,sans-serif;text-align:left;transition:opacity .25s}
+body.pk-yt-fs-on #pkYtFsBar{display:block}
+#pkYtFsBar.hide{opacity:0;pointer-events:none}
+#pkYtFsX{position:absolute;right:12px;top:calc(10px + env(safe-area-inset-top,0px));z-index:3;width:42px;height:42px;border:0;border-radius:50%;background:rgba(0,0,0,.62);color:#fff;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.5);transition:opacity .25s}
+body.pk-yt-fs-on #pkYtFsX{display:flex}
+#pkYtFsX.hide{opacity:0;pointer-events:none}
+#pkYtFsBar .row{display:flex;align-items:center;gap:10px;margin-top:8px}
+#pkYtFsBar .tm{font-size:12px;font-weight:700;min-width:40px;text-align:center;opacity:.9}
+#pkYtFsBar input[type=range]{flex:1;min-width:0;height:4px;accent-color:#a855f7}
+#pkYtFsBar button{border:0;border-radius:14px;background:rgba(255,255,255,.16);color:#fff;font-size:14px;font-weight:900;padding:10px 12px;cursor:pointer;white-space:nowrap}
+#pkYtFsBar button:disabled,#pkYtFsBar input:disabled{opacity:.4}
+#pkYtFsBar .vol{display:flex;align-items:center;gap:10px;flex:1;font-size:20px}
+#pkYtFsBar .vol input{height:30px}
+</style>
+<script id="pkYtFullJs">
+(function(){
+  function $(i){return document.getElementById(i);}
+  function B(){return window.ytRoomBridge||null;}
+  function fmt(t){t=Math.max(0,Math.floor(t||0));var m=Math.floor(t/60),s=t%60;return m+':'+(s<10?'0':'')+s;}
+  var on=false,hideT=0,drag=false,tick=0,rot=0;
+  function setRot(n){ rot=n; document.body.classList.toggle('pk-yt-r1',n===1); document.body.classList.toggle('pk-yt-r2',n===2); }
+  function room(){return $('prRoom');}
+  function say(m){try{if(typeof toast==='function'){toast(m);return;}}catch(e){}}
+  function build(){
+    if($('pkYtFsBar'))return;
+    var rt=document.createElement('div');rt.id='pkYtFsRot';var tap=document.createElement('div');tap.id='pkYtFsTap';rt.appendChild(tap);
+    var x=document.createElement('button');x.id='pkYtFsX';x.type='button';x.setAttribute('aria-label','Close');x.textContent='\u2715';rt.appendChild(x);
+    var b=document.createElement('div');b.id='pkYtFsBar';
+    b.innerHTML='<div class="row"><button type="button" id="pkYtFsBack">\u23EA 10</button><button type="button" id="pkYtFsFwd">10 \u23E9</button><button type="button" id="pkYtFsRotBtn" aria-label="Rotate">\uD83D\uDD04 \u0918\u0941\u092E\u093E\u090F\u0901</button></div><div class="row"><div class="vol"><span>\uD83D\uDD0A</span><input type="range" id="pkYtFsVol" min="0" max="100" value="100"></div></div>';
+    rt.appendChild(b);document.body.appendChild(rt);
+    tap.addEventListener('click',function(){ if(b.classList.contains('hide'))show(); else {b.classList.add('hide');x.classList.add('hide');document.body.classList.add('pk-yt-ui-hide');} });
+    x.addEventListener('click',function(e){e.stopPropagation();exit();});
+    function seekTo(t){ var br=B(); if(!br||!br.canControl||!br.canControl()){say('\u0906\u0917\u0947-\u092A\u0940\u091B\u0947 \u0938\u093F\u0930\u094D\u092B\u093C \u0939\u094B\u0938\u094D\u091F \u0915\u0930 \u0938\u0915\u0924\u093E \u0939\u0948');return;} try{br.seek(t);}catch(e){} }
+    function rel(d){ var br=B(),i=br&&br.info&&br.info(); if(!i)return; var t=Math.max(0,Math.min(i.dur||1e9,(i.cur||0)+d)); seekTo(t); show(); }
+    $('pkYtFsBack').addEventListener('click',function(){rel(-10);});
+    $('pkYtFsFwd').addEventListener('click',function(){rel(10);});
+    $('pkYtFsRotBtn').addEventListener('click',function(){setRot((rot+1)%3);show();});
+    var vl=$('pkYtFsVol');
+    vl.addEventListener('input',function(){var br=B();if(br&&br.vol)br.vol(Number(vl.value));show();});
+    b.addEventListener('click',function(e){e.stopPropagation();show();});
+  }
+  function show(){var b=$('pkYtFsBar'),x=$('pkYtFsX');document.body.classList.remove('pk-yt-ui-hide');if(b)b.classList.remove('hide');if(x)x.classList.remove('hide');clearTimeout(hideT);hideT=setTimeout(function(){if(!drag){if(b)b.classList.add('hide');if(x)x.classList.add('hide');document.body.classList.add('pk-yt-ui-hide');}},3500);}
+  function sync(){
+    var br=B(),i=br&&br.info&&br.info(); var can=!!(br&&br.canControl&&br.canControl());
+    if(!$('pkYtFsBack'))return;
+    $('pkYtFsBack').disabled=!can; $('pkYtFsFwd').disabled=!can;
+    var vl=$('pkYtFsVol'); if(vl&&br&&br.vol&&document.activeElement!==vl){var v=br.vol();if(v!==null&&v!==undefined&&Math.abs(Number(vl.value)-v)>2)vl.value=v;}
+    var r=room(); if(!r||!r.classList.contains('party-youtube-layout')) exit();
+  }
+  function enter(){ var r=room(); if(!r||on)return; build(); on=true; r.classList.add('pk-yt-full'); document.body.classList.add('pk-yt-fs-on'); sync(); show(); clearInterval(tick); tick=setInterval(sync,500); }
+  function exit(){ if(!on)return; on=false; var r=room(); if(r)r.classList.remove('pk-yt-full'); document.body.classList.remove('pk-yt-fs-on'); document.body.classList.remove('pk-yt-ui-hide'); setRot(0); clearInterval(tick); clearTimeout(hideT); }
+  window.pkYtFullEnter=enter; window.pkYtFullExit=exit;
+  function ensureBtn(){
+    var card=document.querySelector('#partyYoutubeStage .yt-room-card'); if(!card||$('pkYtFsOpen'))return;
+    var b=document.createElement('button');b.id='pkYtFsOpen';b.type='button';b.setAttribute('aria-label','Full screen');b.textContent='\u26F6';
+    b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();enter();});
+    card.appendChild(b);
+  }
+  ensureBtn(); setInterval(ensureBtn,1500);
+})();
+</script>
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
