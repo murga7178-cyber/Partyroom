@@ -17362,6 +17362,19 @@ html body #prRoom.party-youtube-layout.party-youtube-layout #ytRoomInlinePanel.p
     var show=!!(room&&st&&room.classList.contains('party-youtube-layout')&&st.classList.contains('yt-host'));
     var r=null;
     if(show){ r=st.getBoundingClientRect(); if(r.width<60||r.height<60||getComputedStyle(st).display==='none') show=false; }
+    /* सिर्फ़ तब दिखे जब YouTube मोड असल में सामने खुला हो: रूम छिपा/मिनिमाइज़/बैक हुआ हो, किसी दूसरे पेज के पीछे हो या फुल-स्क्रीन चालू हो तो न दिखे */
+    if(show){
+      var gm=$('cinemaGharModal');
+      if(!gm||getComputedStyle(gm).display==='none'||getComputedStyle(gm).visibility==='hidden') show=false;
+      else if(document.body.classList.contains('pk-yt-fs-on')||(room&&room.classList.contains('pk-yt-full'))) show=false;
+      else {
+        try{
+          var cx=Math.min(window.innerWidth-2,Math.max(2,r.left+r.width/2)), cy=Math.min(window.innerHeight-2,Math.max(2,r.top+r.height/2));
+          var top=document.elementFromPoint(cx,cy);
+          if(!top||!gm.contains(top)) show=false;
+        }catch(_){}
+      }
+    }
     if(show&&!box) build();
     if(!box) return;
     if(!show){ box.classList.remove('on'); return; }
@@ -17734,11 +17747,7 @@ html body #prRoom.pk-yt-fs.party-youtube-layout #cinemaSeats{top:calc(env(safe-a
     if(ov)ov.classList.remove('on');
   }
   window.pkYtFullscreen=enter; window.pkYtFullscreenExit=exit;
-  function wire(){
-    var c=document.querySelector('#partyYoutubeStage .yt-room-card'); if(!c)return;
-    if(!$('pkYtFsBtn')){ var b=document.createElement('button'); b.type='button'; b.id='pkYtFsBtn'; b.setAttribute('aria-label','फुल स्क्रीन'); b.textContent='\u26F6'; b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();enter();}); c.appendChild(b); }
-    var k=c.querySelector('.yt-room-block'); if(k&&!k.__pkFs){ k.__pkFs=1; k.addEventListener('click',function(){enter();}); }
-  }
+  function wire(){ var o=$('pkYtFsBtn'); if(o&&o.parentNode) o.parentNode.removeChild(o); }
   setInterval(wire,1200);
 })();
 </script>
@@ -17749,11 +17758,13 @@ html body #prRoom.pk-yt-full #partyYoutubeStage{position:fixed!important;inset:0
 html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;aspect-ratio:auto!important;margin:0!important;border-radius:0!important;max-width:none!important}
 html body #prRoom.pk-yt-full #partyYoutubeStage > *:not(.yt-room-card):not(#ytRoomViewerSeekBar){display:none!important}
 /* पहले से बना, काम करने वाला वीडियो-टाइमलाइन बार फुल-स्क्रीन में भी वही दिखता है */
-html body #prRoom.pk-yt-full #ytRoomViewerSeekBar{display:flex!important;align-items:center!important;position:absolute!important;left:10px!important;right:10px!important;top:auto!important;bottom:calc(142px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box!important;width:auto!important;max-width:none!important;height:52px!important;min-height:52px!important;padding:6px 14px!important;gap:10px!important;border-radius:16px!important;background:rgba(0,0,0,.55)!important;z-index:5!important;transition:opacity .25s;pointer-events:auto!important}
+html body #prRoom.pk-yt-full #ytRoomViewerSeekBar{display:flex!important;align-items:center!important;position:absolute!important;left:10px!important;right:10px!important;top:auto!important;bottom:calc(6px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box!important;width:auto!important;max-width:none!important;height:44px!important;min-height:44px!important;padding:6px 14px!important;gap:10px!important;border-radius:16px!important;background:rgba(0,0,0,.55)!important;z-index:5!important;transition:opacity .25s;pointer-events:auto!important}
 html body #prRoom.pk-yt-full #ytRoomViewerSeekRange{height:38px!important;flex:1!important;min-width:0!important}
 html body #prRoom.pk-yt-full #ytRoomViewerTime,html body #prRoom.pk-yt-full #ytRoomViewerDuration{font-size:12px!important;min-width:44px!important;color:#fff!important;font-weight:800!important;text-align:center}
 body.pk-yt-ui-hide #ytRoomViewerSeekBar{opacity:0!important;pointer-events:none!important}
-html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card .yt-room-hostbar,html body #prRoom.pk-yt-full #pkYtFsOpen{display:none!important}
+html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card .yt-room-hostbar{display:none!important}
+html body #prRoom.pk-yt-full #pkYtFsOpen{display:flex!important;bottom:calc(64px + env(safe-area-inset-bottom,0px))!important;right:12px!important;z-index:40!important;transition:opacity .25s}
+body.pk-yt-ui-hide #pkYtFsOpen{opacity:0!important;pointer-events:none!important}
 html body #prRoom.pk-yt-full #cinemaSeats{position:fixed!important;left:0!important;top:env(safe-area-inset-top,0px)!important;width:200%!important;transform:scale(.5)!important;transform-origin:0 0!important;z-index:100060!important;margin:0!important;padding:6px 8px!important;background:transparent!important;pointer-events:none!important}
 /* घुमाकर (आड़ा) देखना: दोनों तरफ़ */
 body.pk-yt-r1 #pkYtFsRot{left:100%;width:100vh;width:100dvh;height:100vw;height:100dvw;transform-origin:0 0;transform:rotate(90deg)}
@@ -17767,8 +17778,8 @@ body.pk-yt-fs-on #pkUniversalNav,body.pk-yt-fs-on #pkRoomX,body.pk-yt-fs-on .pr-
 #pkYtFsRot{position:fixed;left:0;top:0;width:100%;height:100%;z-index:100065;pointer-events:none;display:none}
 body.pk-yt-fs-on #pkYtFsRot{display:block}
 #pkYtFsRot>*{pointer-events:auto}
-#pkYtFsTap{position:absolute;left:0;right:0;top:0;bottom:210px;background:transparent}
-#pkYtFsBar{position:absolute;left:0;right:0;bottom:0;z-index:2;display:block;padding:26px 14px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(0deg,rgba(0,0,0,.82),rgba(0,0,0,0));color:#fff;font-family:system-ui,"Segoe UI",Arial,sans-serif;text-align:left;transition:opacity .25s}
+#pkYtFsTap{position:absolute;left:0;right:0;top:0;bottom:130px;background:transparent}
+#pkYtFsBar{position:absolute;left:0;right:0;bottom:0;z-index:2;display:block;padding:26px 14px calc(58px + env(safe-area-inset-bottom,0px));pointer-events:none;background:linear-gradient(0deg,rgba(0,0,0,.82),rgba(0,0,0,0));color:#fff;font-family:system-ui,"Segoe UI",Arial,sans-serif;text-align:left;transition:opacity .25s}
 body.pk-yt-fs-on #pkYtFsBar{display:block}
 #pkYtFsBar.hide{opacity:0;pointer-events:none}
 #pkYtFsX{position:absolute;right:12px;top:calc(10px + env(safe-area-inset-top,0px));z-index:3;width:42px;height:42px;border:0;border-radius:50%;background:rgba(0,0,0,.62);color:#fff;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.5);transition:opacity .25s}
@@ -17781,6 +17792,12 @@ body.pk-yt-fs-on #pkYtFsX{display:flex}
 #pkYtFsBar button:disabled,#pkYtFsBar input:disabled{opacity:.4}
 #pkYtFsBar .vol{display:flex;align-items:center;gap:10px;flex:1;font-size:20px}
 #pkYtFsBar .vol input{height:30px}
+#pkYtFsBar button{pointer-events:auto}
+#pkYtFsBar.hide button{pointer-events:none}
+#pkYtFsVolWrap{position:absolute;right:10px;top:50%;margin-top:-75px;width:40px;height:150px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;box-sizing:border-box;padding:8px 0;border-radius:20px;background:rgba(0,0,0,.45);color:#fff;font-size:15px;line-height:1;z-index:3;transition:opacity .25s}
+#pkYtFsVolWrap .vs{position:relative;flex:1;width:100%}
+#pkYtFsVolWrap .vs input{position:absolute;left:50%;top:50%;width:84px;height:28px;margin:-14px 0 0 -42px;transform:rotate(-90deg);accent-color:#a855f7}
+body.pk-yt-ui-hide #pkYtFsVolWrap{opacity:0;pointer-events:none}
 </style>
 <script id="pkYtFullJs">
 (function(){
@@ -17796,8 +17813,8 @@ body.pk-yt-fs-on #pkYtFsX{display:flex}
     var rt=document.createElement('div');rt.id='pkYtFsRot';var tap=document.createElement('div');tap.id='pkYtFsTap';rt.appendChild(tap);
     var x=document.createElement('button');x.id='pkYtFsX';x.type='button';x.setAttribute('aria-label','Close');x.textContent='\u2715';rt.appendChild(x);
     var b=document.createElement('div');b.id='pkYtFsBar';
-    b.innerHTML='<div class="row"><button type="button" id="pkYtFsBack">\u23EA 10</button><button type="button" id="pkYtFsFwd">10 \u23E9</button><button type="button" id="pkYtFsRotBtn" aria-label="Rotate">\uD83D\uDD04 \u0918\u0941\u092E\u093E\u090F\u0901</button></div><div class="row"><div class="vol"><span>\uD83D\uDD0A</span><input type="range" id="pkYtFsVol" min="0" max="100" value="100"></div></div>';
-    rt.appendChild(b);document.body.appendChild(rt);
+    b.innerHTML='<div class="row"><button type="button" id="pkYtFsBack">\u23EA 10</button><button type="button" id="pkYtFsFwd">10 \u23E9</button><button type="button" id="pkYtFsRotBtn" aria-label="Rotate">\uD83D\uDD04 \u0918\u0941\u092E\u093E\u090F\u0901</button></div>';
+    rt.appendChild(b);var vw=document.createElement('div');vw.id='pkYtFsVolWrap';vw.innerHTML='<span>\uD83D\uDD0A</span><div class="vs"><input type="range" id="pkYtFsVol" min="0" max="100" value="100" aria-label="Volume"></div><span>\uD83D\uDD08</span>';vw.addEventListener('click',function(e){e.stopPropagation();});rt.appendChild(vw);document.body.appendChild(rt);
     tap.addEventListener('click',function(){ if(b.classList.contains('hide'))show(); else {b.classList.add('hide');x.classList.add('hide');document.body.classList.add('pk-yt-ui-hide');} });
     x.addEventListener('click',function(e){e.stopPropagation();exit();});
     function seekTo(t){ var br=B(); if(!br||!br.canControl||!br.canControl()){say('\u0906\u0917\u0947-\u092A\u0940\u091B\u0947 \u0938\u093F\u0930\u094D\u092B\u093C \u0939\u094B\u0938\u094D\u091F \u0915\u0930 \u0938\u0915\u0924\u093E \u0939\u0948');return;} try{br.seek(t);}catch(e){} }
@@ -17823,7 +17840,7 @@ body.pk-yt-fs-on #pkYtFsX{display:flex}
   function ensureBtn(){
     var card=document.querySelector('#partyYoutubeStage .yt-room-card'); if(!card||$('pkYtFsOpen'))return;
     var b=document.createElement('button');b.id='pkYtFsOpen';b.type='button';b.setAttribute('aria-label','Full screen');b.textContent='\u26F6';
-    b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();enter();});
+    b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();if(on)exit();else enter();});
     card.appendChild(b);
   }
   ensureBtn(); setInterval(ensureBtn,1500);
