@@ -19095,13 +19095,19 @@ html body #prRoom #cinemaSeats,html body #prRoom #cinemaSeats .psf-seat,html bod
 #pkPageLoader.out{opacity:0;transition:opacity .14s ease}
 #pkPageLoader .v{position:absolute;inset:0;display:none;box-sizing:border-box;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 16px}
 #pkPageLoader.k-page .v-page,#pkPageLoader.k-room .v-room,#pkPageLoader.k-sheet .v-sheet{display:block}
-#pkPageLoader.k-page{background:linear-gradient(180deg,#f7f3ff,#fdf2f8)}
-#pkPageLoader.k-room{background:linear-gradient(180deg,#1a1240,#0b0a1f)}
-#pkPageLoader.k-sheet{background:rgba(8,6,24,.45)}
+#pkPageLoader.k-page{background:radial-gradient(ellipse at 50% -10%,#39216b 0%,#17102e 48%,#080712 100%);color:#fff}
+#pkPageLoader.k-room{background:radial-gradient(ellipse at 50% -10%,#39216b 0%,#17102e 48%,#080712 100%);color:#fff}
+#pkPageLoader.k-sheet{background:rgba(8,6,24,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#pkPageLoader .hd .b{background:linear-gradient(135deg,#a855f7,#ec4899);box-shadow:0 0 22px rgba(168,85,247,.22)}
+#pkPageLoader .hd .t{background:linear-gradient(90deg,rgba(255,255,255,.12),rgba(255,255,255,.2),rgba(255,255,255,.12))}
+#pkPageLoader .v-page:before,#pkPageLoader .v-room:before{content:'PARTY ROOM';display:block;font-size:12px;letter-spacing:3px;font-weight:900;color:#e9d5ff;text-align:center;margin:0 0 18px;text-shadow:0 0 18px rgba(168,85,247,.55)}
+#pkPageLoader .hero{height:120px;border-radius:22px;margin-bottom:16px;background:linear-gradient(135deg,rgba(168,85,247,.16),rgba(236,72,153,.13));border:1px solid rgba(255,255,255,.08)}
 #pkPageLoader .hd{display:flex;align-items:center;gap:12px;margin-bottom:18px}
 #pkPageLoader .hd .b{width:38px;height:38px;border-radius:50%}#pkPageLoader .hd .t{height:16px;width:46%;border-radius:8px}
 #pkPageLoader .hero{height:120px;border-radius:22px;margin-bottom:16px}
-#pkPageLoader .v-room .pk-sk{background:linear-gradient(90deg,rgba(255,255,255,.07) 25%,rgba(255,255,255,.16) 40%,rgba(255,255,255,.07) 60%);background-size:300% 100%}
+#pkPageLoader .v-room .pk-sk,#pkPageLoader .v-page .pk-sk{background:linear-gradient(90deg,rgba(255,255,255,.055) 20%,rgba(190,140,255,.22) 42%,rgba(255,255,255,.07) 62%);background-size:300% 100%;border:1px solid rgba(255,255,255,.045)}
+#pkPageLoader .seats i{background-color:rgba(168,85,247,.12);border:1px solid rgba(216,180,254,.22);box-shadow:inset 0 0 14px rgba(168,85,247,.08)}
+#pkPageLoader .cm i{background-color:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.05)}
 #pkPageLoader .seats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 10px;margin:26px 6px 22px}
 #pkPageLoader .seats i{aspect-ratio:1/1;border-radius:50%}
 #pkPageLoader .cm{display:flex;flex-direction:column;gap:12px;margin-top:8px}#pkPageLoader .cm i{height:34px;border-radius:17px;width:70%}#pkPageLoader .cm i:nth-child(2){width:55%}#pkPageLoader .cm i:nth-child(3){width:80%}
@@ -19118,8 +19124,8 @@ html body #prRoom #cinemaSeats,html body #prRoom #cinemaSeats .psf-seat,html bod
   var el=null, active=0, shownAt=0, MAX=2500, MINSHOW=90;
   var R='<div class="pk-skr"><i class="pk-sk a"></i><div class="l"><i class="pk-sk"></i><i class="pk-sk"></i></div></div>';
   function html(){
-    return '<div class="v v-page"><div class="hd"><i class="pk-sk b"></i><i class="pk-sk t"></i></div><i class="pk-sk hero"></i>'+R+R+R+R+R+'</div>'+
-      '<div class="v v-room"><div class="hd"><i class="pk-sk b"></i><i class="pk-sk t"></i></div><div class="seats"><i class="pk-sk"></i><i class="pk-sk"></i><i class="pk-sk"></i><i class="pk-sk"></i><i class="pk-sk"></i><i class="pk-sk"></i><i class="pk-sk"></i><i class="pk-sk"></i></div><div class="cm"><i class="pk-sk"></i><i class="pk-sk"></i><i class="pk-sk"></i></div></div>'+
+    return '<div class="v v-page"><div class="hd"><i class="pk-sk b"></i><i class="pk-sk t"></i></div><i class="pk-sk hero"></i><div class="cm"><i class="pk-sk"></i><i class="pk-sk"></i><i class="pk-sk"></i></div>'+R+R+R+'</div>'+
+      '<div class="v v-room"><div class="hd"><i class="pk-sk b"></i><i class="pk-sk t"></i></div><i class="pk-sk hero" style="height:76px"></i><div class="seats"><i class="pk-sk"></i><i class="pk-sk"></i><i class="pk-sk"></i><i class="pk-sk"></i><i class="pk-sk"></i><i class="pk-sk"></i><i class="pk-sk"></i><i class="pk-sk"></i></div><div class="cm"><i class="pk-sk"></i><i class="pk-sk"></i><i class="pk-sk"></i></div></div>'+
       '<div class="v v-sheet"><div class="sh"><i class="pk-sk av"></i><i class="pk-sk nm"></i><i class="pk-sk id"></i><div class="st"><i class="pk-sk"></i><i class="pk-sk"></i><i class="pk-sk"></i></div></div></div>';
   }
   function ensure(){
@@ -21640,17 +21646,19 @@ html body #prRoom.pk-yt-full #cinemaSeats .psf-frame-wrap{pointer-events:auto!im
 </style>
 <script id="pkYtFullscreenSeatTapFix">
 (function(){
+  /* Do not intercept or stop seat clicks: cinemaRenderSeats assigns the real onclick handler
+     which writes the selected seat to Firestore. Stopping propagation in capture phase
+     prevented the click from ever reaching the seat button. */
   function wire(){
-    var grid=document.getElementById('cinemaSeats'); if(!grid||grid.__pkSeatTapFix)return;
-    grid.__pkSeatTapFix=true;
-    grid.addEventListener('click',function(e){
-      var seat=e.target&&e.target.closest?e.target.closest('.psf-seat'):null;
-      if(!seat||!grid.contains(seat))return;
-      /* Existing per-seat onclick remains the single handler; this only ensures taps are not swallowed. */
-      e.stopPropagation();
-    },true);
+    var grid=document.getElementById('cinemaSeats'); if(!grid)return;
+    grid.style.setProperty('touch-action','manipulation','important');
+    grid.querySelectorAll('.psf-seat').forEach(function(seat){
+      seat.style.setProperty('pointer-events','auto','important');
+      seat.style.setProperty('touch-action','manipulation','important');
+    });
   }
-  wire();setInterval(wire,1200);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire);else wire();
+  setInterval(wire,1200);
 })();
 </script>
 
@@ -21702,4 +21710,108 @@ html body #prRoom.pk-yt-full #cinemaSeats .psf-seat *{pointer-events:auto!import
 /* Subtle volume control and clean seek bar. */
 body.pk-yt-fs-on #pkYtFsVolWrap{background:rgba(0,0,0,.22)!important;border-color:rgba(255,255,255,.10)!important;box-shadow:none!important;opacity:.78!important;}
 html body #prRoom.pk-yt-full #ytRoomViewerSeekBar{left:4vw!important;right:4vw!important;width:92vw!important;max-width:none!important;bottom:calc(10px + env(safe-area-inset-bottom,0px))!important;background:rgba(0,0,0,.42)!important;border-color:rgba(255,255,255,.15)!important;box-shadow:none!important;border-radius:28px!important;}
+</style>
+
+<!-- Smooth, subtle tap sound for app interactions -->
+<script id="pkSmoothClickSound">
+(function(){
+  if(window.__pkSmoothClickSoundInstalled)return;
+  window.__pkSmoothClickSoundInstalled=true;
+  var ctx=null, last=0;
+  function audio(){
+    try{
+      var AC=window.AudioContext||window.webkitAudioContext;
+      if(!AC)return null;
+      if(!ctx)ctx=new AC();
+      if(ctx.state==='suspended')ctx.resume();
+      return ctx;
+    }catch(e){return null;}
+  }
+  function tone(c, freq, start, duration, volume, type){
+    var o=c.createOscillator(), g=c.createGain();
+    o.type=type||'sine'; o.frequency.setValueAtTime(freq,start);
+    if(type==='sine')o.frequency.exponentialRampToValueAtTime(Math.max(50,freq*.72),start+duration);
+    g.gain.setValueAtTime(.0001,start);
+    g.gain.exponentialRampToValueAtTime(volume,start+.006);
+    g.gain.exponentialRampToValueAtTime(.0001,start+duration);
+    o.connect(g);g.connect(c.destination);o.start(start);o.stop(start+duration+.015);
+  }
+  function play(){
+    var now=Date.now(); if(now-last<65)return; last=now;
+    var c=audio(); if(!c)return;
+    var t=c.currentTime+.002;
+    /* Warm little “dum-tak”: soft low thump followed by a crisp, quiet tick. */
+    tone(c,155,t,.075,.12,'sine');
+    tone(c,920,t+.035,.038,.045,'triangle');
+  }
+  document.addEventListener('click',function(e){
+    var target=e.target;
+    if(!target||!target.closest)return;
+    var control=target.closest('button,a,[role="button"],.psf-seat,.seat,.clickable,[onclick],input[type="checkbox"],input[type="radio"]');
+    if(!control)return;
+    if(control.disabled||control.getAttribute('aria-disabled')==='true')return;
+    if(control.matches('input[type="range"]'))return;
+    play();
+  },true);
+  /* Prepare audio after the first user gesture; playback still requires normal browser permission. */
+  document.addEventListener('pointerdown',function(){audio();},{once:true,passive:true,capture:true});
+})();
+</script>
+
+<!-- Verified follow-up fix: target the actual fullscreen overlay elements only -->
+<style id="pkYtFullscreenActualFix">
+/* Only fullscreen mode: make the stage truly edge-to-edge, regardless of earlier rules. */
+html body #prRoom.pk-yt-full #partyYoutubeStage{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;width:100dvw!important;height:100dvh!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;overflow:hidden!important;background:#000!important;z-index:2147483000!important;}
+html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-width:100%!important;min-height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;overflow:hidden!important;background:#000!important;}
+html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card iframe,
+html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card #ytRoomPlayerDiv,
+html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card video,
+html body #prRoom.pk-yt-full #partyYoutubeStage #ytRoomLocalVideo{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-width:100%!important;min-height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;border:0!important;border-radius:0!important;}
+/* The share button and native duplicate eye count are hidden only while fullscreen is active. */
+body.pk-yt-fs-on #prRoom #prYtX,
+body.pk-yt-fs-on #prRoom #prFloatingViewerBtn,
+body.pk-yt-fs-on #prRoom #cinemaViewerBtn,
+body.pk-yt-fs-on #prRoom #cinemaViewerCount,
+body.pk-yt-fs-on #prRoom .pr-inline-viewers,
+body.pk-yt-fs-on #prRoom .yt-room-share,
+body.pk-yt-fs-on #prRoom .yt-share-btn,
+body.pk-yt-fs-on #prRoom .yt-room-hostbar,
+body.pk-yt-fs-on #prRoom [aria-label*="Share" i],
+body.pk-yt-fs-on #prRoom [title*="Share" i]{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
+/* Keep the purpose-built single fullscreen viewer button and white exit X. */
+body.pk-yt-fs-on #pkYtFsViewer{display:flex!important;visibility:visible!important;}
+body.pk-yt-fs-on #pkYtFsX{display:flex!important;}
+/* Subtle volume control; seat buttons remain interactive. */
+body.pk-yt-fs-on #pkYtFsVolWrap{background:rgba(0,0,0,.20)!important;border:1px solid rgba(255,255,255,.10)!important;box-shadow:none!important;opacity:.78!important;}
+html body #prRoom.pk-yt-full #cinemaSeats{z-index:2147483100!important;pointer-events:none!important;}
+html body #prRoom.pk-yt-full #cinemaSeats .psf-seat,
+html body #prRoom.pk-yt-full #cinemaSeats .psf-seat *{pointer-events:auto!important;touch-action:manipulation!important;}
+</style>
+<script id="pkYtFullscreenActualFixScript">
+(function(){
+  function active(){return !!(document.body.classList.contains('pk-yt-fs-on') || (document.getElementById('prRoom')||{}).classList && document.getElementById('prRoom').classList.contains('pk-yt-full'));}
+  function clean(){
+    if(!active())return;
+    var root=document.getElementById('prRoom'); if(!root)return;
+    /* Some builds render Share/Party as a text button without a stable class/id. */
+    root.querySelectorAll('button,a,[role="button"]').forEach(function(el){
+      if(el.id==='pkYtFsX'||el.id==='pkYtFsViewer'||el.closest('#pkYtFsRot'))return;
+      var txt=(el.innerText||el.textContent||'').replace(/\s+/g,' ').trim();
+      var aria=((el.getAttribute('aria-label')||'')+' '+(el.getAttribute('title')||'')).trim();
+      if(/^🔗?\s*(share|party)\b/i.test(txt)||/\bshare\b/i.test(aria)){
+        el.style.setProperty('display','none','important');el.style.setProperty('visibility','hidden','important');el.style.setProperty('pointer-events','none','important');
+      }
+    });
+    ['prYtX','prFloatingViewerBtn','cinemaViewerBtn','cinemaViewerCount'].forEach(function(id){var el=document.getElementById(id);if(el){el.style.setProperty('display','none','important');el.style.setProperty('visibility','hidden','important');}});
+    root.querySelectorAll('.pr-inline-viewers,.yt-room-share,.yt-share-btn,.yt-room-hostbar').forEach(function(el){el.style.setProperty('display','none','important');el.style.setProperty('visibility','hidden','important');});
+  }
+  var queued=false;function schedule(){if(queued)return;queued=true;requestAnimationFrame(function(){queued=false;clean();});}
+  new MutationObserver(schedule).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});
+  setInterval(clean,400);document.addEventListener('click',function(){setTimeout(clean,20);},true);clean();
+})();
+</script>
+
+<style id="pkSeatTapActualRepair">
+html body #prRoom.pk-yt-full #cinemaSeats .psf-seat{pointer-events:auto!important;touch-action:manipulation!important;position:relative!important;z-index:2147483200!important;cursor:pointer!important;}
+html body #prRoom.pk-yt-full #cinemaSeats .psf-seat *{pointer-events:none!important;}
 </style>
