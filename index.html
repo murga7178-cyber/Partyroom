@@ -21605,3 +21605,51 @@ html body #pkHomeScreen .pkh-skel{border-radius:20px}
 .pr-sheet button:active,#prGiftSheet button:active{filter:brightness(.93)}
 @media (prefers-reduced-motion:reduce){html body #pkHomeScreen *,html body #pkUniversalNav *{transition:none!important}}
 </style>
+
+<!-- User-requested YouTube full-screen polish and seat tap fix -->
+<style id="pkYtFullscreenPolishUser">
+/* Fullscreen video should use the whole screen rather than a small top-left preview. */
+html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card iframe,
+html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card video,
+html body #prRoom.pk-yt-full #partyYoutubeStage #ytRoomLocalVideo{
+  width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;
+  left:0!important;top:0!important;right:0!important;bottom:0!important;transform:none!important;
+}
+html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card iframe{pointer-events:none!important;}
+/* Hide Share and the extra/original viewer badges only while YouTube is fullscreen. */
+body.pk-yt-fs-on #prRoom #prFloatingViewerBtn,
+body.pk-yt-fs-on #prRoom #cinemaViewerBtn,
+body.pk-yt-fs-on #prRoom .pr-inline-viewers,
+body.pk-yt-fs-on #prRoom .yt-room-share,
+body.pk-yt-fs-on #prRoom .yt-share-btn,
+body.pk-yt-fs-on #prRoom [aria-label="Share"],
+body.pk-yt-fs-on #prRoom [title="Share"]{display:none!important;}
+/* The red room-close cross is not shown over fullscreen video; the fullscreen exit X remains available. */
+body.pk-yt-fs-on #prRoom .yt-room-card .yt-close,
+body.pk-yt-fs-on #prRoom .yt-room-card .yt-close-btn,
+body.pk-yt-fs-on #prRoom .yt-room-card [aria-label="Close video"],
+body.pk-yt-fs-on #prRoom .yt-room-card [title="Close"]{display:none!important;}
+/* A subtler speaker/volume control, matching the lightweight speaker icon. */
+body.pk-yt-fs-on #pkYtFsVolWrap{background:rgba(0,0,0,.24)!important;box-shadow:none!important;border:1px solid rgba(255,255,255,.12)!important;opacity:.78;}
+body.pk-yt-fs-on #pkYtFsVolWrap .vs input{opacity:.78;height:24px;}
+/* Keep seats clickable above the video layer, without making the empty grid block video controls. */
+html body #prRoom.pk-yt-full #cinemaSeats{pointer-events:none!important;}
+html body #prRoom.pk-yt-full #cinemaSeats .psf-seat,
+html body #prRoom.pk-yt-full #cinemaSeats .psf-seat button,
+html body #prRoom.pk-yt-full #cinemaSeats .psf-frame-wrap{pointer-events:auto!important;}
+</style>
+<script id="pkYtFullscreenSeatTapFix">
+(function(){
+  function wire(){
+    var grid=document.getElementById('cinemaSeats'); if(!grid||grid.__pkSeatTapFix)return;
+    grid.__pkSeatTapFix=true;
+    grid.addEventListener('click',function(e){
+      var seat=e.target&&e.target.closest?e.target.closest('.psf-seat'):null;
+      if(!seat||!grid.contains(seat))return;
+      /* Existing per-seat onclick remains the single handler; this only ensures taps are not swallowed. */
+      e.stopPropagation();
+    },true);
+  }
+  wire();setInterval(wire,1200);
+})();
+</script>
