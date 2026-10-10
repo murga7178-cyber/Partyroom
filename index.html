@@ -42,10 +42,10 @@
     el.setAttribute('style','position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483647;display:none;flex-direction:column;align-items:center;justify-content:center;background:#fff;font-family:"Segoe UI",system-ui,Arial,sans-serif;transition:opacity .28s;text-align:center;padding:24px;box-sizing:border-box;');
     el.innerHTML='<style>'+
       '#pkOfflineSplash .glow{position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(176,107,224,.28) 0,rgba(255,255,255,0) 68%);top:50%;left:50%;transform:translate(-50%,-62%);pointer-events:none}'+
-      '#pkOfflineSplash .st{position:relative;font-size:64px;line-height:1;animation:pkOsBob 1.8s ease-in-out infinite;filter:drop-shadow(0 8px 14px rgba(138,43,226,.35))}'+
-      '#pkOfflineSplash .nm{position:relative;margin-top:14px;font-size:42px;font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,#6a1b9a 0%,#8a2be2 40%,#c026d3 75%,#ff4fa8 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}'+
-      '#pkOfflineSplash .sb{position:relative;margin-top:12px;font-size:14px;font-weight:600;color:#7b5aa6}'+
-      '#pkOfflineSplash .dt{position:relative;display:flex;gap:7px;margin-top:20px}'+
+      '#pkOfflineSplash .st{position:relative;top:76px;font-size:64px;line-height:1;animation:pkOsBob 1.8s ease-in-out infinite;filter:drop-shadow(0 8px 14px rgba(138,43,226,.35))}'+
+      '#pkOfflineSplash .nm{position:relative;top:76px;margin-top:14px;font-size:42px;font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,#6a1b9a 0%,#8a2be2 40%,#c026d3 75%,#ff4fa8 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}'+
+      '#pkOfflineSplash .sb{position:relative;top:76px;margin-top:12px;font-size:14px;font-weight:600;color:#7b5aa6}'+
+      '#pkOfflineSplash .dt{position:relative;top:76px;display:flex;gap:7px;margin-top:20px}'+
       '#pkOfflineSplash .dt i{width:9px;height:9px;border-radius:50%;background:linear-gradient(135deg,#8a2be2,#c026d3);animation:pkOsDot 1.1s ease-in-out infinite}'+
       '#pkOfflineSplash .dt i:nth-child(2){animation-delay:.18s}#pkOfflineSplash .dt i:nth-child(3){animation-delay:.36s}'+
       '@keyframes pkOsBob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-10px) rotate(4deg)}}'+
@@ -19131,6 +19131,25 @@ html body #prRoom #cinemaSeats,html body #prRoom #cinemaSeats .psf-seat,html bod
 #pkPageLoader .roomtop{padding-bottom:4px}
 #pkPageLoader .chatbar{position:absolute;bottom:18px;left:16px;right:16px;height:48px;border-radius:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}
 #pkPageLoader .v-room .cm{margin-top:10px}
+
+/* Premium universal navigation loader: one polished screen instead of rough skeleton blocks. */
+#pkPageLoader{background:radial-gradient(ellipse at 50% 32%,#392064 0%,#19102f 45%,#080711 100%)!important;color:#fff}
+#pkPageLoader .v{display:none!important}
+#pkPageLoader .pk-loadstage{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;background:radial-gradient(circle at 50% 42%,rgba(168,85,247,.13),transparent 38%)}
+#pkPageLoader .pk-loadlogo{width:92px;height:92px;border-radius:28px;display:grid;place-items:center;font-size:48px;background:linear-gradient(145deg,#9b4dff,#ed4899);box-shadow:0 12px 38px rgba(168,85,247,.35),inset 0 1px 0 rgba(255,255,255,.42);animation:pkLoadFloat 2.2s ease-in-out infinite;position:relative}
+#pkPageLoader .pk-loadlogo:after{content:"";position:absolute;inset:-8px;border-radius:34px;border:1px solid rgba(216,180,254,.22);animation:pkLoadRing 2.4s ease-out infinite}
+#pkPageLoader .pk-loadtitle{margin-top:23px;font-size:25px;font-weight:900;letter-spacing:.4px;background:linear-gradient(90deg,#fff,#e9d5ff,#fbcfe8);-webkit-background-clip:text;background-clip:text;color:transparent}
+#pkPageLoader .pk-loadhint{margin-top:9px;color:rgba(237,233,254,.72);font-size:13px;font-weight:600;letter-spacing:.15px}
+#pkPageLoader .pk-loadtrack{width:min(210px,65vw);height:5px;border-radius:99px;overflow:hidden;background:rgba(255,255,255,.12);margin-top:25px}
+#pkPageLoader .pk-loadtrack i{display:block;width:42%;height:100%;border-radius:99px;background:linear-gradient(90deg,#a855f7,#f0abfc,#ec4899);box-shadow:0 0 12px rgba(216,180,254,.5);animation:pkLoadLine 1.35s ease-in-out infinite}
+#pkPageLoader .pk-loaddots{display:flex;gap:6px;margin-top:17px}
+#pkPageLoader .pk-loaddots i{width:5px;height:5px;border-radius:50%;background:#d8b4fe;animation:pkLoadDot 1s ease-in-out infinite}
+#pkPageLoader .pk-loaddots i:nth-child(2){animation-delay:.14s}#pkPageLoader .pk-loaddots i:nth-child(3){animation-delay:.28s}
+@keyframes pkLoadFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.025)}}
+@keyframes pkLoadRing{0%{transform:scale(.92);opacity:.8}100%{transform:scale(1.22);opacity:0}}
+@keyframes pkLoadLine{0%{transform:translateX(-120%)}100%{transform:translateX(260%)}}
+@keyframes pkLoadDot{0%,70%,100%{opacity:.35;transform:translateY(0)}35%{opacity:1;transform:translateY(-3px)}}
+@media(prefers-reduced-motion:reduce){#pkPageLoader .pk-loadlogo,#pkPageLoader .pk-loadlogo:after,#pkPageLoader .pk-loadtrack i,#pkPageLoader .pk-loaddots i{animation:none!important}}
 </style>
 <script id="pkPageLoaderScript">
 (function(){
@@ -19150,7 +19169,7 @@ html body #prRoom #cinemaSeats,html body #prRoom #cinemaSeats .psf-seat,html bod
   function ensure(){
     if(el&&el.isConnected)return el;
     el=document.createElement('div'); el.id='pkPageLoader'; el.setAttribute('aria-hidden','true');
-    el.innerHTML=html();
+    el.innerHTML=html()+'<div class="pk-loadstage" aria-live="polite"><div class="pk-loadlogo">⭐</div><div class="pk-loadtitle">Star Masti</div><div class="pk-loadhint">आपका पेज तैयार हो रहा है…</div><div class="pk-loadtrack"><i></i></div><div class="pk-loaddots"><i></i><i></i><i></i></div></div>';
     (document.body||document.documentElement).appendChild(el); return el;
   }
   function reveal(kind){ ensure(); el.className='k-'+(kind||'page'); el.classList.add('on'); shownAt=Date.now(); }
@@ -21888,5 +21907,60 @@ body.pk-yt-fs-on #pkYtFsVolWrap input[type="range"]{height:26px!important;opacit
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',clean);else clean();
   new MutationObserver(queue).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','aria-label','title']});
   setInterval(clean,500);
+})();
+</script>
+
+<!-- vFinal: unify fullscreen state selectors; target the actual controls even when they live outside #prRoom -->
+<style id="pkYtFullscreenFinalStatePatch">
+body.pk-yt-fs-on #prYtX,
+body.pk-yt-fs-on #prFloatingViewerBtn,
+body.pk-yt-fs-on #cinemaViewerBtn,
+body.pk-yt-fs-on #cinemaViewerCount,
+body.pk-yt-fs-on .pr-inline-viewers,
+body.pk-yt-fs-on .yt-room-share,
+body.pk-yt-fs-on .yt-share-btn,
+body.pk-yt-fs-on .yt-room-hostbar,
+body.pk-yt-fs-on [aria-label*="Share" i],
+body.pk-yt-fs-on [title*="Share" i],
+body.pk-yt-fs-on [aria-label*="Party" i],
+body.pk-yt-fs-on [title*="Party" i],
+#prRoom.pk-yt-full #prYtX,
+#prRoom.pk-yt-full #prFloatingViewerBtn,
+#prRoom.pk-yt-full #cinemaViewerBtn,
+#prRoom.pk-yt-full #cinemaViewerCount,
+#prRoom.pk-yt-full .pr-inline-viewers,
+#prRoom.pk-yt-full .yt-room-share,
+#prRoom.pk-yt-full .yt-share-btn,
+#prRoom.pk-yt-full .yt-room-hostbar,
+#prRoom.pk-yt-full [aria-label*="Share" i],
+#prRoom.pk-yt-full [title*="Share" i],
+#prRoom.pk-yt-full [aria-label*="Party" i],
+#prRoom.pk-yt-full [title*="Party" i] {display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+body.pk-yt-fs-on #pkYtFsX, body.pk-yt-fs-on #pkYtFsViewer,
+#prRoom.pk-yt-full #pkYtFsX, #prRoom.pk-yt-full #pkYtFsViewer {display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}
+/* Give the actual video surface all available viewport space; retain aspect ratio unless mild crop is needed. */
+html body #prRoom.pk-yt-full #partyYoutubeStage,
+html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card {position:fixed!important;inset:0!important;width:100vw!important;width:100dvw!important;height:100vh!important;height:100dvh!important;max-width:none!important;max-height:none!important;margin:0!important;border-radius:0!important;overflow:hidden!important;background:#000!important}
+body.pk-yt-fs-on #pkYtFsVolWrap {opacity:.92!important;background:rgba(10,10,18,.25)!important;border-color:rgba(255,255,255,.15)!important}
+</style>
+<script id="pkYtFullscreenFinalStatePatchScript">
+(function(){
+ if(window.__pkYtFinalStatePatch)return;window.__pkYtFinalStatePatch=true;
+ function full(){var r=document.getElementById('prRoom');return document.body.classList.contains('pk-yt-fs-on')||!!(r&&r.classList.contains('pk-yt-full'));}
+ function hide(el){if(!el||el.id==='pkYtFsX'||el.id==='pkYtFsViewer'||(el.closest&&el.closest('#pkYtFsRot')))return;el.style.setProperty('display','none','important');el.style.setProperty('visibility','hidden','important');el.style.setProperty('opacity','0','important');el.style.setProperty('pointer-events','none','important');}
+ function clean(){if(!full())return;
+  ['prYtX','prFloatingViewerBtn','cinemaViewerBtn','cinemaViewerCount'].forEach(function(id){hide(document.getElementById(id));});
+  document.querySelectorAll('button,a,[role="button"]').forEach(function(el){
+   if(el.id==='pkYtFsX'||el.id==='pkYtFsViewer'||(el.closest&&el.closest('#pkYtFsRot')))return;
+   var txt=(el.innerText||el.textContent||'').replace(/\s+/g,' ').trim();
+   var lab=((el.getAttribute('aria-label')||'')+' '+(el.getAttribute('title')||'')).trim();
+   if(/^(🔗\s*)?(share|party)\b/i.test(txt)||/\b(share|party)\b/i.test(lab))hide(el);
+   if(/👁|👀/.test(txt)&&/\d/.test(txt))hide(el);
+  });
+  ['pkYtFsX','pkYtFsViewer'].forEach(function(id){var el=document.getElementById(id);if(el){el.style.setProperty('display','flex','important');el.style.setProperty('visibility','visible','important');el.style.setProperty('opacity','1','important');el.style.setProperty('pointer-events','auto','important');}});
+ }
+ var q=false;function queue(){if(q)return;q=true;requestAnimationFrame(function(){q=false;clean();});}
+ new MutationObserver(queue).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','aria-label','title']});
+ document.addEventListener('click',function(){setTimeout(clean,30);},true);setInterval(clean,350);clean();
 })();
 </script>
