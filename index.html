@@ -21653,3 +21653,53 @@ html body #prRoom.pk-yt-full #cinemaSeats .psf-frame-wrap{pointer-events:auto!im
   wire();setInterval(wire,1200);
 })();
 </script>
+
+<!-- Final correction: clean edge-to-edge YouTube fullscreen, one viewer badge, clickable seats -->
+<style id="pkYtFullscreenFinalCorrection">
+/* Fullscreen stage and player occupy the entire device viewport: no brown/black room margins. */
+html body.pk-yt-fs-on #prRoom.pk-yt-full #partyYoutubeStage,
+html body #prRoom.pk-yt-full #partyYoutubeStage{
+  position:fixed!important;inset:0!important;left:0!important;right:0!important;top:0!important;bottom:0!important;
+  width:100vw!important;width:100dvw!important;height:100vh!important;height:100dvh!important;
+  max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;gap:0!important;
+  border:0!important;border-radius:0!important;background:#000!important;overflow:hidden!important;z-index:100050!important;
+}
+html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card{
+  position:absolute!important;inset:0!important;left:0!important;right:0!important;top:0!important;bottom:0!important;
+  width:100%!important;height:100%!important;min-width:100%!important;min-height:100%!important;
+  max-width:none!important;max-height:none!important;aspect-ratio:auto!important;margin:0!important;padding:0!important;
+  border:0!important;border-radius:0!important;box-shadow:none!important;overflow:hidden!important;background:#000!important;
+}
+html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card iframe,
+html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card #ytRoomPlayerDiv,
+html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card video,
+html body #prRoom.pk-yt-full #partyYoutubeStage #ytRoomLocalVideo{
+  position:absolute!important;inset:0!important;left:0!important;top:0!important;right:0!important;bottom:0!important;
+  width:100%!important;height:100%!important;min-width:100%!important;min-height:100%!important;
+  max-width:none!important;max-height:none!important;margin:0!important;border:0!important;border-radius:0!important;
+}
+/* Remove Share/Party and duplicate eye badges only in fullscreen. */
+body.pk-yt-fs-on #prRoom .yt-room-share,
+body.pk-yt-fs-on #prRoom .yt-share-btn,
+body.pk-yt-fs-on #prRoom .yt-room-card .yt-room-hostbar,
+body.pk-yt-fs-on #prRoom .yt-room-card [aria-label*="Share" i],
+body.pk-yt-fs-on #prRoom .yt-room-card [title*="Share" i],
+body.pk-yt-fs-on #prRoom .yt-room-card button:has(svg),
+body.pk-yt-fs-on #prRoom #prFloatingViewerBtn,
+body.pk-yt-fs-on #prRoom .pr-inline-viewers,
+body.pk-yt-fs-on #prRoom #cinemaViewerBtn{display:none!important;visibility:hidden!important;}
+/* Keep only the fullscreen overlay's single viewer count if present. */
+body.pk-yt-fs-on #prRoom #cinemaViewerCount{display:none!important;}
+/* Red video-close X is hidden only in fullscreen; fullscreen-exit control remains. */
+body.pk-yt-fs-on #prRoom #prYtX,
+body.pk-yt-fs-on #prRoom .yt-room-close-video,
+body.pk-yt-fs-on #prRoom .yt-room-card .yt-close,
+body.pk-yt-fs-on #prRoom .yt-room-card .yt-close-btn{display:none!important;}
+/* Seats sit above the video and accept taps; empty grid space doesn't block the player. */
+html body #prRoom.pk-yt-full #cinemaSeats{z-index:100070!important;pointer-events:none!important;}
+html body #prRoom.pk-yt-full #cinemaSeats .psf-seat,
+html body #prRoom.pk-yt-full #cinemaSeats .psf-seat *{pointer-events:auto!important;touch-action:manipulation!important;}
+/* Subtle volume control and clean seek bar. */
+body.pk-yt-fs-on #pkYtFsVolWrap{background:rgba(0,0,0,.22)!important;border-color:rgba(255,255,255,.10)!important;box-shadow:none!important;opacity:.78!important;}
+html body #prRoom.pk-yt-full #ytRoomViewerSeekBar{left:4vw!important;right:4vw!important;width:92vw!important;max-width:none!important;bottom:calc(10px + env(safe-area-inset-bottom,0px))!important;background:rgba(0,0,0,.42)!important;border-color:rgba(255,255,255,.15)!important;box-shadow:none!important;border-radius:28px!important;}
+</style>
