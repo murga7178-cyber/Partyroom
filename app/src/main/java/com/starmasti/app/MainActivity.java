@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
 
     /** खाली छोड़ेंगे तो ऐप के अंदर रखी assets/index.html चलेगी।
      *  अगर आपकी साइट ऑनलाइन (hosting) है तो उसका पूरा लिंक यहाँ डालें, जैसे "https://aapka-site.web.app/" */
-    private static final String START_URL = "";
+    private static final String START_URL = "https://murga7178-cyber.github.io/Partyroom/";
     private static final String ASSET_URL = "https://appassets.androidplatform.net/assets/index.html";
 
     private static final int REQ_FILE = 11, REQ_PERM = 12;
