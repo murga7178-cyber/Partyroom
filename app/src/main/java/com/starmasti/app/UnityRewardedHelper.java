@@ -26,7 +26,7 @@ public class UnityRewardedHelper
     private static final String GAME_ID = "800394722";
     private static final String PLACEMENT_ID = "BP_Rewarded_Android";
     // जाँच के समय true रखें (टेस्ट विज्ञापन हमेशा आते हैं). Play Store पर डालने से पहले false करें।
-    private static final boolean TEST_MODE = true;
+    private static final boolean TEST_MODE = false;
 
     private final Activity activity;
     private final WebView webView;
