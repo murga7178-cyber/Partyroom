@@ -10758,12 +10758,48 @@ input,textarea,select{font-size:16px}
   document.addEventListener('pointerdown',function(e){ if(e.target.closest&&e.target.closest('#pkDailyBtn')){ try{ prefetch(); }catch(_){} } },{passive:true});
   setTimeout(function(){ try{ build(); }catch(_){} },1500);
 
+  /* Unity Rewarded bridge contract:
+     Android WebView exposes window.Android.showUnityRewardedAd();
+     native code calls window.onUnityRewardedAdResult(true) ONLY from the Unity
+     SDK's onUnityAdsShowComplete(... COMPLETED) callback. False means no reward.
+     Web-only mode intentionally fails closed and never grants coins without the bridge.
+  */
+  var pkUnityAdPending=null, pkUnityAdTimer=null;
+  window.onUnityRewardedAdResult=function(completed){
+    if(!pkUnityAdPending) return;
+    var done=pkUnityAdPending; pkUnityAdPending=null;
+    if(pkUnityAdTimer) clearTimeout(pkUnityAdTimer); pkUnityAdTimer=null;
+    done( completed===true );
+  };
+  function requestUnityRewardedAd(){
+    return new Promise(function(resolve){
+      var bridge=window.Android;
+      if(!bridge || typeof bridge.showUnityRewardedAd!=='function'){
+        toast('इस APK में Unity Ads Bridge अभी जुड़ा नहीं है'); resolve(false); return;
+      }
+      if(pkUnityAdPending){ resolve(false); return; }
+      pkUnityAdPending=resolve;
+      pkUnityAdTimer=setTimeout(function(){
+        if(pkUnityAdPending){ var done=pkUnityAdPending; pkUnityAdPending=null; pkUnityAdTimer=null; done(false); }
+      },120000);
+      try{ bridge.showUnityRewardedAd(); }
+      catch(e){ if(pkUnityAdPending){ var done=pkUnityAdPending; pkUnityAdPending=null; clearTimeout(pkUnityAdTimer); pkUnityAdTimer=null; done(false); } }
+    });
+  }
+
   async function claim(){
     if(busy) return;
     var key=null; try{ key=currentUserKey; }catch(e){}
     if(!db||!key||String(key).indexOf('local_')===0){ toast('चेक-इन के लिए लॉगिन करें'); return; }
-    busy=true; var btn=$('pkDcBtn'); btn.disabled=true;
+    busy=true; var btn=$('pkDcBtn'); btn.disabled=true; btn.textContent='विज्ञापन लोड हो रहा है…';
     try{
+      /* First verify that the user completed the native Unity Rewarded Ad. */
+      var completed=await requestUnityRewardedAd();
+      if(!completed){
+        btn.disabled=false; btn.textContent='विज्ञापन पूरा करके इनाम लें';
+        toast('विज्ञापन पूरा नहीं हुआ, कॉइन नहीं मिले');
+        return;
+      }
       var ref=db.collection('users').doc(String(key)), today=dayStr(0), yest=dayStr(-1);
       var r=await db.runTransaction(async function(tx){
         var s=await tx.get(ref), d=s.exists?(s.data()||{}):{}, dc=d.dailyCheckin||{};
@@ -10783,8 +10819,10 @@ input,textarea,select{font-size:16px}
       toast(r.already?'आज का इनाम पहले ही मिल चुका है':'🪙 +'+fmt(r.reward)+' कॉइन आपके वॉलेट में जुड़ गए!');
     }catch(e){
       toast('चेक-इन नहीं हो पाया, दोबारा कोशिश करें'); btn.disabled=false;
+    }finally{
+      busy=false;
+      if(btn && !last?.claimedToday){ btn.disabled=false; if(btn.textContent==='विज्ञापन लोड हो रहा है…') btn.textContent='विज्ञापन पूरा करके इनाम लें'; }
     }
-    busy=false;
   }
 
   window.pkOpenDailyCheckin=open;
