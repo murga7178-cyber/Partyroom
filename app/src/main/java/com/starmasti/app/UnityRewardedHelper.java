@@ -1,4 +1,4 @@
-package com.yourapp;   // <-- यहाँ अपने ऐप का package नाम रखें (MainActivity.java की पहली लाइन जैसा)
+package com.starmasti.app;
 
 import android.app.Activity;
 import android.os.Handler;
@@ -141,4 +141,4 @@ public class UnityRewardedHelper
         sendResult(ok, "complete " + state);
         load(); // अगला विज्ञापन पहले से तैयार करो
     }
-        }
+}
