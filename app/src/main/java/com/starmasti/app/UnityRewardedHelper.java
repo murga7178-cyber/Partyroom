@@ -1,4 +1,4 @@
-package com.starmasti.app;
+package com.yourapp;   // <-- यहाँ अपने ऐप का package नाम रखें (MainActivity.java की पहली लाइन जैसा)
 
 import android.app.Activity;
 import android.os.Handler;
@@ -26,7 +26,7 @@ public class UnityRewardedHelper
     private static final String GAME_ID = "800394722";
     private static final String PLACEMENT_ID = "BP_Rewarded_Android";
     // जाँच के समय true रखें (टेस्ट विज्ञापन हमेशा आते हैं). Play Store पर डालने से पहले false करें।
-    private static final boolean TEST_MODE = false;
+    private static final boolean TEST_MODE = true;
 
     private final Activity activity;
     private final WebView webView;
@@ -93,7 +93,7 @@ public class UnityRewardedHelper
         Log.d(TAG, "result ok=" + ok + " why=" + why);
         activity.runOnUiThread(new Runnable() {
             @Override public void run() {
-                webView.evaluateJavascript("window.onUnityRewardedAdResult(" + ok + ")", null);
+                webView.evaluateJavascript("window.onUnityRewardedAdResult(" + ok + "," + org.json.JSONObject.quote(String.valueOf(why)) + ")", null);
             }
         });
     }
