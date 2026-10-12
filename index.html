@@ -10764,9 +10764,10 @@ input,textarea,select{font-size:16px}
      SDK's onUnityAdsShowComplete(... COMPLETED) callback. False means no reward.
      Web-only mode intentionally fails closed and never grants coins without the bridge.
   */
-  var pkUnityAdPending=null, pkUnityAdTimer=null;
-  window.onUnityRewardedAdResult=function(completed){
+  var pkUnityAdPending=null, pkUnityAdTimer=null, pkUnityReason='';
+  window.onUnityRewardedAdResult=function(completed,reason){
     if(!pkUnityAdPending) return;
+    pkUnityReason=(completed===true)?'':String(reason||'');
     var done=pkUnityAdPending; pkUnityAdPending=null;
     if(pkUnityAdTimer) clearTimeout(pkUnityAdTimer); pkUnityAdTimer=null;
     done( completed===true );
@@ -10797,7 +10798,7 @@ input,textarea,select{font-size:16px}
       var completed=await requestUnityRewardedAd();
       if(!completed){
         btn.disabled=false; btn.textContent='विज्ञापन पूरा करके इनाम लें';
-        toast('विज्ञापन पूरा नहीं हुआ, कॉइन नहीं मिले');
+        toast('विज्ञापन पूरा नहीं हुआ, कॉइन नहीं मिले'+(pkUnityReason?' ('+pkUnityReason+')':''));
         return;
       }
       var ref=db.collection('users').doc(String(key)), today=dayStr(0), yest=dayStr(-1);
@@ -17899,9 +17900,13 @@ html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card{max-height:none!im
     clearTimeout(leaveT); leaveT=setTimeout(hideLeave,3500);
   }
   var HIDE=['pkRoomX','pkRoomViewerBtn','prFloatingViewerBtn','cinemaViewerBtn'];
-  function hideApp(v){ HIDE.forEach(function(id){ var e=$(id); if(!e)return; var st=e.style;
-    if(v){ st.setProperty('display','none','important'); st.setProperty('visibility','hidden','important'); st.setProperty('pointer-events','none','important'); }
-    else { st.removeProperty('display'); st.removeProperty('visibility'); st.removeProperty('pointer-events'); } }); }
+  /* छिपाते समय ऐप की अपनी inline सेटिंग याद रखो और बाहर आते समय हू-ब-हू लौटाओ (वरना जो बटन ऐप ने छिपाया था वह खुल जाता है) */
+  var HP=[['display','d'],['visibility','v'],['pointer-events','p']];
+  function holdEl(e,v){ if(!e)return; var st=e.style;
+    if(v){ if(!e.__pkSv){ e.__pkSv={}; HP.forEach(function(k){ e.__pkSv[k[1]]=[st.getPropertyValue(k[0]),st.getPropertyPriority(k[0])]; }); }
+      st.setProperty('display','none','important'); st.setProperty('visibility','hidden','important'); st.setProperty('pointer-events','none','important'); }
+    else if(e.__pkSv){ var o=e.__pkSv; HP.forEach(function(k){ var x=o[k[1]]; if(x[0])st.setProperty(k[0],x[0],x[1]); else st.removeProperty(k[0]); }); e.__pkSv=null; } }
+  function hideApp(v){ HIDE.forEach(function(id){ holdEl($(id),v); }); }
   var CV=['position','left','top','right','bottom','width','height','max-width','max-height','min-width','min-height','transform','margin','border','aspect-ratio','inset'];
   function coverVideo(v){
     var c=document.querySelector('#partyYoutubeStage .yt-room-card'); if(!c)return; var r=room();
@@ -17938,15 +17943,14 @@ html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card{max-height:none!im
   function sync(){
     var br=B(),i=br&&br.info&&br.info(); var can=!!(br&&br.canControl&&br.canControl());
     if(!$('pkYtFsVol'))return;
-    ['ytRoomCloseVideoBtn','pkRoomX'].forEach(function(id){ var e=$(id); if(e){ e.style.setProperty('display','none','important'); e.style.setProperty('visibility','hidden','important'); } });
-    var hb=document.querySelector('.yt-room-hostbar'); if(hb)hb.style.setProperty('display','none','important'); hideApp(true); coverVideo(true);
+    holdEl($('ytRoomCloseVideoBtn'),true); holdEl(document.querySelector('.yt-room-hostbar'),true); hideApp(true); coverVideo(true);
     var vl=$('pkYtFsVol'); if(vl&&br&&br.vol&&document.activeElement!==vl){var v=br.vol();if(v!==null&&v!==undefined&&Math.abs(Number(vl.value)-v)>2)vl.value=v;}
     var vc=$('prFloatingViewerCount')||$('cinemaViewerCount'),vt=$('pkYtFsVCnt'); if(vc&&vt&&vt.textContent!==vc.textContent)vt.textContent=vc.textContent;
     /* आवाज़ घटाते-बढ़ाते समय ऐप लेआउट पल भर बदले तो बाहर न निकले: लगातार 2.5 सेकंड गायब रहे तभी */
     var r=room(),gone=!r||!r.isConnected||!r.classList.contains('party-youtube-layout'); if(gone){ if(++miss>=5) exit(); } else miss=0;
   }
   function enter(){ var r=room(); if(!r||on)return; build(); on=true; r.classList.add('pk-yt-full'); document.body.classList.add('pk-yt-fs-on'); watchSeats(); fit(); tryFs(); sync(); show(); clearInterval(tick); tick=setInterval(sync,500); }
-  function exit(){ if(!on)return; on=false; var r=room(); if(r)r.classList.remove('pk-yt-full'); document.body.classList.remove('pk-yt-fs-on'); document.body.classList.remove('pk-yt-ui-hide'); setRot(0); if(r){['--pkw','--pkh','--pks-s','--pks-y','--pks-sbl','--pks-bar'].forEach(function(k){r.style.removeProperty(k);});} ['ytRoomCloseVideoBtn','pkRoomX'].forEach(function(id){ var e=$(id); if(e){ e.style.removeProperty('display'); e.style.removeProperty('visibility'); } }); var hb0=document.querySelector('.yt-room-hostbar'); if(hb0)hb0.style.removeProperty('display');
+  function exit(){ if(!on)return; on=false; var r=room(); if(r)r.classList.remove('pk-yt-full'); document.body.classList.remove('pk-yt-fs-on'); document.body.classList.remove('pk-yt-ui-hide'); setRot(0); if(r){['--pkw','--pkh','--pks-s','--pks-y','--pks-sbl','--pks-bar'].forEach(function(k){r.style.removeProperty(k);});} holdEl($('ytRoomCloseVideoBtn'),false); holdEl(document.querySelector('.yt-room-hostbar'),false);
     hideLeave(); var se0=$('cinemaSeats'); if(se0){se0.style.removeProperty('width');se0.style.removeProperty('height');} hideApp(false); coverVideo(false); if(seatMO){seatMO.disconnect();seatMO=null;} try{ if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock(); }catch(e){} try{ if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(function(){}); }catch(e){} usedFs=false; miss=0; try{ var vp=$('partyRoomViewersPage'); if(vp&&vp.style.display!=='none'&&window.closePartyRoomViewers)window.closePartyRoomViewers(); }catch(_){} clearInterval(tick); clearTimeout(hideT); }
   window.pkYtFullEnter=enter; window.pkYtFullExit=exit;
   function ensureBtn(){
