@@ -17876,10 +17876,10 @@ html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card{max-height:none!im
   function room(){return $('prRoom');}
   var usedFs=false;
   /* घुमाव अपने आप: फ़ोन सीधा हो तो आड़ा कर देता है; आड़ा हो तो वैसा ही रखता है। वीडियो पूरी स्क्रीन भरता है (कोई काला किनारा नहीं) */
-  function fit(){ if(!on)return; var w=window.innerWidth,h=window.innerHeight,land=w>=h; var n=land?0:1; if(n!==rot)setRot(n);
+  function fit(){ if(!on)return; var w=window.innerWidth,h=window.innerHeight,land=w>=h; var n=land?0:pref; if(n!==rot)setRot(n);
     var W=land?w:h,H=land?h:w,sc=Math.max(W/16,H/9),r=room(); if(r){ r.style.setProperty('--pkw',(16*sc)+'px'); r.style.setProperty('--pkh',(9*sc)+'px'); } layoutSeats(W,H); coverVideo(true); hideApp(true); }
   /* सीटें नीचे, टाइमलाइन के साथ एक ही पंक्ति में: सीटें जितनी ज़्यादा, टाइमलाइन उतनी छोटी */
-  var seatMO=null,safeProbe=null,leaveT=0;
+  var seatMO=null,safeProbe=null,leaveT=0,hideTick=0;
   function safeBottom(){ try{ if(!safeProbe){ safeProbe=document.createElement('div'); safeProbe.style.cssText='position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding-bottom:env(safe-area-inset-bottom,0px)'; document.body.appendChild(safeProbe); } return parseFloat(getComputedStyle(safeProbe).paddingBottom)||0; }catch(e){ return 0; } }
   function layoutSeats(W,H){
     var el=$('cinemaSeats'),r=room(); if(!el||!r)return;
@@ -17903,10 +17903,21 @@ html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card{max-height:none!im
   /* छिपाते समय ऐप की अपनी inline सेटिंग याद रखो और बाहर आते समय हू-ब-हू लौटाओ (वरना जो बटन ऐप ने छिपाया था वह खुल जाता है) */
   var HP=[['display','d'],['visibility','v'],['pointer-events','p']];
   function holdEl(e,v){ if(!e)return; var st=e.style;
-    if(v){ if(!e.__pkSv){ e.__pkSv={}; HP.forEach(function(k){ e.__pkSv[k[1]]=[st.getPropertyValue(k[0]),st.getPropertyPriority(k[0])]; }); }
+    if(v){ if(!e.__pkSv){ e.__pkSv={}; HP.forEach(function(k){ e.__pkSv[k[1]]=[st.getPropertyValue(k[0]),st.getPropertyPriority(k[0])]; }); held.push(e); }
+      if(st.getPropertyValue('display')==='none'&&st.getPropertyPriority('display')==='important'&&st.getPropertyValue('visibility')==='hidden'&&st.getPropertyPriority('visibility')==='important'&&st.getPropertyValue('pointer-events')==='none') return;
       st.setProperty('display','none','important'); st.setProperty('visibility','hidden','important'); st.setProperty('pointer-events','none','important'); }
     else if(e.__pkSv){ var o=e.__pkSv; HP.forEach(function(k){ var x=o[k[1]]; if(x[0])st.setProperty(k[0],x[0],x[1]); else st.removeProperty(k[0]); }); e.__pkSv=null; } }
-  function hideApp(v){ HIDE.forEach(function(id){ holdEl($(id),v); }); }
+  var held=[];
+  /* ऐप का अपना लाल ✕ (रूम से बाहर) कभी वापस न दिखे: कोई उसे दोबारा दिखाए तो तुरंत फिर छिपा दो */
+  function hideApp(v){
+    if(v){
+      var els=HIDE.map(function(id){ return $(id); }).concat([].slice.call(document.querySelectorAll('[aria-label="\u0930\u0942\u092E \u0938\u0947 \u092C\u093E\u0939\u0930"],.pr-room-sync-visible')));
+      els.forEach(function(e){ if(!e)return; holdEl(e,true);
+        if(!e.__pkOb){ e.__pkOb=new MutationObserver(function(){ if(on)holdEl(e,true); }); e.__pkOb.observe(e,{attributes:true,attributeFilter:['style','class']}); } });
+    } else {
+      held.slice().forEach(function(e){ if(e.__pkOb){ e.__pkOb.disconnect(); e.__pkOb=null; } holdEl(e,false); }); held=[];
+    }
+  }
   var CV=['position','left','top','right','bottom','width','height','max-width','max-height','min-width','min-height','transform','margin','border','aspect-ratio','inset'];
   function coverVideo(v){
     var c=document.querySelector('#partyYoutubeStage .yt-room-card'); if(!c)return; var r=room();
@@ -17918,6 +17929,9 @@ html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card{max-height:none!im
       else { for(var j=0;j<CV.length;j++) st.removeProperty(CV[j]); } }
   }
   function tryFs(){ try{ if(window.Android&&typeof window.Android.showToast==='function') return; /* ऐप (WebView) के अंदर ब्राउज़र का फुल-स्क्रीन API नहीं: सिर्फ़ अपना घुमाव/कवर */ var el=document.documentElement; if(el.requestFullscreen&&!document.fullscreenElement){ usedFs=true; var p=el.requestFullscreen({navigationUI:'hide'}); if(p&&p.then)p.then(function(){ try{ if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(function(){}); }catch(e){} setTimeout(fit,250); }).catch(function(){usedFs=false;}); } }catch(e){ usedFs=false; } }
+  /* ऐप खड़ी (portrait) में बंद रहती है; फ़ोन किस तरफ़ घुमा है यह सेंसर से जानकर वीडियो अपने आप उसी तरफ़ घूमता है */
+  var pref=1;
+  window.addEventListener('deviceorientation',function(e){ if(!on)return; var g=e.gamma; if(g===null||g===undefined)return; var np=pref; if(g>40)np=2; else if(g<-40)np=1; if(np!==pref){ pref=np; fit(); } });
   window.addEventListener('resize',fit); window.addEventListener('orientationchange',function(){setTimeout(fit,250);});
   document.addEventListener('fullscreenchange',function(){ if(on&&usedFs&&!document.fullscreenElement) exit(); });
   function say(m){try{if(typeof toast==='function'){toast(m);return;}}catch(e){}}
@@ -17949,8 +17963,10 @@ html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card{max-height:none!im
     /* आवाज़ घटाते-बढ़ाते समय ऐप लेआउट पल भर बदले तो बाहर न निकले: लगातार 2.5 सेकंड गायब रहे तभी */
     var r=room(),gone=!r||!r.isConnected||!r.classList.contains('party-youtube-layout'); if(gone){ if(++miss>=5) exit(); } else miss=0;
   }
-  function enter(){ var r=room(); if(!r||on)return; build(); on=true; r.classList.add('pk-yt-full'); document.body.classList.add('pk-yt-fs-on'); watchSeats(); fit(); tryFs(); sync(); show(); clearInterval(tick); tick=setInterval(sync,500); }
-  function exit(){ if(!on)return; on=false; var r=room(); if(r)r.classList.remove('pk-yt-full'); document.body.classList.remove('pk-yt-fs-on'); document.body.classList.remove('pk-yt-ui-hide'); setRot(0); if(r){['--pkw','--pkh','--pks-s','--pks-y','--pks-sbl','--pks-bar'].forEach(function(k){r.style.removeProperty(k);});} holdEl($('ytRoomCloseVideoBtn'),false); holdEl(document.querySelector('.yt-room-hostbar'),false);
+  function enter(){ var r=room(); if(!r||on)return; build(); on=true; r.classList.add('pk-yt-full'); document.body.classList.add('pk-yt-fs-on'); watchSeats(); fit(); tryFs(); sync(); show();
+    /* ऐप बीच-बीच में अपना लाल क्रॉस दोबारा दिखा देता है: हर 0.25 सेकंड में फिर छिपाओ */
+    clearInterval(hideTick); hideTick=setInterval(function(){ if(on){ hideApp(true); holdEl($('ytRoomCloseVideoBtn'),true); holdEl(document.querySelector('.yt-room-hostbar'),true); } },250); clearInterval(tick); tick=setInterval(sync,500); }
+  function exit(){ if(!on)return; on=false; clearInterval(hideTick); var r=room(); if(r)r.classList.remove('pk-yt-full'); document.body.classList.remove('pk-yt-fs-on'); document.body.classList.remove('pk-yt-ui-hide'); setRot(0); if(r){['--pkw','--pkh','--pks-s','--pks-y','--pks-sbl','--pks-bar'].forEach(function(k){r.style.removeProperty(k);});} holdEl($('ytRoomCloseVideoBtn'),false); holdEl(document.querySelector('.yt-room-hostbar'),false);
     hideLeave(); var se0=$('cinemaSeats'); if(se0){se0.style.removeProperty('width');se0.style.removeProperty('height');} hideApp(false); coverVideo(false); if(seatMO){seatMO.disconnect();seatMO=null;} try{ if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock(); }catch(e){} try{ if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(function(){}); }catch(e){} usedFs=false; miss=0; try{ var vp=$('partyRoomViewersPage'); if(vp&&vp.style.display!=='none'&&window.closePartyRoomViewers)window.closePartyRoomViewers(); }catch(_){} clearInterval(tick); clearTimeout(hideT); }
   window.pkYtFullEnter=enter; window.pkYtFullExit=exit;
   function ensureBtn(){
