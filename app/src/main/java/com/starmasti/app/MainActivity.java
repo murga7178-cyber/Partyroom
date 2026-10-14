@@ -40,7 +40,6 @@ public class MainActivity extends AppCompatActivity {
     private WebView webView;
     private UnityRewardedHelper unity;
     private UnityInterstitialHelper unityInter;
-    private UnityInterstitialHelper interstitial;
     private View customView;
     private WebChromeClient.CustomViewCallback customCb;
     private ValueCallback<Uri[]> filePathCb;
@@ -121,8 +120,6 @@ public class MainActivity extends AppCompatActivity {
         unity.start();
         unityInter = new UnityInterstitialHelper(this, webView);
         unityInter.start();
-        interstitial = new UnityInterstitialHelper(this, webView);
-        interstitial.start();
 
         webView.loadUrl(START_URL.isEmpty() ? ASSET_URL : START_URL);
     }
@@ -140,10 +137,6 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void showUnityInterstitialAd() {
             runOnUiThread(() -> unityInter.requestShow());
-        }
-        @JavascriptInterface
-        public void showUnityInterstitialAd() {
-            runOnUiThread(() -> interstitial.requestShow());
         }
     }
 
