@@ -11716,7 +11716,24 @@ function ytRoomUploadStoragePath(fileName){
   var rid=getRoomId()||'default';
   return 'roomVideos/'+rid+'/'+Date.now()+'_'+String(fileName||'video').replace(/[^a-zA-Z0-9_.-]/g,'_');
 }
+var __pkAdKeyU='';
 function playUploadedVideo(url,title,opts){
+  try{
+    if(url&&window.pkAdGate){
+      var __sameU=!!(current&&current.upload&&current.url===url);
+      if(!__sameU){
+        var __keyU='u:'+url;
+        if(__pkAdKeyU===__keyU) return;
+        __pkAdKeyU=__keyU;
+        var __remoteU=!!(opts&&opts.remote);
+        window.pkAdGate('video',function(){ __pkAdKeyU=''; if(__remoteU) ytRoomSuppressNextSync=true; playUploadedVideo__orig(url,title,opts); });
+        return;
+      }
+    }
+  }catch(e){}
+  return playUploadedVideo__orig(url,title,opts);
+}
+function playUploadedVideo__orig(url,title,opts){
   opts=opts||{};
   destroyPlayer();
   var lv=$('ytRoomLocalVideo'); if(!lv)return;
@@ -12203,7 +12220,25 @@ window.ytRoomBridge={
    के बाद YouTube के अनुसार चलेगा। Queue item केवल load होगा, auto-play नहीं। */
 window.ytRoomPlayInfo=function(info,title,opts){return playInfo(info,title,opts||{});};
 
+var __pkAdKeyY='';
 function playInfo(info,title,opts){
+  /* विज्ञापन-द्वार: नया YouTube वीडियो शुरू होने से पहले विज्ञापन (वही वीडियो फिर चले तो नहीं) */
+  try{
+    if(info&&window.pkAdGate){
+      var __same=!!(current&&!current.upload&&String(current.id||'')===String(info.id||'')&&String(current.list||'')===String(info.list||''));
+      if(!__same){
+        var __key='y:'+(info.id||'')+':'+(info.list||'');
+        if(__pkAdKeyY===__key) return;
+        __pkAdKeyY=__key;
+        var __remote=!!(opts&&opts.share===false);
+        window.pkAdGate('video',function(){ __pkAdKeyY=''; if(__remote) ytRoomSuppressNextSync=true; playInfo__orig(info,title,opts); });
+        return;
+      }
+    }
+  }catch(e){}
+  return playInfo__orig(info,title,opts);
+}
+function playInfo__orig(info,title,opts){
   opts=opts||{};
   if(!info)return;
   /* Inside a Party Room, YouTube playback is allowed only in YouTube Mode.
@@ -18125,6 +18160,126 @@ html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card{max-height:none!im
   window.addEventListener('resize',soon); setInterval(run,1200); run();
 })();
 </script>
+<script id="pkAdsJs">
+(function(){
+  /* विज्ञापन-द्वार: वीडियो / गाना चलने से पहले और गेम ख़त्म होने पर Unity Interstitial विज्ञापन।
+     नया APK न हो या विज्ञापन फेल हो जाए तो कुछ नहीं रुकता, सब सीधे आगे बढ़ जाता है। */
+  var CFG={ on:true, cool:{ video:30000, song:30000, game:60000 }, timeout:25000 };
+  /* cool = दो विज्ञापनों के बीच कम से कम अंतर (मिलीसेकंड). 0 करने पर हर बार विज्ञापन आएगा. on:false = सब बंद. */
+  window.PK_ADS=CFG;
+  var last={}, busy=false, pend=null, tm=0;
+  function has(){ var b=window.Android; return !!(b&&typeof b.showUnityInterstitialAd==='function'); }
+  function gate(kind,proceed){
+    var now=Date.now();
+    if(!CFG.on||!has()||busy||now-(last[kind]||0)<(CFG.cool[kind]||0)){ try{ proceed(); }catch(e){} return; }
+    busy=true; var done=false;
+    function fin(){ if(done)return; done=true; busy=false; pend=null; clearTimeout(tm); last[kind]=Date.now(); try{ proceed(); }catch(e){} }
+    pend=fin; tm=setTimeout(fin,CFG.timeout);
+    try{ window.Android.showUnityInterstitialAd(); }catch(e){ fin(); }
+  }
+  window.pkAdGate=gate;
+  window.onUnityInterstitialResult=function(ok,why){ if(pend) pend(); };
+
+  /* गाना: खोजकर चुनने के बाद, चलने से पहले विज्ञापन */
+  function wrapSong(){
+    var o=window.partyRoomChatAudioPlay; if(typeof o!=='function'||o.__pkAd) return false;
+    var w=function(){ var a=arguments,t=this; gate('song',function(){ o.apply(t,a); }); };
+    w.__pkAd=1; window.partyRoomChatAudioPlay=w; return true;
+  }
+  if(!wrapSong()){ var n=0,iv=setInterval(function(){ if(wrapSong()||++n>40) clearInterval(iv); },500); }
+
+  /* गेम: ख़त्म (dead) होने के कुछ पल बाद, स्कोर दिखने के बाद विज्ञापन। मल्टीप्लेयर में नहीं (टर्न का समय न बिगड़े) */
+  window.addEventListener('message',function(e){
+    var m=e.data; if(!m||m.type!=='pkJumpDead') return;
+    try{ if(e.source&&e.source.__mp) return; }catch(_){}
+    setTimeout(function(){ gate('game',function(){}); },1300);
+  });
+})();
+</script>
+<style id="pkPrerollCss">
+#pkPrerollBox{position:absolute;inset:0;z-index:60;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#pkPrerollBox.fixed{position:fixed;z-index:2147482500}
+#pkPrerollBox video{width:100%;height:100%;object-fit:contain;background:#000}
+#pkPrerollBox .tag{position:absolute;left:10px;top:10px;padding:4px 10px;border-radius:12px;background:rgba(0,0,0,.6);color:#fff;font:800 11px system-ui,Arial,sans-serif}
+#pkPrerollBox .skip{position:absolute;right:10px;bottom:14px;min-width:96px;height:38px;padding:0 14px;border:1px solid rgba(255,255,255,.55);border-radius:10px;background:rgba(0,0,0,.65);color:#fff;font:800 13px system-ui,Arial,sans-serif;cursor:pointer}
+#pkPrerollBox .skip[disabled]{opacity:.7;cursor:default}
+#pkPrerollBox .snd{position:absolute;left:10px;bottom:14px;height:34px;padding:0 12px;border:0;border-radius:17px;background:rgba(0,0,0,.65);color:#fff;font:800 12px system-ui,Arial,sans-serif;display:none}
+#pkPrerollBox .bar{position:absolute;left:0;bottom:0;height:3px;width:0;background:#fbbf24}
+</style>
+<script id="pkPrerollJs">
+(function(){
+  /* प्लेयर के अंदर चलने वाला विज्ञापन (pre-roll) + स्किप बटन।
+     नीचे vast में विज्ञापन-कंपनी का VAST लिंक, या videos में सीधे विज्ञापन-वीडियो (.mp4) के लिंक डालें।
+     दोनों खाली हों तो यह बंद रहता है और पहले जैसा Unity विज्ञापन ही चलता है। */
+  var P=window.PK_PREROLL={ on:true, vast:'', videos:[], skipAfter:5, cool:30000, timeout:8000 };
+  var last=0,busy=false;
+  function ready(){ return P.on&&(P.vast||(P.videos&&P.videos.length)); }
+  function ping(list){ (list||[]).forEach(function(u){ try{ var i=new Image(); i.src=String(u).replace(/\[TIMESTAMP\]/g,Date.now()).replace(/\[CACHEBUSTING\]/g,Math.floor(Math.random()*1e9)); }catch(e){} }); }
+  function txt(n){ return n?String(n.textContent||'').trim():''; }
+  function all(x,sel){ return Array.prototype.slice.call(x.querySelectorAll(sel)); }
+  function toSec(s,dur){ if(!s)return 0; s=String(s).trim(); if(/%$/.test(s))return dur?parseFloat(s)/100*dur:0; var p=s.split(':'); if(p.length===3)return (+p[0])*3600+(+p[1])*60+parseFloat(p[2]); return parseFloat(s)||0; }
+  function getVast(url,depth){
+    return fetch(url,{credentials:'omit'}).then(function(r){ return r.text(); }).then(function(t){
+      var x=new DOMParser().parseFromString(t,'text/xml'), w=x.querySelector('Wrapper > VASTAdTagURI, Wrapper VASTAdTagURI');
+      var imp=all(x,'Impression').map(txt), tr={}; all(x,'Tracking').forEach(function(n){ var e=n.getAttribute('event'); (tr[e]=tr[e]||[]).push(txt(n)); });
+      if(w&&depth<4){ return getVast(txt(w),depth+1).then(function(r){ r.imp=r.imp.concat(imp); Object.keys(tr).forEach(function(k){ r.tr[k]=(r.tr[k]||[]).concat(tr[k]); }); return r; }); }
+      var mf=all(x,'MediaFile').filter(function(m){ return /mp4|webm/i.test((m.getAttribute('type')||'')+txt(m)); });
+      if(!mf.length) throw new Error('no media');
+      mf.sort(function(a,b){ var A=+a.getAttribute('width')||0,B=+b.getAttribute('width')||0; var sa=A<=800?A:-A, sb=B<=800?B:-B; return sb-sa; });
+      var lin=x.querySelector('Linear'); var sk=lin&&lin.getAttribute('skipoffset');
+      return {src:txt(mf[0]),skip:sk||'',imp:imp,tr:tr};
+    });
+  }
+  function pickSource(){
+    if(P.vast) return getVast(P.vast,0).catch(function(){ if(P.videos&&P.videos.length) return {src:P.videos[Math.floor(Math.random()*P.videos.length)],skip:'',imp:[],tr:{}}; throw 0; });
+    return Promise.resolve({src:P.videos[Math.floor(Math.random()*P.videos.length)],skip:'',imp:[],tr:{}});
+  }
+  function run(onDone,onFail){
+    if(busy){ onDone(); return; } busy=true;
+    var finished=false, started=false, tmo=0, box=null, v=null, ad=null, q={};
+    function cleanup(){ clearTimeout(tmo); try{ if(v){ v.pause(); v.removeAttribute('src'); v.load(); } }catch(e){} if(box&&box.parentNode)box.parentNode.removeChild(box); }
+    function ok(){ if(finished)return; finished=true; cleanup(); busy=false; last=Date.now(); try{ onDone(); }catch(e){} }
+    function fail(){ if(finished)return; finished=true; cleanup(); busy=false; if(started){ last=Date.now(); try{ onDone(); }catch(e){} } else { try{ onFail(); }catch(e){} } }
+    pickSource().then(function(src){
+      ad=src; if(finished)return;
+      var card=document.querySelector('#partyYoutubeStage .yt-room-card'), inCard=!!(card&&card.offsetWidth>0);
+      box=document.createElement('div'); box.id='pkPrerollBox'; if(!inCard) box.className='fixed';
+      box.innerHTML='<video playsinline preload="auto"></video><div class="tag">\u0935\u093F\u091C\u094D\u091E\u093E\u092A\u0928</div><button type="button" class="snd">\uD83D\uDD0A \u0906\u0935\u093E\u091C\u093C \u091A\u093E\u0932\u0942</button><button type="button" class="skip" disabled></button><div class="bar"></div>';
+      (inCard?card:document.body).appendChild(box);
+      v=box.querySelector('video'); var sb=box.querySelector('.skip'), snd=box.querySelector('.snd'), bar=box.querySelector('.bar');
+      var skipSec=ad.skip?toSec(ad.skip,0):(+P.skipAfter||0), skipOk=false;
+      function label(t){ if(skipOk){ sb.disabled=false; sb.textContent='\u0938\u094D\u0915\u093F\u092A \u25B6'; } else { sb.disabled=true; sb.textContent='\u0938\u094D\u0915\u093F\u092A '+Math.max(1,Math.ceil(skipSec-t))+' \u092E\u0947\u0902'; } }
+      label(0);
+      sb.addEventListener('click',function(e){ e.stopPropagation(); if(!skipOk)return; ping(ad.tr.skip); ok(); });
+      snd.addEventListener('click',function(e){ e.stopPropagation(); v.muted=false; snd.style.display='none'; });
+      v.addEventListener('playing',function(){ if(started)return; started=true; clearTimeout(tmo); ping(ad.imp); ping(ad.tr.start); ping(ad.tr.creativeView); });
+      v.addEventListener('timeupdate',function(){
+        var d=v.duration||0,t=v.currentTime||0; if(d&&bar)bar.style.width=Math.min(100,t/d*100)+'%';
+        if(ad.skip&&/%$/.test(ad.skip)&&d) skipSec=toSec(ad.skip,d);
+        if(!skipOk&&t>=skipSec){ skipOk=true; } label(t);
+        if(d){ [['firstQuartile',.25],['midpoint',.5],['thirdQuartile',.75]].forEach(function(k){ if(!q[k[0]]&&t>=d*k[1]){ q[k[0]]=1; ping(ad.tr[k[0]]); } }); }
+      });
+      v.addEventListener('ended',function(){ ping(ad.tr.complete); ok(); });
+      v.addEventListener('error',function(){ fail(); });
+      tmo=setTimeout(function(){ if(!started) fail(); },+P.timeout||8000);
+      v.src=ad.src;
+      var pr=v.play(); if(pr&&pr.catch) pr.catch(function(){ try{ v.muted=true; snd.style.display='block'; var p2=v.play(); if(p2&&p2.catch)p2.catch(function(){ fail(); }); }catch(e){ fail(); } });
+    }).catch(function(){ fail(); });
+  }
+  /* वीडियो के विज्ञापन-द्वार से पहले यह चलता है; न चले तो पुराना Unity विज्ञापन-द्वार */
+  var base=window.pkAdGate;
+  window.pkAdGate=function(kind,proceed){
+    if(kind==='video'&&ready()){
+      if(Date.now()-last<(+P.cool||0)){ try{ proceed(); }catch(e){} return; }
+      run(proceed,function(){ if(base) base(kind,proceed); else proceed(); });
+      return;
+    }
+    if(base) return base(kind,proceed); try{ proceed(); }catch(e){}
+  };
+  window.pkPrerollRun=run;
+})();
+</script>
+
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
