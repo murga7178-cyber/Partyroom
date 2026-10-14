@@ -18205,6 +18205,9 @@ html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card{max-height:none!im
 #pkPrerollBox .skip[disabled]{opacity:.7;cursor:default}
 #pkPrerollBox .snd{position:absolute;left:10px;bottom:14px;height:34px;padding:0 12px;border:0;border-radius:17px;background:rgba(0,0,0,.65);color:#fff;font:800 12px system-ui,Arial,sans-serif;display:none}
 #pkPrerollBox .bar{position:absolute;left:0;bottom:0;height:3px;width:0;background:#fbbf24}
+/* फुल-स्क्रीन में विज्ञापन के समय स्किप बटन टाइमलाइन के ऊपर रहे और टाइमलाइन छिपी रहे */
+html body #prRoom.pk-yt-full #pkPrerollBox .skip{bottom:calc(var(--pks-bar,70px) + 56px)!important}
+html body #prRoom.pk-yt-full:has(#pkPrerollBox) #ytRoomViewerSeekBar{visibility:hidden!important}
 </style>
 <script id="pkPrerollJs">
 (function(){
