@@ -3,9 +3,7 @@ package com.starmasti.app;
 import android.Manifest;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
-import android.os.Build;
 import android.view.Window;
-import android.view.WindowManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -28,11 +26,7 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.webkit.WebViewAssetLoader;
 
 import java.util.ArrayList;
@@ -61,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT); // फ़ोन घुमाने पर ऐप न घूमे
         webView = new WebView(this);
         setContentView(webView);
-        applySystemBars();
+        setBarColor(Color.parseColor("#F7F4FF")); // शुरुआती रंग: ऐप का हल्का बैकग्राउंड
 
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
@@ -147,6 +141,10 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(() -> unity.requestShow());
         }
         @JavascriptInterface
+        public void setStatusBarColor(final String hex) {
+            runOnUiThread(() -> { try { setBarColor(Color.parseColor(hex)); } catch (Exception ignored) { } });
+        }
+        @JavascriptInterface
         public void showUnityInterstitialAd() {
             runOnUiThread(() -> unityInter.requestShow());
         }
@@ -194,34 +192,13 @@ public class MainActivity extends AppCompatActivity {
         webView.setVisibility(View.VISIBLE);
     }
 
-    /** ऊपर की स्टेटस-बार (टावर/बैटरी वाली पट्टी) हटाकर ऐप का बैकग्राउंड वहाँ तक फैलाओ; नीचे की नेविगेशन-बार/कीबोर्ड के लिए जगह छोड़ो. */
-    private void applySystemBars() {
+    /** स्टेटस-बार (टावर/बैटरी/घड़ी) दिखती रहती है; उसका रंग पेज के सबसे ऊपरी हिस्से के रंग जैसा किया जाता है,
+     *  ताकि वह अलग पट्टी न लगे। आइकन का रंग (काला/सफ़ेद) रंग की चमक देखकर अपने आप चुना जाता है। */
+    private void setBarColor(int color) {
         Window w = getWindow();
-        WindowCompat.setDecorFitsSystemWindows(w, false);
-        w.setStatusBarColor(Color.TRANSPARENT);
-        if (Build.VERSION.SDK_INT >= 28) {
-            WindowManager.LayoutParams lp = w.getAttributes();
-            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-            w.setAttributes(lp);
-        }
-        WindowInsetsControllerCompat c = WindowCompat.getInsetsController(w, w.getDecorView());
-        c.hide(WindowInsetsCompat.Type.statusBars());
-        c.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-        final View content = findViewById(android.R.id.content);
-        ViewCompat.setOnApplyWindowInsetsListener(content, (v, insets) -> {
-            Insets bars = insets.getInsets(WindowInsetsCompat.Type.navigationBars() | WindowInsetsCompat.Type.ime());
-            v.setPadding(0, 0, 0, bars.bottom);
-            return insets;
-        });
-    }
-
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) {
-            WindowInsetsControllerCompat c = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-            c.hide(WindowInsetsCompat.Type.statusBars());
-        }
+        w.setStatusBarColor(color);
+        double lum = (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255.0;
+        WindowCompat.getInsetsController(w, w.getDecorView()).setAppearanceLightStatusBars(lum > 0.55);
     }
 
     @Override
