@@ -1,6 +1,11 @@
 package com.starmasti.app;
 
 import android.Manifest;
+import android.content.pm.ActivityInfo;
+import android.graphics.Color;
+import android.os.Build;
+import android.view.Window;
+import android.view.WindowManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -23,6 +28,11 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.webkit.WebViewAssetLoader;
 
 import java.util.ArrayList;
@@ -48,8 +58,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT); // फ़ोन घुमाने पर ऐप न घूमे
         webView = new WebView(this);
         setContentView(webView);
+        applySystemBars();
 
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
@@ -180,6 +192,36 @@ public class MainActivity extends AppCompatActivity {
         if (customCb != null) customCb.onCustomViewHidden();
         customCb = null;
         webView.setVisibility(View.VISIBLE);
+    }
+
+    /** ऊपर की स्टेटस-बार (टावर/बैटरी वाली पट्टी) हटाकर ऐप का बैकग्राउंड वहाँ तक फैलाओ; नीचे की नेविगेशन-बार/कीबोर्ड के लिए जगह छोड़ो. */
+    private void applySystemBars() {
+        Window w = getWindow();
+        WindowCompat.setDecorFitsSystemWindows(w, false);
+        w.setStatusBarColor(Color.TRANSPARENT);
+        if (Build.VERSION.SDK_INT >= 28) {
+            WindowManager.LayoutParams lp = w.getAttributes();
+            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            w.setAttributes(lp);
+        }
+        WindowInsetsControllerCompat c = WindowCompat.getInsetsController(w, w.getDecorView());
+        c.hide(WindowInsetsCompat.Type.statusBars());
+        c.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+        final View content = findViewById(android.R.id.content);
+        ViewCompat.setOnApplyWindowInsetsListener(content, (v, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.navigationBars() | WindowInsetsCompat.Type.ime());
+            v.setPadding(0, 0, 0, bars.bottom);
+            return insets;
+        });
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            WindowInsetsControllerCompat c = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            c.hide(WindowInsetsCompat.Type.statusBars());
+        }
     }
 
     @Override
