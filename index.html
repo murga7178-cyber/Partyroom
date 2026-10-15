@@ -17966,7 +17966,10 @@ html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card{max-height:none!im
   function tryFs(){ try{ if(window.Android&&typeof window.Android.showToast==='function') return; /* ऐप (WebView) के अंदर ब्राउज़र का फुल-स्क्रीन API नहीं: सिर्फ़ अपना घुमाव/कवर */ var el=document.documentElement; if(el.requestFullscreen&&!document.fullscreenElement){ usedFs=true; var p=el.requestFullscreen({navigationUI:'hide'}); if(p&&p.then)p.then(function(){ try{ if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(function(){}); }catch(e){} setTimeout(fit,250); }).catch(function(){usedFs=false;}); } }catch(e){ usedFs=false; } }
   /* ऐप खड़ी (portrait) में बंद रहती है; फ़ोन किस तरफ़ घुमा है यह सेंसर से जानकर वीडियो अपने आप उसी तरफ़ घूमता है */
   var pref=1;
-  window.addEventListener('deviceorientation',function(e){ if(!on)return; var g=e.gamma; if(g===null||g===undefined)return; var np=pref; if(g>40)np=2; else if(g<-40)np=1; if(np!==pref){ pref=np; fit(); } });
+  var flipT=0,flipTo=0;
+  window.addEventListener('deviceorientation',function(e){ if(!on)return; var g=e.gamma; if(g===null||g===undefined)return; var want=g>60?2:(g<-60?1:0);
+    if(want===0||want===pref){ clearTimeout(flipT); flipT=0; flipTo=0; return; } if(flipTo===want&&flipT)return; clearTimeout(flipT); flipTo=want;
+    flipT=setTimeout(function(){ flipT=0; if(on&&flipTo&&flipTo!==pref){ pref=flipTo; fit(); } flipTo=0; },1500); });
   window.addEventListener('resize',fit); window.addEventListener('orientationchange',function(){setTimeout(fit,250);});
   document.addEventListener('fullscreenchange',function(){ if(on&&usedFs&&!document.fullscreenElement) exit(); });
   function say(m){try{if(typeof toast==='function'){toast(m);return;}}catch(e){}}
@@ -18164,12 +18167,14 @@ html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card{max-height:none!im
 (function(){
   /* विज्ञापन-द्वार: वीडियो / गाना चलने से पहले और गेम ख़त्म होने पर Unity Interstitial विज्ञापन।
      नया APK न हो या विज्ञापन फेल हो जाए तो कुछ नहीं रुकता, सब सीधे आगे बढ़ जाता है। */
-  var CFG={ on:true, cool:{ video:30000, song:30000, game:60000 }, timeout:25000 };
+  var CFG={ on:true, kinds:{ video:false, song:false, game:true, search:true }, cool:{ video:30000, song:30000, game:60000, search:30000 }, timeout:25000 };
+  /* kinds: false = उस जगह विज्ञापन बंद। अभी: यूट्यूब वीडियो/गाना चलाने पर नहीं; सर्च और गेम ख़त्म होने पर हाँ */
   /* cool = दो विज्ञापनों के बीच कम से कम अंतर (मिलीसेकंड). 0 करने पर हर बार विज्ञापन आएगा. on:false = सब बंद. */
   window.PK_ADS=CFG;
   var last={}, busy=false, pend=null, tm=0;
   function has(){ var b=window.Android; return !!(b&&typeof b.showUnityInterstitialAd==='function'); }
   function gate(kind,proceed){
+    if(CFG.kinds&&CFG.kinds[kind]===false){ try{ proceed(); }catch(e){} return; }
     var now=Date.now();
     if(!CFG.on||!has()||busy||now-(last[kind]||0)<(CFG.cool[kind]||0)){ try{ proceed(); }catch(e){} return; }
     busy=true; var done=false;
@@ -18178,6 +18183,22 @@ html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card{max-height:none!im
     try{ window.Android.showUnityInterstitialAd(); }catch(e){ fin(); }
   }
   window.pkAdGate=gate;
+  /* सर्च: सर्च रुकता नहीं, बैकग्राउंड में अपनी लोडिंग पूरी करता रहता है; उसी बीच ऊपर विज्ञापन चलता है */
+  function fire(kind){
+    var now=Date.now();
+    if(!CFG.on||!has()||(CFG.kinds&&CFG.kinds[kind]===false)||busy||now-(last[kind]||0)<(CFG.cool[kind]||0)) return;
+    last[kind]=now; try{ window.Android.showUnityInterstitialAd(); }catch(e){}
+  }
+  window.pkAdSearch=function(){ fire('search'); };
+  function wrapSearch(){
+    var ok=true, g=window.prBrowserGo, o=window.pkOpenGlobalSearch;
+    if(typeof g!=='function') ok=false;
+    else if(!g.__pkAd){ var w=function(){ var r=g.apply(this,arguments); try{ var l=document.getElementById('prBrowserLoading'); if(l&&l.classList.contains('show')) window.pkAdSearch(); }catch(e){} return r; }; w.__pkAd=1; window.prBrowserGo=w; }
+    if(typeof o!=='function') ok=false;
+    else if(!o.__pkAd){ var w2=function(){ var r=o.apply(this,arguments); window.pkAdSearch(); return r; }; w2.__pkAd=1; window.pkOpenGlobalSearch=w2; }
+    return ok;
+  }
+  if(!wrapSearch()){ var sn=0,siv=setInterval(function(){ if(wrapSearch()||++sn>40) clearInterval(siv); },500); }
   window.onUnityInterstitialResult=function(ok,why){ if(pend) pend(); };
 
   /* गाना: खोजकर चुनने के बाद, चलने से पहले विज्ञापन */
