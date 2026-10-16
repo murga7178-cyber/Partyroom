@@ -13841,7 +13841,13 @@ html:has(#cinemaGharModal:not([style*="display: none"])) body{background:var(--p
   var MORE_VIDEO_B64='PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImhpIj4KPGhlYWQ+CjxtZXRhIGNoYXJzZXQ9IlVURi04Ij4KPG1ldGEgbmFtZT0idmlld3BvcnQiIGNvbnRlbnQ9IndpZHRoPWRldmljZS13aWR0aCwgaW5pdGlhbC1zY2FsZT0xLjAiPgo8bWV0YSBodHRwLWVxdWl2PSJyZWZyZXNoIiBjb250ZW50PSIwO3VybD1odHRwczovL3d3dy55b3V0dWJlLmNvbS8iPgo8dGl0bGU+WW91VHViZTwvdGl0bGU+CjxzY3JpcHQ+d2luZG93LmxvY2F0aW9uLnJlcGxhY2UoJ2h0dHBzOi8vd3d3LnlvdXR1YmUuY29tLycpOzwvc2NyaXB0Pgo8L2hlYWQ+Cjxib2R5Pgo8cD5Zb3VUdWJlIOCkluClgeCksiDgpLDgpLngpL4g4KS54KWI4oCmIDxhIGhyZWY9Imh0dHBzOi8vd3d3LnlvdXR1YmUuY29tLyI+4KSv4KS54KS+4KSBIOCkn+CliOCkqiDgpJXgpLDgpYfgpII8L2E+PC9wPgo8L2JvZHk+CjwvaHRtbD4K';
   var MORE_VIDEO_PLACEHOLDER='<!DOCTYPE html><html lang="hi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0f0f14;color:#fff;font-family:system-ui,Segoe UI,Arial,sans-serif;text-align:center;padding:24px;box-sizing:border-box}</style></head><body><div><div style="font-size:44px">\u25B6\uFE0F</div><h3>More Video</h3><p style="opacity:.7;font-size:13px">यहाँ आपकी HTML फ़ाइल खुलेगी।</p></div></body></html>';
   var youtubeHtmlV2=MORE_VIDEO_B64?(function(b){var s=atob(b),u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return new TextDecoder('utf-8').decode(u);})(MORE_VIDEO_B64):MORE_VIDEO_PLACEHOLDER;
+  /* More Video को अलग पूरे पेज में खोलने की कोशिश (iframe में YouTube ब्लॉक होता है). न खुले तो पुराना overlay खुलेगा. */
+  var MORE_VIDEO_OPEN_PAGE=true, MORE_VIDEO_PAGE_URL='https://www.youtube.com/';
   function openMoreVideo(){
+    if(MORE_VIDEO_OPEN_PAGE){
+      var w=null; try{ w=window.open(MORE_VIDEO_PAGE_URL,'_blank'); }catch(_){}
+      if(w) return;
+    }
     if(!overlay||!frame)return;
     if(!loaded){ frame.srcdoc=youtubeHtmlV2; loaded=true; }
     /* गाना वाला (म्यूज़िक) पैनल More Video के ऊपर न दिखे: खोलते ही बंद कर दो */
