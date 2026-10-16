@@ -2,6 +2,7 @@ package com.starmasti.app;
 
 import android.Manifest;
 import android.content.pm.ActivityInfo;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
@@ -16,12 +17,15 @@ import android.webkit.PermissionRequest;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -58,13 +62,20 @@ public class MainActivity extends AppCompatActivity {
     // More Video: अलग पूरे पेज में खुलने वाला दूसरा WebView
     private FrameLayout mvRoot;
     private WebView mvWeb;
+    private View mvLoading;      // More Video खुलते समय की लोडिंग
+    private View splash;         // ऐप खुलते समय "स्टार मस्ती" वाली स्क्रीन
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT); // फ़ोन घुमाने पर ऐप न घूमे
         webView = new WebView(this);
-        setContentView(webView);
+        webView.setBackgroundColor(Color.parseColor("#F7F4FF")); // पेज आने से पहले सफ़ेद की जगह हल्का बैंगनी
+        FrameLayout root = new FrameLayout(this);
+        root.addView(webView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        splash = buildSplash();
+        root.addView(splash, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        setContentView(root);
         setBarColor(Color.parseColor("#F7F4FF")); // शुरुआती रंग: ऐप का हल्का बैकग्राउंड
 
         WebSettings s = webView.getSettings();
@@ -79,6 +90,15 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                // पेज लोड होते ही थोड़ी देर बाद "स्टार मस्ती" स्क्रीन धीरे से हट जाती है
+                view.postDelayed(MainActivity.this::hideSplash, 350);
+            }
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                if (request != null && request.isForMainFrame()) hideSplash(); // नेट न हो तो भी स्क्रीन अटकी न रहे
+            }
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 return loader.shouldInterceptRequest(request.getUrl());
@@ -144,6 +164,97 @@ public class MainActivity extends AppCompatActivity {
         unityInter.start();
 
         webView.loadUrl(START_URL.isEmpty() ? ASSET_URL : START_URL);
+        webView.postDelayed(this::hideSplash, 15000); // सुरक्षा: 15 सेकंड बाद हर हाल में हटा दो
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    //  शुरुआती स्क्रीन: पेज लोड होने तक सफ़ेद की जगह "स्टार मस्ती"
+    // ---------------------------------------------------------------------------------------------
+    private View buildSplash() {
+        float d = getResources().getDisplayMetrics().density;
+        int purple = Color.parseColor("#4A148C");
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setGravity(Gravity.CENTER);
+        box.setBackgroundColor(Color.parseColor("#F7F4FF")); // स्टेटस-बार जैसा ही रंग, ताकि अलग पट्टी न दिखे
+        box.setClickable(true);
+
+        TextView star = new TextView(this);
+        star.setText("⭐");
+        star.setTextSize(54);
+        star.setGravity(Gravity.CENTER);
+        box.addView(star);
+
+        TextView title = new TextView(this);
+        title.setText("स्टार मस्ती");
+        title.setTextColor(purple);
+        title.setTextSize(34);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        title.setGravity(Gravity.CENTER);
+        box.addView(title);
+
+        TextView sub = new TextView(this);
+        sub.setText("लोड हो रहा है…");
+        sub.setTextColor(Color.parseColor("#7B6A99"));
+        sub.setTextSize(13);
+        sub.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams lpSub = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lpSub.topMargin = (int) (6 * d);
+        box.addView(sub, lpSub);
+
+        ProgressBar pb = new ProgressBar(this);
+        pb.setIndeterminate(true);
+        pb.setIndeterminateTintList(ColorStateList.valueOf(Color.parseColor("#7C3AED")));
+        LinearLayout.LayoutParams lpPb = new LinearLayout.LayoutParams((int) (34 * d), (int) (34 * d));
+        lpPb.topMargin = (int) (22 * d);
+        box.addView(pb, lpPb);
+        return box;
+    }
+
+    private void hideSplash() {
+        final View v = splash;
+        if (v == null) return;
+        splash = null;
+        v.animate().alpha(0f).setDuration(250).withEndAction(() -> {
+            ViewGroup p = (ViewGroup) v.getParent();
+            if (p != null) p.removeView(v);
+        }).start();
+    }
+
+    // More Video खुलते समय की लोडिंग (गहरा बैकग्राउंड + लाल घूमता गोला), पेज आते ही हट जाती है
+    private View buildMvLoading() {
+        float d = getResources().getDisplayMetrics().density;
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setGravity(Gravity.CENTER);
+        box.setBackgroundColor(Color.parseColor("#0F0F12"));
+        box.setClickable(true);
+
+        ProgressBar pb = new ProgressBar(this);
+        pb.setIndeterminate(true);
+        pb.setIndeterminateTintList(ColorStateList.valueOf(Color.parseColor("#FF2D55")));
+        box.addView(pb, new LinearLayout.LayoutParams((int) (44 * d), (int) (44 * d)));
+
+        TextView t = new TextView(this);
+        t.setText("More Video लोड हो रहा है…");
+        t.setTextColor(Color.WHITE);
+        t.setTextSize(14);
+        t.setTypeface(null, android.graphics.Typeface.BOLD);
+        t.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams lpT = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lpT.topMargin = (int) (14 * d);
+        box.addView(t, lpT);
+        return box;
+    }
+
+    private void hideMvLoading() {
+        final View v = mvLoading;
+        if (v == null) return;
+        mvLoading = null;
+        v.animate().alpha(0f).setDuration(200).withEndAction(() -> {
+            ViewGroup p = (ViewGroup) v.getParent();
+            if (p != null) p.removeView(v);
+        }).start();
     }
 
     /** HTML से बुलाए जाने वाले फ़ंक्शन: window.Android.showToast(..) और window.Android.showUnityRewardedAd() */
@@ -185,12 +296,19 @@ public class MainActivity extends AppCompatActivity {
         mvRoot.setClickable(true);
 
         mvWeb = new WebView(this);
+        mvWeb.setBackgroundColor(Color.parseColor("#0F0F12"));
         WebSettings ws = mvWeb.getSettings();
         ws.setJavaScriptEnabled(true);
         ws.setDomStorageEnabled(true);
         ws.setMediaPlaybackRequiresUserGesture(false);
         ws.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
         mvWeb.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String u) { view.postDelayed(MainActivity.this::hideMvLoading, 250); }
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                if (request != null && request.isForMainFrame()) hideMvLoading();
+            }
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String sc = request.getUrl().getScheme();
@@ -200,6 +318,9 @@ public class MainActivity extends AppCompatActivity {
         });
         mvWeb.setWebChromeClient(chrome);
         mvRoot.addView(mvWeb, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mvLoading = buildMvLoading();
+        mvRoot.addView(mvLoading, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mvLoading.postDelayed(this::hideMvLoading, 12000); // सुरक्षा: 12 सेकंड बाद हर हाल में हटा दो
 
         float d = getResources().getDisplayMetrics().density;
 
@@ -254,6 +375,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception ignored) { }
         mvWeb = null;
         mvRoot = null;
+        mvLoading = null;
     }
 
     /** खुले हुए YouTube पेज से वीडियो/Short की ID निकालकर साफ़ लिंक बनाता है; न मिले तो null */
