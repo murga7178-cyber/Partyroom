@@ -21997,3 +21997,48 @@ html body *,html body *::before,html body *::after{-webkit-backdrop-filter:none!
 })();
 </script>
 <style id="pkHideSongBanner">html body #prChatAudioPill,html body #prRoom #prChatAudioPill,html body #prChatAudioPill.on,html body #prRoom #prChatAudioPill.on{display:none!important;}</style>
+
+<style id="pkBannerAdsCss">
+/* बैनर चालू होने पर लिस्ट के नीचे जगह छोड़ो ताकि बैनर किसी चीज़ को न ढके */
+body.pk-banner-on #pkVisitorsList{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))!important;}
+body.pk-banner-on #partyMoreVideoOverlay{padding-bottom:calc(58px + env(safe-area-inset-bottom,0px));box-sizing:border-box;}
+</style>
+<script id="pkBannerAdsJs">
+/* Unity Banner + Interstitial: Visitors लिस्ट और More Video (सर्च रिज़ल्ट) पर.
+   APK के Android bridge में ये दो मेथड चाहिए: showUnityBannerAd(placementId), hideUnityBannerAd() */
+(function(){
+  var BANNER_ID='BP_Banner_Android';
+  var VIS_INTERSTITIAL_COOL=180000; /* Visitors पर इंटरस्टिशियल दो बार के बीच कम से कम 3 मिनट. 0 = हर बार */
+  var bannerOn=false, visWas=false, lastVisAd=0;
+  function A(){ return window.Android||null; }
+  function showBanner(){
+    if(bannerOn) return; var b=A();
+    try{ if(b&&typeof b.showUnityBannerAd==='function'){ b.showUnityBannerAd(BANNER_ID); bannerOn=true; document.body.classList.add('pk-banner-on'); } }catch(e){}
+  }
+  function hideBanner(){
+    if(!bannerOn) return; var b=A(); bannerOn=false; document.body.classList.remove('pk-banner-on');
+    try{ if(b&&typeof b.hideUnityBannerAd==='function') b.hideUnityBannerAd(); }catch(e){}
+  }
+  function visOpen(){
+    var el=document.getElementById('pkVisitorsOverlay'); if(!el) return false;
+    return getComputedStyle(el).display!=='none';
+  }
+  function mvOpen(){
+    var el=document.getElementById('partyMoreVideoOverlay'); return !!(el&&el.classList.contains('open'));
+  }
+  function visInterstitial(){
+    var b=A(), cfg=window.PK_ADS, now=Date.now();
+    if(!b||typeof b.showUnityInterstitialAd!=='function') return;
+    if(cfg&&cfg.on===false) return;
+    if(now-lastVisAd<VIS_INTERSTITIAL_COOL) return;
+    lastVisAd=now; try{ b.showUnityInterstitialAd(); }catch(e){}
+  }
+  setInterval(function(){
+    var v=visOpen(), m=mvOpen();
+    if(v&&!visWas) visInterstitial();
+    visWas=v;
+    if(v||m) showBanner(); else hideBanner();
+  },400);
+  document.addEventListener('visibilitychange',function(){ if(document.hidden) hideBanner(); });
+})();
+</script>
