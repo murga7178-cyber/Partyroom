@@ -13845,8 +13845,8 @@ html:has(#cinemaGharModal:not([style*="display: none"])) body{background:var(--p
   var MORE_VIDEO_OPEN_PAGE=true, MORE_VIDEO_PAGE_URL='https://www.youtube.com/';
   function openMoreVideo(){
     if(MORE_VIDEO_OPEN_PAGE){
-      var w=null; try{ w=window.open(MORE_VIDEO_PAGE_URL,'_blank'); }catch(_){}
-      if(w) return;
+      /* नया APK: ऐप अलग पूरे पेज में असली YouTube खोलता है (लाल "Room में भेजें" बटन के साथ). पुराना APK: नीचे वाला overlay. */
+      try{ if(window.Android&&typeof window.Android.openMoreVideo==='function'){ window.Android.openMoreVideo(MORE_VIDEO_PAGE_URL); return; } }catch(_){}
     }
     if(!overlay||!frame)return;
     if(!loaded){ frame.srcdoc=youtubeHtmlV2; loaded=true; }
