@@ -3,6 +3,8 @@ package com.starmasti.app;
 import android.Manifest;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
+import android.view.Gravity;
 import android.view.Window;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -20,6 +22,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -31,6 +34,8 @@ import androidx.webkit.WebViewAssetLoader;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -42,12 +47,17 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQ_FILE = 11, REQ_PERM = 12;
 
     private WebView webView;
+    private WebChromeClient chrome;          // मुख्य WebView और More Video पेज दोनों यही इस्तेमाल करते हैं (फ़ुल-स्क्रीन वीडियो के लिए)
     private UnityRewardedHelper unity;
     private UnityInterstitialHelper unityInter;
     private View customView;
     private WebChromeClient.CustomViewCallback customCb;
     private ValueCallback<Uri[]> filePathCb;
     private PermissionRequest pendingPerm;
+
+    // More Video: अलग पूरे पेज में खुलने वाला दूसरा WebView
+    private FrameLayout mvRoot;
+    private WebView mvWeb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        webView.setWebChromeClient(new WebChromeClient() {
+        chrome = new WebChromeClient() {
             @Override
             public void onPermissionRequest(final PermissionRequest request) {
                 runOnUiThread(() -> handleWebPermission(request));
@@ -107,16 +117,22 @@ public class MainActivity extends AppCompatActivity {
                 ((FrameLayout) getWindow().getDecorView()).addView(view,
                         new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
                 webView.setVisibility(View.GONE);
+                if (mvRoot != null) mvRoot.setVisibility(View.GONE);
             }
             @Override
             public void onHideCustomView() { hideCustomView(); }
-        });
+        };
+        webView.setWebChromeClient(chrome);
 
         webView.addJavascriptInterface(new Bridge(), "Android");
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override public void handleOnBackPressed() {
                 if (customView != null) hideCustomView();
+                else if (mvWeb != null) {
+                    if (mvWeb.canGoBack()) mvWeb.goBack();
+                    else closeMoreVideoPage();
+                }
                 else if (webView.canGoBack()) webView.goBack();
                 else { setEnabled(false); getOnBackPressedDispatcher().onBackPressed(); }
             }
@@ -148,6 +164,118 @@ public class MainActivity extends AppCompatActivity {
         public void showUnityInterstitialAd() {
             runOnUiThread(() -> unityInter.requestShow());
         }
+        /** More Video: HTML से window.Android.openMoreVideo("https://www.youtube.com/") बुलाने पर अलग पूरे पेज में खुलता है */
+        @JavascriptInterface
+        public void openMoreVideo(final String url) {
+            runOnUiThread(() -> openMoreVideoPage(url));
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    //  More Video पेज: ऐप के ऊपर एक अलग WebView (असली YouTube, iframe वाली रोक नहीं लगती)
+    //  नीचे लाल "Room में भेजें" बटन: जो वीडियो/Short खुला है उसका लिंक रूम में भेज देता है (कॉइन HTML वाला ऐप काटता है)
+    //  ऊपर दाएँ ✕ या फ़ोन का Back: बंद करने के लिए
+    // ---------------------------------------------------------------------------------------------
+    private void openMoreVideoPage(String url) {
+        if (mvRoot != null) return;
+        if (url == null || url.trim().isEmpty()) url = "https://www.youtube.com/";
+
+        mvRoot = new FrameLayout(this);
+        mvRoot.setBackgroundColor(Color.BLACK);
+        mvRoot.setClickable(true);
+
+        mvWeb = new WebView(this);
+        WebSettings ws = mvWeb.getSettings();
+        ws.setJavaScriptEnabled(true);
+        ws.setDomStorageEnabled(true);
+        ws.setMediaPlaybackRequiresUserGesture(false);
+        ws.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+        mvWeb.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                String sc = request.getUrl().getScheme();
+                // सिर्फ़ http/https यहीं खुलें; youtube:// या intent:// जैसे लिंक अनदेखे कर दो
+                return !("http".equals(sc) || "https".equals(sc));
+            }
+        });
+        mvWeb.setWebChromeClient(chrome);
+        mvRoot.addView(mvWeb, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        float d = getResources().getDisplayMetrics().density;
+
+        // लाल बटन: Room में भेजें
+        TextView send = new TextView(this);
+        send.setText("▶  Room में भेजें  🪙");
+        send.setTextColor(Color.WHITE);
+        send.setTextSize(14);
+        send.setTypeface(null, android.graphics.Typeface.BOLD);
+        send.setGravity(Gravity.CENTER);
+        send.setPadding((int) (18 * d), 0, (int) (18 * d), 0);
+        GradientDrawable red = new GradientDrawable();
+        red.setColor(Color.parseColor("#E11D48"));
+        red.setCornerRadius(24 * d);
+        send.setBackground(red);
+        send.setElevation(8 * d);
+        FrameLayout.LayoutParams lpSend = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, (int) (46 * d));
+        lpSend.gravity = Gravity.BOTTOM | Gravity.END;
+        lpSend.setMargins(0, 0, (int) (14 * d), (int) (86 * d));
+        send.setOnClickListener(v -> sendCurrentVideoToRoom());
+        mvRoot.addView(send, lpSend);
+
+        // ✕ बंद करें
+        TextView close = new TextView(this);
+        close.setText("✕");
+        close.setTextColor(Color.WHITE);
+        close.setTextSize(16);
+        close.setGravity(Gravity.CENTER);
+        GradientDrawable dark = new GradientDrawable();
+        dark.setShape(GradientDrawable.OVAL);
+        dark.setColor(Color.parseColor("#B3000000"));
+        close.setBackground(dark);
+        close.setElevation(8 * d);
+        FrameLayout.LayoutParams lpClose = new FrameLayout.LayoutParams((int) (38 * d), (int) (38 * d));
+        lpClose.gravity = Gravity.TOP | Gravity.END;
+        lpClose.setMargins(0, (int) (8 * d), (int) (8 * d), 0);
+        close.setOnClickListener(v -> closeMoreVideoPage());
+        mvRoot.addView(close, lpClose);
+
+        ViewGroup content = findViewById(android.R.id.content);
+        content.addView(mvRoot, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mvWeb.loadUrl(url);
+    }
+
+    private void closeMoreVideoPage() {
+        if (mvRoot == null) return;
+        try {
+            if (mvWeb != null) { mvWeb.stopLoading(); mvWeb.loadUrl("about:blank"); }
+            ViewGroup content = findViewById(android.R.id.content);
+            content.removeView(mvRoot);
+            if (mvWeb != null) { mvRoot.removeView(mvWeb); mvWeb.destroy(); }
+        } catch (Exception ignored) { }
+        mvWeb = null;
+        mvRoot = null;
+    }
+
+    /** खुले हुए YouTube पेज से वीडियो/Short की ID निकालकर साफ़ लिंक बनाता है; न मिले तो null */
+    private static String cleanYoutubeUrl(String cur) {
+        if (cur == null) return null;
+        Matcher sh = Pattern.compile("/shorts/([A-Za-z0-9_-]{11})").matcher(cur);
+        if (sh.find()) return "https://www.youtube.com/shorts/" + sh.group(1);
+        Matcher m = Pattern.compile("(?:[?&]v=|youtu\\.be/|/embed/)([A-Za-z0-9_-]{11})").matcher(cur);
+        if (m.find()) return "https://www.youtube.com/watch?v=" + m.group(1);
+        return null;
+    }
+
+    private void sendCurrentVideoToRoom() {
+        String clean = cleanYoutubeUrl(mvWeb == null ? null : mvWeb.getUrl());
+        if (clean == null) {
+            Toast.makeText(this, "पहले कोई वीडियो खोलिए, फिर Room में भेजिए", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        closeMoreVideoPage();
+        // ऐप के HTML को वही संदेश भेजते हैं जो पहले More Video का पेज भेजता था; कॉइन कटना और प्ले होना वहीं होता है
+        final String js = "window.postMessage({type:'PARTY_ROOM_YOUTUBE_SELECTED',url:'" + clean + "'},'*');";
+        webView.evaluateJavascript(js, null);
     }
 
     private void handleWebPermission(PermissionRequest request) {
@@ -190,6 +318,7 @@ public class MainActivity extends AppCompatActivity {
         if (customCb != null) customCb.onCustomViewHidden();
         customCb = null;
         webView.setVisibility(View.VISIBLE);
+        if (mvRoot != null) mvRoot.setVisibility(View.VISIBLE);
     }
 
     /** स्टेटस-बार (टावर/बैटरी/घड़ी) दिखती रहती है; उसका रंग पेज के सबसे ऊपरी हिस्से के रंग जैसा किया जाता है,
@@ -203,6 +332,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        closeMoreVideoPage();
         if (webView != null) { webView.destroy(); webView = null; }
         super.onDestroy();
     }
