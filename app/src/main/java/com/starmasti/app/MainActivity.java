@@ -1,9 +1,16 @@
 package com.starmasti.app;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
+import android.graphics.Shader;
+import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.Window;
@@ -11,7 +18,13 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.OvershootInterpolator;
+import android.view.animation.ScaleAnimation;
 import android.view.ViewGroup;
 import android.webkit.PermissionRequest;
 import android.webkit.JavascriptInterface;
@@ -24,6 +37,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -59,11 +73,81 @@ public class MainActivity extends AppCompatActivity {
     private ValueCallback<Uri[]> filePathCb;
     private PermissionRequest pendingPerm;
 
+    /** More Video में वीडियो पर पहली बार क्लिक करने पर वह अपने आप शुरू न हो (रुका रहे); दोबारा टैप करने पर ही चले।
+     *  सिर्फ़ सामान्य वीडियो (watch?v=...) पर लागू; Shorts पहले जैसे चलते हैं। */
+    private static final String MV_HOLD_JS =
+            "(function(){" +
+            " if(window.__pkHold) return; window.__pkHold=1;" +
+            " var held=false, settle=0, lastId='', sx=0, sy=0;" +
+            " function vid(){ var m=location.href.match(/[?&]v=([\\w-]{11})/); return m?m[1]:''; }" +
+            " function pauseAll(){ var v=document.querySelectorAll('video'); for(var i=0;i<v.length;i++){ try{ if(!v[i].paused) v[i].pause(); }catch(e){} } }" +
+            " function check(){ var id=vid(); if(id&&id!==lastId){ lastId=id; held=true; settle=Date.now()+900; pauseAll(); } if(!id) lastId=''; if(held) pauseAll(); }" +
+            " function release(){ if(held&&Date.now()>settle) held=false; }" +
+            " function stop(e){ if(held&&e.target&&e.target.pause){ try{ e.target.pause(); }catch(x){} } }" +
+            " document.addEventListener('play',stop,true);" +
+            " document.addEventListener('playing',stop,true);" +
+            " document.addEventListener('touchstart',function(e){ var t=e.touches&&e.touches[0]; if(t){ sx=t.clientX; sy=t.clientY; } },true);" +
+            " document.addEventListener('touchend',function(e){ var t=e.changedTouches&&e.changedTouches[0]; if(t&&Math.abs(t.clientX-sx)<10&&Math.abs(t.clientY-sy)<10) release(); },true);" +
+            " document.addEventListener('click',release,true);" +
+            " setInterval(check,250); check();" +
+            "})();";
+
+    /** More Video की सूची/सर्च पर: लाल बटन दबाने पर स्क्रीन के वीडियो पर "▶ Room" बटन आते हैं; उस बटन से वीडियो रूम में जाकर चलता है */
+    private static final String MV_PICK_JS =
+            "(function(){ " +
+            " if(window.__pkMv) return; window.__pkMv=1; " +
+            " var on=false, layer=null, btns={}; " +
+            " function vid(h){ var s=String(h); var m=s.match(/[?&]v=([\\w-]{11})/)||s.match(/\\/shorts\\/([\\w-]{11})/); return m?m[1]:''; } " +
+            " function onWatch(){ return /[?&]v=[\\w-]{11}/.test(location.href)||/\\/shorts\\//.test(location.href); } " +
+            " function layerEl(){ if(layer&&layer.isConnected) return layer; layer=document.createElement('div'); layer.id='pkMvLayer'; layer.style.cssText='position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:2147483647;'; document.documentElement.appendChild(layer); return layer; } " +
+            " function clearAll(){ if(layer) layer.innerHTML=''; btns={}; } " +
+            " function mk(id,isShort){ " +
+            "  var b=document.createElement('button'); b.type='button'; b.textContent='▶ Room'; " +
+            "  b.style.cssText='position:absolute;pointer-events:auto;height:34px;padding:0 14px;border:0;border-radius:17px;background:#E11D48;color:#fff;font:800 13px/34px sans-serif;box-shadow:0 3px 10px rgba(0,0,0,.5);'; " +
+            "  b.addEventListener('click',function(e){ e.preventDefault(); e.stopPropagation(); try{ AndroidMV.send('https://www.youtube.com/'+(isShort?'shorts/':'watch?v=')+id); }catch(x){} },true); " +
+            "  layerEl().appendChild(b); return b; " +
+            " } " +
+            " function scan(){ " +
+            "  if(!on) return; " +
+            "  if(onWatch()){ on=false; clearAll(); return; } " +
+            "  var vh=window.innerHeight, vw=window.innerWidth, best={}; " +
+            "  var as=document.querySelectorAll('a[href*=\"/watch?v=\"],a[href*=\"/shorts/\"]'); " +
+            "  for(var i=0;i<as.length;i++){ " +
+            "   var a=as[i], h=a.getAttribute('href')||'', v=vid(h); if(!v) continue; " +
+            "   var r=a.getBoundingClientRect(); " +
+            "   if(r.width<110||r.height<60||r.bottom<60||r.top>vh-30||r.right<20||r.left>vw-20) continue; " +
+            "   var ar=r.width*r.height; " +
+            "   if(!best[v]||ar>best[v].ar) best[v]={r:r,ar:ar,s:/\\/shorts\\//.test(h)}; " +
+            "  } " +
+            "  for(var k in btns){ if(!best[k]){ if(btns[k].parentNode) btns[k].parentNode.removeChild(btns[k]); delete btns[k]; } } " +
+            "  for(var id in best){ " +
+            "   var o=best[id], b=btns[id]||(btns[id]=mk(id,o.s)); " +
+            "   var top=Math.min(Math.max(o.r.top+8,64),o.r.bottom-42); " +
+            "   b.style.top=Math.round(top)+'px'; b.style.left=Math.round(Math.max(o.r.left+8,4))+'px'; " +
+            "  } " +
+            " } " +
+            " window.__pkMvToggle=function(){ on=!on; if(!on) clearAll(); else scan(); return on?'on':'off'; }; " +
+            " window.__pkMvOff=function(){ on=false; clearAll(); }; " +
+            " var t=0; function sched(){ if(t) return; t=requestAnimationFrame(function(){ t=0; scan(); }); } " +
+            " window.addEventListener('scroll',sched,true); window.addEventListener('touchmove',sched,true); window.addEventListener('resize',sched); " +
+            " setInterval(scan,350); " +
+            "})(); ";
+
     // More Video: अलग पूरे पेज में खुलने वाला दूसरा WebView
     private FrameLayout mvRoot;
     private WebView mvWeb;
     private View mvLoading;      // More Video खुलते समय की लोडिंग
+    private TextView mvSendBtn;  // नीचे का लाल बटन
+    private boolean mvPickOn = false;
     private View splash;         // ऐप खुलते समय "स्टार मस्ती" वाली स्क्रीन
+    // शुरुआती एनिमेशन: आइकन उभरता है, तारा उड़कर आता है, बिल्ली चलकर आती है और डांस करती है
+    private boolean splashAnimated = false, splashRunning = false, splashHidePending = false;
+    private long splashStartMs = 0;
+    private int splashSz;
+    private FrameLayout splashStage;
+    private ImageView splashEmblem, splashStar, splashCat;
+    private TextView splashTitle;
+    private final List<Animator> splashAnims = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,8 +176,9 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                // पेज लोड होते ही थोड़ी देर बाद "स्टार मस्ती" स्क्रीन धीरे से हट जाती है
-                view.postDelayed(MainActivity.this::hideSplash, 350);
+                // "स्टार मस्ती" यहाँ नहीं हटती: वह तब हटती है जब HTML बताए कि Home/Login तैयार है (Android.appReady()).
+                // सुरक्षा: HTML से संकेत न आए तो पेज लोड के 8 सेकंड बाद हटा दो।
+                view.postDelayed(MainActivity.this::hideSplash, 8000);
             }
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
@@ -164,7 +249,7 @@ public class MainActivity extends AppCompatActivity {
         unityInter.start();
 
         webView.loadUrl(START_URL.isEmpty() ? ASSET_URL : START_URL);
-        webView.postDelayed(this::hideSplash, 15000); // सुरक्षा: 15 सेकंड बाद हर हाल में हटा दो
+        webView.postDelayed(this::hideSplash, 30000); // सुरक्षा: 30 सेकंड बाद हर हाल में हटा दो
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -179,19 +264,69 @@ public class MainActivity extends AppCompatActivity {
         box.setBackgroundColor(Color.parseColor("#F7F4FF")); // स्टेटस-बार जैसा ही रंग, ताकि अलग पट्टी न दिखे
         box.setClickable(true);
 
-        TextView star = new TextView(this);
-        star.setText("⭐");
-        star.setTextSize(54);
-        star.setGravity(Gravity.CENTER);
-        box.addView(star);
+        // ऊपर आपका लोगो (res/drawable-nodpi/splash_logo.png). फ़ाइल न मिले तो पहले जैसा ⭐ दिखेगा।
+        int logoRes = getResources().getIdentifier("splash_logo", "drawable", getPackageName());
+        int idE = getResources().getIdentifier("splash_emblem", "drawable", getPackageName());
+        int idS = getResources().getIdentifier("splash_star", "drawable", getPackageName());
+        int idC = getResources().getIdentifier("splash_cat", "drawable", getPackageName());
+        View top = null;
+        float pulseTo = 1.06f;
+        if (idE != 0 && idS != 0 && idC != 0) {
+            // तीन परतें: पीछे आइकन, उसके ऊपर तारा, सबसे ऊपर बिल्ली (तीनों एक ही नाप की पारदर्शी PNG)
+            splashSz = (int) (230 * d);
+            FrameLayout stage = new FrameLayout(this);
+            stage.setClipChildren(false);
+            box.setClipChildren(false);
+            splashEmblem = mkLayer(idE);
+            splashStar = mkLayer(idS);
+            splashCat = mkLayer(idC);
+            stage.addView(splashEmblem, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            stage.addView(splashStar, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            stage.addView(splashCat, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            box.addView(stage, new LinearLayout.LayoutParams(splashSz, splashSz));
+            splashStage = stage;
+            splashAnimated = true;
+        } else if (logoRes != 0) {
+            ImageView logo = new ImageView(this);
+            logo.setImageResource(logoRes);
+            logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            box.addView(logo, new LinearLayout.LayoutParams((int) (200 * d), (int) (200 * d)));
+            top = logo;
+            pulseTo = 1.06f;
+        } else {
+            TextView star = new TextView(this);
+            star.setText("⭐");
+            star.setTextSize(64);
+            star.setGravity(Gravity.CENTER);
+            box.addView(star);
+            top = star;
+            pulseTo = 1.18f;
+        }
+        // लोगो हल्का-हल्का धड़कता रहता है
+        ScaleAnimation pulse = new ScaleAnimation(1f, pulseTo, 1f, pulseTo,
+                Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        pulse.setDuration(800);
+        pulse.setRepeatMode(Animation.REVERSE);
+        pulse.setRepeatCount(Animation.INFINITE);
+        if (top != null) top.startAnimation(pulse);
 
+        // बड़ा, मोटा, रंगीन (गुलाबी → बैंगनी → नारंगी) "स्टार मस्ती" हल्की चमक (glow) के साथ
         TextView title = new TextView(this);
         title.setText("स्टार मस्ती");
-        title.setTextColor(purple);
-        title.setTextSize(34);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        title.setTextSize(48);
+        title.setTypeface(Typeface.create("sans-serif-black", Typeface.BOLD));
+        title.setLetterSpacing(0.05f);
         title.setGravity(Gravity.CENTER);
-        box.addView(title);
+        title.setTextColor(Color.parseColor("#8A2BE2"));
+        float tw = title.getPaint().measureText("स्टार मस्ती");
+        title.getPaint().setShader(new LinearGradient(0, 0, tw, 0,
+                new int[]{Color.parseColor("#FF2D95"), Color.parseColor("#8A2BE2"), Color.parseColor("#FF8A00")},
+                null, Shader.TileMode.CLAMP));
+        title.setShadowLayer(14 * d, 0, 3 * d, Color.parseColor("#66B06BE0"));
+        splashTitle = title;
+        LinearLayout.LayoutParams lpTitle = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lpTitle.topMargin = (int) (18 * d);
+        box.addView(title, lpTitle);
 
         TextView sub = new TextView(this);
         sub.setText("लोड हो रहा है…");
@@ -208,13 +343,149 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout.LayoutParams lpPb = new LinearLayout.LayoutParams((int) (34 * d), (int) (34 * d));
         lpPb.topMargin = (int) (22 * d);
         box.addView(pb, lpPb);
+        if (splashAnimated) startSplashAnim();
         return box;
     }
 
+    private ImageView mkLayer(int res) {
+        ImageView v = new ImageView(this);
+        v.setImageResource(res);
+        v.setScaleType(ImageView.ScaleType.FIT_XY);
+        return v;
+    }
+
+    /** पूरा क्रम: आइकन उभरे → तारा घूमता-उड़ता आकर अपनी जगह लगे (चमक के साथ) → बिल्ली दाएँ से चलकर आए → डांस करती रहे */
+    private void startSplashAnim() {
+        final float d = getResources().getDisplayMetrics().density;
+        final int sz = splashSz;
+        splashRunning = true;
+        splashStartMs = SystemClock.uptimeMillis();
+
+        splashEmblem.setAlpha(0f);
+        splashEmblem.setScaleX(0.5f);
+        splashEmblem.setScaleY(0.5f);
+
+        splashStar.setPivotX(0.372f * sz);
+        splashStar.setPivotY(0.559f * sz);
+        splashStar.setAlpha(0f);
+        splashStar.setScaleX(0.3f);
+        splashStar.setScaleY(0.3f);
+        splashStar.setRotation(-540f);
+        splashStar.setTranslationX(-0.7f * sz);
+        splashStar.setTranslationY(-1.0f * sz);
+
+        splashCat.setPivotX(0.755f * sz);   // पैरों के पास से झूलेगी
+        splashCat.setPivotY(0.957f * sz);
+        splashCat.setTranslationX(330 * d); // स्क्रीन के दाएँ बाहर से शुरू
+
+        if (splashTitle != null) { splashTitle.setAlpha(0f); splashTitle.setTranslationY(14 * d); }
+
+        // 1) आइकन उभरता है
+        splashEmblem.animate().alpha(1f).scaleX(1f).scaleY(1f)
+                .setDuration(450).setInterpolator(new OvershootInterpolator(1.3f)).start();
+
+        // 2) तारा उड़कर आता है और अपनी जगह लग जाता है
+        splashStar.animate().alpha(1f).translationX(0f).translationY(0f).scaleX(1f).scaleY(1f).rotation(0f)
+                .setStartDelay(350).setDuration(800).setInterpolator(new DecelerateInterpolator(1.4f))
+                .withEndAction(() -> {
+                    if (!splashRunning) return;
+                    splashStar.animate().scaleX(1.25f).scaleY(1.25f).setStartDelay(0).setDuration(110).withEndAction(() -> {
+                        if (splashRunning) splashStar.animate().scaleX(1f).scaleY(1f).setDuration(160).start();
+                    }).start();
+                    sparkleBurst(0.372f * sz, 0.559f * sz, d);
+                    if (splashTitle != null) splashTitle.animate().alpha(1f).translationY(0f).setDuration(500).start();
+                }).start();
+
+        // 3) बिल्ली चलकर आती है (ऊपर-नीचे उछलते और हल्का झूलते कदम)
+        final ObjectAnimator walk = ObjectAnimator.ofFloat(splashCat, View.TRANSLATION_X, 330 * d, 0f);
+        walk.setDuration(1700);
+        walk.setStartDelay(900);
+        walk.setInterpolator(new DecelerateInterpolator(0.9f));
+        final ObjectAnimator bob = ObjectAnimator.ofFloat(splashCat, View.TRANSLATION_Y, 0f, -9 * d);
+        bob.setDuration(190);
+        bob.setStartDelay(900);
+        bob.setRepeatMode(ValueAnimator.REVERSE);
+        bob.setRepeatCount(ValueAnimator.INFINITE);
+        final ObjectAnimator wad = ObjectAnimator.ofFloat(splashCat, View.ROTATION, -3f, 3f);
+        wad.setDuration(190);
+        wad.setStartDelay(900);
+        wad.setRepeatMode(ValueAnimator.REVERSE);
+        wad.setRepeatCount(ValueAnimator.INFINITE);
+        walk.addListener(new AnimatorListenerAdapter() {
+            @Override public void onAnimationEnd(Animator a) {
+                bob.cancel();
+                wad.cancel();
+                if (splashRunning) startCatDance(d);   // पहुँचते ही डांस; ऐप तैयार होने तक चलता रहेगा
+            }
+        });
+        splashAnims.add(walk);
+        splashAnims.add(bob);
+        splashAnims.add(wad);
+        walk.start();
+        bob.start();
+        wad.start();
+    }
+
+    private void startCatDance(float d) {
+        splashCat.setTranslationY(0f);
+        splashCat.setRotation(0f);
+        ObjectAnimator sway = ObjectAnimator.ofFloat(splashCat, View.ROTATION, -9f, 9f);
+        sway.setDuration(380);
+        sway.setRepeatMode(ValueAnimator.REVERSE);
+        sway.setRepeatCount(ValueAnimator.INFINITE);
+        ObjectAnimator hop = ObjectAnimator.ofFloat(splashCat, View.TRANSLATION_Y, 0f, -16 * d);
+        hop.setDuration(190);
+        hop.setInterpolator(new LinearInterpolator());
+        hop.setRepeatMode(ValueAnimator.REVERSE);
+        hop.setRepeatCount(ValueAnimator.INFINITE);
+        splashAnims.add(sway);
+        splashAnims.add(hop);
+        sway.start();
+        hop.start();
+    }
+
+    /** तारा लगते ही चारों तरफ़ छोटे चमकते सितारे बिखरते हैं */
+    private void sparkleBurst(float cx, float cy, float d) {
+        if (splashStage == null) return;
+        final FrameLayout stage = splashStage;
+        int[] cols = {Color.parseColor("#FFD54F"), Color.parseColor("#FF2D95"), Color.parseColor("#8A2BE2"), Color.parseColor("#FF8A00")};
+        for (int i = 0; i < 8; i++) {
+            final TextView t = new TextView(this);
+            t.setText("✦");
+            t.setTextSize(16);
+            t.setTextColor(cols[i % cols.length]);
+            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.leftMargin = (int) (cx - 8 * d);
+            lp.topMargin = (int) (cy - 12 * d);
+            stage.addView(t, lp);
+            double ang = i * Math.PI * 2 / 8;
+            float dist = (46 + (i % 3) * 16) * d;
+            t.animate().translationX((float) Math.cos(ang) * dist).translationY((float) Math.sin(ang) * dist)
+                    .alpha(0f).rotation(180f).setDuration(700)
+                    .withEndAction(() -> stage.removeView(t)).start();
+        }
+    }
+
+    /** ऐप तैयार होने पर बुलाया जाता है. एनिमेशन वाली स्क्रीन कम से कम ~2.6 सेकंड दिखती है ताकि बिल्ली आकर डांस कर सके. */
     private void hideSplash() {
+        if (splash == null) return;
+        if (splashAnimated && splashStartMs > 0) {
+            long left = 2600 - (SystemClock.uptimeMillis() - splashStartMs);
+            if (left > 0) {
+                if (!splashHidePending) { splashHidePending = true; splash.postDelayed(this::hideSplashNow, left); }
+                return;
+            }
+        }
+        hideSplashNow();
+    }
+
+    private void hideSplashNow() {
         final View v = splash;
         if (v == null) return;
         splash = null;
+        splashRunning = false;
+        for (Animator a : new ArrayList<>(splashAnims)) a.cancel();   // चलती एनिमेशन बंद
+        splashAnims.clear();
         v.animate().alpha(0f).setDuration(250).withEndAction(() -> {
             ViewGroup p = (ViewGroup) v.getParent();
             if (p != null) p.removeView(v);
@@ -275,10 +546,26 @@ public class MainActivity extends AppCompatActivity {
         public void showUnityInterstitialAd() {
             runOnUiThread(() -> unityInter.requestShow());
         }
+        /** HTML का पहला पेज (Home/Login) तैयार होने पर बुलाया जाता है; तब "स्टार मस्ती" स्क्रीन हटती है */
+        @JavascriptInterface
+        public void appReady() {
+            runOnUiThread(() -> hideSplash());
+        }
         /** More Video: HTML से window.Android.openMoreVideo("https://www.youtube.com/") बुलाने पर अलग पूरे पेज में खुलता है */
         @JavascriptInterface
         public void openMoreVideo(final String url) {
             runOnUiThread(() -> openMoreVideoPage(url));
+        }
+    }
+
+    /** YouTube पेज पर आए "▶ Room" बटन इसे बुलाते हैं (सिर्फ़ youtube का वीडियो/Short लिंक मान्य) */
+    private class MvBridge {
+        @JavascriptInterface
+        public void send(final String url) {
+            runOnUiThread(() -> {
+                String clean = cleanYoutubeUrl(url);
+                if (clean != null) sendCleanToRoom(clean);
+            });
         }
     }
 
@@ -304,10 +591,18 @@ public class MainActivity extends AppCompatActivity {
         ws.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
         mvWeb.setWebViewClient(new WebViewClient() {
             @Override
-            public void onPageFinished(WebView view, String u) { view.postDelayed(MainActivity.this::hideMvLoading, 250); }
+            public void onPageFinished(WebView view, String u) {
+                view.evaluateJavascript(MV_HOLD_JS, null); // पहले क्लिक पर वीडियो अपने आप न चले
+                view.evaluateJavascript(MV_PICK_JS, null); // सूची के वीडियो पर "▶ Room" बटन दिखाने वाली स्क्रिप्ट
+                view.postDelayed(MainActivity.this::hideMvLoading, 250);
+            }
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 if (request != null && request.isForMainFrame()) hideMvLoading();
+            }
+            @Override
+            public void doUpdateVisitedHistory(WebView view, String u, boolean isReload) {
+                resetPickLabel(); // दूसरे पेज पर जाने पर बटन छुपाने की स्थिति वापस सामान्य
             }
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -317,6 +612,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         mvWeb.setWebChromeClient(chrome);
+        mvWeb.addJavascriptInterface(new MvBridge(), "AndroidMV");
         mvRoot.addView(mvWeb, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         mvLoading = buildMvLoading();
         mvRoot.addView(mvLoading, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -340,7 +636,8 @@ public class MainActivity extends AppCompatActivity {
         FrameLayout.LayoutParams lpSend = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, (int) (46 * d));
         lpSend.gravity = Gravity.BOTTOM | Gravity.END;
         lpSend.setMargins(0, 0, (int) (14 * d), (int) (86 * d));
-        send.setOnClickListener(v -> sendCurrentVideoToRoom());
+        send.setOnClickListener(v -> onMvSendTapped());
+        mvSendBtn = send;
         mvRoot.addView(send, lpSend);
 
         // ✕ बंद करें
@@ -376,6 +673,8 @@ public class MainActivity extends AppCompatActivity {
         mvWeb = null;
         mvRoot = null;
         mvLoading = null;
+        mvSendBtn = null;
+        mvPickOn = false;
     }
 
     /** खुले हुए YouTube पेज से वीडियो/Short की ID निकालकर साफ़ लिंक बनाता है; न मिले तो null */
@@ -388,12 +687,28 @@ public class MainActivity extends AppCompatActivity {
         return null;
     }
 
-    private void sendCurrentVideoToRoom() {
-        String clean = cleanYoutubeUrl(mvWeb == null ? null : mvWeb.getUrl());
-        if (clean == null) {
-            Toast.makeText(this, "पहले कोई वीडियो खोलिए, फिर Room में भेजिए", Toast.LENGTH_SHORT).show();
-            return;
-        }
+    /** नीचे के लाल बटन का टैप:
+     *  - वीडियो/Short खुला हो → वही रूम में भेज दो
+     *  - सूची/सर्च खुली हो → स्क्रीन के वीडियो पर "▶ Room" बटन दिखाओ/छुपाओ */
+    private void onMvSendTapped() {
+        if (mvWeb == null) return;
+        String clean = cleanYoutubeUrl(mvWeb.getUrl());
+        if (clean != null) { sendCleanToRoom(clean); return; }
+        mvWeb.evaluateJavascript("(function(){return window.__pkMvToggle?window.__pkMvToggle():'none';})()", value -> {
+            boolean on = value != null && value.contains("on");
+            mvPickOn = on;
+            if (mvSendBtn != null) mvSendBtn.setText(on ? "✕  बटन छुपाएँ" : "▶  Room में भेजें  🪙");
+            if (on) Toast.makeText(this, "जिस वीडियो को रूम में चलाना है, उसके लाल \"▶ Room\" बटन को दबाइए", Toast.LENGTH_LONG).show();
+            else if (value != null && value.contains("none")) Toast.makeText(this, "पेज अभी लोड हो रहा है, थोड़ी देर बाद दबाइए", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private void resetPickLabel() {
+        mvPickOn = false;
+        if (mvSendBtn != null) mvSendBtn.setText("▶  Room में भेजें  🪙");
+    }
+
+    private void sendCleanToRoom(String clean) {
         closeMoreVideoPage();
         // ऐप के HTML को वही संदेश भेजते हैं जो पहले More Video का पेज भेजता था; कॉइन कटना और प्ले होना वहीं होता है
         final String js = "window.postMessage({type:'PARTY_ROOM_YOUTUBE_SELECTED',url:'" + clean + "'},'*');";
