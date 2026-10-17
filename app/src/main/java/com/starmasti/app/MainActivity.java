@@ -96,41 +96,44 @@ public class MainActivity extends AppCompatActivity {
     private static final String MV_PICK_JS =
             "(function(){ " +
             " if(window.__pkMv) return; window.__pkMv=1; " +
-            " var on=false, layer=null, btns={}; " +
+            " var on=false, timer=0; " +
             " function vid(h){ var s=String(h); var m=s.match(/[?&]v=([\\w-]{11})/)||s.match(/\\/shorts\\/([\\w-]{11})/); return m?m[1]:''; } " +
             " function onWatch(){ return /[?&]v=[\\w-]{11}/.test(location.href)||/\\/shorts\\//.test(location.href); } " +
-            " function layerEl(){ if(layer&&layer.isConnected) return layer; layer=document.createElement('div'); layer.id='pkMvLayer'; layer.style.cssText='position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:2147483647;'; document.documentElement.appendChild(layer); return layer; } " +
-            " function clearAll(){ if(layer) layer.innerHTML=''; btns={}; } " +
+            " function clearAll(){ var n=document.querySelectorAll('.pkMvBtn'); for(var i=0;i<n.length;i++){ if(n[i].parentNode) n[i].parentNode.removeChild(n[i]); } } " +
             " function mk(id,isShort){ " +
-            "  var b=document.createElement('button'); b.type='button'; b.textContent='▶ Room'; " +
-            "  b.style.cssText='position:absolute;pointer-events:auto;height:34px;padding:0 14px;border:0;border-radius:17px;background:#E11D48;color:#fff;font:800 13px/34px sans-serif;box-shadow:0 3px 10px rgba(0,0,0,.5);'; " +
+            "  var b=document.createElement('button'); b.type='button'; b.className='pkMvBtn'; b.textContent='▶ Room'; " +
+            "  b.style.cssText='position:absolute;top:8px;left:8px;z-index:3;height:32px;padding:0 13px;margin:0;border:0;border-radius:16px;background:linear-gradient(135deg,#FF3B5C,#B5179E);color:#fff;font:800 13px/32px sans-serif;border:2px solid rgba(255,255,255,.55);box-shadow:0 4px 12px rgba(0,0,0,.45);'; " +
             "  b.addEventListener('click',function(e){ e.preventDefault(); e.stopPropagation(); try{ AndroidMV.send('https://www.youtube.com/'+(isShort?'shorts/':'watch?v=')+id); }catch(x){} },true); " +
-            "  layerEl().appendChild(b); return b; " +
+            "  b.addEventListener('touchend',function(e){ e.stopPropagation(); },true); " +
+            "  b.addEventListener('pointerup',function(e){ e.stopPropagation(); },true); " +
+            "  return b; " +
             " } " +
             " function scan(){ " +
-            "  if(!on) return; " +
+            "  if(!on){ if(document.querySelector('.pkMvBtn')) clearAll(); return; } " +
             "  if(onWatch()){ on=false; clearAll(); return; } " +
-            "  var vh=window.innerHeight, vw=window.innerWidth, best={}; " +
-            "  var as=document.querySelectorAll('a[href*=\"/watch?v=\"],a[href*=\"/shorts/\"]'); " +
+            "  var as=document.querySelectorAll('a[href*=\"/watch?v=\"],a[href*=\"/shorts/\"]'), best={}; " +
             "  for(var i=0;i<as.length;i++){ " +
             "   var a=as[i], h=a.getAttribute('href')||'', v=vid(h); if(!v) continue; " +
             "   var r=a.getBoundingClientRect(); " +
-            "   if(r.width<110||r.height<60||r.bottom<60||r.top>vh-30||r.right<20||r.left>vw-20) continue; " +
+            "   if(r.width<110||r.height<60) continue; " +
             "   var ar=r.width*r.height; " +
-            "   if(!best[v]||ar>best[v].ar) best[v]={r:r,ar:ar,s:/\\/shorts\\//.test(h)}; " +
+            "   if(!best[v]||ar>best[v].ar) best[v]={a:a,ar:ar,s:/\\/shorts\\//.test(h)}; " +
             "  } " +
-            "  for(var k in btns){ if(!best[k]){ if(btns[k].parentNode) btns[k].parentNode.removeChild(btns[k]); delete btns[k]; } } " +
             "  for(var id in best){ " +
-            "   var o=best[id], b=btns[id]||(btns[id]=mk(id,o.s)); " +
-            "   var top=Math.min(Math.max(o.r.top+8,64),o.r.bottom-42); " +
-            "   b.style.top=Math.round(top)+'px'; b.style.left=Math.round(Math.max(o.r.left+8,4))+'px'; " +
+            "   var an=best[id].a; " +
+            "   if(an.querySelector(':scope > .pkMvBtn')) continue; " +
+            "   try{ if(getComputedStyle(an).position==='static') an.style.position='relative'; }catch(x){} " +
+            "   an.appendChild(mk(id,best[id].s)); " +
             "  } " +
             " } " +
+            " function later(){ if(timer) return; timer=setTimeout(function(){ timer=0; scan(); },250); } " +
+            " function onNav(){ on=false; clearAll(); } " +
             " window.__pkMvToggle=function(){ on=!on; if(!on) clearAll(); else scan(); return on?'on':'off'; }; " +
             " window.__pkMvOff=function(){ on=false; clearAll(); }; " +
-            " var t=0; function sched(){ if(t) return; t=requestAnimationFrame(function(){ t=0; scan(); }); } " +
-            " window.addEventListener('scroll',sched,true); window.addEventListener('touchmove',sched,true); window.addEventListener('resize',sched); " +
-            " setInterval(scan,350); " +
+            " ['pushState','replaceState'].forEach(function(k){ var o=history[k]; history[k]=function(){ var r=o.apply(this,arguments); setTimeout(onNav,0); return r; }; }); " +
+            " window.addEventListener('popstate',onNav); " +
+            " try{ new MutationObserver(function(){ if(on) later(); }).observe(document.documentElement,{childList:true,subtree:true}); }catch(x){} " +
+            " setInterval(scan,900); " +
             "})(); ";
 
     // More Video: अलग पूरे पेज में खुलने वाला दूसरा WebView
@@ -498,23 +501,47 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
         box.setGravity(Gravity.CENTER);
-        box.setBackgroundColor(Color.parseColor("#0F0F12"));
+        // रूम जैसा बैंगनी → गुलाबी ग्रेडिएंट
+        GradientDrawable bgGrad = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[]{Color.parseColor("#2B0A63"), Color.parseColor("#6D28D9"), Color.parseColor("#DB2777")});
+        box.setBackground(bgGrad);
         box.setClickable(true);
+
+        int logoRes = getResources().getIdentifier("splash_logo", "drawable", getPackageName());
+        if (logoRes != 0) {
+            ImageView logo = new ImageView(this);
+            logo.setImageResource(logoRes);
+            logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            box.addView(logo, new LinearLayout.LayoutParams((int) (96 * d), (int) (96 * d)));
+        }
+
+        TextView title = new TextView(this);
+        title.setText("More Video");
+        title.setTextColor(Color.WHITE);
+        title.setTextSize(26);
+        title.setTypeface(Typeface.create("sans-serif-black", Typeface.BOLD));
+        title.setLetterSpacing(0.04f);
+        title.setGravity(Gravity.CENTER);
+        title.setShadowLayer(10 * d, 0, 2 * d, Color.parseColor("#66000000"));
+        LinearLayout.LayoutParams lpTi = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lpTi.topMargin = (int) (14 * d);
+        box.addView(title, lpTi);
+
+        TextView t = new TextView(this);
+        t.setText("वीडियो लोड हो रहे हैं…");
+        t.setTextColor(Color.parseColor("#E9DDFF"));
+        t.setTextSize(13);
+        t.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams lpT = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lpT.topMargin = (int) (6 * d);
+        box.addView(t, lpT);
 
         ProgressBar pb = new ProgressBar(this);
         pb.setIndeterminate(true);
-        pb.setIndeterminateTintList(ColorStateList.valueOf(Color.parseColor("#FF2D55")));
-        box.addView(pb, new LinearLayout.LayoutParams((int) (44 * d), (int) (44 * d)));
-
-        TextView t = new TextView(this);
-        t.setText("More Video लोड हो रहा है…");
-        t.setTextColor(Color.WHITE);
-        t.setTextSize(14);
-        t.setTypeface(null, android.graphics.Typeface.BOLD);
-        t.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams lpT = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lpT.topMargin = (int) (14 * d);
-        box.addView(t, lpT);
+        pb.setIndeterminateTintList(ColorStateList.valueOf(Color.WHITE));
+        LinearLayout.LayoutParams lpPb = new LinearLayout.LayoutParams((int) (36 * d), (int) (36 * d));
+        lpPb.topMargin = (int) (22 * d);
+        box.addView(pb, lpPb);
         return box;
     }
 
@@ -572,7 +599,7 @@ public class MainActivity extends AppCompatActivity {
     // ---------------------------------------------------------------------------------------------
     //  More Video पेज: ऐप के ऊपर एक अलग WebView (असली YouTube, iframe वाली रोक नहीं लगती)
     //  नीचे लाल "Room में भेजें" बटन: जो वीडियो/Short खुला है उसका लिंक रूम में भेज देता है (कॉइन HTML वाला ऐप काटता है)
-    //  ऊपर दाएँ ✕ या फ़ोन का Back: बंद करने के लिए
+    //  बंद करने के लिए: फ़ोन का Back (YouTube में पीछे जाते-जाते आख़िर में पेज बंद हो जाता है)
     // ---------------------------------------------------------------------------------------------
     private void openMoreVideoPage(String url) {
         if (mvRoot != null) return;
@@ -628,34 +655,19 @@ public class MainActivity extends AppCompatActivity {
         send.setTypeface(null, android.graphics.Typeface.BOLD);
         send.setGravity(Gravity.CENTER);
         send.setPadding((int) (18 * d), 0, (int) (18 * d), 0);
-        GradientDrawable red = new GradientDrawable();
-        red.setColor(Color.parseColor("#E11D48"));
-        red.setCornerRadius(24 * d);
+        GradientDrawable red = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Color.parseColor("#FF3B5C"), Color.parseColor("#E11D48"), Color.parseColor("#B5179E")});
+        red.setCornerRadius(26 * d);
+        red.setStroke((int) (2 * d), Color.parseColor("#66FFFFFF"));
         send.setBackground(red);
-        send.setElevation(8 * d);
+        send.setElevation(10 * d);
+        send.setLetterSpacing(0.02f);
         FrameLayout.LayoutParams lpSend = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, (int) (46 * d));
         lpSend.gravity = Gravity.BOTTOM | Gravity.END;
         lpSend.setMargins(0, 0, (int) (14 * d), (int) (86 * d));
         send.setOnClickListener(v -> onMvSendTapped());
         mvSendBtn = send;
         mvRoot.addView(send, lpSend);
-
-        // ✕ बंद करें
-        TextView close = new TextView(this);
-        close.setText("✕");
-        close.setTextColor(Color.WHITE);
-        close.setTextSize(16);
-        close.setGravity(Gravity.CENTER);
-        GradientDrawable dark = new GradientDrawable();
-        dark.setShape(GradientDrawable.OVAL);
-        dark.setColor(Color.parseColor("#B3000000"));
-        close.setBackground(dark);
-        close.setElevation(8 * d);
-        FrameLayout.LayoutParams lpClose = new FrameLayout.LayoutParams((int) (38 * d), (int) (38 * d));
-        lpClose.gravity = Gravity.TOP | Gravity.END;
-        lpClose.setMargins(0, (int) (8 * d), (int) (8 * d), 0);
-        close.setOnClickListener(v -> closeMoreVideoPage());
-        mvRoot.addView(close, lpClose);
 
         ViewGroup content = findViewById(android.R.id.content);
         content.addView(mvRoot, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -705,6 +717,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void resetPickLabel() {
         mvPickOn = false;
+        if (mvWeb != null) mvWeb.evaluateJavascript("window.__pkMvOff&&window.__pkMvOff()", null);
         if (mvSendBtn != null) mvSendBtn.setText("▶  Room में भेजें  🪙");
     }
 
