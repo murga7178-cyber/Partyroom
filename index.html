@@ -2269,6 +2269,25 @@ html body #pkSignupModal .auth-card{max-height:88vh!important;}
 <div id="pkBoot" style="position:fixed;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;font-size:15px;color:#4a148c">
   <span class="loading-msg"><span class="spinner"></span> लोड हो रहा है...</span>
 </div>
+<script id="pkAppReadySignal">
+/* APK की "स्टार मस्ती" स्क्रीन तब तक रहती है जब तक असली पहली स्क्रीन (Home या Login) तैयार न हो जाए.
+   #pkBoot ("लोड हो रहा है...") के हटते ही ऐप को बता देते हैं. */
+(function(){
+  var fired=false, t0=Date.now();
+  function bootGone(){ var b=document.getElementById('pkBoot'); if(!b) return true; try{ return getComputedStyle(b).display==='none'; }catch(e){ return false; } }
+  function fire(){
+    if(fired) return; fired=true;
+    try{ if(window.Android&&typeof window.Android.appReady==='function') window.Android.appReady(); }catch(e){}
+  }
+  var iv=setInterval(function(){
+    if(fired){ clearInterval(iv); return; }
+    if(document.readyState==='complete' && bootGone()){
+      clearInterval(iv);
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ setTimeout(fire,150); }); }); /* पहली स्क्रीन पेंट होने तक थोड़ा रुकें */
+    } else if(Date.now()-t0>25000){ clearInterval(iv); fire(); }
+  },100);
+})();
+</script>
 <h2 id="profileNameText" style="display:none">—</h2>
 
 
@@ -14271,6 +14290,42 @@ tick();
     if(blk&&!blk.__yspWired){ blk.__yspWired=1; blk.addEventListener('click',function(e){ e.preventDefault(); toggle(); }); }
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+
+<!-- ===== YT CENTER PLAY: वीडियो के बीच में YouTube के लाल प्ले बटन पर टैप = नीचे वाले ▶ (±2s) बटन जैसा ही काम ===== -->
+<style id="ytCenterPlayCss">
+#ytCenterPlay{position:absolute;left:50%;top:50%;width:36%;height:40%;transform:translate(-50%,-50%);z-index:30;background:transparent;display:none;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+#ytCenterPlay.on{display:block;}
+</style>
+<script id="ytCenterPlayJs">
+(function(){
+  'use strict';
+  function $(i){return document.getElementById(i);}
+  function build(){
+    var card=document.querySelector('#partyYoutubeStage .yt-room-card'); if(!card) return null;
+    var c=$('ytCenterPlay'); if(c) return c;
+    c=document.createElement('div'); c.id='ytCenterPlay'; c.setAttribute('role','button'); c.setAttribute('aria-label','Play');
+    c.addEventListener('click',function(e){
+      e.preventDefault(); e.stopPropagation();
+      var b=document.querySelector('#ytSeekPad .ysp-play'); if(b) b.click(); /* ठीक वही बटन दबता है जो ±2s वाले पैड में है */
+    });
+    card.appendChild(c); return c;
+  }
+  /* सिर्फ़ तब दिखता (टैप पकड़ता) है जब वीडियो चल नहीं रहा; चलते समय YouTube के अपने कंट्रोल पहले जैसे काम करते हैं */
+  function tick(){
+    try{
+      var c=build(); if(!c) return;
+      var br=window.ytRoomBridge, r=$('prRoom');
+      var can=!!(br&&(br.canControl?br.canControl():br.host()));
+      var i=null; try{ i=br&&br.info(); }catch(_){}
+      var rp=(br&&br.roomPlaying&&!br.host())?br.roomPlaying():null;
+      var playing=(rp!==null&&rp!==undefined)?rp:!!(i&&i.state===1);
+      var vis=!!(can&&i&&!i.ad&&!playing&&r&&!r.classList.contains('party-gaming-layout')&&!r.classList.contains('party-cinema-layout'));
+      c.classList.toggle('on',vis);
+    }catch(e){}
+  }
+  setInterval(tick,400);
 })();
 </script>
 
