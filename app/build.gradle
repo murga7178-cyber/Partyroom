@@ -1,4 +1,10 @@
 plugins { id 'com.android.application' }
+
+/* हर नए बिल्ड पर versionCode अपने आप बढ़ता है (GitHub Actions का run number).
+   वर्कफ़्लो में: VERSION_CODE=${{ github.run_number }}
+   बिना वर्कफ़्लो (लोकल) बिल्ड में 1 रहेगा. */
+def vCode = (System.getenv('VERSION_CODE') ?: project.findProperty('versionCodeOverride') ?: '1').toString().toInteger()
+
 android {
     namespace 'com.starmasti.app'
     compileSdk 34
@@ -6,10 +12,35 @@ android {
         applicationId 'com.starmasti.app'   // पहले से Play Store पर ऐप है तो यहाँ वही package नाम लिखें
         minSdk 23
         targetSdk 34
-        versionCode 1
-        versionName '1.0'
+        versionCode vCode
+        versionName "1.0.${vCode}"
     }
-    buildTypes { release { minifyEnabled false } }
+
+    /* हर बार एक ही चाबी (keystore) से साइन होगा, तभी नया APK पुराने ऐप के ऊपर इंस्टॉल होता है.
+       चाबी की जानकारी GitHub Secrets से आती है (वर्कफ़्लो इन्हें environment में देता है):
+       KEYSTORE_FILE (फ़ाइल का रास्ता), KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD */
+    signingConfigs {
+        stable {
+            def ksPath = System.getenv('KEYSTORE_FILE')
+            if (ksPath && file(ksPath).exists()) {
+                storeFile file(ksPath)
+                storePassword System.getenv('KEYSTORE_PASSWORD')
+                keyAlias System.getenv('KEY_ALIAS')
+                keyPassword System.getenv('KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (signingConfigs.stable.storeFile != null) { signingConfig signingConfigs.stable }
+        }
+        debug {
+            // debug APK भी उसी चाबी से साइन हो, ताकि debug बिल्ड भी ऊपर से इंस्टॉल हो सके
+            if (signingConfigs.stable.storeFile != null) { signingConfig signingConfigs.stable }
+        }
+    }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
 dependencies {
