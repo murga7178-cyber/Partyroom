@@ -20,7 +20,24 @@ jobs:
         with:
           gradle-version: '8.7'
 
+      # हर बार एक ही चाबी से साइन करने के लिए: secret से keystore फ़ाइल बनाओ
+      - name: Restore signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::KEYSTORE_BASE64 secret नहीं मिला. GitHub > Settings > Secrets and variables > Actions में चारों secrets बनाइए."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/starmasti.jks"
+
       - name: Build debug APK
+        env:
+          KEYSTORE_FILE: ${{ runner.temp }}/starmasti.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          VERSION_CODE: ${{ github.run_number }}   # हर बिल्ड पर अपने आप बढ़ता है
         run: gradle assembleDebug --no-daemon
 
       - uses: actions/upload-artifact@v4
