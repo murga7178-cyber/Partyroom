@@ -7,13 +7,17 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.Window;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -274,18 +278,18 @@ public class MainActivity extends AppCompatActivity {
         int idC = getResources().getIdentifier("splash_cat", "drawable", getPackageName());
         View top = null;
         float pulseTo = 1.06f;
-        if (idE != 0 && idS != 0 && idC != 0) {
-            // तीन परतें: पीछे आइकन, उसके ऊपर तारा, सबसे ऊपर बिल्ली (तीनों एक ही नाप की पारदर्शी PNG)
+        if (idE != 0 && idS != 0) {
+            // परतें: पीछे आइकन, उसके ऊपर तारा, और (अगर splash_cat.png रखी हो तो) सबसे ऊपर बिल्ली. बिल्ली न रखें तो बिल्ली नहीं आएगी.
             splashSz = (int) (230 * d);
             FrameLayout stage = new FrameLayout(this);
             stage.setClipChildren(false);
             box.setClipChildren(false);
             splashEmblem = mkLayer(idE);
             splashStar = mkLayer(idS);
-            splashCat = mkLayer(idC);
+            splashCat = (idC != 0) ? mkLayer(idC) : null;
             stage.addView(splashEmblem, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             stage.addView(splashStar, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-            stage.addView(splashCat, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            if (splashCat != null) stage.addView(splashCat, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             box.addView(stage, new LinearLayout.LayoutParams(splashSz, splashSz));
             splashStage = stage;
             splashAnimated = true;
@@ -331,23 +335,111 @@ public class MainActivity extends AppCompatActivity {
         lpTitle.topMargin = (int) (18 * d);
         box.addView(title, lpTitle);
 
-        TextView sub = new TextView(this);
-        sub.setText("लोड हो रहा है…");
-        sub.setTextColor(Color.parseColor("#7B6A99"));
-        sub.setTextSize(13);
-        sub.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams lpSub = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lpSub.topMargin = (int) (6 * d);
-        box.addView(sub, lpSub);
-
-        ProgressBar pb = new ProgressBar(this);
-        pb.setIndeterminate(true);
-        pb.setIndeterminateTintList(ColorStateList.valueOf(Color.parseColor("#7C3AED")));
-        LinearLayout.LayoutParams lpPb = new LinearLayout.LayoutParams((int) (34 * d), (int) (34 * d));
-        lpPb.topMargin = (int) (22 * d);
-        box.addView(pb, lpPb);
+        // "लोड हो रहा है" की जगह: उछलते म्यूज़िक नोट्स और नाचते साउंड-बार
+        LinearLayout.LayoutParams lpMusic = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lpMusic.topMargin = (int) (26 * d);
+        box.addView(buildMusicLoader(
+                new int[]{Color.parseColor("#FF2D95"), Color.parseColor("#8A2BE2"), Color.parseColor("#FF8A00"), Color.parseColor("#7C3AED")},
+                Color.parseColor("#DB2777"), Color.parseColor("#7C3AED")), lpMusic);
         if (splashAnimated) startSplashAnim();
         return box;
+    }
+
+    /** नाचते साउंड-बार (equalizer): बार ऊपर-नीचे लहराते रहते हैं */
+    private static class EqView extends View {
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final RectF rect = new RectF();
+        private final int[] cols;
+        private final int n;
+        private float phase = 0f;
+        private ValueAnimator va;
+
+        EqView(Context c, int[] cols, int n) {
+            super(c);
+            this.cols = cols;
+            this.n = n;
+        }
+
+        @Override protected void onAttachedToWindow() {
+            super.onAttachedToWindow();
+            va = ValueAnimator.ofFloat(0f, (float) (Math.PI * 2));
+            va.setDuration(850);
+            va.setRepeatCount(ValueAnimator.INFINITE);
+            va.setInterpolator(new LinearInterpolator());
+            va.addUpdateListener(a -> { phase = (float) a.getAnimatedValue(); invalidate(); });
+            va.start();
+        }
+
+        @Override protected void onDetachedFromWindow() {
+            if (va != null) { va.cancel(); va = null; }
+            super.onDetachedFromWindow();
+        }
+
+        @Override protected void onDraw(Canvas canvas) {
+            int w = getWidth(), h = getHeight();
+            if (w == 0 || h == 0) return;
+            float bw = w / (n * 1.7f);
+            float gap = bw * 0.7f;
+            float total = n * bw + (n - 1) * gap;
+            float x = (w - total) / 2f;
+            for (int i = 0; i < n; i++) {
+                // हर बार की अलग लय: कोई ऊँचा, कोई नीचा, लगातार बदलता
+                float s = (float) (0.5 + 0.5 * Math.sin(phase * (1 + (i % 3) * 0.5f) + i * 1.1f));
+                float bh = h * (0.22f + 0.78f * s);
+                paint.setColor(cols[i % cols.length]);
+                rect.set(x, (h - bh) / 2f, x + bw, (h + bh) / 2f);
+                canvas.drawRoundRect(rect, bw / 2f, bw / 2f, paint);
+                x += bw + gap;
+            }
+        }
+    }
+
+    /** उछलता हुआ चित्र: view ऊपर-नीचे कूदता रहता है, स्क्रीन से हटते ही अपने आप रुक जाता है */
+    private void bounce(final View v, float amp, long delay) {
+        final ObjectAnimator a = ObjectAnimator.ofFloat(v, View.TRANSLATION_Y, 0f, -amp);
+        a.setDuration(360);
+        a.setStartDelay(delay);
+        a.setRepeatMode(ValueAnimator.REVERSE);
+        a.setRepeatCount(ValueAnimator.INFINITE);
+        a.setInterpolator(new DecelerateInterpolator());
+        v.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override public void onViewAttachedToWindow(View x) { }
+            @Override public void onViewDetachedFromWindow(View x) { a.cancel(); }
+        });
+        a.start();
+    }
+
+    /** लोडिंग की जगह: ♪ [साउंड-बार] ♫ — नोट्स बारी-बारी से उछलते हैं और बार नाचते हैं */
+    private View buildMusicLoader(int[] barColors, int note1Color, int note2Color) {
+        float d = getResources().getDisplayMetrics().density;
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER);
+        row.setClipChildren(false);
+
+        TextView n1 = new TextView(this);
+        n1.setText("♪");
+        n1.setTextSize(30);
+        n1.setTextColor(note1Color);
+        n1.setTypeface(Typeface.DEFAULT_BOLD);
+        row.addView(n1, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        EqView eq = new EqView(this, barColors, 7);
+        LinearLayout.LayoutParams lpEq = new LinearLayout.LayoutParams((int) (112 * d), (int) (46 * d));
+        lpEq.leftMargin = (int) (10 * d);
+        lpEq.rightMargin = (int) (10 * d);
+        row.addView(eq, lpEq);
+
+        TextView n2 = new TextView(this);
+        n2.setText("♫");
+        n2.setTextSize(30);
+        n2.setTextColor(note2Color);
+        n2.setTypeface(Typeface.DEFAULT_BOLD);
+        row.addView(n2, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        bounce(n1, 14 * d, 0);
+        bounce(n2, 14 * d, 180);   // दूसरा नोट आधी लय बाद उछलता है
+        return row;
     }
 
     private ImageView mkLayer(int res) {
@@ -377,9 +469,11 @@ public class MainActivity extends AppCompatActivity {
         splashStar.setTranslationX(-0.7f * sz);
         splashStar.setTranslationY(-1.0f * sz);
 
-        splashCat.setPivotX(0.755f * sz);   // पैरों के पास से झूलेगी
-        splashCat.setPivotY(0.957f * sz);
-        splashCat.setTranslationX(330 * d); // स्क्रीन के दाएँ बाहर से शुरू
+        if (splashCat != null) {
+            splashCat.setPivotX(0.755f * sz);   // पैरों के पास से झूलेगी
+            splashCat.setPivotY(0.957f * sz);
+            splashCat.setTranslationX(330 * d); // स्क्रीन के दाएँ बाहर से शुरू
+        }
 
         if (splashTitle != null) { splashTitle.setAlpha(0f); splashTitle.setTranslationY(14 * d); }
 
@@ -398,6 +492,8 @@ public class MainActivity extends AppCompatActivity {
                     sparkleBurst(0.372f * sz, 0.559f * sz, d);
                     if (splashTitle != null) splashTitle.animate().alpha(1f).translationY(0f).setDuration(500).start();
                 }).start();
+
+        if (splashCat == null) return;   // बिल्ली की फ़ोटो नहीं रखी तो यहीं रुक जाओ
 
         // 3) बिल्ली चलकर आती है (ऊपर-नीचे उछलते और हल्का झूलते कदम)
         final ObjectAnimator walk = ObjectAnimator.ofFloat(splashCat, View.TRANSLATION_X, 330 * d, 0f);
@@ -473,7 +569,8 @@ public class MainActivity extends AppCompatActivity {
     private void hideSplash() {
         if (splash == null) return;
         if (splashAnimated && splashStartMs > 0) {
-            long left = 2600 - (SystemClock.uptimeMillis() - splashStartMs);
+            long minMs = (splashCat != null) ? 2600 : 1800;   // बिल्ली के बिना थोड़ा कम
+            long left = minMs - (SystemClock.uptimeMillis() - splashStartMs);
             if (left > 0) {
                 if (!splashHidePending) { splashHidePending = true; splash.postDelayed(this::hideSplashNow, left); }
                 return;
@@ -527,21 +624,11 @@ public class MainActivity extends AppCompatActivity {
         lpTi.topMargin = (int) (14 * d);
         box.addView(title, lpTi);
 
-        TextView t = new TextView(this);
-        t.setText("वीडियो लोड हो रहे हैं…");
-        t.setTextColor(Color.parseColor("#E9DDFF"));
-        t.setTextSize(13);
-        t.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams lpT = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lpT.topMargin = (int) (6 * d);
-        box.addView(t, lpT);
-
-        ProgressBar pb = new ProgressBar(this);
-        pb.setIndeterminate(true);
-        pb.setIndeterminateTintList(ColorStateList.valueOf(Color.WHITE));
-        LinearLayout.LayoutParams lpPb = new LinearLayout.LayoutParams((int) (36 * d), (int) (36 * d));
-        lpPb.topMargin = (int) (22 * d);
-        box.addView(pb, lpPb);
+        LinearLayout.LayoutParams lpMusic = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lpMusic.topMargin = (int) (22 * d);
+        box.addView(buildMusicLoader(
+                new int[]{Color.WHITE, Color.parseColor("#FFD54F"), Color.parseColor("#FFB3E6"), Color.parseColor("#E9DDFF")},
+                Color.parseColor("#FFD54F"), Color.WHITE), lpMusic);
         return box;
     }
 
