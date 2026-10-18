@@ -14293,26 +14293,42 @@ tick();
 })();
 </script>
 
-<!-- ===== YT CENTER PLAY: वीडियो के बीच में YouTube के लाल प्ले बटन पर टैप = नीचे वाले ▶ (±2s) बटन जैसा ही काम ===== -->
+<!-- ===== YT CENTER PLAY: वीडियो की स्क्रीन पर टैप ===== -->
+<!-- चलते समय टैप → बीच में ⏸ बटन आता है (2.8 सेकंड), उस पर टैप → वीडियो रुक जाता है.
+     रुकने पर बीच में ▶ बटन टिका रहता है, उस पर (या स्क्रीन पर) टैप → फिर चालू. सब कुछ ±2s वाले पैड के ▶/⏸ बटन जैसा ही काम करता है.
+     फुल-स्क्रीन में यह बंद रहता है (वहाँ का अपना कंट्रोल चलता है). ऊपर की शीर्षक पट्टी और नीचे के YouTube बटन ढके नहीं जाते. -->
 <style id="ytCenterPlayCss">
-#ytCenterPlay{position:absolute;left:50%;top:50%;width:36%;height:40%;transform:translate(-50%,-50%);z-index:30;background:transparent;display:none;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+#ytCenterPlay{position:absolute;left:4%;right:4%;top:20%;bottom:24%;z-index:30;background:transparent;display:none;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 #ytCenterPlay.on{display:block;}
+#ytCenterPlay .ycp-b{position:absolute;left:50%;top:50%;width:62px;height:62px;margin:-31px 0 0 -31px;border-radius:50%;background:rgba(24,10,48,.66);border:2px solid rgba(255,255,255,.75);box-shadow:0 4px 16px rgba(0,0,0,.45),0 0 18px rgba(219,39,119,.5);display:none;align-items:center;justify-content:center;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);}
+#ytCenterPlay.showb .ycp-b{display:flex;}
+#ytCenterPlay .ycp-b svg{width:30px;height:30px;fill:#fff;display:block;}
 </style>
 <script id="ytCenterPlayJs">
 (function(){
   'use strict';
+  var PAUSE='<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg>';
+  var PLAY='<svg viewBox="0 0 24 24"><path d="M8 5.2v13.6a1 1 0 0 0 1.5.86l11-6.8a1 1 0 0 0 0-1.72l-11-6.8A1 1 0 0 0 8 5.2z"/></svg>';
+  var showUntil=0;
   function $(i){return document.getElementById(i);}
+  function inFs(){ var b=document.body; return !!(b&&(b.classList.contains('pk-yt-fs-on')||document.querySelector('#prRoom.pk-yt-full,#prRoom.pk-yt-fs')||document.fullscreenElement||document.webkitFullscreenElement)); }
+  function padClick(){ var b=document.querySelector('#ytSeekPad .ysp-play'); if(b) b.click(); }
   function build(){
     var card=document.querySelector('#partyYoutubeStage .yt-room-card'); if(!card) return null;
     var c=$('ytCenterPlay'); if(c) return c;
-    c=document.createElement('div'); c.id='ytCenterPlay'; c.setAttribute('role','button'); c.setAttribute('aria-label','Play');
+    c=document.createElement('div'); c.id='ytCenterPlay'; c.setAttribute('role','button'); c.setAttribute('aria-label','Play / Pause');
+    c.innerHTML='<div class="ycp-b"></div>';
     c.addEventListener('click',function(e){
       e.preventDefault(); e.stopPropagation();
-      var b=document.querySelector('#ytSeekPad .ysp-play'); if(b) b.click(); /* ठीक वही बटन दबता है जो ±2s वाले पैड में है */
+      var mode=c.getAttribute('data-mode');
+      var onBtn=!!(e.target&&e.target.closest&&e.target.closest('.ycp-b'));
+      if(mode==='playing'){
+        if(onBtn&&c.classList.contains('showb')){ showUntil=0; padClick(); }   /* ⏸ दबाया → रुक जाए */
+        else { showUntil=Date.now()+2800; c.classList.add('showb'); }          /* स्क्रीन दबाई → ⏸ बटन दिखे */
+      } else { showUntil=0; padClick(); }                                      /* रुका हो / शुरू न हुआ हो → चालू */
     });
     card.appendChild(c); return c;
   }
-  /* सिर्फ़ तब दिखता (टैप पकड़ता) है जब वीडियो चल नहीं रहा; चलते समय YouTube के अपने कंट्रोल पहले जैसे काम करते हैं */
   function tick(){
     try{
       var c=build(); if(!c) return;
@@ -14320,12 +14336,92 @@ tick();
       var can=!!(br&&(br.canControl?br.canControl():br.host()));
       var i=null; try{ i=br&&br.info(); }catch(_){}
       var rp=(br&&br.roomPlaying&&!br.host())?br.roomPlaying():null;
-      var playing=(rp!==null&&rp!==undefined)?rp:!!(i&&i.state===1);
-      var vis=!!(can&&i&&!i.ad&&!playing&&r&&!r.classList.contains('party-gaming-layout')&&!r.classList.contains('party-cinema-layout'));
+      var st=(i&&typeof i.state==='number')?i.state:null;
+      var playing=(rp!==null&&rp!==undefined)?!!rp:(st===1||st===3);
+      var paused=!playing&&st===2;
+      var vis=!!(can&&i&&!i.ad&&!inFs()&&r&&!r.classList.contains('party-gaming-layout')&&!r.classList.contains('party-cinema-layout'));
       c.classList.toggle('on',vis);
+      c.setAttribute('data-mode',playing?'playing':(paused?'paused':'idle'));
+      var showb=vis&&(paused||(playing&&Date.now()<showUntil));
+      c.classList.toggle('showb',showb);
+      var want=playing?'pause':'play', b=c.firstChild;
+      if(b&&b.getAttribute('data-i')!==want){ b.setAttribute('data-i',want); b.innerHTML=playing?PAUSE:PLAY; }
     }catch(e){}
   }
-  setInterval(tick,400);
+  setInterval(tick,250);
+})();
+</script>
+
+<!-- ===== YT FULLSCREEN: फुल-स्क्रीन में लाल ✕ (सबके लिए YouTube बंद) कभी न दिखे; बाहर आते ही पहले जैसा ===== -->
+<style id="ytFsNoRedXCss">
+html body.pk-yt-fs-on #ytRoomCloseVideoBtn,html body.pk-yt-fs-on .yt-room-close-video,html body.pk-yt-fs-on .yt-room-hostbar,
+html body #prRoom.pk-yt-full #ytRoomCloseVideoBtn,html body #prRoom.pk-yt-full .yt-room-close-video,html body #prRoom.pk-yt-full .yt-room-hostbar,
+html body #prRoom.pk-yt-fs #ytRoomCloseVideoBtn,html body #prRoom.pk-yt-fs .yt-room-close-video,html body #prRoom.pk-yt-fs .yt-room-hostbar,
+html body.pk-yt-fs-on [data-pkfs-hide],html body #prRoom.pk-yt-full [data-pkfs-hide],html body #prRoom.pk-yt-fs [data-pkfs-hide]{
+  display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;width:0!important;height:0!important;overflow:hidden!important;
+}
+</style>
+<script id="ytFsNoRedXJs">
+(function(){
+  'use strict';
+  function isRed(css){
+    if(!css) return false; var re=/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/g, m;
+    while((m=re.exec(css))){ var r=+m[1],g=+m[2],b=+m[3]; if(r>=170&&g<=125&&b<=125) return true; }
+    return false;
+  }
+  function inFs(){ return document.body&&(document.body.classList.contains('pk-yt-fs-on')||document.querySelector('#prRoom.pk-yt-full,#prRoom.pk-yt-fs')); }
+  function sweep(){
+    try{
+      if(!inFs()) return;
+      var list=document.querySelectorAll('button,[role="button"],.yt-room-close-video,[aria-label*="Close"],[aria-label*="close"],[aria-label*="बंद"]');
+      for(var i=0;i<list.length;i++){
+        var e=list[i]; if(e.hasAttribute('data-pkfs-hide')) continue;
+        if(e.id==='pkYtFsX'||e.id==='pkYtFsLeave'||(e.closest&&e.closest('#pkYtFs,#pkYtFsRot'))) continue; /* फुल-स्क्रीन से बाहर निकलने वाले अपने बटन रहने दो */
+        var t=(e.textContent||'').trim(); if(t!=='\u2715'&&t!=='\u00D7'&&t!=='\u2716'&&t!=='\u2716\uFE0F') continue;
+        var cs=getComputedStyle(e);
+        if(isRed(cs.backgroundColor)||isRed(cs.backgroundImage)) e.setAttribute('data-pkfs-hide','1');
+      }
+    }catch(x){}
+  }
+  setInterval(sweep,300);
+})();
+</script>
+
+<!-- ===== FULLSCREEN NO RED X (v2): फुल-स्क्रीन में कैसा भी लाल क्रॉस (बटन/div/svg/emoji) कभी न दिखे; छोटी स्क्रीन में पहले जैसा ===== -->
+<style id="ytFsNoRedX2Css">
+[data-pkfs-hide2]{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
+</style>
+<script id="ytFsNoRedX2Js">
+(function(){
+  'use strict';
+  var CROSS={'\u2715':1,'\u2716':1,'\u00D7':1,'\u274C':1,'\u274E':1,'\u2717':1,'\u2718':1,'x':1,'X':1};
+  var SEL='button,[role="button"],[aria-label],[title],[class*="close"],[class*="Close"],[id*="close"],[id*="Close"],[id$="X"],[class$="-x"]';
+  function isRed(css){
+    if(!css) return false; var re=/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/g, m;
+    while((m=re.exec(css))){ var r=+m[1],g=+m[2],b=+m[3]; if(r>=170&&g<=125&&b<=125) return true; }
+    return false;
+  }
+  function inFs(){ var b=document.body; return !!(b&&(b.classList.contains('pk-yt-fs-on')||document.querySelector('#prRoom.pk-yt-full,#prRoom.pk-yt-fs')||document.fullscreenElement||document.webkitFullscreenElement)); }
+  function ours(e){ return !!(e.closest&&e.closest('#pkYtFs,#pkYtFsRot,#pkYtFsBar,#pkYtFsX,#pkYtFsLeave,#ytCenterPlay')); }
+  var busy=0;
+  function sweep(){
+    busy=0;
+    try{
+      if(!inFs()){ var h=document.querySelectorAll('[data-pkfs-hide2]'); for(var k=0;k<h.length;k++) h[k].removeAttribute('data-pkfs-hide2'); return; }
+      var list=document.querySelectorAll(SEL);
+      for(var i=0;i<list.length;i++){
+        var e=list[i]; if(e.hasAttribute('data-pkfs-hide2')||ours(e)) continue;
+        var r=e.getBoundingClientRect(); if(!r.width||!r.height||r.width>72||r.height>72) continue;
+        var cs=getComputedStyle(e); if(cs.display==='none'||cs.visibility==='hidden') continue;
+        if(!(isRed(cs.backgroundColor)||isRed(cs.backgroundImage))) continue;
+        var t=(e.textContent||'').trim(), lab=(e.getAttribute('aria-label')||'')+' '+(e.getAttribute('title')||'');
+        if(CROSS[t]||/close|\u092C\u0902\u0926|\u092C\u093E\u0939\u0930|exit|cross/i.test(lab)||(t===''&&e.querySelector('svg,img'))) e.setAttribute('data-pkfs-hide2','1');
+      }
+    }catch(x){}
+  }
+  function later(){ if(busy) return; busy=requestAnimationFrame(sweep); }
+  setInterval(sweep,200);
+  try{ new MutationObserver(function(){ if(inFs()) later(); }).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class']}); }catch(x){}
 })();
 </script>
 
