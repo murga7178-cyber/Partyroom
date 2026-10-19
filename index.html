@@ -18862,7 +18862,7 @@ html body #prRoom.pk-yt-full:has(#pkPrerollBox) #ytRoomViewerSeekBar{visibility:
   bottom:calc(10px + env(safe-area-inset-bottom,0px))!important;
   height:auto!important;min-height:62px;padding:7px 8px!important;
   border-radius:24px!important;border:1px solid rgba(124,58,237,.14)!important;
-  background:rgba(255,255,255,.92)!important;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+  background:rgba(255,255,255,.985)!important;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
   box-shadow:0 10px 30px rgba(76,29,149,.20),0 2px 8px rgba(76,29,149,.10)!important;
   gap:6px;
 }
@@ -18903,6 +18903,78 @@ html body #prRoom.pk-yt-full:has(#pkPrerollBox) #ytRoomViewerSeekBar{visibility:
 @media (prefers-reduced-motion:reduce){#partyRoomBottomDock #partyRoomMuteDockBtn{animation:none;}}
 
 </style>
+<script id="pkUiPolishJs">
+(function(){
+  'use strict';
+  /* ---- फ्रेम: उसका अंदर का गोल छेद ठीक फोटो के किनारे पर बैठे (हर फ्रेम की नाप अपने आप निकलती है) ---- */
+  var cache={};
+  function measure(src,cb){
+    if(cache.hasOwnProperty(src)) return cb(cache[src]);
+    var im=new Image();
+    im.onload=function(){
+      var r=null;
+      try{
+        var N=200,c=document.createElement('canvas'); c.width=c.height=N;
+        var x=c.getContext('2d',{willReadFrequently:true}); x.drawImage(im,0,0,N,N);
+        var d=x.getImageData(0,0,N,N).data, half=N/2, rs=[];
+        for(var k=0;k<24;k++){
+          var a=k*Math.PI/12, dx=Math.cos(a), dy=Math.sin(a), q=0;
+          while(q<half){
+            var px=Math.round(half+dx*q), py=Math.round(half+dy*q);
+            if(px<0||py<0||px>=N||py>=N) break;
+            if(d[(py*N+px)*4+3]>60) break;
+            q++;
+          }
+          rs.push(q);
+        }
+        rs.sort(function(m,n){return m-n;});
+        var med=rs[Math.floor(rs.length/2)];
+        r=(med>20&&med<half-2)?med/half:null;
+      }catch(e){ r=null; }
+      cache[src]=r; cb(r);
+    };
+    im.onerror=function(){ cache[src]=null; cb(null); };
+    im.src=src;
+  }
+  function fit(img){
+    var src=img.getAttribute('src'); if(!src||img.__pkFit===src) return; img.__pkFit=src;
+    measure(src,function(r){
+      if(!r) return;
+      var pct=Math.max(104,Math.min(175,(100/r)*0.985));   /* 0.985: फ्रेम फोटो के किनारे को हल्का सा ढके, बीच में खाली जगह न रहे */
+      img.style.setProperty('width',pct+'%','important');
+      img.style.setProperty('height',pct+'%','important');
+    });
+  }
+  function scan(){ var l=document.querySelectorAll('#pkPPavatar .pp-frame'); for(var i=0;i<l.length;i++) fit(l[i]); }
+  setInterval(scan,600);
+
+  /* ---- प्रोफ़ाइल की ID: दबाने पर कॉपी (पहले कोई क्लिक जुड़ा ही नहीं था) ---- */
+  function toastMsg(t){ try{ if(typeof toast==='function') toast(t); }catch(e){} }
+  function copyText(val){
+    val=String(val||''); if(!val) return;
+    function done(ok){ toastMsg(ok?'✔ ID कॉपी हो गई':'कॉपी नहीं हो पाई'); }
+    try{ if(window.Android&&typeof window.Android.copyText==='function'){ window.Android.copyText(val); done(true); return; } }catch(e){}
+    function legacy(){
+      try{
+        var ta=document.createElement('textarea'); ta.value=val; ta.setAttribute('readonly','');
+        ta.style.cssText='position:fixed;left:0;top:0;opacity:0;'; document.body.appendChild(ta);
+        ta.focus(); ta.select(); ta.setSelectionRange(0,val.length);
+        var ok=document.execCommand('copy'); document.body.removeChild(ta); done(!!ok);
+      }catch(e){ done(false); }
+    }
+    try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(val).then(function(){done(true);},legacy); return; } }catch(e){}
+    legacy();
+  }
+  document.addEventListener('click',function(e){
+    var t=e.target&&e.target.closest?e.target.closest('#pkPPid'):null; if(!t) return;
+    var m=String(t.textContent||'').match(/ID\s*:?\s*([A-Za-z0-9_-]+)/);
+    if(m){ e.preventDefault(); copyText(m[1]); }
+  },true);
+  /* रूम कार्ड की 📋 कॉपी भी इसी पक्के तरीके से */
+  var _old=window.prCopyText;
+  window.prCopyText=function(v){ try{ if(window.Android&&typeof window.Android.copyText==='function'){ copyText(v); return; } }catch(e){} if(typeof _old==='function') _old(v); else copyText(v); };
+})();
+</script>
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
