@@ -17,6 +17,8 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.Window;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -659,6 +661,16 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void showUnityInterstitialAd() {
             runOnUiThread(() -> unityInter.requestShow());
+        }
+        /** ID जैसी चीज़ें पक्के तौर पर कॉपी करने के लिए (WebView में वेब का clipboard कई बार नहीं चलता) */
+        @JavascriptInterface
+        public void copyText(final String text) {
+            runOnUiThread(() -> {
+                try {
+                    ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("text", String.valueOf(text)));
+                } catch (Exception ignored) { }
+            });
         }
         /** HTML का पहला पेज (Home/Login) तैयार होने पर बुलाया जाता है; तब "स्टार मस्ती" स्क्रीन हटती है */
         @JavascriptInterface
