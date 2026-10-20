@@ -16,7 +16,12 @@ import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.text.InputType;
+import android.webkit.CookieManager;
 import android.view.Window;
+import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -42,6 +47,7 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -142,11 +148,84 @@ public class MainActivity extends AppCompatActivity {
             " setInterval(scan,900); " +
             "})(); ";
 
+    /** ब्राउज़िंग मोड: किसी भी साइट पर दिख रहे वीडियो पर "🔗 Copy" और (YouTube हो तो) "▶ Room" बटन */
+    private static final String BW_PICK_JS =
+            "(function(){ " +
+            " if(window.__pkBw) return; window.__pkBw=1; " +
+            " var on=false, layer=null, items={}, timer=0; " +
+            " function yid(u){ var m=String(u).match(/(?:youtube\\.com\\/(?:watch\\?(?:[^#]*&)?v=|shorts\\/|embed\\/|live\\/)|youtu\\.be\\/)([\\w-]{11})/); return m?m[1]:''; } " +
+            " function yurl(u){ var i=yid(u); if(!i) return ''; return /\\/shorts\\//.test(String(u))?'https://www.youtube.com/shorts/'+i:'https://www.youtube.com/watch?v='+i; } " +
+            " function abs(h){ try{ return new URL(h,location.href).href; }catch(e){ return ''; } } " +
+            " function isVid(h){ return /\\.(mp4|webm|m3u8|mov|mkv)(\\?|#|$)/i.test(h)||!!yid(h)||/vimeo\\.com\\/\\d+|dailymotion\\.com\\/video|facebook\\.com\\/[^\\s]*\\/videos\\//i.test(h); } " +
+            " function layerEl(){ if(layer&&layer.isConnected) return layer; layer=document.createElement('div'); layer.id='pkBwLayer'; layer.style.cssText='position:absolute;left:0;top:0;width:0;height:0;z-index:2147483647;'; document.documentElement.appendChild(layer); return layer; } " +
+            " function clearAll(){ if(layer) layer.innerHTML=''; items={}; } " +
+            " function btn(label,bg,fn){ " +
+            "  var b=document.createElement('button'); b.type='button'; b.textContent=label; " +
+            "  b.style.cssText='height:34px;padding:0 13px;margin:0;border:2px solid rgba(255,255,255,.65);border-radius:17px;background:'+bg+';color:#fff;font:800 13px/30px sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.45);'; " +
+            "  b.addEventListener('click',function(e){ e.preventDefault(); e.stopPropagation(); fn(); },true); " +
+            "  b.addEventListener('touchend',function(e){ e.stopPropagation(); },true); " +
+            "  b.addEventListener('pointerup',function(e){ e.stopPropagation(); },true); " +
+            "  return b; " +
+            " } " +
+            " function mk(url){ " +
+            "  var g=document.createElement('div'); g.style.cssText='position:absolute;display:flex;gap:6px;align-items:center;'; " +
+            "  g.appendChild(btn('🔗 Copy','linear-gradient(135deg,#0EA5E9,#6366F1)',function(){ try{ AndroidMV.copy(url); }catch(x){} })); " +
+            "  if(yid(url)) g.appendChild(btn('▶ Room','linear-gradient(135deg,#FF3B5C,#B5179E)',function(){ try{ AndroidMV.send(yurl(url)); }catch(x){} })); " +
+            "  layerEl().appendChild(g); return g; " +
+            " } " +
+            " function collect(){ " +
+            "  var res={}, vh=window.innerHeight; " +
+            "  function add(url,el){ " +
+            "   if(!url) return; var r=el.getBoundingClientRect(); " +
+            "   if(r.width<90||r.height<50||r.bottom<-1200||r.top>vh+1200) return; " +
+            "   var key=yid(url)||url, ar=r.width*r.height; " +
+            "   if(!res[key]||ar>res[key].ar) res[key]={url:yid(url)?yurl(url):url,r:r,ar:ar}; " +
+            "  } " +
+            "  var vs=document.querySelectorAll('video'); " +
+            "  for(var i=0;i<vs.length;i++){ var v=vs[i], u=v.currentSrc||v.src||''; if(!u||/^blob:/.test(u)) u=yid(location.href)?location.href:''; add(u,v); } " +
+            "  var fs=document.querySelectorAll('iframe[src]'); " +
+            "  for(var k=0;k<fs.length;k++){ var s=fs[k].src; if(isVid(s)) add(s,fs[k]); } " +
+            "  var as=document.querySelectorAll('a[href]'); " +
+            "  for(var n=0;n<as.length;n++){ var h=abs(as[n].getAttribute('href')||''); if(h&&isVid(h)) add(h,as[n]); } " +
+            "  return res; " +
+            " } " +
+            " function scan(){ " +
+            "  if(!on){ if(layer&&layer.firstChild) clearAll(); return; } " +
+            "  var res=collect(), sx=window.pageXOffset||0, sy=window.pageYOffset||0; " +
+            "  for(var key in items){ if(!res[key]){ var o=items[key]; if(o.parentNode) o.parentNode.removeChild(o); delete items[key]; } } " +
+            "  for(var k2 in res){ " +
+            "   var it=res[k2], g=items[k2]||(items[k2]=mk(it.url)); " +
+            "   g.style.left=Math.round(Math.max(it.r.left+sx+8,sx+4))+'px'; g.style.top=Math.round(it.r.top+sy+8)+'px'; " +
+            "  } " +
+            " } " +
+            " function later(){ if(timer) return; timer=setTimeout(function(){ timer=0; scan(); },200); } " +
+            " function onNav(){ on=false; clearAll(); } " +
+            " window.__pkBwToggle=function(){ on=!on; if(!on) clearAll(); else scan(); return on?'on':'off'; }; " +
+            " window.__pkBwOff=function(){ on=false; clearAll(); }; " +
+            " ['pushState','replaceState'].forEach(function(k){ var o=history[k]; history[k]=function(){ var r=o.apply(this,arguments); setTimeout(onNav,0); return r; }; }); " +
+            " window.addEventListener('popstate',onNav); " +
+            " try{ new MutationObserver(function(){ if(on) later(); }).observe(document.documentElement,{childList:true,subtree:true}); }catch(x){} " +
+            " setInterval(scan,700); " +
+            "})(); ";
+
+    // ब्राउज़िंग मोड के सर्च इंजन
+    private static final String[] ENG_LABELS = {"🔎 Google", "🦆 DuckDuckGo", "🅱️ Bing", "🦁 Brave", "🌐 Yandex", "🔒 Startpage", "🌱 Ecosia", "🇪🇺 Qwant", "🔍 Mojeek"};
+    private static final String[] ENG_URLS = {
+            "https://www.google.com/search?q=", "https://duckduckgo.com/?q=", "https://www.bing.com/search?q=",
+            "https://search.brave.com/search?q=", "https://yandex.com/search/?text=", "https://www.startpage.com/sp/search?query=",
+            "https://www.ecosia.org/search?q=", "https://www.qwant.com/?q=", "https://www.mojeek.com/search?q="};
+
     // More Video: अलग पूरे पेज में खुलने वाला दूसरा WebView
     private FrameLayout mvRoot;
     private WebView mvWeb;
     private View mvLoading;      // More Video खुलते समय की लोडिंग
     private TextView mvSendBtn;  // नीचे का लाल बटन
+    private FrameLayout mvChooser;     // "ब्राउज़िंग / YouTube" चुनाव वाली खिड़की
+    private int mvMode = 0;            // 0 = YouTube, 1 = ब्राउज़िंग
+    private EditText bwInput;
+    private TextView bwEngineBtn, bwPlaceholder;
+    private View bwProgress;
+    private int bwEngine = 1;          // DuckDuckGo पहले से चुना
     private boolean mvPickOn = false;
     private View splash;         // ऐप खुलते समय "स्टार मस्ती" वाली स्क्रीन
     // शुरुआती एनिमेशन: आइकन उभरता है, तारा उड़कर आता है, बिल्ली चलकर आती है और डांस करती है
@@ -243,6 +322,7 @@ public class MainActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override public void handleOnBackPressed() {
                 if (customView != null) hideCustomView();
+                else if (mvChooser != null) closeMvChooser();
                 else if (mvWeb != null) {
                     if (mvWeb.canGoBack()) mvWeb.goBack();
                     else closeMoreVideoPage();
@@ -686,6 +766,18 @@ public class MainActivity extends AppCompatActivity {
 
     /** YouTube पेज पर आए "▶ Room" बटन इसे बुलाते हैं (सिर्फ़ youtube का वीडियो/Short लिंक मान्य) */
     private class MvBridge {
+        /** ब्राउज़िंग मोड का "🔗 Copy": सिर्फ़ http/https लिंक कॉपी होता है */
+        @JavascriptInterface
+        public void copy(final String url) {
+            if (url == null || !url.matches("(?i)^https?://\\S+$")) return;
+            runOnUiThread(() -> {
+                try {
+                    ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("video", url));
+                    Toast.makeText(MainActivity.this, "✅ लिंक कॉपी हो गया", Toast.LENGTH_SHORT).show();
+                } catch (Exception ignored) { }
+            });
+        }
         @JavascriptInterface
         public void send(final String url) {
             runOnUiThread(() -> {
@@ -700,8 +792,309 @@ public class MainActivity extends AppCompatActivity {
     //  नीचे लाल "Room में भेजें" बटन: जो वीडियो/Short खुला है उसका लिंक रूम में भेज देता है (कॉइन HTML वाला ऐप काटता है)
     //  बंद करने के लिए: फ़ोन का Back (YouTube में पीछे जाते-जाते आख़िर में पेज बंद हो जाता है)
     // ---------------------------------------------------------------------------------------------
+    /** More Video दबाने पर पहले चुनाव: ब्राउज़िंग से वीडियो लाओ, या सीधे YouTube */
     private void openMoreVideoPage(String url) {
+        if (mvRoot != null || mvChooser != null) return;
+        final String u = (url == null || url.trim().isEmpty()) ? "https://www.youtube.com/" : url;
+        final float d = getResources().getDisplayMetrics().density;
+
+        FrameLayout dim = new FrameLayout(this);
+        dim.setBackgroundColor(Color.parseColor("#D9140A2E"));
+        dim.setClickable(true);
+        dim.setOnClickListener(v -> closeMvChooser());
+
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding((int) (18 * d), (int) (20 * d), (int) (18 * d), (int) (14 * d));
+        GradientDrawable cardBg = new GradientDrawable();
+        cardBg.setColor(Color.parseColor("#FFFFFF"));
+        cardBg.setCornerRadius(28 * d);
+        card.setBackground(cardBg);
+        card.setElevation(16 * d);
+        card.setClickable(true);
+
+        TextView title = new TextView(this);
+        title.setText("More Video");
+        title.setTextColor(Color.parseColor("#4C1D95"));
+        title.setTextSize(24);
+        title.setTypeface(Typeface.create("sans-serif-black", Typeface.BOLD));
+        title.setGravity(Gravity.CENTER);
+        card.addView(title);
+
+        TextView sub = new TextView(this);
+        sub.setText("आप क्या करना चाहते हैं?");
+        sub.setTextColor(Color.parseColor("#7B6A99"));
+        sub.setTextSize(14);
+        sub.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams lpSub = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lpSub.topMargin = (int) (4 * d);
+        lpSub.bottomMargin = (int) (14 * d);
+        card.addView(sub, lpSub);
+
+        card.addView(makeChoice("🌐  ब्राउज़िंग से वीडियो लाएँ", "सर्च करो, वीडियो चुनो, लिंक कॉपी करो या रूम में भेजो",
+                "#7C3AED", "#DB2777", () -> { closeMvChooser(); startBrowseMode(); }));
+        card.addView(makeChoice("▶  YouTube में जाओ", "सीधे YouTube खोलो और वीडियो चुनो",
+                "#FF3B5C", "#B5179E", () -> { closeMvChooser(); startYoutubeMode(u); }));
+
+        TextView cancel = new TextView(this);
+        cancel.setText("बंद करें");
+        cancel.setTextColor(Color.parseColor("#7B6A99"));
+        cancel.setTextSize(14);
+        cancel.setTypeface(Typeface.DEFAULT_BOLD);
+        cancel.setGravity(Gravity.CENTER);
+        cancel.setPadding(0, (int) (10 * d), 0, (int) (4 * d));
+        cancel.setOnClickListener(v -> closeMvChooser());
+        card.addView(cancel);
+
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.gravity = Gravity.CENTER;
+        lp.setMargins((int) (22 * d), 0, (int) (22 * d), 0);
+        dim.addView(card, lp);
+
+        ViewGroup content = findViewById(android.R.id.content);
+        content.addView(dim, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mvChooser = dim;
+    }
+
+    private LinearLayout makeChoice(String title, String sub, String c1, String c2, final Runnable action) {
+        float d = getResources().getDisplayMetrics().density;
+        LinearLayout b = new LinearLayout(this);
+        b.setOrientation(LinearLayout.VERTICAL);
+        b.setPadding((int) (18 * d), (int) (14 * d), (int) (18 * d), (int) (14 * d));
+        GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Color.parseColor(c1), Color.parseColor(c2)});
+        g.setCornerRadius(20 * d);
+        b.setBackground(g);
+        b.setElevation(6 * d);
+        TextView t = new TextView(this);
+        t.setText(title);
+        t.setTextColor(Color.WHITE);
+        t.setTextSize(17);
+        t.setTypeface(Typeface.DEFAULT_BOLD);
+        b.addView(t);
+        TextView s = new TextView(this);
+        s.setText(sub);
+        s.setTextColor(Color.parseColor("#F3E8FF"));
+        s.setTextSize(12);
+        LinearLayout.LayoutParams lpS = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lpS.topMargin = (int) (3 * d);
+        b.addView(s, lpS);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = (int) (12 * d);
+        b.setLayoutParams(lp);
+        b.setOnClickListener(v -> action.run());
+        return b;
+    }
+
+    private void closeMvChooser() {
+        if (mvChooser == null) return;
+        try {
+            ViewGroup p = (ViewGroup) mvChooser.getParent();
+            if (p != null) p.removeView(mvChooser);
+        } catch (Exception ignored) { }
+        mvChooser = null;
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    //  ब्राउज़िंग मोड: ऊपर सर्च इंजन + सर्च बॉक्स, नीचे पूरा वेब पेज (असली, iframe नहीं, इसलिए सर्च चलता है).
+    //  नीचे "🎬 वीडियो चुनो": स्क्रीन के वीडियो पर "🔗 Copy" और (YouTube हो तो) "▶ Room" बटन आते हैं.
+    // ---------------------------------------------------------------------------------------------
+    private void startBrowseMode() {
         if (mvRoot != null) return;
+        mvMode = 1;
+        final float d = getResources().getDisplayMetrics().density;
+
+        mvRoot = new FrameLayout(this);
+        mvRoot.setBackgroundColor(Color.parseColor("#0F0F12"));
+        mvRoot.setClickable(true);
+
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        mvRoot.addView(col, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        // ऊपर की पट्टी
+        LinearLayout bar = new LinearLayout(this);
+        bar.setOrientation(LinearLayout.HORIZONTAL);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setPadding((int) (10 * d), (int) (8 * d), (int) (10 * d), (int) (8 * d));
+        bar.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Color.parseColor("#4C1D95"), Color.parseColor("#9D1FB3"), Color.parseColor("#DB2777")}));
+
+        bwEngineBtn = new TextView(this);
+        bwEngineBtn.setText(ENG_LABELS[bwEngine] + " ▾");
+        bwEngineBtn.setTextColor(Color.WHITE);
+        bwEngineBtn.setTextSize(12);
+        bwEngineBtn.setTypeface(Typeface.DEFAULT_BOLD);
+        bwEngineBtn.setSingleLine(true);
+        bwEngineBtn.setGravity(Gravity.CENTER);
+        bwEngineBtn.setPadding((int) (10 * d), 0, (int) (10 * d), 0);
+        GradientDrawable engBg = new GradientDrawable();
+        engBg.setColor(Color.parseColor("#33FFFFFF"));
+        engBg.setCornerRadius(22 * d);
+        bwEngineBtn.setBackground(engBg);
+        bwEngineBtn.setOnClickListener(v -> showEnginePicker());
+        bar.addView(bwEngineBtn, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, (int) (40 * d)));
+
+        bwInput = new EditText(this);
+        bwInput.setHint("वेब पर खोजें…");
+        bwInput.setHintTextColor(Color.parseColor("#9A8DB5"));
+        bwInput.setTextColor(Color.parseColor("#1F1235"));
+        bwInput.setTextSize(14);
+        bwInput.setSingleLine(true);
+        bwInput.setInputType(InputType.TYPE_CLASS_TEXT);
+        bwInput.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
+        bwInput.setPadding((int) (14 * d), 0, (int) (14 * d), 0);
+        GradientDrawable inBg = new GradientDrawable();
+        inBg.setColor(Color.WHITE);
+        inBg.setCornerRadius(22 * d);
+        bwInput.setBackground(inBg);
+        bwInput.setOnEditorActionListener((v, actionId, ev) -> { doBrowseSearch(); return true; });
+        LinearLayout.LayoutParams lpIn = new LinearLayout.LayoutParams(0, (int) (40 * d), 1f);
+        lpIn.leftMargin = (int) (8 * d);
+        lpIn.rightMargin = (int) (8 * d);
+        bar.addView(bwInput, lpIn);
+
+        TextView go = new TextView(this);
+        go.setText("खोजें");
+        go.setTextColor(Color.WHITE);
+        go.setTextSize(13);
+        go.setTypeface(Typeface.DEFAULT_BOLD);
+        go.setGravity(Gravity.CENTER);
+        go.setPadding((int) (14 * d), 0, (int) (14 * d), 0);
+        GradientDrawable goBg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Color.parseColor("#FF4D4D"), Color.parseColor("#FF9A3C")});
+        goBg.setCornerRadius(22 * d);
+        go.setBackground(goBg);
+        go.setOnClickListener(v -> doBrowseSearch());
+        bar.addView(go, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, (int) (40 * d)));
+        col.addView(bar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        // लोड होते समय पतली पट्टी
+        android.widget.ProgressBar pb = new android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        pb.setIndeterminate(true);
+        pb.setIndeterminateTintList(ColorStateList.valueOf(Color.parseColor("#FF9A3C")));
+        pb.setVisibility(View.GONE);
+        bwProgress = pb;
+        col.addView(pb, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (int) (3 * d)));
+
+        // नीचे: वेब पेज + शुरुआती संदेश + वीडियो चुनो बटन
+        FrameLayout body = new FrameLayout(this);
+        col.addView(body, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+
+        mvWeb = new WebView(this);
+        mvWeb.setBackgroundColor(Color.WHITE);
+        WebSettings ws = mvWeb.getSettings();
+        ws.setJavaScriptEnabled(true);
+        ws.setDomStorageEnabled(true);
+        ws.setMediaPlaybackRequiresUserGesture(false);
+        ws.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+        try { CookieManager.getInstance().setAcceptThirdPartyCookies(mvWeb, true); } catch (Exception ignored) { }
+        mvWeb.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageStarted(WebView view, String u, android.graphics.Bitmap fav) {
+                if (bwProgress != null) bwProgress.setVisibility(View.VISIBLE);
+            }
+            @Override
+            public void onPageFinished(WebView view, String u) {
+                if (bwProgress != null) bwProgress.setVisibility(View.GONE);
+                view.evaluateJavascript(MV_HOLD_JS, null);   // YouTube वीडियो खुले तो पहले क्लिक पर अपने आप न चले
+                view.evaluateJavascript(BW_PICK_JS, null);   // वीडियो चुनने वाली स्क्रिप्ट
+            }
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                if (request != null && request.isForMainFrame() && bwProgress != null) bwProgress.setVisibility(View.GONE);
+            }
+            @Override
+            public void doUpdateVisitedHistory(WebView view, String u, boolean isReload) {
+                resetPickLabel();
+            }
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                String sc = request.getUrl().getScheme();
+                return !("http".equals(sc) || "https".equals(sc));   // youtube:// intent:// जैसे लिंक अनदेखे
+            }
+        });
+        mvWeb.setWebChromeClient(chrome);
+        mvWeb.addJavascriptInterface(new MvBridge(), "AndroidMV");
+        body.addView(mvWeb, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        bwPlaceholder = new TextView(this);
+        bwPlaceholder.setText("🔎\nऊपर कुछ सर्च करें\nरिज़ल्ट इसी पेज में खुलेंगे");
+        bwPlaceholder.setTextColor(Color.parseColor("#6B5B8A"));
+        bwPlaceholder.setTextSize(16);
+        bwPlaceholder.setGravity(Gravity.CENTER);
+        bwPlaceholder.setBackgroundColor(Color.parseColor("#F7F4FF"));
+        bwPlaceholder.setClickable(true);
+        body.addView(bwPlaceholder, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        TextView pick = new TextView(this);
+        pick.setText("🎬  वीडियो चुनो");
+        pick.setTextColor(Color.WHITE);
+        pick.setTextSize(15);
+        pick.setTypeface(Typeface.DEFAULT_BOLD);
+        pick.setGravity(Gravity.CENTER);
+        pick.setPadding((int) (22 * d), 0, (int) (22 * d), 0);
+        GradientDrawable pickBg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Color.parseColor("#FF3B5C"), Color.parseColor("#E11D48"), Color.parseColor("#B5179E")});
+        pickBg.setCornerRadius(26 * d);
+        pickBg.setStroke((int) (2 * d), Color.parseColor("#66FFFFFF"));
+        pick.setBackground(pickBg);
+        pick.setElevation(10 * d);
+        pick.setOnClickListener(v -> onBwPickTapped());
+        mvSendBtn = pick;
+        FrameLayout.LayoutParams lpPick = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, (int) (50 * d));
+        lpPick.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        lpPick.bottomMargin = (int) (22 * d);
+        body.addView(pick, lpPick);
+
+        ViewGroup content = findViewById(android.R.id.content);
+        content.addView(mvRoot, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        bwInput.requestFocus();
+    }
+
+    private void showEnginePicker() {
+        new AlertDialog.Builder(this)
+                .setTitle("सर्च इंजन चुनें")
+                .setItems(ENG_LABELS, (dlg, which) -> {
+                    bwEngine = which;
+                    if (bwEngineBtn != null) bwEngineBtn.setText(ENG_LABELS[bwEngine] + " ▾");
+                })
+                .show();
+    }
+
+    private void doBrowseSearch() {
+        if (bwInput == null || mvWeb == null) return;
+        String q = bwInput.getText().toString().trim();
+        if (q.isEmpty()) return;
+        try {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) imm.hideSoftInputFromWindow(bwInput.getWindowToken(), 0);
+        } catch (Exception ignored) { }
+        String url;
+        if (q.matches("(?i)^https?://\\S+$")) url = q;
+        else if (q.matches("^[\\w-]+(\\.[\\w-]+)+(/\\S*)?$")) url = "https://" + q;
+        else url = ENG_URLS[bwEngine] + Uri.encode(q);
+        if (bwPlaceholder != null) bwPlaceholder.setVisibility(View.GONE);
+        resetPickLabel();
+        mvWeb.loadUrl(url);
+    }
+
+    /** नीचे का "🎬 वीडियो चुनो": स्क्रीन के वीडियो पर बटन दिखाओ/छुपाओ */
+    private void onBwPickTapped() {
+        if (mvWeb == null) return;
+        mvWeb.evaluateJavascript("(function(){return window.__pkBwToggle?window.__pkBwToggle():'none';})()", value -> {
+            boolean on = "\"on\"".equals(value);
+            boolean none = "\"none\"".equals(value);
+            mvPickOn = on;
+            if (mvSendBtn != null) mvSendBtn.setText(on ? "✕  बटन छुपाएँ" : "🎬  वीडियो चुनो");
+            if (on) Toast.makeText(this, "जिस वीडियो को चाहिए उसके बटन दबाइए: 🔗 Copy = लिंक कॉपी, ▶ Room = रूम में चलाओ", Toast.LENGTH_LONG).show();
+            else if (none) Toast.makeText(this, "पहले कुछ सर्च करके पेज खोलिए", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private void startYoutubeMode(String url) {
+        if (mvRoot != null) return;
+        mvMode = 0;
         if (url == null || url.trim().isEmpty()) url = "https://www.youtube.com/";
 
         mvRoot = new FrameLayout(this);
@@ -781,11 +1174,20 @@ public class MainActivity extends AppCompatActivity {
             content.removeView(mvRoot);
             if (mvWeb != null) { mvRoot.removeView(mvWeb); mvWeb.destroy(); }
         } catch (Exception ignored) { }
+        try {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null && bwInput != null) imm.hideSoftInputFromWindow(bwInput.getWindowToken(), 0);
+        } catch (Exception ignored) { }
         mvWeb = null;
         mvRoot = null;
         mvLoading = null;
         mvSendBtn = null;
         mvPickOn = false;
+        bwInput = null;
+        bwEngineBtn = null;
+        bwPlaceholder = null;
+        bwProgress = null;
+        mvMode = 0;
     }
 
     /** खुले हुए YouTube पेज से वीडियो/Short की ID निकालकर साफ़ लिंक बनाता है; न मिले तो null */
@@ -806,18 +1208,18 @@ public class MainActivity extends AppCompatActivity {
         String clean = cleanYoutubeUrl(mvWeb.getUrl());
         if (clean != null) { sendCleanToRoom(clean); return; }
         mvWeb.evaluateJavascript("(function(){return window.__pkMvToggle?window.__pkMvToggle():'none';})()", value -> {
-            boolean on = value != null && value.contains("on");
+            boolean on = "\"on\"".equals(value);
             mvPickOn = on;
             if (mvSendBtn != null) mvSendBtn.setText(on ? "✕  बटन छुपाएँ" : "▶  Room में भेजें  🪙");
             if (on) Toast.makeText(this, "जिस वीडियो को रूम में चलाना है, उसके लाल \"▶ Room\" बटन को दबाइए", Toast.LENGTH_LONG).show();
-            else if (value != null && value.contains("none")) Toast.makeText(this, "पेज अभी लोड हो रहा है, थोड़ी देर बाद दबाइए", Toast.LENGTH_SHORT).show();
+            else if ("\"none\"".equals(value)) Toast.makeText(this, "पेज अभी लोड हो रहा है, थोड़ी देर बाद दबाइए", Toast.LENGTH_SHORT).show();
         });
     }
 
     private void resetPickLabel() {
         mvPickOn = false;
-        if (mvWeb != null) mvWeb.evaluateJavascript("window.__pkMvOff&&window.__pkMvOff()", null);
-        if (mvSendBtn != null) mvSendBtn.setText("▶  Room में भेजें  🪙");
+        if (mvWeb != null) mvWeb.evaluateJavascript("window.__pkMvOff&&window.__pkMvOff();window.__pkBwOff&&window.__pkBwOff()", null);
+        if (mvSendBtn != null) mvSendBtn.setText(mvMode == 1 ? "🎬  वीडियो चुनो" : "▶  Room में भेजें  🪙");
     }
 
     private void sendCleanToRoom(String clean) {
