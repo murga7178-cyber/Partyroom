@@ -3064,6 +3064,13 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
               <input type="file" id="ytRoomUploadInput" accept="video/*" style="display:none;">
             </div>
             <div class="yt-room-input-hint">Load: सब लोग video चला सकते हैं • Q: queue में जोड़ें</div>
+            <div class="yt-room-input-label" style="margin-top:8px">सीधा वीडियो लिंक (ब्राउज़िंग से कॉपी किया हुआ)</div>
+            <div class="yt-room-url-row" id="ytRoomDirectRow">
+              <input id="ytRoomDirectInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="url" placeholder="Video link paste करें (.mp4 जैसा)...">
+              <button type="button" id="ytRoomDirectPasteBtn" title="कॉपी किया हुआ लिंक चिपकाएँ" style="width:44px!important;background:rgba(255,255,255,.10)!important;border:1px solid rgba(255,255,255,.16)!important;font-size:17px!important;">📋</button>
+              <button type="button" id="ytRoomDirectLoadBtn" style="background:linear-gradient(135deg,#7c3aed,#db2777)!important;">Load</button>
+            </div>
+            <div class="yt-room-input-hint">सिर्फ़ Host चला सकता है • YouTube के अलावा किसी भी साइट का सीधा video link (.mp4 / .webm / .m3u8)</div>
           </div>
           <div class="yt-room-input-tools" id="ytRoomInputTools">
             <div class="yt-room-tools-top">
@@ -11930,6 +11937,51 @@ function ytRoomHandleUploadFile(file){
     }).catch(function(){ if(bar)bar.style.display='none'; toast('❌ Video link नहीं मिला'); });
   });
 }
+/* ---- सीधा video link (ब्राउज़िंग से कॉपी किया हुआ): उसी synced HTML5 player में चलता है जिसमें गैलरी वाली video चलती है ---- */
+function ytRoomDirectIsYouTube(u){ return /(?:youtube\.com|youtu\.be)\//i.test(String(u||'')); }
+function ytRoomDirectCanLoad(){ try{ refreshHostState(); }catch(e){} return !!ytRoomHost(); }
+function ytRoomLoadDirect(url,title){
+  url=String(url||'').trim();
+  if(!/^https?:\/\/\S+$/i.test(url)){ toast('❌ सही video link डालें',1800); return false; }
+  if(!ytRoomDirectCanLoad()){ toast('👑 सिर्फ Host video चला सकता है',1800); return false; }
+  if(ytRoomDirectIsYouTube(url)){            /* YouTube का लिंक हो तो ऊपर वाले पुराने तरीके से */
+    var yi=$('ytRoomInput'); if(yi){ yi.value=url; try{ yi.dispatchEvent(new Event('input',{bubbles:true})); }catch(e){} }
+    if(typeof window.ytRoomBottomSubmit==='function') window.ytRoomBottomSubmit();
+    return true;
+  }
+  toast('🔎 Video जाँच रहा हूँ...',1500);
+  var t=document.createElement('video'), done=false, tm=0;
+  t.preload='metadata'; t.muted=true; t.setAttribute('playsinline','');
+  function fin(ok){
+    if(done)return; done=true; clearTimeout(tm);
+    try{ t.removeAttribute('src'); t.load(); }catch(e){}
+    if(ok){
+      var nm=title||decodeURIComponent((url.split('?')[0].split('/').pop()||'Video')).slice(0,60)||'Video';
+      playUploadedVideo(url,nm,{addedBy:'You'});
+    } else toast('❌ यह सीधा video link नहीं है, इसलिए नहीं चल सकता. ब्राउज़िंग में video के ▶ Room बटन से लें, या .mp4 जैसा सीधा link डालें',4200);
+  }
+  t.addEventListener('loadedmetadata',function(){ fin(true); });
+  t.addEventListener('error',function(){ fin(false); });
+  tm=setTimeout(function(){ fin(false); },9000);
+  t.src=url;
+  return true;
+}
+window.ytRoomLoadDirect=ytRoomLoadDirect;
+window.ytRoomDirectCanLoad=ytRoomDirectCanLoad;
+function ytRoomDirectReadClipboard(cb){
+  try{ if(window.Android&&typeof window.Android.getClipboardText==='function'){ cb(String(window.Android.getClipboardText()||'')); return; } }catch(e){}
+  try{ if(navigator.clipboard&&navigator.clipboard.readText){ navigator.clipboard.readText().then(function(v){cb(String(v||''));},function(){cb('');}); return; } }catch(e){}
+  cb('');
+}
+(function initYtRoomDirect(){
+  var inp=$('ytRoomDirectInput'), pasteB=$('ytRoomDirectPasteBtn'), loadB=$('ytRoomDirectLoadBtn');
+  if(!inp||!loadB) return;
+  function go(){ var v=(inp.value||'').trim(); if(v){ if(ytRoomLoadDirect(v)) inp.value=''; return; }
+    ytRoomDirectReadClipboard(function(c){ c=(c||'').trim(); if(/^https?:\/\//i.test(c)){ inp.value=c; if(ytRoomLoadDirect(c)) inp.value=''; } else toast('पहले कोई video link कॉपी करें या यहाँ paste करें',2200); }); }
+  loadB.addEventListener('click',go);
+  inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); go(); } });
+  if(pasteB) pasteB.addEventListener('click',function(){ ytRoomDirectReadClipboard(function(c){ c=(c||'').trim(); if(c){ inp.value=c; } else toast('Clipboard में कोई link नहीं मिला',1800); }); });
+})();
 (function initYtRoomUpload(){
   var btn=document.getElementById('ytRoomUploadBtn'), inp=document.getElementById('ytRoomUploadInput'), lv=document.getElementById('ytRoomLocalVideo');
   if(btn&&inp){
@@ -13933,6 +13985,17 @@ html:has(#cinemaGharModal:not([style*="display: none"])) body{background:var(--p
     var d=e&&e.data;
     if(!d||d.type!=='PARTY_ROOM_YOUTUBE_SELECTED'||!d.url)return;
     mvCharge(d.url).then(function(ok){ if(ok) mvPlay(d); });
+  });
+  /* ब्राउज़िंग से चुना सीधा video (YouTube नहीं): सिर्फ़ Host, और YouTube/Video Mode में; कॉइन उसी हिसाब से कटते हैं */
+  window.addEventListener('message',function(e){
+    var d=e&&e.data;
+    if(!d||d.type!=='PARTY_ROOM_DIRECT_VIDEO_SELECTED'||!d.url)return;
+    try{
+      if(!window.cinemaRoomId){ mvToast('पहले किसी रूम में जाइए'); return; }
+      if(String(window.__partyRoomMode||'chat')==='chat'){ mvToast('Video के लिए रूम को YouTube Mode में कीजिए'); return; }
+      if(typeof window.ytRoomDirectCanLoad==='function'&&!window.ytRoomDirectCanLoad()){ mvToast('👑 सिर्फ Host video चला सकता है'); return; }
+    }catch(_){}
+    mvCharge(d.url).then(function(ok){ if(!ok) return; closeMoreVideo(); setTimeout(function(){ try{ window.ytRoomLoadDirect(String(d.url)); }catch(_){} },80); });
   });
   function mvPlay(d){
     /* Chatting Mode: वीडियो नहीं, सिर्फ़ गाना (audio) चलेगा। YouTube section/room में कुछ load या share नहीं होता। */
