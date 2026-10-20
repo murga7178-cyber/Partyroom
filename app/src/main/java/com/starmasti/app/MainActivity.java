@@ -62,6 +62,8 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.WindowCompat;
 import androidx.webkit.WebViewAssetLoader;
 
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -150,63 +152,65 @@ public class MainActivity extends AppCompatActivity {
 
     /** ब्राउज़िंग मोड: किसी भी साइट पर दिख रहे वीडियो पर "🔗 Copy" और (YouTube हो तो) "▶ Room" बटन */
     private static final String BW_PICK_JS =
-            "(function(){ " +
-            " if(window.__pkBw) return; window.__pkBw=1; " +
-            " var on=false, layer=null, items={}, timer=0; " +
-            " function yid(u){ var m=String(u).match(/(?:youtube\\.com\\/(?:watch\\?(?:[^#]*&)?v=|shorts\\/|embed\\/|live\\/)|youtu\\.be\\/)([\\w-]{11})/); return m?m[1]:''; } " +
-            " function yurl(u){ var i=yid(u); if(!i) return ''; return /\\/shorts\\//.test(String(u))?'https://www.youtube.com/shorts/'+i:'https://www.youtube.com/watch?v='+i; } " +
-            " function abs(h){ try{ return new URL(h,location.href).href; }catch(e){ return ''; } } " +
-            " function isVid(h){ return /\\.(mp4|webm|m3u8|mov|mkv)(\\?|#|$)/i.test(h)||!!yid(h)||/vimeo\\.com\\/\\d+|dailymotion\\.com\\/video|facebook\\.com\\/[^\\s]*\\/videos\\//i.test(h); } " +
-            " function layerEl(){ if(layer&&layer.isConnected) return layer; layer=document.createElement('div'); layer.id='pkBwLayer'; layer.style.cssText='position:absolute;left:0;top:0;width:0;height:0;z-index:2147483647;'; document.documentElement.appendChild(layer); return layer; } " +
-            " function clearAll(){ if(layer) layer.innerHTML=''; items={}; } " +
-            " function btn(label,bg,fn){ " +
-            "  var b=document.createElement('button'); b.type='button'; b.textContent=label; " +
-            "  b.style.cssText='height:34px;padding:0 13px;margin:0;border:2px solid rgba(255,255,255,.65);border-radius:17px;background:'+bg+';color:#fff;font:800 13px/30px sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.45);'; " +
-            "  b.addEventListener('click',function(e){ e.preventDefault(); e.stopPropagation(); fn(); },true); " +
-            "  b.addEventListener('touchend',function(e){ e.stopPropagation(); },true); " +
-            "  b.addEventListener('pointerup',function(e){ e.stopPropagation(); },true); " +
-            "  return b; " +
-            " } " +
-            " function mk(url){ " +
-            "  var g=document.createElement('div'); g.style.cssText='position:absolute;display:flex;gap:6px;align-items:center;'; " +
-            "  g.appendChild(btn('🔗 Copy','linear-gradient(135deg,#0EA5E9,#6366F1)',function(){ try{ AndroidMV.copy(url); }catch(x){} })); " +
+            "(function(){  " +
+            " if(window.__pkBw) return; window.__pkBw=1;  " +
+            " var on=false, layer=null, items={}, timer=0;  " +
+            " function yid(u){ var m=String(u).match(/(?:youtube\\.com\\/(?:watch\\?(?:[^#]*&)?v=|shorts\\/|embed\\/|live\\/)|youtu\\.be\\/)([\\w-]{11})/); return m?m[1]:''; }  " +
+            " function yurl(u){ var i=yid(u); if(!i) return ''; return /\\/shorts\\//.test(String(u))?'https://www.youtube.com/shorts/'+i:'https://www.youtube.com/watch?v='+i; }  " +
+            " function abs(h){ try{ return new URL(h,location.href).href; }catch(e){ return ''; } }  " +
+            " function isMedia(h){ return /\\.(mp4|webm|m3u8|mov|mkv|ogg)(\\?|#|$)/i.test(String(h)); } " +
+            " function isVid(h){ return /\\.(mp4|webm|m3u8|mov|mkv)(\\?|#|$)/i.test(h)||!!yid(h)||/vimeo\\.com\\/\\d+|dailymotion\\.com\\/video|facebook\\.com\\/[^\\s]*\\/videos\\//i.test(h); }  " +
+            " function layerEl(){ if(layer&&layer.isConnected) return layer; layer=document.createElement('div'); layer.id='pkBwLayer'; layer.style.cssText='position:absolute;left:0;top:0;width:0;height:0;z-index:2147483647;'; document.documentElement.appendChild(layer); return layer; }  " +
+            " function clearAll(){ if(layer) layer.innerHTML=''; items={}; }  " +
+            " function btn(label,bg,fn){  " +
+            "  var b=document.createElement('button'); b.type='button'; b.textContent=label;  " +
+            "  b.style.cssText='height:34px;padding:0 13px;margin:0;border:2px solid rgba(255,255,255,.65);border-radius:17px;background:'+bg+';color:#fff;font:800 13px/30px sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.45);';  " +
+            "  b.addEventListener('click',function(e){ e.preventDefault(); e.stopPropagation(); fn(); },true);  " +
+            "  b.addEventListener('touchend',function(e){ e.stopPropagation(); },true);  " +
+            "  b.addEventListener('pointerup',function(e){ e.stopPropagation(); },true);  " +
+            "  return b;  " +
+            " }  " +
+            " function mk(url,direct){  " +
+            "  var g=document.createElement('div'); g.style.cssText='position:absolute;display:flex;gap:6px;align-items:center;';  " +
+            "  g.appendChild(btn('🔗 Copy','linear-gradient(135deg,#0EA5E9,#6366F1)',function(){ try{ AndroidMV.copy(url); }catch(x){} }));  " +
             "  if(yid(url)) g.appendChild(btn('▶ Room','linear-gradient(135deg,#FF3B5C,#B5179E)',function(){ try{ AndroidMV.send(yurl(url)); }catch(x){} })); " +
-            "  layerEl().appendChild(g); return g; " +
-            " } " +
-            " function collect(){ " +
-            "  var res={}, vh=window.innerHeight; " +
-            "  function add(url,el){ " +
-            "   if(!url) return; var r=el.getBoundingClientRect(); " +
-            "   if(r.width<90||r.height<50||r.bottom<-1200||r.top>vh+1200) return; " +
-            "   var key=yid(url)||url, ar=r.width*r.height; " +
-            "   if(!res[key]||ar>res[key].ar) res[key]={url:yid(url)?yurl(url):url,r:r,ar:ar}; " +
-            "  } " +
-            "  var vs=document.querySelectorAll('video'); " +
-            "  for(var i=0;i<vs.length;i++){ var v=vs[i], u=v.currentSrc||v.src||''; if(!u||/^blob:/.test(u)) u=yid(location.href)?location.href:''; add(u,v); } " +
-            "  var fs=document.querySelectorAll('iframe[src]'); " +
-            "  for(var k=0;k<fs.length;k++){ var s=fs[k].src; if(isVid(s)) add(s,fs[k]); } " +
-            "  var as=document.querySelectorAll('a[href]'); " +
-            "  for(var n=0;n<as.length;n++){ var h=abs(as[n].getAttribute('href')||''); if(h&&isVid(h)) add(h,as[n]); } " +
-            "  return res; " +
-            " } " +
-            " function scan(){ " +
-            "  if(!on){ if(layer&&layer.firstChild) clearAll(); return; } " +
-            "  var res=collect(), sx=window.pageXOffset||0, sy=window.pageYOffset||0; " +
-            "  for(var key in items){ if(!res[key]){ var o=items[key]; if(o.parentNode) o.parentNode.removeChild(o); delete items[key]; } } " +
-            "  for(var k2 in res){ " +
-            "   var it=res[k2], g=items[k2]||(items[k2]=mk(it.url)); " +
-            "   g.style.left=Math.round(Math.max(it.r.left+sx+8,sx+4))+'px'; g.style.top=Math.round(it.r.top+sy+8)+'px'; " +
-            "  } " +
-            " } " +
-            " function later(){ if(timer) return; timer=setTimeout(function(){ timer=0; scan(); },200); } " +
-            " function onNav(){ on=false; clearAll(); } " +
-            " window.__pkBwToggle=function(){ on=!on; if(!on) clearAll(); else scan(); return on?'on':'off'; }; " +
-            " window.__pkBwOff=function(){ on=false; clearAll(); }; " +
-            " ['pushState','replaceState'].forEach(function(k){ var o=history[k]; history[k]=function(){ var r=o.apply(this,arguments); setTimeout(onNav,0); return r; }; }); " +
-            " window.addEventListener('popstate',onNav); " +
-            " try{ new MutationObserver(function(){ if(on) later(); }).observe(document.documentElement,{childList:true,subtree:true}); }catch(x){} " +
-            " setInterval(scan,700); " +
-            "})(); ";
+            "  else if(direct) g.appendChild(btn('▶ Room','linear-gradient(135deg,#FF3B5C,#B5179E)',function(){ try{ AndroidMV.sendDirect(url); }catch(x){} }));  " +
+            "  layerEl().appendChild(g); return g;  " +
+            " }  " +
+            " function collect(){  " +
+            "  var res={}, vh=window.innerHeight;  " +
+            "  function add(url,el,dir){  " +
+            "   if(!url) return; var r=el.getBoundingClientRect();  " +
+            "   if(r.width<90||r.height<50||r.bottom<-1200||r.top>vh+1200) return;  " +
+            "   var key=yid(url)||url, ar=r.width*r.height;  " +
+            "   if(!res[key]||ar>res[key].ar) res[key]={url:yid(url)?yurl(url):url,r:r,ar:ar,direct:!!dir&&!yid(url)};  " +
+            "  }  " +
+            "  var vs=document.querySelectorAll('video');  " +
+            "  for(var i=0;i<vs.length;i++){ var v=vs[i], u=v.currentSrc||v.src||''; var isDir=!!u&&!/^blob:/.test(u); if(!u||/^blob:/.test(u)) u=yid(location.href)?location.href:''; add(u,v,isDir); }  " +
+            "  var fs=document.querySelectorAll('iframe[src]');  " +
+            "  for(var k=0;k<fs.length;k++){ var s=fs[k].src; if(isVid(s)) add(s,fs[k]); }  " +
+            "  var as=document.querySelectorAll('a[href]');  " +
+            "  for(var n=0;n<as.length;n++){ var h=abs(as[n].getAttribute('href')||''); if(h&&isVid(h)) add(h,as[n],isMedia(h)); }  " +
+            "  return res;  " +
+            " }  " +
+            " function scan(){  " +
+            "  if(!on){ if(layer&&layer.firstChild) clearAll(); return; }  " +
+            "  var res=collect(), sx=window.pageXOffset||0, sy=window.pageYOffset||0;  " +
+            "  for(var key in items){ if(!res[key]){ var o=items[key]; if(o.parentNode) o.parentNode.removeChild(o); delete items[key]; } }  " +
+            "  for(var k2 in res){  " +
+            "   var it=res[k2], g=items[k2]||(items[k2]=mk(it.url,it.direct));  " +
+            "   g.style.left=Math.round(Math.max(it.r.left+sx+8,sx+4))+'px'; g.style.top=Math.round(it.r.top+sy+8)+'px';  " +
+            "  }  " +
+            " }  " +
+            " function later(){ if(timer) return; timer=setTimeout(function(){ timer=0; scan(); },200); }  " +
+            " function onNav(){ on=false; clearAll(); }  " +
+            " window.__pkBwToggle=function(){ on=!on; if(!on) clearAll(); else scan(); return on?'on':'off'; };  " +
+            " window.__pkBwOff=function(){ on=false; clearAll(); };  " +
+            " ['pushState','replaceState'].forEach(function(k){ var o=history[k]; history[k]=function(){ var r=o.apply(this,arguments); setTimeout(onNav,0); return r; }; });  " +
+            " window.addEventListener('popstate',onNav);  " +
+            " try{ new MutationObserver(function(){ if(on) later(); }).observe(document.documentElement,{childList:true,subtree:true}); }catch(x){}  " +
+            " setInterval(scan,700);  " +
+            "})();  ";
 
     // ब्राउज़िंग मोड के सर्च इंजन
     private static final String[] ENG_LABELS = {"🔎 Google", "🦆 DuckDuckGo", "🅱️ Bing", "🦁 Brave", "🌐 Yandex", "🔒 Startpage", "🌱 Ecosia", "🇪🇺 Qwant", "🔍 Mojeek"};
@@ -743,6 +747,18 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(() -> unityInter.requestShow());
         }
         /** ID जैसी चीज़ें पक्के तौर पर कॉपी करने के लिए (WebView में वेब का clipboard कई बार नहीं चलता) */
+        /** रूम के "📋 Paste" बटन के लिए: कॉपी किया हुआ लिंक पढ़ता है */
+        @JavascriptInterface
+        public String getClipboardText() {
+            try {
+                ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                if (cm != null && cm.hasPrimaryClip() && cm.getPrimaryClip() != null && cm.getPrimaryClip().getItemCount() > 0) {
+                    CharSequence t = cm.getPrimaryClip().getItemAt(0).coerceToText(MainActivity.this);
+                    return t == null ? "" : t.toString();
+                }
+            } catch (Exception ignored) { }
+            return "";
+        }
         @JavascriptInterface
         public void copyText(final String text) {
             runOnUiThread(() -> {
@@ -777,6 +793,12 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "✅ लिंक कॉपी हो गया", Toast.LENGTH_SHORT).show();
                 } catch (Exception ignored) { }
             });
+        }
+        /** ब्राउज़िंग से चुना सीधा video (YouTube नहीं): रूम के HTML को संदेश भेजता है; कॉइन काटना और चलाना वहीं होता है */
+        @JavascriptInterface
+        public void sendDirect(final String url) {
+            if (url == null || !url.matches("(?i)^https?://\\S+$")) return;
+            runOnUiThread(() -> sendDirectToRoom(url));
         }
         @JavascriptInterface
         public void send(final String url) {
@@ -1220,6 +1242,12 @@ public class MainActivity extends AppCompatActivity {
         mvPickOn = false;
         if (mvWeb != null) mvWeb.evaluateJavascript("window.__pkMvOff&&window.__pkMvOff();window.__pkBwOff&&window.__pkBwOff()", null);
         if (mvSendBtn != null) mvSendBtn.setText(mvMode == 1 ? "🎬  वीडियो चुनो" : "▶  Room में भेजें  🪙");
+    }
+
+    private void sendDirectToRoom(String url) {
+        closeMoreVideoPage();
+        final String js = "window.postMessage({type:'PARTY_ROOM_DIRECT_VIDEO_SELECTED',url:" + JSONObject.quote(url) + "},'*');";
+        webView.evaluateJavascript(js, null);
     }
 
     private void sendCleanToRoom(String clean) {
