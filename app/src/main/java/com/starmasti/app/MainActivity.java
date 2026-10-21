@@ -64,6 +64,10 @@ import androidx.webkit.WebViewAssetLoader;
 
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -152,65 +156,98 @@ public class MainActivity extends AppCompatActivity {
 
     /** ब्राउज़िंग मोड: किसी भी साइट पर दिख रहे वीडियो पर "🔗 Copy" और (YouTube हो तो) "▶ Room" बटन */
     private static final String BW_PICK_JS =
-            "(function(){  " +
-            " if(window.__pkBw) return; window.__pkBw=1;  " +
-            " var on=false, layer=null, items={}, timer=0;  " +
-            " function yid(u){ var m=String(u).match(/(?:youtube\\.com\\/(?:watch\\?(?:[^#]*&)?v=|shorts\\/|embed\\/|live\\/)|youtu\\.be\\/)([\\w-]{11})/); return m?m[1]:''; }  " +
-            " function yurl(u){ var i=yid(u); if(!i) return ''; return /\\/shorts\\//.test(String(u))?'https://www.youtube.com/shorts/'+i:'https://www.youtube.com/watch?v='+i; }  " +
-            " function abs(h){ try{ return new URL(h,location.href).href; }catch(e){ return ''; } }  " +
+            "(function(){ " +
+            " if(window.__pkBw) return; window.__pkBw=1; " +
+            " var on=false, layer=null, items={}, timer=0; " +
+            " function yid(u){ var m=String(u).match(/(?:youtube\\.com\\/(?:watch\\?(?:[^#]*&)?v=|shorts\\/|embed\\/|live\\/)|youtu\\.be\\/)([\\w-]{11})/); return m?m[1]:''; } " +
+            " function yurl(u){ var i=yid(u); if(!i) return ''; return /\\/shorts\\//.test(String(u))?'https://www.youtube.com/shorts/'+i:'https://www.youtube.com/watch?v='+i; } " +
+            " function abs(h){ try{ return new URL(h,location.href).href; }catch(e){ return ''; } } " +
             " function isMedia(h){ return /\\.(mp4|webm|m3u8|mov|mkv|ogg)(\\?|#|$)/i.test(String(h)); } " +
-            " function isVid(h){ return /\\.(mp4|webm|m3u8|mov|mkv)(\\?|#|$)/i.test(h)||!!yid(h)||/vimeo\\.com\\/\\d+|dailymotion\\.com\\/video|facebook\\.com\\/[^\\s]*\\/videos\\//i.test(h); }  " +
-            " function layerEl(){ if(layer&&layer.isConnected) return layer; layer=document.createElement('div'); layer.id='pkBwLayer'; layer.style.cssText='position:absolute;left:0;top:0;width:0;height:0;z-index:2147483647;'; document.documentElement.appendChild(layer); return layer; }  " +
-            " function clearAll(){ if(layer) layer.innerHTML=''; items={}; }  " +
-            " function btn(label,bg,fn){  " +
-            "  var b=document.createElement('button'); b.type='button'; b.textContent=label;  " +
-            "  b.style.cssText='height:34px;padding:0 13px;margin:0;border:2px solid rgba(255,255,255,.65);border-radius:17px;background:'+bg+';color:#fff;font:800 13px/30px sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.45);';  " +
-            "  b.addEventListener('click',function(e){ e.preventDefault(); e.stopPropagation(); fn(); },true);  " +
-            "  b.addEventListener('touchend',function(e){ e.stopPropagation(); },true);  " +
-            "  b.addEventListener('pointerup',function(e){ e.stopPropagation(); },true);  " +
-            "  return b;  " +
-            " }  " +
-            " function mk(url,direct){  " +
-            "  var g=document.createElement('div'); g.style.cssText='position:absolute;display:flex;gap:6px;align-items:center;';  " +
-            "  g.appendChild(btn('🔗 Copy','linear-gradient(135deg,#0EA5E9,#6366F1)',function(){ try{ AndroidMV.copy(url); }catch(x){} }));  " +
-            "  if(yid(url)) g.appendChild(btn('▶ Room','linear-gradient(135deg,#FF3B5C,#B5179E)',function(){ try{ AndroidMV.send(yurl(url)); }catch(x){} })); " +
-            "  else if(direct) g.appendChild(btn('▶ Room','linear-gradient(135deg,#FF3B5C,#B5179E)',function(){ try{ AndroidMV.sendDirect(url); }catch(x){} }));  " +
-            "  layerEl().appendChild(g); return g;  " +
-            " }  " +
-            " function collect(){  " +
-            "  var res={}, vh=window.innerHeight;  " +
-            "  function add(url,el,dir){  " +
-            "   if(!url) return; var r=el.getBoundingClientRect();  " +
-            "   if(r.width<90||r.height<50||r.bottom<-1200||r.top>vh+1200) return;  " +
-            "   var key=yid(url)||url, ar=r.width*r.height;  " +
-            "   if(!res[key]||ar>res[key].ar) res[key]={url:yid(url)?yurl(url):url,r:r,ar:ar,direct:!!dir&&!yid(url)};  " +
-            "  }  " +
-            "  var vs=document.querySelectorAll('video');  " +
-            "  for(var i=0;i<vs.length;i++){ var v=vs[i], u=v.currentSrc||v.src||''; var isDir=!!u&&!/^blob:/.test(u); if(!u||/^blob:/.test(u)) u=yid(location.href)?location.href:''; add(u,v,isDir); }  " +
-            "  var fs=document.querySelectorAll('iframe[src]');  " +
-            "  for(var k=0;k<fs.length;k++){ var s=fs[k].src; if(isVid(s)) add(s,fs[k]); }  " +
-            "  var as=document.querySelectorAll('a[href]');  " +
-            "  for(var n=0;n<as.length;n++){ var h=abs(as[n].getAttribute('href')||''); if(h&&isVid(h)) add(h,as[n],isMedia(h)); }  " +
-            "  return res;  " +
-            " }  " +
-            " function scan(){  " +
-            "  if(!on){ if(layer&&layer.firstChild) clearAll(); return; }  " +
-            "  var res=collect(), sx=window.pageXOffset||0, sy=window.pageYOffset||0;  " +
-            "  for(var key in items){ if(!res[key]){ var o=items[key]; if(o.parentNode) o.parentNode.removeChild(o); delete items[key]; } }  " +
-            "  for(var k2 in res){  " +
-            "   var it=res[k2], g=items[k2]||(items[k2]=mk(it.url,it.direct));  " +
-            "   g.style.left=Math.round(Math.max(it.r.left+sx+8,sx+4))+'px'; g.style.top=Math.round(it.r.top+sy+8)+'px';  " +
-            "  }  " +
-            " }  " +
-            " function later(){ if(timer) return; timer=setTimeout(function(){ timer=0; scan(); },200); }  " +
-            " function onNav(){ on=false; clearAll(); }  " +
-            " window.__pkBwToggle=function(){ on=!on; if(!on) clearAll(); else scan(); return on?'on':'off'; };  " +
-            " window.__pkBwOff=function(){ on=false; clearAll(); };  " +
-            " ['pushState','replaceState'].forEach(function(k){ var o=history[k]; history[k]=function(){ var r=o.apply(this,arguments); setTimeout(onNav,0); return r; }; });  " +
-            " window.addEventListener('popstate',onNav);  " +
-            " try{ new MutationObserver(function(){ if(on) later(); }).observe(document.documentElement,{childList:true,subtree:true}); }catch(x){}  " +
-            " setInterval(scan,700);  " +
-            "})();  ";
+            " var AD_TOKEN=/(^|[\\s_\\-:.\\/])(ad|ads|adv|advert|advertisement|adunit|adslot|adsbygoogle|adsense|adbox|sponsor|sponsored|promoted|dfp|doubleclick|googlesyndication|taboola|outbrain|mgid|revcontent|popunder|preroll|ima-ad|videoad|video-ad)([\\s_\\-:.\\/\\d]|$)/i; " +
+            " var AD_URL=/doubleclick|googlesyndication|googleadservices|adservice\\.|\\/aclk\\?|adclick|adsystem|adnxs|taboola|outbrain|mgid\\.com|popads|exoclick|propellerads|juicyads|trafficjunky|clickadu|adsterra|\\/ads?\\/|[?&]ad(?:s|id|_id)?=/i; " +
+            " function isAd(el){ " +
+            "  var n=el, d=0; " +
+            "  while(n&&n!==document.documentElement&&d<8){ " +
+            "   var cl=(typeof n.className==='string')?n.className:((n.getAttribute&&n.getAttribute('class'))||''); " +
+            "   var tag=(n.id||'')+' '+cl+' '+((n.getAttribute&&n.getAttribute('aria-label'))||''); " +
+            "   if(AD_TOKEN.test(tag)) return true; " +
+            "   if(n.getAttribute&&(n.getAttribute('data-ad')!==null||n.getAttribute('data-ad-slot')!==null||n.getAttribute('data-google-query-id')!==null||n.getAttribute('data-adsbygoogle-status')!==null)) return true; " +
+            "   n=n.parentElement; d++; " +
+            "  } " +
+            "  return false; " +
+            " } " +
+            " function pageLike(h){ return /\\/(video|videos|watch|play|player|embed|clip|clips|reel|reels|movie|movies|film|vid|v|view|media|stream)(\\/|\\?|\\.|-|_|$)/i.test(h); } " +
+            " function hasThumb(a){ " +
+            "  if(a.querySelector('img,picture,video,canvas')) return true; " +
+            "  try{ var bg=getComputedStyle(a).backgroundImage; if(bg&&bg!=='none') return true; var k=a.firstElementChild; if(k){ var b2=getComputedStyle(k).backgroundImage; if(b2&&b2!=='none') return true; } }catch(e){} " +
+            "  return false; " +
+            " } " +
+            " function layerEl(){ if(layer&&layer.isConnected) return layer; layer=document.createElement('div'); layer.id='pkBwLayer'; layer.style.cssText='position:absolute;left:0;top:0;width:0;height:0;z-index:2147483647;'; document.documentElement.appendChild(layer); return layer; } " +
+            " function clearAll(){ if(layer) layer.innerHTML=''; items={}; } " +
+            " function mk(it){ " +
+            "  var g=document.createElement('div'); g.style.cssText='position:absolute;display:flex;gap:6px;align-items:center;'; " +
+            "  var b=document.createElement('button'); b.type='button'; b.textContent='▶ Room'; " +
+            "  b.style.cssText='height:34px;padding:0 14px;margin:0;border:2px solid rgba(255,255,255,.65);border-radius:17px;background:linear-gradient(135deg,#FF3B5C,#B5179E);color:#fff;font:800 13px/30px sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.45);'; " +
+            "  b.addEventListener('click',function(e){ " +
+            "   e.preventDefault(); e.stopPropagation(); " +
+            "   try{ " +
+            "    if(it.kind==='yt') AndroidMV.send(it.url); " +
+            "    else if(it.kind==='direct') AndroidMV.sendDirect(it.url); " +
+            "    else AndroidMV.resolveAndSend(it.url); " +
+            "   }catch(x){} " +
+            "  },true); " +
+            "  b.addEventListener('touchend',function(e){ e.stopPropagation(); },true); " +
+            "  b.addEventListener('pointerup',function(e){ e.stopPropagation(); },true); " +
+            "  g.appendChild(b); layerEl().appendChild(g); return g; " +
+            " } " +
+            " function collect(){ " +
+            "  var res={}, vh=window.innerHeight, pages=0; " +
+            "  function add(kind,url,el){ " +
+            "   if(!url||AD_URL.test(url)||isAd(el)) return; " +
+            "   var r=el.getBoundingClientRect(); " +
+            "   if(r.width<90||r.height<50||r.bottom<-1200||r.top>vh+1200) return; " +
+            "   var key=(kind==='yt'?yid(url):url), ar=r.width*r.height; " +
+            "   if(!res[key]||ar>res[key].ar) res[key]={kind:kind,url:kind==='yt'?yurl(url):url,r:r,ar:ar}; " +
+            "  } " +
+            "  var vs=document.querySelectorAll('video'); " +
+            "  for(var i=0;i<vs.length;i++){ " +
+            "   var v=vs[i]; if(v.loop&&v.muted) continue; " +
+            "   var u=v.currentSrc||v.src||''; " +
+            "   if(!u){ var so=v.querySelector('source[src]'); if(so) u=so.src||''; } " +
+            "   if(!u){ u=v.getAttribute('data-src')||v.getAttribute('data-video')||v.getAttribute('data-mp4')||v.getAttribute('data-url')||''; if(u) u=abs(u); } " +
+            "   if(u&&!/^blob:/.test(u)){ if(yid(u)) add('yt',u,v); else add('direct',u,v); } " +
+            "   else if(yid(location.href)) add('yt',location.href,v); " +
+            "   else add('page',location.href,v); " +
+            "  } " +
+            "  var fs=document.querySelectorAll('iframe[src]'); " +
+            "  for(var k=0;k<fs.length;k++){ var s=fs[k].src; if(yid(s)) add('yt',s,fs[k]); } " +
+            "  var as=document.querySelectorAll('a[href]'); " +
+            "  for(var n=0;n<as.length;n++){ " +
+            "   var a=as[n], h=abs(a.getAttribute('href')||''); if(!h) continue; " +
+            "   if(yid(h)) add('yt',h,a); " +
+            "   else if(isMedia(h)) add('direct',h,a); " +
+            "   else if(pages<40&&pageLike(h)){ var rr=a.getBoundingClientRect(); if(rr.width>=140&&rr.height>=80&&hasThumb(a)){ pages++; add('page',h,a); } } " +
+            "  } " +
+            "  return res; " +
+            " } " +
+            " function scan(){ " +
+            "  if(!on){ if(layer&&layer.firstChild) clearAll(); return; } " +
+            "  var res=collect(), sx=window.pageXOffset||0, sy=window.pageYOffset||0; " +
+            "  for(var key in items){ if(!res[key]){ var o=items[key]; if(o.parentNode) o.parentNode.removeChild(o); delete items[key]; } } " +
+            "  for(var k2 in res){ " +
+            "   var it=res[k2], g=items[k2]||(items[k2]=mk(it)); " +
+            "   g.style.left=Math.round(Math.max(it.r.left+sx+8,sx+4))+'px'; g.style.top=Math.round(it.r.top+sy+8)+'px'; " +
+            "  } " +
+            " } " +
+            " function later(){ if(timer) return; timer=setTimeout(function(){ timer=0; scan(); },200); } " +
+            " function onNav(){ on=false; clearAll(); } " +
+            " window.__pkBwToggle=function(){ on=!on; if(!on) clearAll(); else scan(); return on?'on':'off'; }; " +
+            " window.__pkBwOff=function(){ on=false; clearAll(); }; " +
+            " ['pushState','replaceState'].forEach(function(k){ var o=history[k]; history[k]=function(){ var r=o.apply(this,arguments); setTimeout(onNav,0); return r; }; }); " +
+            " window.addEventListener('popstate',onNav); " +
+            " try{ new MutationObserver(function(){ if(on) later(); }).observe(document.documentElement,{childList:true,subtree:true}); }catch(x){} " +
+            " setInterval(scan,700); " +
+            "})(); ";
 
     // ब्राउज़िंग मोड के सर्च इंजन
     private static final String[] ENG_LABELS = {"🔎 Google", "🦆 DuckDuckGo", "🅱️ Bing", "🦁 Brave", "🌐 Yandex", "🔒 Startpage", "🌱 Ecosia", "🇪🇺 Qwant", "🔍 Mojeek"};
@@ -230,6 +267,12 @@ public class MainActivity extends AppCompatActivity {
     private TextView bwEngineBtn, bwPlaceholder;
     private View bwProgress;
     private int bwEngine = 1;          // DuckDuckGo पहले से चुना
+
+    /** बंद करने पर पेज नष्ट नहीं होते, छुपा लिए जाते हैं: दोबारा खोलने पर ब्राउज़र/YouTube वहीं से मिलता है */
+    private static class MvHolder {
+        FrameLayout root; WebView web; TextView sendBtn, engineBtn, placeholder; EditText input; View progress;
+    }
+    private MvHolder mvHolderYt, mvHolderBw;
     private boolean mvPickOn = false;
     private View splash;         // ऐप खुलते समय "स्टार मस्ती" वाली स्क्रीन
     // शुरुआती एनिमेशन: आइकन उभरता है, तारा उड़कर आता है, बिल्ली चलकर आती है और डांस करती है
@@ -747,6 +790,12 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(() -> unityInter.requestShow());
         }
         /** ID जैसी चीज़ें पक्के तौर पर कॉपी करने के लिए (WebView में वेब का clipboard कई बार नहीं चलता) */
+        /** रूम के "सीधा video link" खाने में पेज का link डाला हो तो असली video link ढूँढ़ने के लिए */
+        @JavascriptInterface
+        public void resolveVideo(final String pageUrl) {
+            if (pageUrl == null || !pageUrl.matches("(?i)^https?://\\S+$")) return;
+            resolveForRoomLoader(pageUrl);
+        }
         /** रूम के "📋 Paste" बटन के लिए: कॉपी किया हुआ लिंक पढ़ता है */
         @JavascriptInterface
         public String getClipboardText() {
@@ -795,6 +844,12 @@ public class MainActivity extends AppCompatActivity {
             });
         }
         /** ब्राउज़िंग से चुना सीधा video (YouTube नहीं): रूम के HTML को संदेश भेजता है; कॉइन काटना और चलाना वहीं होता है */
+        /** ब्राउज़िंग में वेबपेज-लिंक पर ▶ Room: पेज के अंदर से असली video ढूँढकर भेजना */
+        @JavascriptInterface
+        public void resolveAndSend(final String pageUrl) {
+            if (pageUrl == null || !pageUrl.matches("(?i)^https?://\\S+$")) return;
+            runOnUiThread(() -> resolveAndSendToRoom(pageUrl));
+        }
         @JavascriptInterface
         public void sendDirect(final String url) {
             if (url == null || !url.matches("(?i)^https?://\\S+$")) return;
@@ -923,6 +978,7 @@ public class MainActivity extends AppCompatActivity {
     // ---------------------------------------------------------------------------------------------
     private void startBrowseMode() {
         if (mvRoot != null) return;
+        if (mvHolderBw != null) { restoreHolder(mvHolderBw, 1); return; }   // पहले का ब्राउज़िंग पेज जैसा था वैसा ही
         mvMode = 1;
         final float d = getResources().getDisplayMetrics().density;
 
@@ -1010,6 +1066,8 @@ public class MainActivity extends AppCompatActivity {
         ws.setDomStorageEnabled(true);
         ws.setMediaPlaybackRequiresUserGesture(false);
         ws.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+        ws.setJavaScriptCanOpenWindowsAutomatically(true);   // कई साइटें नए विंडो में वीडियो-पेज खोलती हैं
+        ws.setSupportMultipleWindows(true);
         try { CookieManager.getInstance().setAcceptThirdPartyCookies(mvWeb, true); } catch (Exception ignored) { }
         mvWeb.setWebViewClient(new WebViewClient() {
             @Override
@@ -1024,7 +1082,21 @@ public class MainActivity extends AppCompatActivity {
             }
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                if (request != null && request.isForMainFrame() && bwProgress != null) bwProgress.setVisibility(View.GONE);
+                if (request != null && request.isForMainFrame()) {
+                    if (bwProgress != null) bwProgress.setVisibility(View.GONE);
+                    String why = (error != null && error.getDescription() != null) ? error.getDescription().toString() : "";
+                    view.loadDataWithBaseURL(null,
+                            "<html><head><meta name='viewport' content='width=device-width,initial-scale=1'></head>"
+                                    + "<body style='font-family:sans-serif;text-align:center;padding:48px 22px;background:#F7F4FF;color:#4C1D95'>"
+                                    + "<div style='font-size:54px'>😕</div><h2>यह साइट नहीं खुल पाई</h2>"
+                                    + "<p style='color:#7B6A99;font-size:14px'>" + why.replace("<", "&lt;") + "</p>"
+                                    + "<p style='color:#7B6A99;font-size:14px'>दूसरा सर्च इंजन या दूसरी साइट आज़माइए</p></body></html>",
+                            "text/html", "UTF-8", null);
+                }
+            }
+            @Override
+            public void onReceivedSslError(WebView view, android.webkit.SslErrorHandler handler, android.net.http.SslError error) {
+                handler.cancel();   // असुरक्षित सर्टिफ़िकेट वाली साइट नहीं खुलेगी
             }
             @Override
             public void doUpdateVisitedHistory(WebView view, String u, boolean isReload) {
@@ -1036,7 +1108,30 @@ public class MainActivity extends AppCompatActivity {
                 return !("http".equals(sc) || "https".equals(sc));   // youtube:// intent:// जैसे लिंक अनदेखे
             }
         });
-        mvWeb.setWebChromeClient(chrome);
+        mvWeb.setWebChromeClient(new WebChromeClient() {
+            // नए विंडो में खुलने वाला लिंक (सिर्फ़ उँगली से दबाने पर) इसी पेज में खोलो; अपने-आप खुलने वाले pop-up ऐड रोक दो
+            @Override
+            public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, android.os.Message resultMsg) {
+                if (!isUserGesture) return false;
+                final WebView tmp = new WebView(MainActivity.this);
+                tmp.setWebViewClient(new WebViewClient() {
+                    @Override
+                    public void onPageStarted(WebView v, String u, android.graphics.Bitmap fav) {
+                        if (u != null && u.startsWith("http") && mvWeb != null) mvWeb.loadUrl(u);
+                        v.stopLoading();
+                        v.post(v::destroy);
+                    }
+                });
+                WebView.WebViewTransport t = (WebView.WebViewTransport) resultMsg.obj;
+                t.setWebView(tmp);
+                resultMsg.sendToTarget();
+                return true;
+            }
+            @Override public void onShowCustomView(View v, CustomViewCallback cb) { chrome.onShowCustomView(v, cb); }
+            @Override public void onHideCustomView() { chrome.onHideCustomView(); }
+            @Override public void onPermissionRequest(PermissionRequest r) { chrome.onPermissionRequest(r); }
+            @Override public boolean onShowFileChooser(WebView v, ValueCallback<Uri[]> cb, FileChooserParams p) { return chrome.onShowFileChooser(v, cb, p); }
+        });
         mvWeb.addJavascriptInterface(new MvBridge(), "AndroidMV");
         body.addView(mvWeb, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
@@ -1071,6 +1166,7 @@ public class MainActivity extends AppCompatActivity {
 
         ViewGroup content = findViewById(android.R.id.content);
         content.addView(mvRoot, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mvHolderBw = snapshotHolder();
         bwInput.requestFocus();
     }
 
@@ -1109,13 +1205,33 @@ public class MainActivity extends AppCompatActivity {
             boolean none = "\"none\"".equals(value);
             mvPickOn = on;
             if (mvSendBtn != null) mvSendBtn.setText(on ? "✕  बटन छुपाएँ" : "🎬  वीडियो चुनो");
-            if (on) Toast.makeText(this, "जिस वीडियो को चाहिए उसके बटन दबाइए: 🔗 Copy = लिंक कॉपी, ▶ Room = रूम में चलाओ", Toast.LENGTH_LONG).show();
+            if (on) Toast.makeText(this, "जिस वीडियो को रूम में चलाना है, उसके ▶ Room बटन को दबाइए", Toast.LENGTH_LONG).show();
             else if (none) Toast.makeText(this, "पहले कुछ सर्च करके पेज खोलिए", Toast.LENGTH_SHORT).show();
         });
     }
 
+    private MvHolder snapshotHolder() {
+        MvHolder h = new MvHolder();
+        h.root = mvRoot; h.web = mvWeb; h.sendBtn = mvSendBtn;
+        h.engineBtn = bwEngineBtn; h.placeholder = bwPlaceholder; h.input = bwInput; h.progress = bwProgress;
+        return h;
+    }
+
+    private void restoreHolder(MvHolder h, int mode) {
+        mvMode = mode;
+        mvRoot = h.root; mvWeb = h.web; mvSendBtn = h.sendBtn; mvLoading = null;
+        bwEngineBtn = h.engineBtn; bwPlaceholder = h.placeholder; bwInput = h.input; bwProgress = h.progress;
+        ViewGroup content = findViewById(android.R.id.content);
+        if (mvRoot.getParent() == null) {
+            content.addView(mvRoot, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+        try { mvWeb.onResume(); } catch (Exception ignored) { }
+        resetPickLabel();   // बटन बंद, नीचे का बटन सामान्य
+    }
+
     private void startYoutubeMode(String url) {
         if (mvRoot != null) return;
+        if (mvHolderYt != null) { restoreHolder(mvHolderYt, 0); return; }   // पहले का YouTube पेज जैसा था वैसा ही
         mvMode = 0;
         if (url == null || url.trim().isEmpty()) url = "https://www.youtube.com/";
 
@@ -1185,16 +1301,21 @@ public class MainActivity extends AppCompatActivity {
 
         ViewGroup content = findViewById(android.R.id.content);
         content.addView(mvRoot, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mvHolderYt = snapshotHolder();
         mvWeb.loadUrl(url);
     }
 
-    private void closeMoreVideoPage() {
+    /** More Video बंद करना: पेज नष्ट नहीं होता, छुप जाता है (वीडियो रुक जाता है). दोबारा खोलने पर वहीं से मिलेगा. */
+    private void hideMoreVideoPage() {
         if (mvRoot == null) return;
+        final WebView w = mvWeb;
         try {
-            if (mvWeb != null) { mvWeb.stopLoading(); mvWeb.loadUrl("about:blank"); }
+            if (w != null) {
+                w.evaluateJavascript("(function(){try{document.querySelectorAll('video,audio').forEach(function(v){try{v.pause();}catch(e){}});window.__pkMvOff&&window.__pkMvOff();window.__pkBwOff&&window.__pkBwOff();}catch(e){}})()", null);
+                w.postDelayed(() -> { if (mvWeb != w) { try { w.onPause(); } catch (Exception ignored) { } } }, 500);
+            }
             ViewGroup content = findViewById(android.R.id.content);
             content.removeView(mvRoot);
-            if (mvWeb != null) { mvRoot.removeView(mvWeb); mvWeb.destroy(); }
         } catch (Exception ignored) { }
         try {
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -1210,6 +1331,20 @@ public class MainActivity extends AppCompatActivity {
         bwPlaceholder = null;
         bwProgress = null;
         mvMode = 0;
+    }
+
+    private void closeMoreVideoPage() { hideMoreVideoPage(); }
+
+    /** ऐप बंद होते समय ही पेज नष्ट होते हैं */
+    private void destroyMoreVideoPages() {
+        hideMoreVideoPage();
+        for (MvHolder h : new MvHolder[]{mvHolderYt, mvHolderBw}) {
+            if (h != null && h.web != null) {
+                try { h.web.stopLoading(); h.web.loadUrl("about:blank"); h.web.destroy(); } catch (Exception ignored) { }
+            }
+        }
+        mvHolderYt = null;
+        mvHolderBw = null;
     }
 
     /** खुले हुए YouTube पेज से वीडियो/Short की ID निकालकर साफ़ लिंक बनाता है; न मिले तो null */
@@ -1242,6 +1377,97 @@ public class MainActivity extends AppCompatActivity {
         mvPickOn = false;
         if (mvWeb != null) mvWeb.evaluateJavascript("window.__pkMvOff&&window.__pkMvOff();window.__pkBwOff&&window.__pkBwOff()", null);
         if (mvSendBtn != null) mvSendBtn.setText(mvMode == 1 ? "🎬  वीडियो चुनो" : "▶  Room में भेजें  🪙");
+    }
+
+    /** वेबपेज का HTML पढ़कर उसके अंदर से असली video link निकालता है (og:video, <video>, <source>, .mp4/.m3u8, YouTube embed) */
+    private String resolveVideoFromPage(String pageUrl) {
+        HttpURLConnection c = null;
+        try {
+            URL u0 = new URL(pageUrl);
+            c = (HttpURLConnection) u0.openConnection();
+            c.setInstanceFollowRedirects(true);
+            c.setConnectTimeout(8000);
+            c.setReadTimeout(10000);
+            c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36");
+            c.setRequestProperty("Accept", "text/html,application/xhtml+xml,*/*");
+            c.setRequestProperty("Accept-Language", "en-US,en;q=0.9,hi;q=0.8");
+            c.getResponseCode();
+            String ct = c.getContentType() == null ? "" : c.getContentType().toLowerCase();
+            URL fin = c.getURL();
+            if (ct.startsWith("video/") || ct.contains("mpegurl")) return fin.toString();
+            if (!ct.contains("html")) return "";
+            InputStream in = c.getInputStream();
+            ByteArrayOutputStream bo = new ByteArrayOutputStream();
+            byte[] buf = new byte[16384];
+            int n, total = 0;
+            while ((n = in.read(buf)) > 0 && total < 2000000) { bo.write(buf, 0, n); total += n; }
+            return extractVideoUrl(bo.toString("UTF-8"), fin);
+        } catch (Exception e) {
+            return "";
+        } finally {
+            if (c != null) c.disconnect();
+        }
+    }
+
+    private static boolean isGoodVideoUrl(String u) {
+        if (u == null || !u.startsWith("http")) return false;
+        String l = u.toLowerCase();
+        if (l.matches(".*\\.(jpg|jpeg|png|gif|webp|js|css|json|svg|ico)(\\?.*)?$")) return false;
+        return !(l.contains("doubleclick") || l.contains("googlesyndication") || l.contains("adserver"));
+    }
+
+    private String extractVideoUrl(String html, URL base) {
+        String h = html.replace("\\/", "/").replace("&amp;", "&");
+        String[] pats = {
+                "<meta[^>]+(?:property|name)=[\"']og:video(?::secure_url|:url)?[\"'][^>]*content=[\"']([^\"']+)[\"']",
+                "<meta[^>]+content=[\"']([^\"']+)[\"'][^>]*(?:property|name)=[\"']og:video(?::secure_url|:url)?[\"']",
+                "<meta[^>]+name=[\"']twitter:player:stream[\"'][^>]*content=[\"']([^\"']+)[\"']",
+                "\"contentUrl\"\\s*:\\s*\"([^\"]+)\"",
+                "<video[^>]*\\ssrc=[\"']([^\"']+)[\"']",
+                "<source[^>]+src=[\"']([^\"']+)[\"']",
+                "(https?://[^\"'\\s<>\\\\]+\\.(?:mp4|m3u8|webm|mov)(?:\\?[^\"'\\s<>\\\\]*)?)"
+        };
+        String firstAny = "";
+        for (String p : pats) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile(p, java.util.regex.Pattern.CASE_INSENSITIVE).matcher(h);
+            while (m.find()) {
+                String u;
+                try { u = new URL(base, m.group(1)).toString(); } catch (Exception e) { continue; }
+                if (!isGoodVideoUrl(u)) continue;
+                if (u.toLowerCase().matches(".*\\.(mp4|m3u8|webm|mov)(\\?.*)?$")) return u;   // असली फ़ाइल मिली
+                if (firstAny.isEmpty()) firstAny = u;
+            }
+        }
+        java.util.regex.Matcher y = java.util.regex.Pattern.compile("(?:youtube(?:-nocookie)?\\.com/(?:embed/|watch\\?v=)|youtu\\.be/)([A-Za-z0-9_-]{11})").matcher(h);
+        if (y.find()) return "https://www.youtube.com/watch?v=" + y.group(1);
+        return firstAny;
+    }
+
+    /** पेज का link असली video link में बदलकर JS को बताता है (रूम का "सीधा video link" खाना इसे इस्तेमाल करता है) */
+    private void resolveForRoomLoader(final String pageUrl) {
+        new Thread(() -> {
+            final String r = resolveVideoFromPage(pageUrl);
+            runOnUiThread(() -> {
+                if (webView != null) webView.evaluateJavascript("window.__pkOnResolved&&window.__pkOnResolved("
+                        + JSONObject.quote(pageUrl) + "," + JSONObject.quote(r == null ? "" : r) + ")", null);
+            });
+        }).start();
+    }
+
+    /** ब्राउज़िंग में किसी वेबपेज-लिंक पर "▶ Room": पेज में से असली video निकालकर रूम में भेजो */
+    private void resolveAndSendToRoom(final String pageUrl) {
+        Toast.makeText(this, "🔎 वीडियो ढूँढ रहा हूँ…", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            final String r = resolveVideoFromPage(pageUrl);
+            runOnUiThread(() -> {
+                if (r == null || r.isEmpty()) {
+                    Toast.makeText(MainActivity.this, "❌ इस पेज से सीधा वीडियो नहीं मिला", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                String yt = cleanYoutubeUrl(r);
+                if (yt != null) sendCleanToRoom(yt); else sendDirectToRoom(r);
+            });
+        }).start();
     }
 
     private void sendDirectToRoom(String url) {
@@ -1311,7 +1537,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        closeMoreVideoPage();
+        destroyMoreVideoPages();
         if (webView != null) { webView.destroy(); webView = null; }
         super.onDestroy();
     }
