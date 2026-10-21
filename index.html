@@ -11845,9 +11845,13 @@ function ytRoomApplyState(d){
       else{
         var lv=$('ytRoomLocalVideo');
         if(lv){
-          var targetU=ytRoomLiveTime(d), nowU=lv.currentTime||0;
-          if(Math.abs(nowU-targetU)>2){ try{lv.currentTime=targetU;}catch(e){} }
-          if(d.playing===true){ var pr=lv.play(); if(pr&&pr.catch)pr.catch(function(){}); } else if(d.playing===false){ try{lv.pause();}catch(e){} }
+          /* Host की अपनी video: host ही सच है, पुराने snapshot से उसे पीछे नहीं खींचना (आगे बढ़ाने पर वापस पीछे हो जाने की वजह) */
+          if(!ytRoomHost()){
+            var targetU=ytRoomLiveTime(d), nowU=lv.currentTime||0;
+            var staleU=(d.playing===true)&&((Date.now()-(Number(d.updatedAt)||0))>8000); /* host का heartbeat रुका हो तो पुराना समय न मानें */
+            if(!staleU&&Math.abs(nowU-targetU)>3&&Date.now()>=(window.__ytViewerManualSeekUntil||0)){ try{lv.currentTime=targetU;}catch(e){} }
+            if(d.playing===true){ var pr=lv.play(); if(pr&&pr.catch)pr.catch(function(){}); } else if(d.playing===false){ try{lv.pause();}catch(e){} }
+          }
         }
       }
       ytRemoteApplying=false; return;
@@ -11940,15 +11944,15 @@ function ytRoomHandleUploadFile(file){
 /* ---- सीधा video link (ब्राउज़िंग से कॉपी किया हुआ): उसी synced HTML5 player में चलता है जिसमें गैलरी वाली video चलती है ---- */
 function ytRoomDirectIsYouTube(u){ return /(?:youtube\.com|youtu\.be)\//i.test(String(u||'')); }
 function ytRoomDirectCanLoad(){ try{ refreshHostState(); }catch(e){} return !!ytRoomHost(); }
-function ytRoomLoadDirect(url,title){
+function ytRoomLoadDirect(url,title,noResolve){
   url=String(url||'').trim();
   if(!/^https?:\/\/\S+$/i.test(url)){ toast('❌ सही video link डालें',1800); return false; }
-  if(!ytRoomDirectCanLoad()){ toast('👑 सिर्फ Host video चला सकता है',1800); return false; }
-  if(ytRoomDirectIsYouTube(url)){            /* YouTube का लिंक हो तो ऊपर वाले पुराने तरीके से */
+  if(ytRoomDirectIsYouTube(url)){            /* YouTube का लिंक: पुराने तरीके से, सब लोग चला सकते हैं */
     var yi=$('ytRoomInput'); if(yi){ yi.value=url; try{ yi.dispatchEvent(new Event('input',{bubbles:true})); }catch(e){} }
     if(typeof window.ytRoomBottomSubmit==='function') window.ytRoomBottomSubmit();
     return true;
   }
+  if(!ytRoomDirectCanLoad()){ toast('👑 सिर्फ Host video चला सकता है',1800); return false; }
   toast('🔎 Video जाँच रहा हूँ...',1500);
   var t=document.createElement('video'), done=false, tm=0;
   t.preload='metadata'; t.muted=true; t.setAttribute('playsinline','');
@@ -11958,7 +11962,19 @@ function ytRoomLoadDirect(url,title){
     if(ok){
       var nm=title||decodeURIComponent((url.split('?')[0].split('/').pop()||'Video')).slice(0,60)||'Video';
       playUploadedVideo(url,nm,{addedBy:'You'});
-    } else toast('❌ यह सीधा video link नहीं है, इसलिए नहीं चल सकता. ब्राउज़िंग में video के ▶ Room बटन से लें, या .mp4 जैसा सीधा link डालें',4200);
+      return;
+    }
+    /* सीधा video नहीं निकला: ऐप (APK) से उस वेबपेज के अंदर असली video link ढूँढ़ने की कोशिश */
+    if(!noResolve&&window.Android&&typeof window.Android.resolveVideo==='function'){
+      toast('🔎 पेज में से video link ढूँढ़ रहा हूँ...',2500);
+      window.__pkOnResolved=function(src,res){
+        window.__pkOnResolved=null;
+        if(res&&res!==url){ ytRoomLoadDirect(res,title,true); }
+        else toast('❌ इस पेज से सीधा video नहीं मिला. ब्राउज़िंग में video के ▶ Room बटन से लें',4200);
+      };
+      try{ window.Android.resolveVideo(url); return; }catch(e){}
+    }
+    toast('❌ यह सीधा video link नहीं है, इसलिए नहीं चल सकता. ब्राउज़िंग में video के ▶ Room बटन से लें, या .mp4 जैसा सीधा link डालें',4200);
   }
   t.addEventListener('loadedmetadata',function(){ fin(true); });
   t.addEventListener('error',function(){ fin(false); });
