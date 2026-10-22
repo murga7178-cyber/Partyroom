@@ -3523,7 +3523,7 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
     if(!pend[key] && typeof db!=='undefined' && db){
       pend[key]=true;
       db.collection('users').doc(key).get()
-        .then(d=>{ const data=(d&&d.exists&&d.data())||{}; const v=data.photoURL||''; c[key]=cinemaOkPhoto(v)?v:''; window.__partyFrameCache=window.__partyFrameCache||{}; window.__partyFrameCache[key]=String(window.partyFrameActiveId?window.partyFrameActiveId(data):(data.partyEquippedFrame||'none')); })
+        .then(d=>{ const data=(d&&d.exists&&d.data())||{}; const v=data.photoURL||data.photo||data.avatar||data.profilePhoto||data.picture||''; c[key]=cinemaOkPhoto(v)?v:''; window.__partyFrameCache=window.__partyFrameCache||{}; window.__partyFrameCache[key]=String(window.partyFrameActiveId?window.partyFrameActiveId(data):(data.partyEquippedFrame||'none')); })
         .catch(()=>{ c[key]=''; })
         .then(()=>{ delete pend[key]; try{ cinemaRenderSeats(window.__cinemaPeople||[]); }catch(e){} try{ const vp=document.getElementById('partyRoomViewersPage'); if(vp && vp.style.display!=='none') cinemaRenderViewerList(window.__cinemaPeople||[]); }catch(e){} });
     }
@@ -7142,7 +7142,7 @@ window.pkOpenDirectMessage=async function(key,name){var inbox=document.getElemen
         if(day!==lastDay){h+='<div class="pk-dm-day">'+(dt.toDateString()===new Date().toDateString()?'Today':esc(day))+(x.createdAt?' '+dt.toLocaleTimeString('hi-IN',{hour:'2-digit',minute:'2-digit'}):'')+'</div>';lastDay=day;}
         var photo=mine?direct.myPhoto:direct.otherPhoto,av=photo?'<img src="'+esc(photo)+'" alt="">':esc(((mine?'You':direct.otherName).trim()[0]||'U').toUpperCase());
          var body=x.type==='gift'?dmGiftCard(x):(x.type==='room'?dmRoomCard(x):dmMedia(x)+esc(x.text||''));
-         h+='<div class="pk-dm-row '+(mine?'mine':'theirs')+'">'+(mine?'':'<div class="pk-dm-avatar">'+av+'</div>')+'<div class="pk-dm '+(mine?'mine':'theirs')+'">'+body+'<div class="pk-dm-time">'+(x.createdAt?dt.toLocaleTimeString('hi-IN',{hour:'2-digit',minute:'2-digit'}):'')+'</div></div>'+(mine?'<div class="pk-dm-avatar">'+av+'</div>':'')+'</div>';
+         h+='<div class="pk-dm-row '+(mine?'mine':'theirs')+'">'+(mine?'':'<div class="pk-dm-avatar" data-k="'+esc(direct.otherKey)+'">'+av+'</div>')+'<div class="pk-dm '+(mine?'mine':'theirs')+'">'+body+'<div class="pk-dm-time">'+(x.createdAt?dt.toLocaleTimeString('hi-IN',{hour:'2-digit',minute:'2-digit'}):'')+'</div></div>'+(mine?'<div class="pk-dm-avatar" data-k="'+esc(currentUserKey)+'">'+av+'</div>':'')+'</div>';
       });
       box.innerHTML=h||'<div style="text-align:center;color:#9a9a9d;padding:35px 15px;">अभी कोई मैसेज नहीं है। पहला मैसेज भेजें 👋</div>';
       requestAnimationFrame(function(){
@@ -8418,7 +8418,7 @@ var name=String(d.name||d.displayName||d.fullName||d.username||'User');
       box.innerHTML=arr.map(function(x,i){
         var d=x.d,n=String(d.name||d.displayName||d.fullName||d.username||'User'),ph=userPhoto(d),li=labelInfo(x.points);
         var medal=i===0?'👑':i===1?'🥈':i===2?'🥉':String(i+1);
-        return '<div class="pkr-row '+(i===0?'top1':'')+'">'+
+        return '<div class="pkr-row '+(i===0?'top1':'')+'" data-k="'+esc(x.key)+'">'+
           '<div class="pkr-rank">'+medal+'</div>'+
           '<div class="pkr-av">'+(ph?'<img src="'+esc(ph)+'" alt="">':esc((n.trim()[0]||'U').toUpperCase()))+'</div>'+
           '<div class="pkr-mid"><div class="pkr-name">'+esc(n)+'</div><div class="pkr-coins">🪙 '+x.points.toLocaleString('en-IN')+' Game Coins</div><span class="pkr-label" style="background:'+li.color+'">🏷️ '+esc(li.name)+' · Lv.'+li.level+'</span></div>'+
@@ -19054,6 +19054,128 @@ html body #prRoom.pk-yt-full:has(#pkPrerollBox) #ytRoomViewerSeekBar{visibility:
   window.prCopyText=function(v){ try{ if(window.Android&&typeof window.Android.copyText==='function'){ copyText(v); return; } }catch(e){} if(typeof _old==='function') _old(v); else copyText(v); };
 })();
 </script>
+<style id="pkAvatarFixCss">
+/* ===== हर जगह: फोटो गोल, फ्रेम फोटो के किनारे पर, फ्रेम कटे नहीं ===== */
+.pk-ua-dec{position:relative!important;overflow:visible!important;border-radius:50%!important;}
+.pk-ua-dec>img:not(.pk-ua-frame){width:100%!important;height:100%!important;border-radius:50%!important;object-fit:cover!important;display:block!important;}
+.pk-ua-dec>img.pk-ua-frame{position:absolute!important;inset:auto!important;left:50%!important;top:50%!important;right:auto!important;bottom:auto!important;width:var(--fw,138%)!important;height:var(--fw,138%)!important;max-width:none!important;max-height:none!important;transform:translate(-50%,-50%)!important;object-fit:contain!important;pointer-events:none!important;z-index:5!important;border-radius:0!important;margin:0!important;}
+.pk-ua-slot{display:inline-flex;align-items:center;justify-content:center;flex:none;width:36px;height:36px;margin:0 3px;color:#fff;font-size:14px;font-weight:900;background:linear-gradient(145deg,#312e81,#1e3a8a);}
+.cinema-viewer-row,#cinemaViewerList{overflow:visible!important;}
+#cinemaChatMessages .pr-chat-avatar,.pki-av,.pvf-av,.pkr-av,.pk-dm-avatar,.prc-trigger .prc-av{overflow:visible!important;}
+</style>
+<script id="pkAvatarFixJs">
+(function(){
+  'use strict';
+  var cache={}, pend={}, holeCache={};
+  function okPhoto(u){ return typeof u==='string' && /^(data:image\/|https:\/\/)/i.test(u); }
+  function photoOf(d){ return String((d&&(d.photoURL||d.photo||d.avatar||d.profilePhoto||d.picture))||'').trim(); }
+  function frameOf(d){ try{ if(typeof window.partyFrameActiveId==='function') return String(window.partyFrameActiveId(d)||'none'); }catch(e){} return String((d&&(d.partyEquippedFrame||d.equippedFrame||d.frameId))||'none'); }
+  function artOf(id){ try{ return (id&&id!=='none'&&typeof partyFrameArt==='function')?String(partyFrameArt(id)||''):''; }catch(e){ return ''; } }
+  function dbOk(){ try{ return typeof db!=='undefined'&&!!db; }catch(e){ return false; } }
+  function meKey(){ try{ return typeof currentUserKey!=='undefined'?String(currentUserKey||''):''; }catch(e){ return ''; } }
+  /* कौन सा फ्रेम फोटो से कितना बड़ा हो, यह फ्रेम की तस्वीर से नाप लेते हैं */
+  function measure(src,cb){
+    if(holeCache.hasOwnProperty(src)) return cb(holeCache[src]);
+    var im=new Image();
+    im.onload=function(){
+      var r=null;
+      try{
+        var N=200,c=document.createElement('canvas'); c.width=c.height=N;
+        var x=c.getContext('2d',{willReadFrequently:true}); x.drawImage(im,0,0,N,N);
+        var d=x.getImageData(0,0,N,N).data, half=N/2, rs=[];
+        for(var k=0;k<24;k++){ var a=k*Math.PI/12, dx=Math.cos(a), dy=Math.sin(a), q=0;
+          while(q<half){ var px=Math.round(half+dx*q), py=Math.round(half+dy*q); if(px<0||py<0||px>=N||py>=N) break; if(d[(py*N+px)*4+3]>60) break; q++; }
+          rs.push(q); }
+        rs.sort(function(m,n){return m-n;}); var med=rs[Math.floor(rs.length/2)];
+        r=(med>20&&med<half-2)?med/half:null;
+      }catch(e){ r=null; }
+      holeCache[src]=r; cb(r);
+    };
+    im.onerror=function(){ holeCache[src]=null; cb(null); };
+    im.src=src;
+  }
+  function fitFrame(img){
+    var src=img.getAttribute('src'); if(!src) return;
+    measure(src,function(r){ if(!r) return; var pct=Math.max(104,Math.min(175,(100/r)*0.985)); img.style.setProperty('--fw',pct+'%'); });
+  }
+  function getVis(key,cb){
+    var c=cache[key];
+    if(c&&Date.now()-c.t<120000){ cb(c); return; }
+    /* पहले जो पहले से याद है वही दिखा दो, फिर असली डेटा से सुधारो */
+    var quick={t:0,photo:'',frame:'none'};
+    try{ var pc=window.__cinemaPhotoCache; if(pc&&pc[key]) quick.photo=pc[key]; }catch(e){}
+    try{ if(key===meKey()&&typeof currentUserPhotoURL!=='undefined'&&currentUserPhotoURL) quick.photo=currentUserPhotoURL; }catch(e){}
+    try{ var fc=window.__partyFrameCache; if(fc&&fc[key]) quick.frame=fc[key]; }catch(e){}
+    if(!dbOk()){ cb(quick); return; }
+    if(pend[key]){ pend[key].push(cb); if(quick.photo||quick.frame!=='none') cb(quick); return; }
+    pend[key]=[cb];
+    if(quick.photo||quick.frame!=='none') cb(quick);
+    function flush(v){ var l=pend[key]||[]; delete pend[key]; cache[key]=v; l.forEach(function(f){ try{ f(v); }catch(e){} }); }
+    try{
+      db.collection('users').doc(key).get().then(function(d){
+        var x=(d&&d.exists&&d.data())||{};
+        var ph=photoOf(x); if(!ph&&quick.photo) ph=quick.photo;
+        flush({t:Date.now(),photo:ph,frame:frameOf(x)||'none'});
+      }).catch(function(){ flush({t:Date.now()-100000,photo:quick.photo,frame:quick.frame}); });
+    }catch(e){ flush(quick); }
+  }
+  function decorate(el,key){
+    if(!el||!key) return;
+    el.classList.add('pk-ua-dec');
+    getVis(key,function(v){
+      if(!el.isConnected) return;
+      var img=null, kids=el.children;
+      for(var i=0;i<kids.length;i++){ if(kids[i].tagName==='IMG'&&!kids[i].classList.contains('pk-ua-frame')){ img=kids[i]; break; } }
+      if(okPhoto(v.photo)){
+        if(!img){ el.textContent=''; img=document.createElement('img'); img.alt=''; img.className='pk-ua-photo'; el.appendChild(img); }
+        if(img.getAttribute('src')!==v.photo) img.setAttribute('src',v.photo);
+      }
+      var old=el.querySelector(':scope>img.pk-ua-frame'), art=artOf(v.frame);
+      if(!art){ if(old) old.remove(); return; }
+      if(old&&old.getAttribute('src')===art) return;
+      if(old) old.remove();
+      var f=document.createElement('img'); f.className='pk-ua-frame'; f.alt=''; f.setAttribute('src',art); el.appendChild(f); fitFrame(f);
+    });
+  }
+  var MAP=[
+    ['#cinemaChatMessages .pr-chat-avatar[data-chat-avatar-key]',function(e){return e.getAttribute('data-chat-avatar-key');}],
+    ['.pki-row[data-k] .pki-av',function(e){var r=e.closest('.pki-row');return r&&r.getAttribute('data-k');}],
+    ['.pvf-row[data-k] .pvf-av',function(e){var r=e.closest('.pvf-row');return r&&r.getAttribute('data-k');}],
+    ['.pkr-row[data-k] .pkr-av',function(e){var r=e.closest('.pkr-row');return r&&r.getAttribute('data-k');}],
+    ['.pk-dm-avatar[data-k]',function(e){return e.getAttribute('data-k');}],
+    ['.prc-trigger .prc-av',function(){return meKey();}]
+  ];
+  function scan(){
+    try{
+      MAP.forEach(function(m){
+        var list=document.querySelectorAll(m[0]);
+        for(var i=0;i<list.length;i++){
+          var el=list[i], key=m[1](el); if(!key) continue;
+          if(el.__pkUa===key) continue; el.__pkUa=key;
+          decorate(el,String(key));
+        }
+      });
+      /* व्यूअर सूची: पुराना 32px बिना-फ्रेम वाला आइकन बदलकर फोटो+फ्रेम वाला */
+      var rows=document.querySelectorAll('#cinemaViewerList .cinema-viewer-row[data-viewer-key]');
+      for(var j=0;j<rows.length;j++){
+        var row=rows[j]; if(row.__pkUa) continue;
+        var key=row.getAttribute('data-viewer-key'); if(!key) continue;
+        var first=row.firstElementChild; if(!first||first.classList.contains('pk-ua-slot')) { row.__pkUa=1; continue; }
+        var nm=row.querySelector('div>div'); var letter=(Array.from(String(nm?nm.textContent:'U').trim())[0]||'U').toUpperCase();
+        var slot=document.createElement('span'); slot.className='pk-ua-slot'; slot.textContent=letter;
+        var oldImg=first.tagName==='IMG'?first.getAttribute('src'):'';
+        if(oldImg&&okPhoto(oldImg)){ slot.textContent=''; var im=document.createElement('img'); im.alt=''; im.setAttribute('src',oldImg); slot.appendChild(im); }
+        row.replaceChild(slot,first); row.__pkUa=1;
+        decorate(slot,String(key));
+      }
+    }catch(e){}
+  }
+  var t=0; function later(){ if(t) return; t=setTimeout(function(){ t=0; scan(); },150); }
+  setInterval(scan,700);
+  try{ new MutationObserver(later).observe(document.documentElement,{childList:true,subtree:true}); }catch(e){}
+  window.pkAvatarFix=scan;
+})();
+</script>
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
@@ -21431,7 +21553,7 @@ html body #prRoom #cinemaChatPanel .pr-chat-line .pr-n{text-shadow:0 1px 3px rgb
       var rows=[];
       for(var i=0;i<ids.length;i++){
         var k=ids[i],ud=await fetchUser(k),nm=String(ud.name||ud.displayName||ud.fullName||ud.username||'User'),ph=photoOf(ud);
-        rows.push('<div class="pvf-row"><div class="pvf-av">'+(ph?'<img src="'+esc(ph)+'" alt="">':esc((nm.trim()[0]||'U').toUpperCase()))+'</div><div class="pvf-name">'+esc(nm)+'</div></div>');
+        rows.push('<div class="pvf-row" data-k="'+esc(k)+'"><div class="pvf-av">'+(ph?'<img src="'+esc(ph)+'" alt="">':esc((nm.trim()[0]||'U').toUpperCase()))+'</div><div class="pvf-name">'+esc(nm)+'</div></div>');
       }
       list.innerHTML=rows.join('')||'<div class="pvf-empty">Followers नहीं मिले।</div>';
     }catch(e){list.innerHTML='<div class="pvf-empty">Followers लोड नहीं हो पाए।</div>';}
