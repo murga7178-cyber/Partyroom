@@ -2183,33 +2183,41 @@ html body #pkSignupModal .auth-card{max-height:88vh!important;}
 <script>(function(){function hide(){var b=document.getElementById('pkBootScreen');if(b){b.style.transition='opacity .25s';b.style.opacity='0';setTimeout(function(){b.remove();},260);}}if(document.readyState==='complete')hide();else window.addEventListener('load',hide);setTimeout(hide,6000);})();</script>
 
 <div class="auth-wrap" id="pkLoginScreen" style="display:none">
-  <div class="auth-card">
-    <div class="auth-emoji">🎉</div>
-    <h2 class="auth-title"><span class="brand-title-shine brand-title-shine--dark">Party Room</span></h2>
-    <p class="auth-subtitle">Paise Kamayein अकाउंट से login करें</p>
-    <input class="auth-input" id="loginUserId" placeholder="User Number / User ID" type="text" autocomplete="username"/>
-    <input class="auth-input" id="loginPassword" placeholder="Password" type="password" autocomplete="current-password"/>
-    <button class="auth-btn-primary" id="pkLoginBtn" onclick="pkDoLogin()">Login</button>
-    <button type="button" id="pkSkipBtn" onclick="pkGuestSkip()" style="width:100%;margin-top:10px;padding:12px;border-radius:12px;border:2px solid #8a2be2;background:#fff;color:#8a2be2;font-weight:800;font-size:16px;">Skip</button>
-    <p id="loginError" style="color:#d32f2f; font-size:13px; min-height:18px; margin-top:10px;"></p>
-    <button class="auth-link" onclick="pkOpenSignup()">Naya Account? Sign Up Karein</button>
+  <i class="pka-spark pka-s1">✦</i><i class="pka-spark pka-s2">✦</i><i class="pka-spark pka-s3">✧</i><i class="pka-spark pka-s4">✦</i><i class="pka-spark pka-s5">✧</i>
+  <div class="pka-hero">
+    <div class="pka-logo"><img alt="Star Masti" src="data:image/webp;base64,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"></div>
+    <h1 class="pka-title">Star Masti</h1>
+  </div>
+  <div class="auth-card pka-card">
+    <div class="pka-field"><span class="pka-ic">👤</span><input class="auth-input" id="loginUserId" placeholder="User ID / Phone Number" type="text" autocomplete="username"/></div>
+    <div class="pka-field"><span class="pka-ic">🔒</span><input class="auth-input" id="loginPassword" placeholder="Password" type="password" autocomplete="current-password"/><button type="button" class="pka-eye" aria-label="Password दिखाएँ" onclick="pkaToggleEye('loginPassword',this)">👁</button></div>
+    <button class="auth-btn-primary pka-login" id="pkLoginBtn" onclick="pkDoLogin()">Login</button>
+    <p id="loginError" class="pka-err"></p>
+    <div class="pka-or"><span>नया यहाँ?</span></div>
+    <button type="button" class="pka-signup" onclick="pkOpenSignup()">✨ Sign Up करें</button>
+    <button type="button" id="pkSkipBtn" class="pka-skip" onclick="pkGuestSkip()">Skip करें</button>
+    <button type="button" class="pka-more" id="pkaMoreBtn" onclick="pkaToggleMore()">और विकल्प <b>▾</b></button>
+    <div class="pka-socials" id="pkaSocials">
+      <button type="button" class="pka-soc" onclick="pkaPhoneSignup()"><span class="pka-sic pka-phone"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="#fff" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/></svg></span><em>Phone</em></button>
+      <button type="button" class="pka-soc" onclick="pkaSoon('Google')"><span class="pka-sic pka-google"><svg viewBox="0 0 48 48" width="22" height="22" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.7 2.4 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6.1C12.3 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.4 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.8-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.8-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.7-4.1-13.6-9.8l-7.8 6.1C6.5 42.6 14.6 48 24 48z"/></svg></span><em>Google</em><u>Soon</u></button>
+      <button type="button" class="pka-soc" onclick="pkaSoon('Facebook')"><span class="pka-sic pka-fb"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="#fff" d="M13.5 21v-7.6h2.6l.4-3h-3V8.5c0-.9.3-1.5 1.5-1.5h1.6V4.3c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.8v3h2.6V21h3.1z"/></svg></span><em>Facebook</em><u>Soon</u></button>
+    </div>
   </div>
 </div>
 <div id="pkSignupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(74,20,140,0.55); z-index:150; align-items:center; justify-content:center;">
-  <div class="auth-card" style="max-height:85vh; overflow-y:auto;">
-    <div class="auth-emoji">📝</div>
-    <h2 class="auth-title" id="pkSignupTitle" style="font-size:20px;">Sign Up</h2>
-    <p class="auth-subtitle" id="pkSignupSub">Naya account banayein</p>
-    <input class="auth-input" id="signupUserId" placeholder="User ID" type="text" autocomplete="username"/>
-    <input class="auth-input" id="signupPassword" placeholder="Password" type="password" autocomplete="new-password"/>
-    <input class="auth-input" id="signupName" placeholder="Full Name" type="text"/>
-    <div style="margin:4px 0 16px 0;">
-      <label class="gender-pill"><input checked="" name="signupGender" style="margin-right:4px;" type="radio" value="Male"/> Male</label>
-      <label class="gender-pill"><input name="signupGender" style="margin-right:4px;" type="radio" value="Female"/> Female</label>
+  <div class="auth-card pka-card pka-modal" style="max-height:88vh; overflow-y:auto;">
+    <div class="pka-mhead"><img alt="" src="data:image/webp;base64,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"><div><h2 class="auth-title" id="pkSignupTitle">Sign Up</h2><p class="auth-subtitle" id="pkSignupSub">Naya account banayein</p></div></div>
+    <div class="pka-seg"><button type="button" id="pkaSegId" class="on" onclick="pkaSignupMode('id')">👤 User ID</button><button type="button" id="pkaSegPhone" onclick="pkaSignupMode('phone')">📱 Phone Number</button></div>
+    <div class="pka-field"><span class="pka-ic">👤</span><input class="auth-input" id="signupUserId" placeholder="User ID" type="text" autocomplete="username"/></div>
+    <div class="pka-field"><span class="pka-ic">🔒</span><input class="auth-input" id="signupPassword" placeholder="Password (कम से कम 6)" type="password" autocomplete="new-password"/><button type="button" class="pka-eye" aria-label="Password दिखाएँ" onclick="pkaToggleEye('signupPassword',this)">👁</button></div>
+    <div class="pka-field"><span class="pka-ic">✍️</span><input class="auth-input" id="signupName" placeholder="Full Name" type="text"/></div>
+    <div class="pka-gender">
+      <label class="gender-pill"><input checked="" name="signupGender" type="radio" value="Male"/><span>👨 Male</span></label>
+      <label class="gender-pill"><input name="signupGender" type="radio" value="Female"/><span>👩 Female</span></label>
     </div>
-    <button class="auth-btn-primary" id="pkSignupBtn" onclick="pkDoSignup()" style="margin-bottom:10px;">Sign Up</button>
-    <button class="auth-btn-secondary" onclick="pkCloseSignup()" style="width:100%;">Cancel</button>
-    <p id="signupError" style="color:#d32f2f; font-size:13px; min-height:18px; margin-top:10px;"></p>
+    <button class="auth-btn-primary pka-login" id="pkSignupBtn" onclick="pkDoSignup()">Sign Up</button>
+    <button class="auth-btn-secondary pka-cancel" onclick="pkCloseSignup()">Cancel</button>
+    <p id="signupError" class="pka-err"></p>
   </div>
 </div>
 <div id="pkHomeScreen" style="display:none;position:fixed;inset:0;z-index:20;background:#fff;overflow:hidden;color:#171717;font-family:Segoe UI,Arial,sans-serif;">
@@ -14448,7 +14456,7 @@ tick();
       if(b&&b.getAttribute('data-i')!==want){ b.setAttribute('data-i',want); b.innerHTML=playing?PAUSE:PLAY; }
     }catch(e){}
   }
-  setInterval(tick,250);
+  setInterval(function(){ if(!document.hidden) tick(); },300);
 })();
 </script>
 
@@ -14519,9 +14527,10 @@ html body.pk-yt-fs-on [data-pkfs-hide],html body #prRoom.pk-yt-full [data-pkfs-h
       }
     }catch(x){}
   }
+  var chk=0;
   function later(){ if(busy) return; busy=requestAnimationFrame(sweep); }
-  setInterval(sweep,200);
-  try{ new MutationObserver(function(){ if(inFs()) later(); }).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class']}); }catch(x){}
+  setInterval(function(){ if(!document.hidden) sweep(); },300);
+  try{ new MutationObserver(function(){ if(chk) return; chk=requestAnimationFrame(function(){ chk=0; if(inFs()) later(); }); }).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class']}); }catch(x){}
 })();
 </script>
 
@@ -19025,7 +19034,7 @@ html body #prRoom.pk-yt-full:has(#pkPrerollBox) #ytRoomViewerSeekBar{visibility:
     });
   }
   function scan(){ var l=document.querySelectorAll('#pkPPavatar .pp-frame'); for(var i=0;i<l.length;i++) fit(l[i]); }
-  setInterval(scan,600);
+  setInterval(function(){ if(!document.hidden) scan(); },1200);
 
   /* ---- प्रोफ़ाइल की ID: दबाने पर कॉपी (पहले कोई क्लिक जुड़ा ही नहीं था) ---- */
   function toastMsg(t){ try{ if(typeof toast==='function') toast(t); }catch(e){} }
@@ -19171,57 +19180,55 @@ html body #prRoom.pk-yt-full:has(#pkPrerollBox) #ytRoomViewerSeekBar{visibility:
     }catch(e){}
   }
   var t=0; function later(){ if(t) return; t=setTimeout(function(){ t=0; scan(); },150); }
-  setInterval(scan,700);
+  setInterval(function(){ if(!document.hidden) scan(); },1500);
   try{ new MutationObserver(later).observe(document.documentElement,{childList:true,subtree:true}); }catch(e){}
   window.pkAvatarFix=scan;
 })();
 </script>
 <style id="pkNavSkinCss">
-/* ===== नीचे की पट्टी (Home / Message / Me): फोटो जैसी — किनारों पर रंगीन अर्धचंद्र, बीच में पतली रेखाएँ, गोल बटन ===== */
+/* ===== नीचे की पट्टी (Home / Message / Me): पूरी चौड़ाई, स्क्रीन के सबसे नीचे चिपकी, ऊपर गोल कोने, किनारों पर रंगीन झलक ===== */
 #pkUniversalNav{
-  left:12px!important;right:12px!important;width:auto!important;
-  bottom:calc(10px + env(safe-area-inset-bottom,0px))!important;
-  height:78px!important;min-height:78px!important;padding:0 6px!important;box-sizing:border-box!important;
+  left:0!important;right:0!important;width:auto!important;
+  bottom:0!important;
+  height:calc(62px + env(safe-area-inset-bottom,0px))!important;min-height:0!important;
+  padding:2px 4px env(safe-area-inset-bottom,0px)!important;box-sizing:border-box!important;
   display:flex;align-items:center!important;justify-content:space-between!important;gap:0!important;
-  border:0!important;border-radius:42px!important;
-  background:linear-gradient(90deg,#7b8bff 0%,#b86bff 7%,#e4dcff 14%,#efeaff 50%,#e4dcff 86%,#d86bf0 93%,#f25bb5 100%)!important;
-  box-shadow:0 12px 30px rgba(112,70,220,.28),0 2px 8px rgba(112,70,220,.16)!important;
+  border:0!important;border-radius:26px 26px 0 0!important;
+  background:linear-gradient(90deg,#7b8bff 0%,#b86bff 14%,#e8e0ff 28%,#f0ebff 50%,#e8e0ff 72%,#d86bf0 86%,#f25bb5 100%)!important;
+  box-shadow:0 -6px 22px rgba(112,70,220,.20)!important;
   -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
 }
 #pkUniversalNav:before{
-  content:"";position:absolute;left:9px;right:9px;top:2px;bottom:2px;z-index:0;pointer-events:none;
-  border-radius:40px/38px;
-  background:linear-gradient(180deg,#ffffff 0%,#faf8ff 60%,#f3efff 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+  content:"";position:absolute;left:0;right:0;top:2px;bottom:0;z-index:0;pointer-events:none;
+  border-radius:25px 25px 0 0;
+  background:linear-gradient(180deg,#ffffff 0%,#faf8ff 65%,#f4f0ff 100%);
 }
 #pkUniversalNav button{
-  position:relative;z-index:1;flex:1 1 0!important;min-width:0!important;height:70px!important;
-  display:flex!important;flex-direction:column;align-items:center!important;justify-content:center!important;gap:3px!important;
+  position:relative;z-index:1;flex:1 1 0!important;min-width:0!important;height:58px!important;
+  display:flex!important;flex-direction:column;align-items:center!important;justify-content:center!important;gap:2px!important;
   border:0!important;background:transparent!important;color:#7270ad!important;
-  font:800 13px "Segoe UI",Arial,sans-serif!important;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  font:800 11px "Segoe UI",Arial,sans-serif!important;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 #pkUniversalNav button+button:before{
-  content:"";position:absolute;left:0;top:26%;height:48%;width:1px;background:linear-gradient(180deg,rgba(150,140,220,0),rgba(150,140,220,.5),rgba(150,140,220,0));
+  content:"";position:absolute;left:0;top:24%;height:46%;width:1px;background:linear-gradient(180deg,rgba(150,140,220,0),rgba(150,140,220,.5),rgba(150,140,220,0));
 }
-/* पुराने नियमों का बचा हुआ गुलाबी डिब्बा और लाल बिंदु हटाओ */
 #pkUniversalNav [data-nav],#pkUniversalNav [data-nav].active{background:transparent!important;box-shadow:none!important;border-radius:0!important;transform:none!important;}
 #pkUniversalNav button.active::after,#pkUniversalNav [data-nav].active:after{display:none!important;content:none!important;}
 #pkUniversalNav button>span.pkun-orb{
-  width:50px!important;height:50px!important;border-radius:50%!important;display:grid!important;place-items:center;
+  width:38px!important;height:38px!important;border-radius:50%!important;display:grid!important;place-items:center;
   background:radial-gradient(circle at 34% 28%,#ffffff 0%,#f3f0ff 70%,#e9e4ff 100%)!important;
-  border:2px solid rgba(172,160,236,.45)!important;
-  box-shadow:0 5px 12px rgba(120,100,220,.18),inset 0 1px 2px rgba(255,255,255,.9)!important;
+  border:1.5px solid rgba(172,160,236,.45)!important;
+  box-shadow:0 3px 8px rgba(120,100,220,.16),inset 0 1px 2px rgba(255,255,255,.9)!important;
   transition:transform .18s ease,box-shadow .18s ease;
 }
-#pkUniversalNav button>span.pkun-orb svg{width:26px;height:26px;display:block;}
-#pkUniversalNav button>b{font-weight:800!important;font-size:13px!important;line-height:1;color:#7270ad;}
-/* चुना हुआ टैब: गुलाबी-बैंगनी गोला, सफ़ेद आइकन, बैंगनी नाम */
+#pkUniversalNav button>span.pkun-orb svg{width:20px!important;height:20px!important;display:block;}
+#pkUniversalNav button>b{font-weight:800!important;font-size:11px!important;line-height:1;color:#7270ad;}
 #pkUniversalNav button.active>span.pkun-orb{
-  width:54px!important;height:54px!important;
+  width:42px!important;height:42px!important;
   background:linear-gradient(215deg,#f046b4 0%,#b04df0 45%,#6d34e6 100%)!important;
   border:2px solid rgba(255,255,255,.95)!important;
-  box-shadow:0 8px 18px rgba(150,70,235,.45),0 0 0 3px rgba(176,77,240,.14)!important;
-  transform:translateY(-2px);
+  box-shadow:0 5px 12px rgba(150,70,235,.42),0 0 0 2px rgba(176,77,240,.14)!important;
+  transform:translateY(-1px);
 }
 #pkUniversalNav button.active>b{color:#6d28d9!important;}
 #pkUniversalNav button.active .pkun-i-fill,#pkUniversalNav button.active .pkun-i-grad{fill:#fff!important;}
@@ -19230,9 +19237,8 @@ html body #prRoom.pk-yt-full:has(#pkPrerollBox) #ytRoomViewerSeekBar{visibility:
 #pkUniversalNav .pkun-i-fill{fill:#7b79b4;}
 #pkUniversalNav .pkun-i-grad{fill:url(#pkunGrad);}
 #pkUniversalNav .pkun-i-dots{fill:#fff;}
-#pkUniversalNav em{top:4px!important;right:calc(50% - 30px)!important;z-index:3;}
-
-#pkPublicProfileOverlay .pp-scroll{padding-bottom:112px!important;}
+#pkUniversalNav em{top:3px!important;right:calc(50% - 26px)!important;z-index:3;}
+#pkPublicProfileOverlay .pp-scroll{padding-bottom:96px!important;}
 </style>
 <script id="pkNavSkinJs">
 (function(){
@@ -19257,10 +19263,149 @@ html body #prRoom.pk-yt-full:has(#pkPrerollBox) #ytRoomViewerSeekBar{visibility:
   skin();
   document.addEventListener('DOMContentLoaded',skin);
   setTimeout(skin,10); setTimeout(skin,600); setTimeout(skin,1200);
-  setInterval(skin,1000);
+  setInterval(function(){ if(!document.hidden) skin(); },1500);
 })();
 
 </script>
+<style id="pkAuthSkinCss">
+/* ===== LOGIN / SIGN UP: सिर्फ़ "Star Masti", आइकन के साथ, साफ़-सुथरा और रंगीन ===== */
+#pkLoginScreen{
+  position:fixed!important;inset:0;box-sizing:border-box;overflow-y:auto;overflow-x:hidden;
+  flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;
+  padding:calc(env(safe-area-inset-top,0px) + 5.5vh) 18px calc(env(safe-area-inset-bottom,0px) + 22px)!important;
+  background:radial-gradient(120% 60% at 50% 0%,rgba(255,255,255,.20) 0,rgba(255,255,255,0) 58%),linear-gradient(165deg,#2a0a5e 0%,#5b21b6 36%,#a21caf 70%,#ec4899 100%)!important;
+}
+#pkLoginScreen .pka-hero{display:flex;flex-direction:column;align-items:center;margin-bottom:18px;position:relative;z-index:1;}
+#pkLoginScreen .pka-logo{width:104px;height:104px;border-radius:28px;box-shadow:0 14px 34px rgba(0,0,0,.35),0 0 0 4px rgba(255,255,255,.18),0 0 40px rgba(255,160,230,.55);animation:pkaFloat 3.2s ease-in-out infinite;background:#fff1;}
+#pkLoginScreen .pka-logo img{width:100%;height:100%;border-radius:28px;display:block;}
+#pkLoginScreen .pka-title{margin:16px 0 0;font:900 40px/1.05 "Segoe UI",system-ui,sans-serif;letter-spacing:.5px;color:#fff;text-align:center;
+  background:linear-gradient(90deg,#fff 0%,#ffe9a8 45%,#ffc2ec 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 4px 14px rgba(0,0,0,.35));}
+@keyframes pkaFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+#pkLoginScreen .pka-spark{position:absolute;color:rgba(255,255,255,.75);font-style:normal;pointer-events:none;animation:pkaTw 2.8s ease-in-out infinite;}
+#pkLoginScreen .pka-s1{left:9%;top:9%;font-size:18px}#pkLoginScreen .pka-s2{right:11%;top:14%;font-size:26px;animation-delay:.6s}
+#pkLoginScreen .pka-s3{left:16%;top:31%;font-size:22px;animation-delay:1.1s}#pkLoginScreen .pka-s4{right:8%;top:36%;font-size:15px;animation-delay:1.6s}
+#pkLoginScreen .pka-s5{left:6%;bottom:12%;font-size:24px;animation-delay:.3s}
+@keyframes pkaTw{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+
+#pkLoginScreen .auth-card.pka-card,#pkSignupModal .auth-card.pka-card{
+  width:100%;max-width:372px;margin:0 auto;padding:20px 18px 16px;border-radius:30px;box-sizing:border-box;text-align:left;
+  background:rgba(255,255,255,.97)!important;box-shadow:0 22px 50px rgba(30,5,80,.45),0 0 0 1px rgba(255,255,255,.5)!important;
+}
+.pka-field{position:relative;display:flex;align-items:center;margin:0 0 11px;}
+.pka-field .pka-ic{position:absolute;left:14px;font-size:17px;pointer-events:none;z-index:1;}
+.pka-field input.auth-input{width:100%!important;margin:0!important;height:52px;box-sizing:border-box;padding:0 46px 0 44px!important;border-radius:16px!important;border:2px solid #e6defa!important;background:#faf8ff!important;font-size:15px;color:#2a1459;outline:none;transition:border-color .15s,box-shadow .15s;}
+.pka-field input.auth-input:focus{border-color:#a855f7!important;box-shadow:0 0 0 4px rgba(168,85,247,.16)!important;background:#fff!important;}
+.pka-eye{position:absolute;right:6px;width:40px;height:40px;border:0;background:transparent;font-size:18px;opacity:.65;cursor:pointer;}
+.pka-eye.on{opacity:1;}
+#pkLoginScreen .pka-login,#pkSignupModal .pka-login{width:100%;height:54px;margin:4px 0 0;border:0;border-radius:18px;font:800 17px "Segoe UI",system-ui,sans-serif;letter-spacing:.3px;color:#fff;cursor:pointer;
+  background:linear-gradient(135deg,#7c3aed 0%,#c026d3 55%,#ec4899 100%)!important;box-shadow:0 10px 22px rgba(168,50,220,.42);transition:transform .12s;}
+.pka-login:active{transform:scale(.98);}
+.pka-login:disabled{opacity:.7;}
+.pka-err{color:#d32f2f;font-size:13px;min-height:16px;margin:8px 2px 0;text-align:center;}
+.pka-or{display:flex;align-items:center;gap:10px;margin:8px 0 12px;color:#8b7cb0;font-size:12.5px;font-weight:700;}
+.pka-or:before,.pka-or:after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,#d8cdf2,transparent);}
+.pka-signup{width:100%;height:52px;border-radius:18px;cursor:pointer;font:800 16px "Segoe UI",system-ui,sans-serif;color:#7c1fd1;
+  border:2px solid transparent;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(135deg,#7c3aed,#ec4899) border-box;}
+.pka-signup:active{transform:scale(.98);}
+.pka-skip{display:block;width:100%;margin-top:8px;padding:10px;border:0;background:transparent;color:#8b7cb0;font:700 14px "Segoe UI",system-ui,sans-serif;cursor:pointer;}
+.pka-more{display:block;margin:2px auto 0;padding:8px 16px;border:0;border-radius:999px;background:#f3eefc;color:#6d28d9;font:800 13px "Segoe UI",system-ui,sans-serif;cursor:pointer;}
+.pka-more b{display:inline-block;transition:transform .2s;}
+.pka-more.open b{transform:rotate(180deg);}
+.pka-socials{display:none;justify-content:center;gap:22px;margin:14px 0 2px;}
+.pka-socials.open{display:flex;animation:pkaIn .22s ease;}
+@keyframes pkaIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.pka-soc{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;border:0;background:transparent;cursor:pointer;padding:0;}
+.pka-sic{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;box-shadow:0 6px 14px rgba(60,30,120,.25);border:2px solid #fff;}
+.pka-phone{background:linear-gradient(145deg,#34d399,#059669);}
+.pka-google{background:#fff;border-color:#eee;}
+.pka-fb{background:linear-gradient(145deg,#4c8bf5,#1d4ed8);}
+.pka-soc em{font-style:normal;font-size:11.5px;font-weight:800;color:#5b4a86;}
+.pka-soc u{position:absolute;top:-6px;right:-10px;text-decoration:none;font-size:9px;font-weight:900;color:#fff;background:#f59e0b;border-radius:8px;padding:2px 5px;}
+/* साइन-अप खिड़की */
+#pkSignupModal{backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}
+.pka-mhead{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.pka-mhead img{width:48px;height:48px;border-radius:14px;box-shadow:0 6px 14px rgba(120,60,200,.3);}
+.pka-mhead h2{margin:0!important;font-size:21px!important;font-weight:900!important;color:#3b1a7a!important;background:none!important;-webkit-text-fill-color:#3b1a7a!important;}
+.pka-mhead p{margin:2px 0 0!important;font-size:12.5px!important;color:#8b7cb0!important;}
+.pka-seg{display:flex;gap:6px;padding:4px;margin-bottom:12px;border-radius:16px;background:#f3eefc;}
+.pka-seg button{flex:1;height:38px;border:0;border-radius:12px;background:transparent;color:#7a69a8;font:800 13px "Segoe UI",system-ui,sans-serif;cursor:pointer;}
+.pka-seg button.on{background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;box-shadow:0 5px 12px rgba(150,60,220,.35);}
+.pka-gender{display:flex;gap:10px;margin:2px 0 14px;}
+.pka-gender .gender-pill{flex:1;margin:0!important;}
+.pka-gender .gender-pill input{position:absolute;opacity:0;pointer-events:none;}
+.pka-gender .gender-pill span{display:flex;align-items:center;justify-content:center;height:46px;border-radius:14px;border:2px solid #e6defa;background:#faf8ff;color:#6d5a99;font:800 14px "Segoe UI",system-ui,sans-serif;}
+.pka-gender .gender-pill input:checked+span{border-color:transparent;background:linear-gradient(135deg,#ede4ff,#ffe0f3);color:#a21caf;box-shadow:0 0 0 2px #c084fc inset;}
+.pka-gender .gender-pill{position:relative;padding:0!important;background:none!important;border:0!important;}
+.pka-cancel{width:100%;height:46px;margin-top:8px;border:0;border-radius:16px;background:#f3eefc;color:#6d28d9;font:800 15px "Segoe UI",system-ui,sans-serif;cursor:pointer;}
+
+/* सुधार: पुराने बटन-नियमों के डिब्बे हटाओ, अक्षर बाईं तरफ़ से */
+#pkLoginScreen .pka-field input.auth-input,#pkSignupModal .pka-field input.auth-input{text-align:left!important;}
+#pkLoginScreen .pka-eye,#pkSignupModal .pka-eye{background:transparent!important;box-shadow:none!important;border:0!important;padding:0!important;min-width:0!important;width:40px!important;}
+#pkLoginScreen #pkSkipBtn.pka-skip{width:100%!important;margin-top:6px!important;padding:10px!important;border:0!important;background:transparent!important;box-shadow:none!important;color:#8b7cb0!important;font-size:14px!important;font-weight:700!important;}
+#pkLoginScreen .pka-more{background:#f3eefc!important;box-shadow:none!important;border:0!important;width:auto!important;color:#6d28d9!important;}
+#pkLoginScreen .pka-soc{background:none!important;box-shadow:none!important;border:0!important;width:auto!important;min-width:0!important;padding:0!important;margin:0!important;}
+#pkLoginScreen .pka-signup{background:linear-gradient(#fff,#fff) padding-box,linear-gradient(135deg,#7c3aed,#ec4899) border-box!important;border:2px solid transparent!important;box-shadow:none!important;color:#7c1fd1!important;}
+#pkSignupModal .pka-cancel{background:#f3eefc!important;color:#6d28d9!important;box-shadow:none!important;border:0!important;}
+#pkSignupModal .pka-seg button{box-shadow:none;}
+#pkSignupModal .pka-seg button.on{box-shadow:0 5px 12px rgba(150,60,220,.35);}
+</style>
+<script id="pkAuthSkinJs">
+(function(){
+  'use strict';
+  function say(t){ try{ if(typeof toast==='function') toast(t); }catch(e){} }
+  window.pkaToggleEye=function(id,btn){ var i=document.getElementById(id); if(!i) return; var show=i.type==='password'; i.type=show?'text':'password'; if(btn) btn.classList.toggle('on',show); };
+  window.pkaToggleMore=function(){ var m=document.getElementById('pkaMoreBtn'), s=document.getElementById('pkaSocials'); if(!s) return; var open=!s.classList.contains('open'); s.classList.toggle('open',open); if(m) m.classList.toggle('open',open); if(open){ setTimeout(function(){ try{ s.scrollIntoView({behavior:'smooth',block:'nearest'}); }catch(e){} },60); } };
+  window.pkaSoon=function(n){ say(n+' से login जल्द आ रहा है. अभी User ID या Phone Number से Sign Up करें'); };
+  var mode='id';
+  window.pkaSignupMode=function(m){
+    mode=(m==='phone')?'phone':'id';
+    var u=document.getElementById('signupUserId'), a=document.getElementById('pkaSegId'), b=document.getElementById('pkaSegPhone');
+    if(a) a.classList.toggle('on',mode==='id'); if(b) b.classList.toggle('on',mode==='phone');
+    if(u){ u.placeholder=(mode==='phone')?'Phone Number (10 अंक)':'User ID'; u.setAttribute('inputmode',mode==='phone'?'tel':'text'); }
+    var ic=document.querySelector('#pkSignupModal .pka-field .pka-ic'); if(ic) ic.textContent=(mode==='phone')?'📱':'👤';
+  };
+  window.pkaPhoneSignup=function(){ try{ pkOpenSignup(); }catch(e){} window.pkaSignupMode('phone'); };
+  /* Phone mode में नंबर सही हो तभी आगे बढ़े; बाकी काम पुराना ही (नंबर ही login ID बनता है, OTP नहीं) */
+  var _orig=window.pkDoSignup;
+  if(typeof _orig==='function'){
+    window.pkDoSignup=function(){
+      if(mode==='phone'){
+        var v=(document.getElementById('signupUserId').value||'').replace(/[\s-]/g,''), er=document.getElementById('signupError');
+        if(!/^\+?\d{10,15}$/.test(v)){ if(er) er.textContent='सही फ़ोन नंबर डालें (10 अंक)'; return; }
+        document.getElementById('signupUserId').value=v.replace(/^\+/,'');
+      }
+      return _orig.apply(this,arguments);
+    };
+  }
+  /* खिड़की खुलते समय हमेशा "User ID" वाला रूप; Phone बटन से खुले तो उसका अपना */
+  var _open=window.pkOpenSignup;
+  if(typeof _open==='function'){ window.pkOpenSignup=function(){ var r=_open.apply(this,arguments); window.pkaSignupMode('id'); return r; }; }
+})();
+</script>
+<style id="pkMusicLoadCss">
+/* ===== लोडिंग: चक्कर वाले गोले की जगह म्यूज़िक के नाचते बार + उछलते नोट्स ===== */
+@keyframes pkEqBig{0.0%{background-size:6px 61%,6px 92%,6px 99%,6px 78%,6px 44%,6px 23%,6px 31%}12.5%{background-size:6px 89%,6px 100%,6px 82%,6px 48%,6px 24%,6px 28%,6px 57%}25.0%{background-size:6px 100%,6px 85%,6px 52%,6px 26%,6px 26%,6px 53%,6px 86%}37.5%{background-size:6px 89%,6px 57%,6px 28%,6px 24%,6px 48%,6px 82%,6px 100%}50.0%{background-size:6px 61%,6px 30%,6px 23%,6px 44%,6px 78%,6px 99%,6px 91%}62.5%{background-size:6px 33%,6px 22%,6px 40%,6px 74%,6px 98%,6px 94%,6px 65%}75.0%{background-size:6px 22%,6px 37%,6px 70%,6px 96%,6px 96%,6px 69%,6px 36%}87.5%{background-size:6px 33%,6px 65%,6px 94%,6px 98%,6px 74%,6px 40%,6px 22%}100.0%{background-size:6px 61%,6px 92%,6px 99%,6px 78%,6px 44%,6px 23%,6px 31%}}@keyframes pkEqSm{0.0%{background-size:4px 61%,4px 99%,4px 81%,4px 34%}12.5%{background-size:4px 89%,4px 95%,4px 52%,4px 22%}25.0%{background-size:4px 100%,4px 71%,4px 28%,4px 33%}37.5%{background-size:4px 89%,4px 42%,4px 23%,4px 60%}50.0%{background-size:4px 61%,4px 23%,4px 41%,4px 88%}62.5%{background-size:4px 33%,4px 27%,4px 70%,4px 100%}75.0%{background-size:4px 22%,4px 51%,4px 94%,4px 89%}87.5%{background-size:4px 33%,4px 80%,4px 99%,4px 62%}100.0%{background-size:4px 61%,4px 99%,4px 81%,4px 34%}}
+@keyframes pkNoteJump{0%{transform:translateY(6px) rotate(-8deg)}100%{transform:translateY(-12px) rotate(8deg)}}
+#cinemaActionLoading .cal-box .cal-spinner{
+  position:relative;width:78px!important;height:44px!important;margin:8px auto 18px!important;border:0!important;border-radius:0!important;
+  background:linear-gradient(#ff2d95,#ff2d95) 0px 50%/6px 40% no-repeat,linear-gradient(#e91e8c,#e91e8c) 12px 50%/6px 40% no-repeat,linear-gradient(#c026d3,#c026d3) 24px 50%/6px 40% no-repeat,linear-gradient(#9333ea,#9333ea) 36px 50%/6px 40% no-repeat,linear-gradient(#7c3aed,#7c3aed) 48px 50%/6px 40% no-repeat,linear-gradient(#ff7a18,#ff7a18) 60px 50%/6px 40% no-repeat,linear-gradient(#ffb020,#ffb020) 72px 50%/6px 40% no-repeat;
+  animation:pkEqBig 1.1s linear infinite!important;
+}
+#cinemaActionLoading .cal-box .cal-spinner:before,#cinemaActionLoading .cal-box .cal-spinner:after{
+  position:absolute;top:2px;font-size:26px;line-height:1;font-weight:900;animation:pkNoteJump .62s ease-in-out infinite alternate;
+}
+#cinemaActionLoading .cal-box .cal-spinner:before{content:"\266A";left:-34px;color:#db2777;}
+#cinemaActionLoading .cal-box .cal-spinner:after{content:"\266B";right:-34px;color:#7c3aed;animation-delay:.31s;}
+#cinemaActionLoading .cal-title{display:none!important;}
+#cinemaActionLoading .cal-text{margin-top:0!important;font-size:13px!important;font-weight:700;color:#6b3fa0!important;}
+/* छोटी लोडिंग (login/signup आदि के संदेश के साथ वाली) */
+.loading-msg .spinner{
+  width:28px!important;height:18px!important;border:0!important;border-radius:0!important;flex-shrink:0;
+  background:linear-gradient(#ff2d95,#ff2d95) 0px 50%/4px 40% no-repeat,linear-gradient(#a855f7,#a855f7) 8px 50%/4px 40% no-repeat,linear-gradient(#7c3aed,#7c3aed) 16px 50%/4px 40% no-repeat,linear-gradient(#ff8a00,#ff8a00) 24px 50%/4px 40% no-repeat;
+  animation:pkEqSm .9s linear infinite!important;
+}
+@media (prefers-reduced-motion:reduce){#cinemaActionLoading .cal-box .cal-spinner,.loading-msg .spinner{animation:none!important}}
+</style>
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
