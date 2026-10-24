@@ -34,7 +34,7 @@
 <script id="pkOfflineSplash">
 /* नेट न होने पर सफ़ेद खाली स्क्रीन की जगह "Star Masti" वाली स्क्रीन; नेट आते ही अपने आप ऐप खुल जाएगा */
 (function(){
-  var el=null,timer=null,shown=false;
+  var el=null,timer=null,shown=false,T0=Date.now();
   function fbOk(){ return typeof window.firebase!=='undefined'&&!!window.firebase; }
   function build(){
     if(el) return;
@@ -61,7 +61,8 @@
   function tick(){
     if(!shown) return;
     probe().then(function(ok){
-      if(!ok||!shown) return;
+      if(!shown) return;
+      if(!ok){ if(fbOk()&&Date.now()-T0>8000) hide(); return; }   /* VPN में जाँच-लिंक रुक जाए तब भी ऐप लोड हो चुका हो तो स्क्रीन न अटके */
       if(!fbOk()){ try{ location.reload(); }catch(e){} } else hide();
     });
   }
@@ -19406,6 +19407,60 @@ html body #prRoom.pk-yt-full:has(#pkPrerollBox) #ytRoomViewerSeekBar{visibility:
 }
 @media (prefers-reduced-motion:reduce){#cinemaActionLoading .cal-box .cal-spinner,.loading-msg .spinner{animation:none!important}}
 </style>
+<script id="pkNetResilienceJs">
+/* VPN / नेट बदलने पर भी ऐप ठीक चले: (1) आवाज़ वाले कनेक्शन को ज़्यादा रास्ते (STUN/TURN, TCP और TLS भी),
+   (2) नेट वापस आने या ऐप दोबारा खुलने पर Firestore का कनेक्शन फिर से जगाना */
+(function(){
+  'use strict';
+  /* अपना TURN हो तो:  window.PK_ICE_EXTRA.push({urls:['turn:...','turns:...:443?transport=tcp'],username:'..',credential:'..'}) */
+  window.PK_ICE_EXTRA=window.PK_ICE_EXTRA||[];
+  var EXTRA=[
+    {urls:['stun:stun1.l.google.com:19302','stun:stun2.l.google.com:19302','stun:stun.cloudflare.com:3478']},
+    {urls:['turn:openrelay.metered.ca:80?transport=tcp','turns:openrelay.metered.ca:443?transport=tcp'],username:'openrelayproject',credential:'openrelayproject'}
+  ];
+  function urlsOf(sv){ return Array.isArray(sv.urls)?sv.urls:[sv.urls]; }
+  try{
+    var Native=window.RTCPeerConnection;
+    if(Native&&!Native.__pkWrapped){
+      var Wrapped=function(cfg,opt){
+        cfg=cfg||{};
+        try{
+          var list=(cfg.iceServers||[]).slice(), have={};
+          list.forEach(function(sv){ urlsOf(sv).forEach(function(u){ have[u]=1; }); });
+          EXTRA.concat(window.PK_ICE_EXTRA||[]).forEach(function(sv){
+            var us=urlsOf(sv).filter(function(u){ return u&&!have[u]; });
+            if(us.length){ var c=Object.assign({},sv); c.urls=us; list.push(c); }
+          });
+          cfg=Object.assign({},cfg,{iceServers:list});
+          if(cfg.iceCandidatePoolSize==null) cfg.iceCandidatePoolSize=2;
+        }catch(e){}
+        return new Native(cfg,opt);
+      };
+      Wrapped.prototype=Native.prototype;
+      if(Native.generateCertificate) Wrapped.generateCertificate=Native.generateCertificate;
+      Wrapped.__pkWrapped=true;
+      window.RTCPeerConnection=Wrapped;
+      if(window.webkitRTCPeerConnection) window.webkitRTCPeerConnection=Wrapped;
+    }
+  }catch(e){}
+  var timer=0, hiddenAt=0;
+  function kick(){
+    clearTimeout(timer);
+    timer=setTimeout(function(){
+      try{
+        if(typeof db!=='undefined'&&db&&db.disableNetwork&&db.enableNetwork){
+          db.disableNetwork().catch(function(){}).then(function(){ return db.enableNetwork(); }).catch(function(){});
+        }
+      }catch(e){}
+    },1200);
+  }
+  window.addEventListener('online',kick);
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden){ hiddenAt=Date.now(); }
+    else if(hiddenAt&&Date.now()-hiddenAt>20000){ hiddenAt=0; kick(); }   /* VPN चालू/बंद करके लौटने पर */
+  });
+})();
+</script>
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
