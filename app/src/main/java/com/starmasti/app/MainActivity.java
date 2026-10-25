@@ -95,7 +95,6 @@ public class MainActivity extends AppCompatActivity {
     private WebView webView;
     private WebChromeClient chrome;          // मुख्य WebView और More Video पेज दोनों यही इस्तेमाल करते हैं (फ़ुल-स्क्रीन वीडियो के लिए)
     private UnityRewardedHelper unity;
-    private UnityInterstitialHelper unityInter;
     private View customView;
     private WebChromeClient.CustomViewCallback customCb;
     private ValueCallback<Uri[]> filePathCb;
@@ -106,10 +105,12 @@ public class MainActivity extends AppCompatActivity {
     private static final String MV_HOLD_JS =
             "(function(){" +
             " if(window.__pkHold) return; window.__pkHold=1;" +
-            " var held=false, settle=0, lastId='', sx=0, sy=0;" +
+            " var held=false, until=0, settle=0, cur='', sx=0, sy=0;" +
             " function vid(){ var m=location.href.match(/[?&]v=([\\w-]{11})/); return m?m[1]:''; }" +
             " function pauseAll(){ var v=document.querySelectorAll('video'); for(var i=0;i<v.length;i++){ try{ if(!v[i].paused) v[i].pause(); }catch(e){} } }" +
-            " function check(){ var id=vid(); if(id&&id!==lastId){ lastId=id; held=true; settle=Date.now()+900; pauseAll(); } if(!id) lastId=''; if(held) pauseAll(); }" +
+            // नया वीडियो खुलने के बाद सिर्फ़ शुरुआती 4 सेकंड तक अपने-आप चलना रोकते हैं; उसके बाद (या यूज़र के टैप करते ही) कभी कुछ नहीं रोकते
+            " function check(){ var id=vid(); if(id&&id!==cur){ cur=id; held=true; settle=Date.now()+300; until=Date.now()+4000; pauseAll(); }" +
+            "   if(held){ if(Date.now()>until) held=false; else pauseAll(); } }" +
             " function release(){ if(held&&Date.now()>settle) held=false; }" +
             " function stop(e){ if(held&&e.target&&e.target.pause){ try{ e.target.pause(); }catch(x){} } }" +
             " document.addEventListener('play',stop,true);" +
@@ -287,6 +288,8 @@ public class MainActivity extends AppCompatActivity {
     /** किस वेबसाइट के video को किस पेज का Referer देना है (hotlink रोकने वाली साइटों के लिए) */
     private final ConcurrentHashMap<String, String> mediaRefHosts = new ConcurrentHashMap<>();
     private boolean mvPickOn = false;
+    /** Q (Queue) से More Video खुला हो तो भेजा गया वीडियो चलने की जगह Queue में जुड़ेगा */
+    private boolean mvQueueMode = false;
     private View splash;         // ऐप खुलते समय "स्टार मस्ती" वाली स्क्रीन
     // शुरुआती एनिमेशन: आइकन उभरता है, तारा उड़कर आता है, बिल्ली चलकर आती है और डांस करती है
     private boolean splashAnimated = false, splashRunning = false, splashHidePending = false;
@@ -427,8 +430,6 @@ public class MainActivity extends AppCompatActivity {
 
         unity = new UnityRewardedHelper(this, webView);
         unity.start();
-        unityInter = new UnityInterstitialHelper(this, webView);
-        unityInter.start();
 
         webView.loadUrl(START_URL.isEmpty() ? ASSET_URL : START_URL);
         webView.postDelayed(this::hideSplash, 30000); // सुरक्षा: 30 सेकंड बाद हर हाल में हटा दो
@@ -831,10 +832,6 @@ public class MainActivity extends AppCompatActivity {
         public void setStatusBarColor(final String hex) {
             runOnUiThread(() -> { try { setBarColor(Color.parseColor(hex)); } catch (Exception ignored) { } });
         }
-        @JavascriptInterface
-        public void showUnityInterstitialAd() {
-            runOnUiThread(() -> unityInter.requestShow());
-        }
         /** ID जैसी चीज़ें पक्के तौर पर कॉपी करने के लिए (WebView में वेब का clipboard कई बार नहीं चलता) */
         /** रूम का video player इस video के लिए सही Referer (जिस पेज पर वह मिला) याद रखवाता है */
         @JavascriptInterface
@@ -876,7 +873,12 @@ public class MainActivity extends AppCompatActivity {
         /** More Video: HTML से window.Android.openMoreVideo("https://www.youtube.com/") बुलाने पर अलग पूरे पेज में खुलता है */
         @JavascriptInterface
         public void openMoreVideo(final String url) {
-            runOnUiThread(() -> openMoreVideoPage(url));
+            runOnUiThread(() -> { mvQueueMode = false; openMoreVideoPage(url); });
+        }
+        /** YouTube मोड के Q बटन से: ब्राउज़िंग/YouTube का चुनाव खुलता है, और भेजा गया वीडियो Queue में जुड़ता है */
+        @JavascriptInterface
+        public void openMoreVideoQueue(final String url) {
+            runOnUiThread(() -> { mvQueueMode = true; openMoreVideoPage(url); });
         }
     }
 
@@ -1230,15 +1232,58 @@ public class MainActivity extends AppCompatActivity {
         pick.setElevation(10 * d);
         pick.setOnClickListener(v -> onBwPickTapped());
         mvSendBtn = pick;
-        FrameLayout.LayoutParams lpPick = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, (int) (50 * d));
+
+        // नीचे की पंक्ति: [🔄 नया ब्राउज़र]  [🎬 वीडियो चुनो]  [🏠 पार्टी रूम]
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        int sz = (int) (44 * d), gap = (int) (10 * d);
+        TextView freshBtn = makeSideBtn("🔄", "#0EA5E9", "#6366F1", v -> resetBrowseFresh());
+        freshBtn.setContentDescription("सारे पेज बंद करके नया ब्राउज़र");
+        TextView roomBtn = makeSideBtn("🏠", "#10B981", "#059669", v -> closeMoreVideoPage());
+        roomBtn.setContentDescription("पार्टी रूम में जाएँ (पेज खुला रहेगा)");
+        LinearLayout.LayoutParams lpL = new LinearLayout.LayoutParams(sz, sz); lpL.rightMargin = gap;
+        LinearLayout.LayoutParams lpR = new LinearLayout.LayoutParams(sz, sz); lpR.leftMargin = gap;
+        row.addView(freshBtn, lpL);
+        row.addView(pick, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, (int) (50 * d)));
+        row.addView(roomBtn, lpR);
+        FrameLayout.LayoutParams lpPick = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lpPick.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
         lpPick.bottomMargin = (int) (22 * d);
-        body.addView(pick, lpPick);
+        body.addView(row, lpPick);
 
         ViewGroup content = findViewById(android.R.id.content);
         content.addView(mvRoot, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         mvHolderBw = snapshotHolder();
         bwInput.requestFocus();
+    }
+
+    /** नीचे की पंक्ति के दोनों छोटे गोल बटन */
+    private TextView makeSideBtn(String label, String c1, String c2, View.OnClickListener l) {
+        float d = getResources().getDisplayMetrics().density;
+        TextView b = new TextView(this);
+        b.setText(label);
+        b.setTextSize(19);
+        b.setGravity(Gravity.CENTER);
+        GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Color.parseColor(c1), Color.parseColor(c2)});
+        g.setShape(GradientDrawable.OVAL);
+        g.setStroke((int) (2 * d), Color.parseColor("#66FFFFFF"));
+        b.setBackground(g);
+        b.setElevation(10 * d);
+        b.setOnClickListener(l);
+        return b;
+    }
+
+    /** 🔄: खुले सारे ब्राउज़िंग पेज बंद (नष्ट) करके बिल्कुल नया ब्राउज़र खोलता है, जैसे पहली बार More Video → ब्राउज़िंग दबाने पर खुलता है */
+    private void resetBrowseFresh() {
+        final MvHolder old = mvHolderBw;
+        hideMoreVideoPage();
+        if (old != null && old.web != null) {
+            try { old.web.stopLoading(); old.web.loadUrl("about:blank"); old.web.clearHistory(); old.web.destroy(); } catch (Exception ignored) { }
+        }
+        mvHolderBw = null;
+        startBrowseMode();
     }
 
     private void showEnginePicker() {
@@ -1906,9 +1951,38 @@ public class MainActivity extends AppCompatActivity {
             InputStream raw = code >= 400 ? c.getErrorStream() : c.getInputStream();
             if (raw == null) raw = new ByteArrayInputStream(new byte[0]);
             InputStream in;
+            // कई साइटें Range नहीं मानतीं और पूरा 200 लौटाती हैं; तब प्लेयर रुकने/आगे-पीछे के बाद दोबारा नहीं चल पाता।
+            // यहाँ हम खुद माँगा हुआ हिस्सा काटकर सही 206 (Content-Range) बनाकर देते हैं।
+            boolean synth = false; long synthStart = 0, synthEnd = -1;
+            if (code == 200) {
+                String rq = null;
+                if (reqH != null) for (Map.Entry<String, String> e : reqH.entrySet()) if ("Range".equalsIgnoreCase(e.getKey())) rq = e.getValue();
+                String cl0 = c.getHeaderField("Content-Length");
+                if (rq != null && cl0 != null) {
+                    Matcher rm = Pattern.compile("bytes=(\\d+)-(\\d*)").matcher(rq);
+                    long len = Long.parseLong(cl0.trim());
+                    if (rm.find() && len > 0) {
+                        long rs = Long.parseLong(rm.group(1));
+                        long re = rm.group(2).isEmpty() ? len - 1 : Math.min(len - 1, Long.parseLong(rm.group(2)));
+                        if (rs <= re && rs <= 200L * 1024 * 1024) {
+                            long skip = rs;
+                            while (skip > 0) {
+                                long sk = raw.skip(skip);
+                                if (sk <= 0) { if (raw.read() < 0) throw new java.io.IOException("eof while skipping"); sk = 1; }
+                                skip -= sk;
+                            }
+                            out.put("Content-Range", "bytes " + rs + "-" + re + "/" + len);
+                            out.put("Content-Length", String.valueOf(re - rs + 1));
+                            out.put("Accept-Ranges", "bytes");
+                            synth = true; synthStart = rs; synthEnd = re; code = 206;
+                        }
+                    }
+                }
+            }
             if (code == 200 || code == 206) {
                 long pos = 0, end = -1;
-                try {
+                if (synth) { pos = synthStart; end = synthEnd; }
+                else try {
                     String cr = c.getHeaderField("Content-Range");
                     String cl = c.getHeaderField("Content-Length");
                     if (code == 206 && cr != null) {
@@ -1927,7 +2001,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 };
             }
-            String reason = c.getResponseMessage();
+            String reason = synth ? "Partial Content" : c.getResponseMessage();
             return new WebResourceResponse(mime, null, code, (reason == null || reason.isEmpty()) ? "OK" : reason, out, in);
         } catch (Exception e) {
             if (m != null && m.c != null) m.c.disconnect();
@@ -1938,16 +2012,18 @@ public class MainActivity extends AppCompatActivity {
     private void sendDirectToRoom(String url) { sendDirectToRoom(url, ""); }
 
     private void sendDirectToRoom(String url, String ref) {
+        final boolean q = mvQueueMode; mvQueueMode = false;
         closeMoreVideoPage();
         final String js = "window.postMessage({type:'PARTY_ROOM_DIRECT_VIDEO_SELECTED',url:" + JSONObject.quote(url)
-                + ",ref:" + JSONObject.quote(ref == null ? "" : ref) + "},'*');";
+                + ",ref:" + JSONObject.quote(ref == null ? "" : ref) + ",queue:" + q + "},'*');";
         webView.evaluateJavascript(js, null);
     }
 
     private void sendCleanToRoom(String clean) {
+        final boolean q = mvQueueMode; mvQueueMode = false;
         closeMoreVideoPage();
         // ऐप के HTML को वही संदेश भेजते हैं जो पहले More Video का पेज भेजता था; कॉइन कटना और प्ले होना वहीं होता है
-        final String js = "window.postMessage({type:'PARTY_ROOM_YOUTUBE_SELECTED',url:'" + clean + "'},'*');";
+        final String js = "window.postMessage({type:'PARTY_ROOM_YOUTUBE_SELECTED',url:'" + clean + "',queue:" + q + "},'*');";
         webView.evaluateJavascript(js, null);
     }
 
@@ -2003,17 +2079,33 @@ public class MainActivity extends AppCompatActivity {
         WindowCompat.getInsetsController(w, w.getDecorView()).setAppearanceLightStatusBars(lum > 0.55);
     }
 
+    /** पेज को बताओ कि ऐप बैकग्राउंड में है (विंडो हमेशा "visible" दिखती है, इसलिए पेज खुद यह नहीं जान पाता);
+     *  YouTube से चुना गाना बैकग्राउंड में खुद pause हो जाए तो पेज इसी से जानकर उसे फिर चालू कर देता है */
+    private void pkSetBg(boolean bg) {
+        try {
+            if (webView != null) webView.evaluateJavascript("window.__pkBg=" + bg + ";window.__pkBgAt=Date.now();", null);
+        } catch (Exception ignored) { }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        pkSetBg(false);
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
         // गाना (audio) बैकग्राउंड में भी चले: WebView के timers/media रुकने न दो
         try { if (webView != null) { webView.onResume(); webView.resumeTimers(); } } catch (Exception ignored) { }
+        pkSetBg(true);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         try { if (webView != null) { webView.onResume(); webView.resumeTimers(); } } catch (Exception ignored) { }
+        pkSetBg(true);
     }
 
     @Override
