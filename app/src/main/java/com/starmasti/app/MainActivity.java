@@ -62,13 +62,23 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.WindowCompat;
 import androidx.webkit.WebViewAssetLoader;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FilterInputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URLEncoder;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -272,7 +282,10 @@ public class MainActivity extends AppCompatActivity {
     private static class MvHolder {
         FrameLayout root; WebView web; TextView sendBtn, engineBtn, placeholder; EditText input; View progress;
     }
-    private MvHolder mvHolderYt, mvHolderBw;
+    private MvHolder mvHolderYt, mvHolderBw, mvHolderOwn;
+
+    /** किस वेबसाइट के video को किस पेज का Referer देना है (hotlink रोकने वाली साइटों के लिए) */
+    private final ConcurrentHashMap<String, String> mediaRefHosts = new ConcurrentHashMap<>();
     private boolean mvPickOn = false;
     private View splash;         // ऐप खुलते समय "स्टार मस्ती" वाली स्क्रीन
     // शुरुआती एनिमेशन: आइकन उभरता है, तारा उड़कर आता है, बिल्ली चलकर आती है और डांस करती है
@@ -321,6 +334,16 @@ public class MainActivity extends AppCompatActivity {
             }
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                try {
+                    String host = request.getUrl().getHost();
+                    if (host != null && "GET".equalsIgnoreCase(request.getMethod())) {
+                        String ref = mediaRefHosts.get(host);
+                        if (ref != null) {
+                            WebResourceResponse r = proxyMedia(request, ref);
+                            if (r != null) return r;
+                        }
+                    }
+                } catch (Exception ignored) { }
                 return loader.shouldInterceptRequest(request.getUrl());
             }
             @Override
@@ -790,6 +813,11 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(() -> unityInter.requestShow());
         }
         /** ID जैसी चीज़ें पक्के तौर पर कॉपी करने के लिए (WebView में वेब का clipboard कई बार नहीं चलता) */
+        /** रूम का video player इस video के लिए सही Referer (जिस पेज पर वह मिला) याद रखवाता है */
+        @JavascriptInterface
+        public void registerMediaReferer(final String url, final String referer) {
+            registerMediaRef(url, referer);
+        }
         /** रूम के "सीधा video link" खाने में पेज का link डाला हो तो असली video link ढूँढ़ने के लिए */
         @JavascriptInterface
         public void resolveVideo(final String pageUrl) {
@@ -843,6 +871,23 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Exception ignored) { }
             });
         }
+        /** हमारा अपना More Video पेज (more-video.html) सर्च के लिए बुलाता है: नतीजे ऐप के अंदर से YouTube से आते हैं */
+        @JavascriptInterface
+        public void ytSearch(final String q, final String cbId) {
+            if (q == null || q.trim().isEmpty() || cbId == null || !cbId.matches("[A-Za-z0-9_]+")) return;
+            new Thread(() -> {
+                final String json = ytSearchJson(q.trim());
+                runOnUiThread(() -> {
+                    if (mvWeb != null) mvWeb.evaluateJavascript("window.__mvSearchDone&&window.__mvSearchDone("
+                            + JSONObject.quote(cbId) + "," + JSONObject.quote(json) + ")", null);
+                });
+            }).start();
+        }
+        /** पेज के ✕ से More Video बंद (पेज छुप जाता है, नष्ट नहीं होता) */
+        @JavascriptInterface
+        public void close() {
+            runOnUiThread(() -> hideMoreVideoPage());
+        }
         /** ब्राउज़िंग से चुना सीधा video (YouTube नहीं): रूम के HTML को संदेश भेजता है; कॉइन काटना और चलाना वहीं होता है */
         /** ब्राउज़िंग में वेबपेज-लिंक पर ▶ Room: पेज के अंदर से असली video ढूँढकर भेजना */
         @JavascriptInterface
@@ -853,7 +898,10 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void sendDirect(final String url) {
             if (url == null || !url.matches("(?i)^https?://\\S+$")) return;
-            runOnUiThread(() -> sendDirectToRoom(url));
+            runOnUiThread(() -> {
+                String ref = (mvWeb != null && mvWeb.getUrl() != null) ? mvWeb.getUrl() : "";
+                sendDirectToRoom(url, ref);
+            });
         }
         @JavascriptInterface
         public void send(final String url) {
@@ -1229,6 +1277,157 @@ public class MainActivity extends AppCompatActivity {
         resetPickLabel();   // बटन बंद, नीचे का बटन सामान्य
     }
 
+    /** हमारा अपना YouTube-जैसा पेज (more-video.html, GitHub Pages से): वीडियो दबाने पर ऊपर प्लेयर, नीचे सूची */
+    private void startOwnMode(String fallbackUrl) {
+        if (mvRoot != null) return;
+        if (mvHolderOwn != null) { restoreHolder(mvHolderOwn, 2); return; }
+        if (START_URL.isEmpty()) { startYoutubeMode(fallbackUrl); return; }
+        mvMode = 2;
+        mvRoot = new FrameLayout(this);
+        mvRoot.setBackgroundColor(Color.parseColor("#0F0F14"));
+        mvRoot.setClickable(true);
+
+        mvWeb = new WebView(this);
+        mvWeb.setBackgroundColor(Color.parseColor("#0F0F14"));
+        WebSettings ws = mvWeb.getSettings();
+        ws.setJavaScriptEnabled(true);
+        ws.setDomStorageEnabled(true);
+        ws.setMediaPlaybackRequiresUserGesture(false);
+        ws.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+        final String startHost = Uri.parse(START_URL).getHost();
+        mvWeb.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String u) { view.postDelayed(MainActivity.this::hideMvLoading, 250); }
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                if (request != null && request.isForMainFrame()) {
+                    hideMvLoading();
+                    view.loadDataWithBaseURL(null,
+                            "<html><head><meta name='viewport' content='width=device-width,initial-scale=1'></head>"
+                                    + "<body style='font-family:sans-serif;text-align:center;padding:60px 22px;background:#0F0F14;color:#e9ddff'>"
+                                    + "<div style='font-size:54px'>😕</div><h2>More Video खुल नहीं पाया</h2>"
+                                    + "<p style='color:#b9a9dd;font-size:14px'>नेट जाँचिए, या GitHub में more-video.html डाली है या नहीं देखिए।</p></body></html>",
+                            "text/html", "UTF-8", null);
+                }
+            }
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                String h = request.getUrl().getHost();
+                return h == null || !h.equals(startHost);   // पेज के बाहर कहीं नहीं जाना
+            }
+        });
+        mvWeb.setWebChromeClient(chrome);   // YouTube प्लेयर का फ़ुल-स्क्रीन भी चलेगा
+        mvWeb.addJavascriptInterface(new MvBridge(), "AndroidMV");
+        mvRoot.addView(mvWeb, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mvLoading = buildMvLoading();
+        mvRoot.addView(mvLoading, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mvLoading.postDelayed(this::hideMvLoading, 12000);
+
+        ViewGroup content = findViewById(android.R.id.content);
+        content.addView(mvRoot, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mvHolderOwn = snapshotHolder();
+        mvWeb.loadUrl(START_URL + "more-video.html");
+    }
+
+    /** YouTube का सर्च पेज पढ़कर वीडियो की सूची (JSON) बनाता है: id, title, ch, dur, views, when, short */
+    private String ytSearchJson(String q) {
+        HttpURLConnection c = null;
+        try {
+            URL u = new URL("https://www.youtube.com/results?search_query=" + URLEncoder.encode(q, "UTF-8") + "&hl=hi&gl=IN");
+            c = (HttpURLConnection) u.openConnection();
+            c.setInstanceFollowRedirects(true);
+            c.setConnectTimeout(9000);
+            c.setReadTimeout(12000);
+            c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36");
+            c.setRequestProperty("Accept-Language", "hi-IN,hi;q=0.9,en;q=0.8");
+            c.setRequestProperty("Cookie", "CONSENT=YES+1; SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg");
+            InputStream in = c.getInputStream();
+            ByteArrayOutputStream bo = new ByteArrayOutputStream();
+            byte[] buf = new byte[16384];
+            int n, total = 0;
+            while ((n = in.read(buf)) > 0 && total < 5000000) { bo.write(buf, 0, n); total += n; }
+            String html = bo.toString("UTF-8");
+            int k = html.indexOf("ytInitialData");
+            if (k < 0) return "[]";
+            int s0 = html.indexOf('{', k);
+            if (s0 < 0) return "[]";
+            int depth = 0, end = -1;
+            boolean inStr = false, esc = false;
+            for (int i = s0; i < html.length(); i++) {
+                char ch = html.charAt(i);
+                if (inStr) {
+                    if (esc) esc = false; else if (ch == '\\') esc = true; else if (ch == '"') inStr = false;
+                } else if (ch == '"') inStr = true;
+                else if (ch == '{') depth++;
+                else if (ch == '}') { depth--; if (depth == 0) { end = i; break; } }
+            }
+            if (end < 0) return "[]";
+            JSONObject root = new JSONObject(html.substring(s0, end + 1));
+            JSONArray out = new JSONArray();
+            collectVideos(root, out, new HashSet<String>());
+            return out.toString();
+        } catch (Exception e) {
+            return "[]";
+        } finally {
+            if (c != null) c.disconnect();
+        }
+    }
+
+    private void collectVideos(Object node, JSONArray out, Set<String> seen) {
+        if (out.length() >= 60) return;
+        if (node instanceof JSONObject) {
+            JSONObject o = (JSONObject) node;
+            JSONObject vr = o.optJSONObject("videoRenderer");
+            if (vr != null) addVideo(vr, false, out, seen);
+            JSONObject rr = o.optJSONObject("reelItemRenderer");
+            if (rr != null) addVideo(rr, true, out, seen);
+            Iterator<String> it = o.keys();
+            while (it.hasNext()) {
+                String key = it.next();
+                if ("videoRenderer".equals(key) || "reelItemRenderer".equals(key)) continue;
+                collectVideos(o.opt(key), out, seen);
+            }
+        } else if (node instanceof JSONArray) {
+            JSONArray a = (JSONArray) node;
+            for (int i = 0; i < a.length(); i++) collectVideos(a.opt(i), out, seen);
+        }
+    }
+
+    private static String ytText(JSONObject o, String key) {
+        JSONObject t = o.optJSONObject(key);
+        if (t == null) return "";
+        String s = t.optString("simpleText", "");
+        if (!s.isEmpty()) return s;
+        JSONArray r = t.optJSONArray("runs");
+        if (r == null) return "";
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < r.length(); i++) {
+            JSONObject x = r.optJSONObject(i);
+            if (x != null) b.append(x.optString("text", ""));
+        }
+        return b.toString();
+    }
+
+    private void addVideo(JSONObject v, boolean reel, JSONArray out, Set<String> seen) {
+        String id = v.optString("videoId", "");
+        if (id.length() != 11 || !seen.add(id)) return;
+        try {
+            JSONObject it = new JSONObject();
+            it.put("id", id);
+            it.put("title", reel ? ytText(v, "headline") : ytText(v, "title"));
+            String ch = ytText(v, "ownerText");
+            if (ch.isEmpty()) ch = ytText(v, "longBylineText");
+            it.put("ch", reel ? "" : ch);
+            it.put("dur", reel ? "" : ytText(v, "lengthText"));
+            String views = ytText(v, "viewCountText");
+            if (views.isEmpty()) views = ytText(v, "shortViewCountText");
+            it.put("views", views);
+            it.put("when", reel ? "" : ytText(v, "publishedTimeText"));
+            it.put("short", reel);
+            out.put(it);
+        } catch (Exception ignored) { }
+    }
+
     private void startYoutubeMode(String url) {
         if (mvRoot != null) return;
         if (mvHolderYt != null) { restoreHolder(mvHolderYt, 0); return; }   // पहले का YouTube पेज जैसा था वैसा ही
@@ -1311,7 +1510,7 @@ public class MainActivity extends AppCompatActivity {
         final WebView w = mvWeb;
         try {
             if (w != null) {
-                w.evaluateJavascript("(function(){try{document.querySelectorAll('video,audio').forEach(function(v){try{v.pause();}catch(e){}});window.__pkMvOff&&window.__pkMvOff();window.__pkBwOff&&window.__pkBwOff();}catch(e){}})()", null);
+                w.evaluateJavascript("(function(){try{document.querySelectorAll('video,audio').forEach(function(v){try{v.pause();}catch(e){}});window.__pkMvOff&&window.__pkMvOff();window.__pkBwOff&&window.__pkBwOff();window.__mvPause&&window.__mvPause();}catch(e){}})()", null);
                 w.postDelayed(() -> { if (mvWeb != w) { try { w.onPause(); } catch (Exception ignored) { } } }, 500);
             }
             ViewGroup content = findViewById(android.R.id.content);
@@ -1338,13 +1537,14 @@ public class MainActivity extends AppCompatActivity {
     /** ऐप बंद होते समय ही पेज नष्ट होते हैं */
     private void destroyMoreVideoPages() {
         hideMoreVideoPage();
-        for (MvHolder h : new MvHolder[]{mvHolderYt, mvHolderBw}) {
+        for (MvHolder h : new MvHolder[]{mvHolderYt, mvHolderBw, mvHolderOwn}) {
             if (h != null && h.web != null) {
                 try { h.web.stopLoading(); h.web.loadUrl("about:blank"); h.web.destroy(); } catch (Exception ignored) { }
             }
         }
         mvHolderYt = null;
         mvHolderBw = null;
+        mvHolderOwn = null;
     }
 
     /** खुले हुए YouTube पेज से वीडियो/Short की ID निकालकर साफ़ लिंक बनाता है; न मिले तो null */
@@ -1465,14 +1665,97 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 String yt = cleanYoutubeUrl(r);
-                if (yt != null) sendCleanToRoom(yt); else sendDirectToRoom(r);
+                if (yt != null) sendCleanToRoom(yt); else sendDirectToRoom(r, pageUrl);
             });
         }).start();
     }
 
-    private void sendDirectToRoom(String url) {
+    private static boolean isProtectedHost(String h) {
+        h = h.toLowerCase();
+        String[] block = {"google", "gstatic", "googleapis", "googleusercontent", "firebase", "firebaseio", "appspot", "youtube", "ytimg",
+                "ggpht", "github.io", "githubusercontent", "cloudflare", "jsdelivr", "unity3d", "unity.com", "androidplatform.net"};
+        for (String b : block) if (h.contains(b)) return true;
+        return false;
+    }
+
+    private void registerMediaRef(String url, String ref) {
+        try {
+            if (url == null || ref == null || !url.matches("(?i)^https?://\\S+$") || !ref.matches("(?i)^https?://\\S+$")) return;
+            String host = Uri.parse(url).getHost();
+            String startHost = START_URL.isEmpty() ? "" : Uri.parse(START_URL).getHost();
+            if (host == null || host.equals(startHost) || isProtectedHost(host)) return;
+            mediaRefHosts.put(host, ref);
+        } catch (Exception ignored) { }
+    }
+
+    /** video की माँग ऐप खुद करके भेजता है, सही Referer/Origin के साथ (और आगे-पीछे करने के लिए Range के साथ) */
+    private WebResourceResponse proxyMedia(WebResourceRequest req, String referer) {
+        HttpURLConnection c = null;
+        try {
+            String cur = req.getUrl().toString();
+            Map<String, String> reqH = req.getRequestHeaders();
+            for (int hop = 0; hop < 6; hop++) {
+                c = (HttpURLConnection) new URL(cur).openConnection();
+                c.setInstanceFollowRedirects(false);
+                c.setConnectTimeout(12000);
+                c.setReadTimeout(25000);
+                for (Map.Entry<String, String> h : reqH.entrySet()) {
+                    String k = h.getKey();
+                    if (k.equalsIgnoreCase("Range") || k.equalsIgnoreCase("User-Agent") || k.equalsIgnoreCase("Accept") || k.equalsIgnoreCase("Accept-Language"))
+                        c.setRequestProperty(k, h.getValue());
+                }
+                c.setRequestProperty("Referer", referer);
+                try {
+                    Uri ru = Uri.parse(referer);
+                    c.setRequestProperty("Origin", ru.getScheme() + "://" + ru.getHost());
+                } catch (Exception ignored) { }
+                int code = c.getResponseCode();
+                if (code >= 300 && code < 400 && c.getHeaderField("Location") != null) {
+                    cur = new URL(new URL(cur), c.getHeaderField("Location")).toString();
+                    c.disconnect();
+                    c = null;
+                    continue;
+                }
+                String mime = c.getContentType();
+                if (mime != null && mime.contains(";")) mime = mime.substring(0, mime.indexOf(';')).trim();
+                String l = cur.toLowerCase();
+                if (mime == null || mime.isEmpty() || mime.equals("application/octet-stream") || mime.equals("text/plain")) {
+                    if (l.contains(".mp4")) mime = "video/mp4";
+                    else if (l.contains(".webm")) mime = "video/webm";
+                    else if (l.contains(".m3u8")) mime = "application/vnd.apple.mpegurl";
+                    else if (l.contains(".ts")) mime = "video/mp2t";
+                    else if (mime == null || mime.isEmpty()) mime = "application/octet-stream";
+                }
+                Map<String, String> out = new HashMap<>();
+                for (String name : new String[]{"Content-Range", "Accept-Ranges", "Content-Length"}) {
+                    String v = c.getHeaderField(name);
+                    if (v != null) out.put(name, v);
+                }
+                out.put("Access-Control-Allow-Origin", "*");
+                out.put("Access-Control-Expose-Headers", "Content-Length,Content-Range,Accept-Ranges");
+                InputStream raw = code >= 400 ? c.getErrorStream() : c.getInputStream();
+                if (raw == null) raw = new ByteArrayInputStream(new byte[0]);
+                final HttpURLConnection conn = c;
+                InputStream in = new FilterInputStream(raw) {
+                    @Override public void close() throws java.io.IOException {
+                        try { super.close(); } finally { conn.disconnect(); }
+                    }
+                };
+                String reason = c.getResponseMessage();
+                return new WebResourceResponse(mime, null, code, (reason == null || reason.isEmpty()) ? "OK" : reason, out, in);
+            }
+        } catch (Exception e) {
+            if (c != null) c.disconnect();
+        }
+        return null;
+    }
+
+    private void sendDirectToRoom(String url) { sendDirectToRoom(url, ""); }
+
+    private void sendDirectToRoom(String url, String ref) {
         closeMoreVideoPage();
-        final String js = "window.postMessage({type:'PARTY_ROOM_DIRECT_VIDEO_SELECTED',url:" + JSONObject.quote(url) + "},'*');";
+        final String js = "window.postMessage({type:'PARTY_ROOM_DIRECT_VIDEO_SELECTED',url:" + JSONObject.quote(url)
+                + ",ref:" + JSONObject.quote(ref == null ? "" : ref) + "},'*');";
         webView.evaluateJavascript(js, null);
     }
 
