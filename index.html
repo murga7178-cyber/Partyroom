@@ -3073,13 +3073,6 @@ let cinemaRoomUnsub=null, cinemaPresenceUnsub=null, cinemaRoomTicker=null;
               <input type="file" id="ytRoomUploadInput" accept="video/*" style="display:none;">
             </div>
             <div class="yt-room-input-hint">Load: सब लोग video चला सकते हैं • Q: queue में जोड़ें</div>
-            <div class="yt-room-input-label" style="margin-top:8px">सीधा वीडियो लिंक (ब्राउज़िंग से कॉपी किया हुआ)</div>
-            <div class="yt-room-url-row" id="ytRoomDirectRow">
-              <input id="ytRoomDirectInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="url" placeholder="Video link paste करें (.mp4 जैसा)...">
-              <button type="button" id="ytRoomDirectPasteBtn" title="कॉपी किया हुआ लिंक चिपकाएँ" style="width:44px!important;background:rgba(255,255,255,.10)!important;border:1px solid rgba(255,255,255,.16)!important;font-size:17px!important;">📋</button>
-              <button type="button" id="ytRoomDirectLoadBtn" style="background:linear-gradient(135deg,#7c3aed,#db2777)!important;">Load</button>
-            </div>
-            <div class="yt-room-input-hint">सिर्फ़ Host चला सकता है • YouTube के अलावा किसी भी साइट का सीधा video link (.mp4 / .webm / .m3u8)</div>
           </div>
           <div class="yt-room-input-tools" id="ytRoomInputTools">
             <div class="yt-room-tools-top">
@@ -6486,7 +6479,8 @@ setInterval(function(){try{
 })();
 </script>
 <style id="prShareRoomStyle">
-html body #pkRoomShareBtn{position:fixed!important;z-index:2147483640!important;display:none;align-items:center;justify-content:center;height:22px;padding:0 9px;border:0;border-radius:11px;box-sizing:border-box;font-size:10px;font-weight:800;line-height:22px;color:#fff;cursor:pointer;background:linear-gradient(135deg,#7c3aed,#ec4899);box-shadow:0 2px 8px rgba(0,0,0,.35);touch-action:manipulation;}
+html body #pkRoomShareBtn{position:fixed!important;z-index:2147483640!important;display:none;align-items:center;justify-content:center;width:50px;height:50px;padding:0;border:2px solid rgba(255,255,255,.55);border-radius:50%;box-sizing:border-box;font-size:0;line-height:0;color:#fff;cursor:pointer;background:linear-gradient(135deg,#7c3aed,#ec4899);box-shadow:0 6px 16px rgba(0,0,0,.45),0 0 0 3px rgba(236,72,153,.22);touch-action:manipulation;}
+html body #pkRoomShareBtn svg{width:25px;height:25px;display:block;pointer-events:none;}
 html body #pkRoomShareBtn:active{transform:scale(.94);}
 #prShareOverlay{position:fixed;inset:0;z-index:2147483646;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;}
 #prShareOverlay .prs-sheet{width:100%;max-width:560px;max-height:78vh;display:flex;flex-direction:column;background:#fff;color:#111827;border-radius:22px 22px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));box-sizing:border-box;box-shadow:0 -10px 30px rgba(0,0,0,.35);}
@@ -6656,7 +6650,7 @@ html body #pkRoomShareBtn:active{transform:scale(.94);}
   /* ---- Share button inside the room, just left of the Viewer button ---- */
   function ensureBtn(){
     var b=document.getElementById('pkRoomShareBtn');if(b)return b;
-    b=document.createElement('button');b.id='pkRoomShareBtn';b.type='button';b.textContent='🔗 Share';b.setAttribute('aria-label','Party Room शेयर करें');
+    b=document.createElement('button');b.id='pkRoomShareBtn';b.type='button';b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>';b.setAttribute('aria-label','Party Room शेयर करें');b.title='Share';
     b.onclick=function(){window.prOpenShareRoom();};
     document.body.appendChild(b);return b;
   }
@@ -6667,7 +6661,10 @@ html body #pkRoomShareBtn:active{transform:scale(.94);}
     if(cs.display==='none'||cs.visibility==='hidden'){b.style.display='none';return;}
     var r=v.getBoundingClientRect();
     if(!r.width){b.style.display='none';return;}
-    b.style.display='flex';b.style.top=Math.round(r.top)+'px';b.style.height=Math.round(r.height||22)+'px';b.style.right=Math.round(innerWidth-r.left+6)+'px';b.style.left='auto';
+    /* नीचे दाएँ कोने में, bottom dock के ठीक ऊपर (कोने/बटनों से टच नहीं) */
+    var dk=document.getElementById('partyRoomBottomDock'), dr=dk&&dk.getBoundingClientRect(), bt=96;
+    if(dr&&dr.height&&dr.top>0&&getComputedStyle(dk).display!=='none') bt=Math.round(innerHeight-dr.top+14);
+    b.style.display='flex';b.style.top='auto';b.style.left='auto';b.style.height='';b.style.right='14px';b.style.bottom=bt+'px';
   }
   setInterval(place,300);
 })();
@@ -10410,6 +10407,16 @@ input,textarea,select{font-size:16px}
   '#pkExitMinDialog .pkx-tx b{font-size:16px;font-weight:900;letter-spacing:.2px}'+
   '#pkExitMinDialog .pkx-tx small{font-size:11.5px;font-weight:600;opacity:.88;line-height:1.3}';
   document.head.appendChild(st2);
+  var st3=document.createElement('style');
+  st3.textContent=
+  '#pkExitMinDialog .pkx-box.pkx-icons{max-width:300px;padding:26px 18px 18px;display:flex;flex-direction:column;align-items:center;gap:20px}'+
+  '#pkExitMinDialog .pkx-box.pkx-icons .pkx-row{display:flex;gap:22px;justify-content:center;width:100%}'+
+  '#pkExitMinDialog .pkx-box.pkx-icons button.pkx-big{width:104px;min-height:104px;height:104px;padding:0;border-radius:30px;display:grid;place-items:center;border:2px solid rgba(255,255,255,.28)}'+
+  '#pkExitMinDialog .pkx-box.pkx-icons button.pkx-min{background:linear-gradient(145deg,#6d28d9,#a855f7);box-shadow:0 12px 28px rgba(124,58,237,.5),inset 0 1px rgba(255,255,255,.25)}'+
+  '#pkExitMinDialog .pkx-box.pkx-icons button.pkx-exit{background:linear-gradient(145deg,#b91c1c,#f43f5e);box-shadow:0 12px 28px rgba(220,38,38,.5),inset 0 1px rgba(255,255,255,.25)}'+
+  '#pkExitMinDialog .pkx-box.pkx-icons button.pkx-x{width:48px;min-height:48px;height:48px;padding:0;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22)}'+
+  '#pkExitMinDialog .pkx-box.pkx-icons svg{pointer-events:none}';
+  document.head.appendChild(st3);
 
   /* ---------- Exit / Minimize room ---------- */
   var origLobbyBack=window.cinemaLobbyBack;
@@ -10426,14 +10433,13 @@ input,textarea,select{font-size:16px}
   function askExitMin(){
     if($('pkExitMinDialog')) return;
     var d=document.createElement('div'); d.id='pkExitMinDialog';
-    d.innerHTML='<div class="pkx-box">'+
-      '<div class="pkx-art" aria-hidden="true"><svg viewBox="0 0 120 120" width="84" height="84"><defs><linearGradient id="pkxg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#ec4899"/></linearGradient></defs><rect x="30" y="10" width="60" height="100" rx="12" fill="#1b2150" stroke="url(#pkxg)" stroke-width="3"/><rect x="38" y="22" width="44" height="46" rx="8" fill="url(#pkxg)" opacity=".9"/><circle cx="52" cy="40" r="6" fill="#fff" opacity=".9"/><circle cx="68" cy="40" r="6" fill="#fff" opacity=".6"/><rect x="42" y="52" width="36" height="6" rx="3" fill="#fff" opacity=".55"/><rect x="40" y="82" width="40" height="14" rx="7" fill="#22c55e"/><circle cx="48" cy="89" r="3.5" fill="#fff"/><rect x="55" y="87" width="19" height="4" rx="2" fill="#fff"/></svg></div>'+
-      '<h4>Party Room</h4><p>रूम का क्या करना है?</p>'+
-      '<div class="pkx-actions">'+
-      '<button type="button" class="pkx-opt pkx-min" data-a="min"><span class="pkx-ico"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 10l7-7M21 3v6M21 3h-6M10 14l-7 7M3 21v-6M3 21h6"/></svg></span><span class="pkx-tx"><b>Minimize</b><small>रूम चालू रहेगा, होम पर छोटा बबल दिखेगा</small></span></button>'+
-      '<button type="button" class="pkx-opt pkx-exit" data-a="exit"><span class="pkx-ico"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></span><span class="pkx-tx"><b>Exit</b><small>रूम छोड़कर होम स्क्रीन पर जाएँ</small></span></button>'+
-      '<button type="button" class="pkx-cancel" data-a="cancel">रूम में वापस जाएँ</button>'+
-      '</div></div>';
+    d.innerHTML='<div class="pkx-box pkx-icons">'+
+      '<div class="pkx-row">'+
+      '<button type="button" class="pkx-big pkx-min" data-a="min" aria-label="Minimize" title="Minimize"><svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button>'+
+      '<button type="button" class="pkx-big pkx-exit" data-a="exit" aria-label="Exit" title="Exit"><svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>'+
+      '</div>'+
+      '<button type="button" class="pkx-x" data-a="cancel" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>'+
+      '</div>';
     d.addEventListener('click',function(e){
       var b=e.target.closest('[data-a]');
       if(!b && e.target!==d) return;
@@ -10672,6 +10678,26 @@ input,textarea,select{font-size:16px}
     navSync();
   });
 
+  /* APK का Back बटन सीधे यहाँ आता है: ऊपर वाला एक पेज/पॉपअप बंद करता है. true = कुछ बंद हुआ (ऐप बंद नहीं होगा); false = Home पर हैं */
+  window.pkHandleNativeBack=function(){
+    try{
+      var l=layers(), fbUsed=false;
+      if(!l.length){ var fb=fallbackLayer(); if(fb){ l=[fb]; fbUsed=true; } }
+      if(!l.length) return false;
+      l.sort(function(a,b){ return b.z-a.z; });
+      var top=l[0];
+      /* कोई हमेशा-दिखने वाला तत्व बंद न हो पा रहा हो तो Back अटके नहीं: दूसरी बार में ऐप को निकलने दो */
+      if(fbUsed){
+        var now=Date.now(), pl=window.__pkFbLast;
+        if(pl&&pl.id===top.id&&now-pl.t<4000){ pl.n++; pl.t=now; if(pl.n>=2) return false; }
+        else window.__pkFbLast={id:top.id,t:now,n:1};
+      }
+      try{ top.close(); }catch(e){}
+      setTimeout(navSync,60);
+      return true;
+    }catch(e){}
+    return false;
+  };
   setInterval(navSync,300);
   /* If a page opens without explicitly touching history, create exactly one
      guard entry for that page. Never create a guard on the Home screen. */
@@ -11910,9 +11936,15 @@ function ytRoomAttachSource(lv,url){
       if(current&&current.url!==url) return;
       if(!ok||!window.Hls||!Hls.isSupported()){ lv.src=url; return; }
       var h=new Hls({maxBufferLength:30,enableWorker:true}); lv.__hls=h;
+      var hlsNetTry=0, hlsMedTry=0;
       h.on(Hls.Events.ERROR,function(ev,data){
-        if(data&&data.fatal){ try{ window.pkVideoFailed&&window.pkVideoFailed('hls'); }catch(e){} toast('❌ यह video नहीं चल पाया',2200); }
+        if(data&&data.fatal){
+          if(data.type===Hls.ErrorTypes.NETWORK_ERROR&&hlsNetTry<5){ hlsNetTry++; try{ h.startLoad(); return; }catch(e){} }
+          if(data.type===Hls.ErrorTypes.MEDIA_ERROR&&hlsMedTry<3){ hlsMedTry++; try{ h.recoverMediaError(); return; }catch(e){} }
+          try{ window.pkVideoFailed&&window.pkVideoFailed('hls'); }catch(e){} toast('❌ यह video नहीं चल पाया',2200);
+        }
       });
+      h.on(Hls.Events.FRAG_LOADED,function(){ hlsNetTry=0; });
       h.loadSource(url); h.attachMedia(lv);
     });
     return;
@@ -11999,7 +12031,7 @@ function ytRoomLoadDirect(url,title,noResolve,ref){
   if(ytRoomIsHls(url)){ playUploadedVideo(url,nm,{addedBy:'You',ref:ref||''}); return true; }   /* HLS: सीधे hls.js से, जाँच अलग से नहीं */
   toast('🔎 Video जाँच रहा हूँ...',1500);
   var t=document.createElement('video'), done=false, tm=0;
-  t.preload='auto'; t.muted=true; t.setAttribute('playsinline','');
+  t.preload='metadata'; t.muted=true; t.setAttribute('playsinline','');
   function fin(ok){
     if(done)return; done=true; clearTimeout(tm);
     try{ t.removeAttribute('src'); t.load(); }catch(e){}
@@ -12064,6 +12096,39 @@ function ytRoomDirectReadClipboard(cb){
     lv.addEventListener('pause',function(){ if(ytRoomIsActive()&&current&&current.upload&&ytRoomHost()&&!ytRemoteApplying) ytRoomWriteState({type:'upload',videoUrl:current.url,title:current.title,playing:false,currentTime:lv.currentTime||0,stopped:false}); });
     lv.addEventListener('seeked',function(){ if(ytRoomIsActive()&&current&&current.upload&&ytRoomHost()&&!ytRemoteApplying) ytRoomWriteState({type:'upload',videoUrl:current.url,title:current.title,playing:!lv.paused,currentTime:lv.currentTime||0,stopped:false}); });
     lv.addEventListener('ended',function(){ if(ytRoomIsActive()&&current&&current.upload&&ytRoomHost()&&!ytRemoteApplying){ toast('⏹️ Video खत्म',1500); ytRoomWriteState({type:'upload',videoUrl:current.url,title:current.title,playing:false,currentTime:lv.duration||0,stopped:true}); } });
+  }
+  /* Browsing/सीधे link वाला video बीच में अटके या error दे तो वहीं से दोबारा जोड़ना (पहले चुपचाप रुक जाता था) */
+  if(lv){
+    var rcTries=0, rcAt=0, stallTm=0;
+    function rcClear(){ if(stallTm){ clearTimeout(stallTm); stallTm=0; } }
+    function rcRecover(why){
+      try{
+        rcClear();
+        if(!current||!current.upload||!current.url||lv.ended) return;
+        var now=Date.now(); if(now-rcAt>90000) rcTries=0;
+        if(rcTries>=4){ try{ window.pkVideoFailed&&window.pkVideoFailed('stall'); }catch(e){} toast('❌ Video बीच में रुक गया ('+why+')',3000); return; }
+        rcTries++; rcAt=now;
+        var t=lv.currentTime||0, wantPlay=!lv.paused||!!lv.error, url=current.url;
+        toast('🔄 Video दोबारा जोड़ रहा हूँ...',1500);
+        var was=ytRemoteApplying; ytRemoteApplying=true;
+        ytRoomAttachSource(lv,url);
+        var back=function(){
+          lv.removeEventListener('loadedmetadata',back);
+          try{ if(t>0) lv.currentTime=t; }catch(e){}
+          if(wantPlay){ var pr=lv.play(); if(pr&&pr.catch) pr.catch(function(){}); }
+          setTimeout(function(){ ytRemoteApplying=was; },800);
+        };
+        lv.addEventListener('loadedmetadata',back);
+        setTimeout(function(){ ytRemoteApplying=was; },6000);
+      }catch(e){}
+    }
+    lv.addEventListener('error',function(){ if(current&&current.upload&&lv.getAttribute('src')!==null||lv.__hls) rcRecover('error '+((lv.error&&lv.error.code)||'')); });
+    var armStall=function(){ if(stallTm||lv.paused||lv.ended) return; stallTm=setTimeout(function(){ stallTm=0; if(!lv.paused&&!lv.ended&&lv.readyState<3) rcRecover('अटक गया'); },9000); };
+    lv.addEventListener('waiting',armStall);
+    lv.addEventListener('stalled',armStall);
+    lv.addEventListener('playing',rcClear);
+    lv.addEventListener('pause',rcClear);
+    lv.addEventListener('timeupdate',function(){ if(stallTm&&lv.readyState>=3) rcClear(); });
   }
 })();
 window.ytRoomHandleUploadFile=ytRoomHandleUploadFile;
@@ -19526,6 +19591,32 @@ html body #prRoom.pk-yt-full:has(#pkPrerollBox) #ytRoomViewerSeekBar{visibility:
   });
 })();
 </script>
+<style id="pkMoreVideoHostOnly">
+/* More Video सिर्फ़ रूम के Host (जिसका party room है) को दिखे; Viewer को नहीं */
+html body #prRoom.pk-not-host.pk-not-host #prMoreVideoBtn,
+html body #prRoom.pk-not-host.pk-not-host #prSubRow #prMoreVideoBtn{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+</style>
+<script id="pkMoreVideoHostOnlyScript">
+(function(){
+  function isHostNow(){ try{ return !!cinemaIsHost; }catch(e){ return false; } }
+  function paint(){
+    try{
+      var r=document.getElementById('prRoom'); if(!r) return;
+      r.classList.toggle('pk-not-host',!isHostNow());
+    }catch(e){}
+  }
+  setInterval(paint,400); paint();
+  function guard(){
+    var o=window.openMoreVideo; if(typeof o!=='function'||o.__pkHostOnly) return;
+    var w=function(){
+      if(!isHostNow()){ try{ (window.pkRoomToast||window.toast||function(){})('👑 More Video सिर्फ़ Host के लिए है'); }catch(e){} return; }
+      return o.apply(this,arguments);
+    };
+    w.__pkHostOnly=1; window.openMoreVideo=w;
+  }
+  guard(); setInterval(guard,1000);
+})();
+</script>
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
@@ -22577,7 +22668,7 @@ html body #prRoom.party-gaming-layout #partyGamingCenter.pgc-luteri #pgcExitBtn{
 <script id="partyRoomChatAudioOnlyScript">
 (function(){
   'use strict';
-  var player=null, ready=false, pendingId='', apiLoading=false, wantPlay=true, gen=0;
+  var player=null, ready=false, pendingId='', apiLoading=false, wantPlay=true, gen=0, userPaused=false, hideAt=0;
   function $(id){return document.getElementById(id);}
   function vid(u){
     u=String(u||'').trim();
@@ -22629,7 +22720,11 @@ html body #prRoom.party-gaming-layout #partyGamingCenter.pgc-luteri #pgcExitBtn{
           if(g!==gen)return;
           var S=window.YT&&YT.PlayerState; if(!S)return;
           if(e.data===S.PLAYING){try{window.pkVideoStarted&&window.pkVideoStarted();}catch(x){} setIcon(true);lowQ();title();}
-          else if(e.data===S.PAUSED){setIcon(false);}
+          else if(e.data===S.PAUSED){
+            /* ऐप minimize / स्क्रीन ऑफ से YouTube खुद pause कर दे (user ने नहीं किया) तो गाना फिर चालू */
+            if(!userPaused&&(document.hidden||Date.now()-hideAt<4000)){ setTimeout(function(){ try{ if(player&&!userPaused&&g===gen)player.playVideo(); }catch(x){} },250); }
+            else setIcon(false);
+          }
           else if(e.data===S.ENDED){setIcon(false);}
         },
         onError:function(){ try{ window.pkVideoFailed&&window.pkVideoFailed('chat-yt'); }catch(x){} stop(); }
@@ -22658,6 +22753,7 @@ html body #prRoom.party-gaming-layout #partyGamingCenter.pgc-luteri #pgcExitBtn{
   window.partyRoomChatAudioVolume=function(v){try{if(player&&ready)player.setVolume(Math.max(0,Math.min(100,v)));}catch(e){}};
   window.partyRoomChatAudioPlay=function(url){
     var id=vid(url); if(!id)return;
+    userPaused=false;
     var t=$('prChatAudioTitle'); if(t)t.textContent='Music';
     setIcon(true); pill(true);
     withApi(function(){ build(id); });
@@ -22666,7 +22762,7 @@ html body #prRoom.party-gaming-layout #partyGamingCenter.pgc-luteri #pgcExitBtn{
     var tg=$('prChatAudioToggle'), st=$('prChatAudioStop');
     if(tg&&!tg.__w){tg.__w=1;tg.addEventListener('click',function(e){
       e.preventDefault();e.stopPropagation();
-      try{ if(!player)return; var S=YT.PlayerState; if(player.getPlayerState()===S.PLAYING){player.pauseVideo();setIcon(false);} else {player.playVideo();setIcon(true);} }catch(x){}
+      try{ if(!player)return; var S=YT.PlayerState; if(player.getPlayerState()===S.PLAYING){userPaused=true;player.pauseVideo();setIcon(false);} else {userPaused=false;player.playVideo();setIcon(true);} }catch(x){}
     });}
     if(st&&!st.__w){st.__w=1;st.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();stop();});}
   }
@@ -22680,6 +22776,10 @@ html body #prRoom.party-gaming-layout #partyGamingCenter.pgc-luteri #pgcExitBtn{
     }catch(e){}
   },800);
   document.addEventListener('DOMContentLoaded',wire);
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden){ hideAt=Date.now(); }
+    try{ if(player&&ready&&!userPaused&&window.YT&&player.getPlayerState()===YT.PlayerState.PAUSED) player.playVideo(); }catch(x){}
+  });
 })();
 </script>
 
