@@ -1150,7 +1150,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String u) {
                 if (bwProgress != null) bwProgress.setVisibility(View.GONE);
-                view.evaluateJavascript(MV_HOLD_JS, null);   // YouTube वीडियो खुले तो पहले क्लिक पर अपने आप न चले
+                // MV_HOLD_JS केवल YouTube watch/shorts पेज पर लगाएँ; दूसरी browsing साइटों के player को pause न करें।
+                if (u != null && (u.contains("youtube.com/watch") ||
+                        u.contains("youtube.com/shorts/") || u.contains("youtube.com/live/"))) {
+                    view.evaluateJavascript(MV_HOLD_JS, null);
+                }
                 view.evaluateJavascript(BW_PICK_JS, null);   // वीडियो चुनने वाली स्क्रिप्ट
             }
             @Override
