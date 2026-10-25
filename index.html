@@ -12126,13 +12126,57 @@ function ytRoomDirectReadClipboard(cb){
       }catch(e){}
     }
     lv.addEventListener('error',function(){ if(current&&current.upload&&lv.getAttribute('src')!==null||lv.__hls) rcRecover('error '+((lv.error&&lv.error.code)||'')); });
-    var armStall=function(){ if(stallTm||lv.paused||lv.ended) return; stallTm=setTimeout(function(){ stallTm=0; if(!lv.paused&&!lv.ended&&lv.readyState<3) rcRecover('अटक गया'); },9000); };
+    var armStall=function(){ if(stallTm||lv.paused||lv.ended) return; stallTm=setTimeout(function(){ stallTm=0; if(!lv.paused&&!lv.ended&&lv.readyState<3) rcRecover('अटक गया'); },4000); };
     lv.addEventListener('play',function(){ if(!(current&&current.upload)) return; var t0=lv.currentTime||0; setTimeout(function(){ if(current&&current.upload&&!lv.paused&&!lv.ended&&Math.abs((lv.currentTime||0)-t0)<0.2) rcRecover('play अटका'); },3500); });
     lv.addEventListener('waiting',armStall);
     lv.addEventListener('stalled',armStall);
     lv.addEventListener('playing',rcClear);
     lv.addEventListener('pause',rcClear);
     lv.addEventListener('timeupdate',function(){ if(stallTm&&lv.readyState>=3) rcClear(); });
+    /* ---- Direct/Browsing video watchdog (सिर्फ Host): बीच में अटका या अपने-आप रुका video वहीं से फिर जोड़कर चलाना ----
+       (पहले: 2 सेकंड चलकर रुक जाता था, और अटके हुए video पर ▶ दबाने से वह उल्टा pause हो जाता था) */
+    var wdWant=true, wdLastT=-1, wdSame=0, wdPaused=0, wdKicks=0, wdKickAt=0;
+    function wdUserWin(){ return Date.now()<(window.__ytHostSeekUntil||0)+400; }
+    lv.addEventListener('play',function(){ wdWant=true; });
+    lv.addEventListener('pause',function(){ if(wdUserWin()) wdWant=false; });
+    function wdKick(why){
+      try{
+        if(!(current&&current.upload&&current.url)||lv.ended) return false;
+        var n=Date.now(); if(n-wdKickAt>60000) wdKicks=0;
+        if(wdKicks>=8) return false; wdKicks++; wdKickAt=n;
+        var t=lv.currentTime||0, url=current.url, was=ytRemoteApplying;
+        ytRemoteApplying=true;
+        try{ console.warn('direct video kick:',why,'t=',t,'rs=',lv.readyState,'ns=',lv.networkState,'err=',lv.error&&lv.error.code); }catch(e){}
+        ytRoomAttachSource(lv,url);
+        var back=function(){
+          lv.removeEventListener('loadedmetadata',back);
+          try{ if(t>0) lv.currentTime=t; }catch(e){}
+          var pr=lv.play(); if(pr&&pr.catch) pr.catch(function(){});
+          setTimeout(function(){ ytRemoteApplying=was; },800);
+        };
+        lv.addEventListener('loadedmetadata',back);
+        setTimeout(function(){ ytRemoteApplying=was; },6000);
+        return true;
+      }catch(e){ return false; }
+    }
+    window.__pkDirectKick=wdKick;
+    setInterval(function(){
+      try{
+        if(!(current&&current.upload)||!ytRoomHost()||lv.ended||!wdWant||!lv.getAttribute('src')&&!lv.__hls){ wdSame=0; wdPaused=0; wdLastT=-1; return; }
+        var t=lv.currentTime||0;
+        if(lv.paused){                       /* user ने नहीं रोका, फिर भी रुका है */
+          wdSame=0;
+          var pr=lv.play(); if(pr&&pr.catch) pr.catch(function(){});
+          if(++wdPaused>=4){ wdPaused=0; wdKick('paused'); }
+          return;
+        }
+        wdPaused=0;
+        if(lv.readyState<3 && Math.abs(t-wdLastT)<0.05){
+          if(++wdSame>=(t>0.3?3:8)){ wdSame=0; wdKick('stalled'); }
+        } else wdSame=0;
+        wdLastT=t;
+      }catch(e){}
+    },1500);
   }
 })();
 window.ytRoomHandleUploadFile=ytRoomHandleUploadFile;
@@ -12539,6 +12583,8 @@ window.ytRoomBridge={
       var hostT=ytRoomHost(), rsT=window.__ytLastState;
       if(current.upload){
         var lvT=$('ytRoomLocalVideo'); if(!lvT)return false;
+        var stuckT=!lvT.paused&&!lvT.ended&&lvT.readyState<3&&(lvT.currentTime||0)>0.3;
+        if(stuckT&&hostT&&typeof window.__pkDirectKick==='function'){ window.__ytHostSeekUntil=Date.now()+1500; window.__pkDirectKick('tap'); return true; }
         var wasPl=(!hostT&&rsT)?(rsT.playing===true):!lvT.paused;
         window.__ytHostSeekUntil=Date.now()+1500;
         if(wasPl){lvT.pause();} else {var prT=lvT.play(); if(prT&&prT.catch)prT.catch(function(){});}
