@@ -10421,6 +10421,25 @@ input,textarea,select{font-size:16px}
   '#pkExitMinDialog .pkx-box.pkx-icons button.pkx-x{width:48px;min-height:48px;height:48px;padding:0;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22)}'+
   '#pkExitMinDialog .pkx-box.pkx-icons svg{pointer-events:none}';
   document.head.appendChild(st3);
+  var st4=document.createElement('style');
+  st4.textContent=
+  '#pkRoomX{position:absolute!important;z-index:20!important;top:calc(var(--pk-sat,env(safe-area-inset-top,0px)) + 8px)!important;right:12px!important;width:36px!important;height:36px!important;border:1px solid rgba(255,255,255,.42)!important;border-radius:13px!important;background:linear-gradient(145deg,rgba(248,113,113,.98),rgba(190,24,93,.98))!important;color:#fff!important;font:800 20px/34px system-ui,Arial,sans-serif!important;text-align:center!important;box-shadow:0 6px 18px rgba(190,24,93,.38),inset 0 1px rgba(255,255,255,.3)!important;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:transform .16s ease,filter .16s ease!important}'+
+  '#pkRoomX:active{transform:scale(.91)!important;filter:brightness(1.15)!important}'+
+  '#pkExitMinDialog .pkx-box.pkx-icons{max-width:340px!important;width:100%!important;padding:23px 18px 18px!important;gap:17px!important;border:1px solid rgba(255,255,255,.2)!important;border-radius:28px!important;background:linear-gradient(145deg,#171a3d 0%,#11152c 56%,#25133c 100%)!important;box-shadow:0 28px 85px rgba(0,0,0,.58),inset 0 1px rgba(255,255,255,.12)!important}'+
+  '#pkExitMinDialog .pkx-title{display:flex;flex-direction:column;align-items:center;gap:5px;margin-bottom:1px}'+
+  '#pkExitMinDialog .pkx-title-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:15px;background:linear-gradient(135deg,#8b5cf6,#ec4899);box-shadow:0 8px 22px rgba(139,92,246,.3);font-size:23px;margin-bottom:3px}'+
+  '#pkExitMinDialog .pkx-title b{font-size:19px;letter-spacing:.2px;color:#fff}'+
+  '#pkExitMinDialog .pkx-title small{font-size:12px;color:#aeb7d3}'+
+  '#pkExitMinDialog .pkx-box.pkx-icons .pkx-row{gap:13px!important}'+
+  '#pkExitMinDialog .pkx-box.pkx-icons button.pkx-big{flex:1;width:auto!important;min-width:0;height:126px!important;min-height:126px!important;padding:12px 6px!important;border-radius:22px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:7px!important;box-shadow:0 10px 25px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.18)!important;transition:transform .16s ease,filter .16s ease!important}'+
+  '#pkExitMinDialog .pkx-box.pkx-icons button.pkx-min{background:linear-gradient(155deg,#6842c2,#49319b)!important;border:1px solid rgba(196,181,253,.42)!important}'+
+  '#pkExitMinDialog .pkx-box.pkx-icons button.pkx-exit{background:linear-gradient(155deg,#f05267,#be123c)!important;border:1px solid rgba(254,202,202,.42)!important}'+
+  '#pkExitMinDialog .pkx-symbol{width:54px;height:54px;display:grid;place-items:center;border-radius:17px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.15)}'+
+  '#pkExitMinDialog .pkx-box.pkx-icons button.pkx-big b{font-size:14px;line-height:1.2;font-weight:900;color:#fff}'+
+  '#pkExitMinDialog .pkx-box.pkx-icons button.pkx-big small{font-size:10px;line-height:1.2;font-weight:600;color:rgba(255,255,255,.8);white-space:nowrap}'+
+  '#pkExitMinDialog .pkx-box.pkx-icons button.pkx-x{width:42px!important;height:42px!important;min-height:42px!important;border-radius:15px!important;background:rgba(255,255,255,.075)!important;border:1px solid rgba(255,255,255,.15)!important;color:#e2e8f0!important}'+
+  '@media(max-width:360px){#pkExitMinDialog .pkx-box.pkx-icons{padding:20px 13px 15px!important}#pkExitMinDialog .pkx-box.pkx-icons .pkx-row{gap:9px!important}#pkExitMinDialog .pkx-box.pkx-icons button.pkx-big{height:118px!important;min-height:118px!important}#pkExitMinDialog .pkx-box.pkx-icons button.pkx-big small{font-size:9px}}';
+  document.head.appendChild(st4);
 
   /* ---------- Exit / Minimize room ---------- */
   var origLobbyBack=window.cinemaLobbyBack;
@@ -10439,9 +10458,10 @@ input,textarea,select{font-size:16px}
     if($('pkExitMinDialog')) return;
     var d=document.createElement('div'); d.id='pkExitMinDialog';
     d.innerHTML='<div class="pkx-box pkx-icons">'+
+      '<div class="pkx-title"><span class="pkx-title-icon">✦</span><b>Party Room</b><small>आप क्या करना चाहते हैं?</small></div>'+
       '<div class="pkx-row">'+
-      '<button type="button" class="pkx-big pkx-min" data-a="min" aria-label="Minimize" title="Minimize"><svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button>'+
-      '<button type="button" class="pkx-big pkx-exit" data-a="exit" aria-label="Exit" title="Exit"><svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>'+
+      '<button type="button" class="pkx-big pkx-min" data-a="min" aria-label="रूम छोटा करें" title="रूम छोटा करें"><span class="pkx-symbol"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></span><b>छोटा करें</b><small>बाद में वापस आएँ</small></button>'+
+      '<button type="button" class="pkx-big pkx-exit" data-a="exit" aria-label="रूम से बाहर जाएँ" title="रूम से बाहर जाएँ"><span class="pkx-symbol"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"/><path d="M3 12h12M10 7l5 5-5 5"/></svg></span><b>रूम से बाहर निकलें</b><small>होम स्क्रीन पर जाएँ</small></button>'+
       '</div>'+
       '<button type="button" class="pkx-x" data-a="cancel" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>'+
       '</div>';
