@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
+<script id="pkQueueIntercept">
+/* Q से खुले More Video (ब्राउज़िंग/YouTube) से आया वीडियो सीधे चलने की जगह Queue में जुड़ता है.
+   यह listener सबसे पहले चलता है और पुराने listeners को रोक देता है (queue:true वाले संदेश पर). */
+window.addEventListener('message',function(e){
+  var d=e&&e.data; if(!d||d.queue!==true||!d.url) return;
+  if(d.type!=='PARTY_ROOM_YOUTUBE_SELECTED'&&d.type!=='PARTY_ROOM_DIRECT_VIDEO_SELECTED') return;
+  e.stopImmediatePropagation();
+  function say(t){ try{ if(typeof window.pkRoomToast==='function') return window.pkRoomToast(t); if(typeof window.toast==='function') return window.toast(t); }catch(x){} }
+  if(d.type==='PARTY_ROOM_YOUTUBE_SELECTED'){
+    try{ if(typeof window.pkQueueAdd==='function') window.pkQueueAdd(String(d.url)); else say('Queue अभी तैयार नहीं, दोबारा कोशिश करें'); }catch(x){ say('Queue में नहीं जुड़ पाया'); }
+  } else { say('Queue में सिर्फ़ YouTube वीडियो जुड़ सकते हैं'); }
+},true);
+</script>
+
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <script id="pkPerfBoot">
@@ -6652,21 +6666,10 @@ html body #pkRoomShareBtn:active{transform:scale(.94);}
     var b=document.getElementById('pkRoomShareBtn');if(b)return b;
     b=document.createElement('button');b.id='pkRoomShareBtn';b.type='button';b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>';b.setAttribute('aria-label','Party Room शेयर करें');b.title='Share';
     b.onclick=function(){window.prOpenShareRoom();};
-    document.body.appendChild(b);return b;
+    (document.getElementById('prRoom')||document.body).appendChild(b);return b;
   }
-  function place(){
-    var b=ensureBtn(),v=document.getElementById('pkRoomViewerBtn');
-    if(!v||!curRoom()||document.body.classList.contains('pr-ve-hide')){b.style.display='none';return;}
-    var cs=getComputedStyle(v);
-    if(cs.display==='none'||cs.visibility==='hidden'){b.style.display='none';return;}
-    var r=v.getBoundingClientRect();
-    if(!r.width){b.style.display='none';return;}
-    /* नीचे दाएँ कोने में, bottom dock के ठीक ऊपर (कोने/बटनों से टच नहीं) */
-    var dk=document.getElementById('partyRoomBottomDock'), dr=dk&&dk.getBoundingClientRect(), bt=96;
-    if(dr&&dr.height&&dr.top>0&&getComputedStyle(dk).display!=='none') bt=Math.round(innerHeight-dr.top+14);
-    b.style.display='flex';b.style.top='auto';b.style.left='auto';b.style.height='';b.style.right='14px';b.style.bottom=bt+'px';
-  }
-  setInterval(place,300);
+  /* जगह और दिखना अब सिर्फ़ CSS से (pkRoomCornerBtnsFinal): कोई बार-बार जाँच (polling) नहीं */
+  ensureBtn();
 })();
 </script>
 <script id="pkStandaloneBoot">
@@ -9748,7 +9751,7 @@ input,textarea,select{font-size:16px}
   v.setAttribute('aria-label','Active Viewers');
   v.setAttribute('title','Active Viewers');
   v.onclick=function(){try{if(window.openPartyRoomViewers)window.openPartyRoomViewers();}catch(e){}};
-  document.body.appendChild(v);
+  (document.getElementById('prRoom')||document.body).appendChild(v);
 
   setInterval(function(){
     var r=document.getElementById('prRoom');
@@ -12124,6 +12127,7 @@ function ytRoomDirectReadClipboard(cb){
     }
     lv.addEventListener('error',function(){ if(current&&current.upload&&lv.getAttribute('src')!==null||lv.__hls) rcRecover('error '+((lv.error&&lv.error.code)||'')); });
     var armStall=function(){ if(stallTm||lv.paused||lv.ended) return; stallTm=setTimeout(function(){ stallTm=0; if(!lv.paused&&!lv.ended&&lv.readyState<3) rcRecover('अटक गया'); },9000); };
+    lv.addEventListener('play',function(){ if(!(current&&current.upload)) return; var t0=lv.currentTime||0; setTimeout(function(){ if(current&&current.upload&&!lv.paused&&!lv.ended&&Math.abs((lv.currentTime||0)-t0)<0.2) rcRecover('play अटका'); },3500); });
     lv.addEventListener('waiting',armStall);
     lv.addEventListener('stalled',armStall);
     lv.addEventListener('playing',rcClear);
@@ -12841,6 +12845,7 @@ function addVideoToQueue(raw,clearTarget){
   toast('➕ Q'+(queue.length||'')+' Queue में जोड़ा गया');
   return true;
 }
+window.pkQueueAdd=function(u){return addVideoToQueue(u,null);};
 if(historyBtn)historyBtn.addEventListener('click',function(){var tab=document.querySelector('.yt-tab[data-tab="history"]');if(tab)tab.click();});
 function ytBottomShowPane(name,btn){
   document.querySelectorAll('.yt-tab').forEach(function(x){x.classList.remove('active');});
@@ -18812,7 +18817,7 @@ html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card{max-height:none!im
 (function(){
   /* विज्ञापन-द्वार: वीडियो / गाना चलने से पहले और गेम ख़त्म होने पर Unity Interstitial विज्ञापन।
      नया APK न हो या विज्ञापन फेल हो जाए तो कुछ नहीं रुकता, सब सीधे आगे बढ़ जाता है। */
-  var CFG={ on:true, kinds:{ video:false, song:false, game:true, search:false }, cool:{ video:30000, song:30000, game:60000, search:15000 }, timeout:25000 };
+  var CFG={ on:false, kinds:{ video:false, song:false, game:false, search:false }, cool:{ video:30000, song:30000, game:60000, search:15000 }, timeout:25000 };
   /* kinds: false = उस जगह विज्ञापन बंद। अभी: यूट्यूब वीडियो/गाना चलाने पर नहीं; सर्च और गेम ख़त्म होने पर हाँ */
   /* cool = दो विज्ञापनों के बीच कम से कम अंतर (मिलीसेकंड). 0 करने पर हर बार विज्ञापन आएगा. on:false = सब बंद. */
   window.PK_ADS=CFG;
@@ -19617,6 +19622,69 @@ html body #prRoom.pk-not-host.pk-not-host #prSubRow #prMoreVideoBtn{display:none
   guard(); setInterval(guard,1000);
 })();
 </script>
+<style id="pkRoomCornerBtnsFinal">
+/* Viewer (👁) और Share अब #prRoom के अंदर रहते हैं, गिफ्ट/माइक/म्यूज़िक बटनों की तरह:
+   कोई भी दूसरा पेज खुले तो वह इनके ऊपर आ जाता है (ये पेज के ऊपर नहीं दिखते), और रूम छुपे तो ये भी साथ छुप जाते हैं.
+   दिखना/छुपना अब CSS से है, बार-बार जाँचने वाली स्क्रिप्ट की ज़रूरत नहीं. */
+html body #prRoom #pkRoomViewerBtn,
+html body #prRoom #pkRoomViewerBtn.pr-room-sync-visible,
+html body #prRoom #pkRoomViewerBtn.pr-room-sync-hidden{
+  position:absolute!important;display:flex!important;visibility:visible!important;pointer-events:auto!important;
+  left:auto!important;bottom:auto!important;right:38px!important;
+  top:calc(var(--pk-sat,env(safe-area-inset-top,0px)) + 4px)!important;
+  z-index:71!important;
+  background:rgba(49,46,129,.34)!important;border:1px solid rgba(255,255,255,.26)!important;box-shadow:none!important;
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  animation:pkCornerFade 5s ease-in-out infinite;
+}
+html body #prRoom #pkRoomShareBtn{
+  position:absolute!important;display:flex!important;pointer-events:auto!important;
+  left:auto!important;top:auto!important;right:14px!important;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 72px)!important;
+  z-index:70!important;width:40px!important;height:40px!important;
+  background:rgba(124,58,237,.28)!important;border:1px solid rgba(255,255,255,.28)!important;box-shadow:none!important;
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  animation:pkCornerFade 5s ease-in-out infinite;
+}
+html body #prRoom #pkRoomShareBtn svg{width:20px!important;height:20px!important;}
+html body #prRoom #pkRoomViewerBtn:active,html body #prRoom #pkRoomShareBtn:active{opacity:1!important;animation:none!important;}
+@keyframes pkCornerFade{0%,100%{opacity:.9}50%{opacity:.3}}
+/* YouTube फ़ुल-स्क्रीन और Viewers पेज खुला होने पर छुपे रहें */
+html body.pk-yt-fs-on #prRoom #pkRoomViewerBtn,html body.pk-yt-fs-on #prRoom #pkRoomShareBtn,
+html body.pr-ve-hide #prRoom #pkRoomViewerBtn,html body.pr-ve-hide #prRoom #pkRoomShareBtn{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+</style>
+<script id="pkQueuePickJs">
+(function(){
+  /* Q खुलने पर: ब्राउज़िंग / YouTube का चुनाव (More Video वाला) खुलता है; वहाँ से भेजा वीडियो Queue में जुड़ता है */
+  window.pkQueuePick=function(){
+    try{ if(window.Android&&typeof window.Android.openMoreVideoQueue==='function'){ window.Android.openMoreVideoQueue('https://www.youtube.com/'); return; } }catch(e){}
+    try{ if(typeof window.openMoreVideo==='function') window.openMoreVideo(); }catch(e){}
+  };
+  document.addEventListener('click',function(ev){
+    var t=ev.target; if(!t||!t.closest||!t.closest('#ytRoomUiHideBtn')) return;
+    var r=document.getElementById('prRoom'); if(!r) return;
+    var was=r.classList.contains('yt-q-open');
+    setTimeout(function(){ if(!was&&r.classList.contains('yt-q-open')) window.pkQueuePick(); },80);
+  },true);
+})();
+</script>
+<style id="pkQueueHideLinkBox">
+/* Q पैनल में "YouTube URL यहाँ डालें" वाला खाना, Load बटन और संदेश छुपे हैं (पर मौजूद हैं, ताकि वीडियो लोड होना पहले जैसा चलता रहे).
+   Host का 📤 (गैलरी से वीडियो) बटन दिखता रहता है. */
+html body #prRoom #ytRoomUrlBar .yt-room-input-label,
+html body #prRoom #ytRoomUrlBar .yt-room-input-hint,
+html body #prRoom #ytRoomUrlBar #ytRoomInput,
+html body #prRoom #ytRoomUrlBar #ytRoomLoadBtn{
+  position:absolute!important;left:-9999px!important;top:auto!important;width:1px!important;height:1px!important;
+  min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;
+  overflow:hidden!important;opacity:0!important;pointer-events:none!important;
+}
+html body #prRoom #ytRoomUrlBar{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;min-height:0!important;}
+/* दर्शक (viewer) के लिए 📤 नहीं है, तो पूरी पट्टी ही छुपा दो */
+html body #prRoom.yt-nonhost #ytRoomUrlBar,html body #prRoom.viewer #ytRoomUrlBar{
+  position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important;margin:0!important;
+}
+</style>
 </body>
 
 <style id="partyRoomYoutubeInlinePanelFix">
@@ -19924,7 +19992,7 @@ html body #prRoom.pk-not-host.pk-not-host #prSubRow #prMoreVideoBtn{display:none
   function boot(){
     sync();
     setTimeout(sync,100);setTimeout(sync,400);setTimeout(sync,1000);
-    setInterval(sync,300);
+    setInterval(sync,1500);
     window.addEventListener('resize',sync,{passive:true});
     window.addEventListener('scroll',sync,{passive:true});
     if(window.MutationObserver){
@@ -21852,7 +21920,7 @@ html body #prRoom #cinemaChatPanel .pr-chat-line .pr-n{text-shadow:0 1px 3px rgb
     document.documentElement.style.setProperty('--pr-sync-viewer-left',left+'px');
     document.documentElement.style.setProperty('--pr-sync-viewer-top',Math.max(2,top)+'px');
   }
-  function boot(){sync();setInterval(sync,250);addEventListener('resize',sync,{passive:true});addEventListener('scroll',sync,{passive:true});if(window.MutationObserver){new MutationObserver(sync).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style','aria-hidden']});}}
+  function boot(){sync();setInterval(sync,1500);addEventListener('resize',sync,{passive:true});addEventListener('scroll',sync,{passive:true});if(window.MutationObserver){new MutationObserver(sync).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style','aria-hidden']});}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
 </script>
@@ -22238,7 +22306,7 @@ body.pr-ve-hide #pkRoomViewerBtn,body.pr-ve-hide #pkRoomX{display:none!important
   var ids=['partyRoomViewersPage','partyRoomTopGiftersPage','partyRoomSettingsPage'];
   function up(el){if(!el)return false;var c=getComputedStyle(el),r=el.getBoundingClientRect();return c.display!=='none'&&c.visibility!=='hidden'&&r.width>0&&r.height>0;}
   function chk(){var on=false;for(var i=0;i<ids.length;i++){if(up(document.getElementById(ids[i]))){on=true;break;}}document.body.classList.toggle('pr-ve-hide',on);}
-  setInterval(chk,250);
+  setInterval(chk,700);
 })();
 </script>
 
@@ -22722,7 +22790,7 @@ html body #prRoom.party-gaming-layout #partyGamingCenter.pgc-luteri #pgcExitBtn{
           if(e.data===S.PLAYING){try{window.pkVideoStarted&&window.pkVideoStarted();}catch(x){} setIcon(true);lowQ();title();}
           else if(e.data===S.PAUSED){
             /* ऐप minimize / स्क्रीन ऑफ से YouTube खुद pause कर दे (user ने नहीं किया) तो गाना फिर चालू */
-            if(!userPaused&&(document.hidden||Date.now()-hideAt<4000)){ setTimeout(function(){ try{ if(player&&!userPaused&&g===gen)player.playVideo(); }catch(x){} },250); }
+            if(!userPaused&&(document.hidden||window.__pkBg||Date.now()-hideAt<4000||Date.now()-(window.__pkBgAt||0)<4000)){ [250,1200,3000].forEach(function(ms){ setTimeout(function(){ try{ if(player&&!userPaused&&g===gen&&player.getPlayerState()===YT.PlayerState.PAUSED)player.playVideo(); }catch(x){} },ms); }); }
             else setIcon(false);
           }
           else if(e.data===S.ENDED){setIcon(false);}
@@ -22780,6 +22848,15 @@ html body #prRoom.party-gaming-layout #partyGamingCenter.pgc-luteri #pgcExitBtn{
     if(document.hidden){ hideAt=Date.now(); }
     try{ if(player&&ready&&!userPaused&&window.YT&&player.getPlayerState()===YT.PlayerState.PAUSED) player.playVideo(); }catch(x){}
   });
+  /* ऐप बैकग्राउंड में हो और YouTube वाला गाना (user ने नहीं रोका) pause हो गया हो तो हर 1.5 सेकंड में फिर चालू */
+  setInterval(function(){
+    try{
+      if(!(window.__pkBg||document.hidden))return;
+      if(!player||!ready||userPaused||!window.YT||!player.getPlayerState)return;
+      var s=player.getPlayerState();
+      if(s===YT.PlayerState.PAUSED||s===YT.PlayerState.CUED) player.playVideo();
+    }catch(e){}
+  },1500);
 })();
 </script>
 
@@ -23226,6 +23303,7 @@ body.pk-banner-on #pkVisitorsList{padding-bottom:calc(76px + env(safe-area-inset
   function visInterstitial(){
     var b=A(), cfg=window.PK_ADS, now=Date.now();
     if(!b||typeof b.showUnityInterstitialAd!=='function') return;
+    return; /* Interstitial बंद: सिर्फ़ Rewarded चलेगा */
     if(cfg&&cfg.on===false) return;
     if(now-lastVisAd<VIS_INTERSTITIAL_COOL) return;
     lastVisAd=now; try{ b.showUnityInterstitialAd(); }catch(e){}
