@@ -6677,6 +6677,7 @@ html body #pkRoomShareBtn:active{transform:scale(.94);}
 (function(){
   var prev = window.closeCinemaGhar;
   window.closeCinemaGhar = function(){
+    try{ if(window.pkYtFullExit) window.pkYtFullExit(); }catch(e){}   /* रूम छोड़ते ही YouTube फुल-स्क्रीन/आवाज़ स्लाइडर हटे */
     var wasInRoom = !!cinemaRoomId;
     try{ if(typeof prev==='function') prev.apply(this, arguments); }catch(e){}
     if(!currentUserKey) return pkShowLogin();
@@ -10414,9 +10415,9 @@ input,textarea,select{font-size:16px}
   st3.textContent=
   '#pkExitMinDialog .pkx-box.pkx-icons{max-width:300px;padding:26px 18px 18px;display:flex;flex-direction:column;align-items:center;gap:20px}'+
   '#pkExitMinDialog .pkx-box.pkx-icons .pkx-row{display:flex;gap:22px;justify-content:center;width:100%}'+
-  '#pkExitMinDialog .pkx-box.pkx-icons button.pkx-big{width:104px;min-height:104px;height:104px;padding:0;border-radius:30px;display:grid;place-items:center;border:2px solid rgba(255,255,255,.28)}'+
-  '#pkExitMinDialog .pkx-box.pkx-icons button.pkx-min{background:linear-gradient(145deg,#6d28d9,#a855f7);box-shadow:0 12px 28px rgba(124,58,237,.5),inset 0 1px rgba(255,255,255,.25)}'+
-  '#pkExitMinDialog .pkx-box.pkx-icons button.pkx-exit{background:linear-gradient(145deg,#b91c1c,#f43f5e);box-shadow:0 12px 28px rgba(220,38,38,.5),inset 0 1px rgba(255,255,255,.25)}'+
+  '#pkExitMinDialog .pkx-box.pkx-icons button.pkx-big{width:92px;min-height:92px;height:92px;padding:0;border-radius:28px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.22)}'+
+  '#pkExitMinDialog .pkx-box.pkx-icons button.pkx-min{background:rgba(255,255,255,.12);box-shadow:none}'+
+  '#pkExitMinDialog .pkx-box.pkx-icons button.pkx-exit{background:rgba(255,255,255,.12);box-shadow:none}'+
   '#pkExitMinDialog .pkx-box.pkx-icons button.pkx-x{width:48px;min-height:48px;height:48px;padding:0;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22)}'+
   '#pkExitMinDialog .pkx-box.pkx-icons svg{pointer-events:none}';
   document.head.appendChild(st3);
@@ -10428,6 +10429,7 @@ input,textarea,select{font-size:16px}
   function closeDialog(){ var d=$('pkExitMinDialog'); if(d) d.remove(); }
 
   function doExit(){
+    try{ if(window.pkYtFullExit) window.pkYtFullExit(); }catch(e){}
     minimized=false; hideBubble();
     window.__pkFromHome=true; /* Exit = leave room and land on Home screen */
     try{ if(typeof window.closeCinemaGhar==='function') window.closeCinemaGhar(); else if(typeof origLobbyBack==='function') origLobbyBack(); }catch(e){}
@@ -11920,6 +11922,17 @@ function ytRoomUploadStoragePath(fileName){
   return 'roomVideos/'+rid+'/'+Date.now()+'_'+String(fileName||'video').replace(/[^a-zA-Z0-9_.-]/g,'_');
 }
 var __pkHlsLoading=null;
+/* Referer-proxy (ऐप के अंदर से media भेजना) अब पहले से नहीं, सिर्फ़ तब जब सीधा चलाना फेल/अटक जाए.
+   (पहले हर browsing video proxy से गुज़रता था, और वह 2 सेकंड बाद अटक जाता था) */
+var __pkRefOn={};
+function ytRoomRefEnable(url,ref){
+  try{
+    if(!url||!ref||__pkRefOn[url]) return false;
+    __pkRefOn[url]=1;
+    if(window.Android&&typeof window.Android.registerMediaReferer==='function'){ window.Android.registerMediaReferer(String(url),String(ref)); return true; }
+  }catch(e){}
+  return false;
+}
 function ytRoomIsHls(u){ return /\.m3u8(\?|#|$)/i.test(String(u||'')); }
 function ytRoomLoadHlsLib(cb){
   if(window.Hls){ cb(true); return; }
@@ -11942,6 +11955,7 @@ function ytRoomAttachSource(lv,url){
       var hlsNetTry=0, hlsMedTry=0;
       h.on(Hls.Events.ERROR,function(ev,data){
         if(data&&data.fatal){
+          if(current&&current.ref&&ytRoomRefEnable(current.url,current.ref)){ try{ ytRoomAttachSource(lv,url); }catch(e){} return; }
           if(data.type===Hls.ErrorTypes.NETWORK_ERROR&&hlsNetTry<5){ hlsNetTry++; try{ h.startLoad(); return; }catch(e){} }
           if(data.type===Hls.ErrorTypes.MEDIA_ERROR&&hlsMedTry<3){ hlsMedTry++; try{ h.recoverMediaError(); return; }catch(e){} }
           try{ window.pkVideoFailed&&window.pkVideoFailed('hls'); }catch(e){} toast('❌ यह video नहीं चल पाया',2200);
@@ -11975,8 +11989,7 @@ function playUploadedVideo__orig(url,title,opts){
   opts=opts||{};
   destroyPlayer();
   var lv=$('ytRoomLocalVideo'); if(!lv)return;
-  current={id:'',upload:true,url:url,title:title||'Video',addedBy:opts.addedBy||'You',byKey:String(opts.byKey||ytRoomMyKey()||''),ts:Date.now()};
-  try{ if(opts.ref&&window.Android&&typeof window.Android.registerMediaReferer==='function') window.Android.registerMediaReferer(url,String(opts.ref)); }catch(e){}
+  current={id:'',upload:true,url:url,ref:String(opts.ref||''),title:title||'Video',addedBy:opts.addedBy||'You',byKey:String(opts.byKey||ytRoomMyKey()||''),ts:Date.now()};
   ytRoomAttachSource(lv,url); lv.style.display='block'; lv.controls=false;
   try{var spv=document.getElementById('ytRoomSpeakerRange');var svv=spv?Math.max(0,Math.min(100,Number(spv.value)||80)):80;lv.volume=spv?svv/100:.8;lv.muted=svv===0;}catch(e){}
   var emp=$('ytRoomEmpty'); if(emp)emp.style.display='none';
@@ -12029,7 +12042,6 @@ function ytRoomLoadDirect(url,title,noResolve,ref){
   if(!ytRoomDirectCanLoad()){ toast('👑 सिर्फ Host video चला सकता है',1800); return false; }
   function giveUp(msg){ try{ window.pkVideoFailed&&window.pkVideoFailed('direct'); }catch(e){} toast(msg,4200); }
   /* जिस पेज से video मिला उसका पता भेजना: कई साइटें बिना सही Referer के video नहीं देतीं (ऐप इसे जोड़ देता है) */
-  try{ if(ref&&window.Android&&typeof window.Android.registerMediaReferer==='function') window.Android.registerMediaReferer(url,String(ref)); }catch(e){}
   var nm=title||decodeURIComponent((url.split('?')[0].split('/').pop()||'Video')).slice(0,60)||'Video';
   if(ytRoomIsHls(url)){ playUploadedVideo(url,nm,{addedBy:'You',ref:ref||''}); return true; }   /* HLS: सीधे hls.js से, जाँच अलग से नहीं */
   toast('🔎 Video जाँच रहा हूँ...',1500);
@@ -12039,6 +12051,7 @@ function ytRoomLoadDirect(url,title,noResolve,ref){
     if(done)return; done=true; clearTimeout(tm);
     try{ t.removeAttribute('src'); t.load(); }catch(e){}
     if(ok){ playUploadedVideo(url,nm,{addedBy:'You',ref:ref||''}); return; }
+    if(ref&&ytRoomRefEnable(url,ref)){ ytRoomLoadDirect(url,title,noResolve,ref); return; }   /* सीधा न चला: अब उसी पेज के Referer के साथ दोबारा */
     /* सीधा video नहीं निकला: ऐप (APK) से उस वेबपेज के अंदर असली video link ढूँढ़ने की कोशिश */
     if(!noResolve&&window.Android&&typeof window.Android.resolveVideo==='function'){
       toast('🔎 पेज में से video link ढूँढ़ रहा हूँ...',2500);
@@ -12114,6 +12127,7 @@ function ytRoomDirectReadClipboard(cb){
         var t=lv.currentTime||0, wantPlay=!lv.paused||!!lv.error, url=current.url;
         toast('🔄 Video दोबारा जोड़ रहा हूँ...',1500);
         var was=ytRemoteApplying; ytRemoteApplying=true;
+        try{ if(current&&current.ref) ytRoomRefEnable(url,current.ref); }catch(e){}
         ytRoomAttachSource(lv,url);
         var back=function(){
           lv.removeEventListener('loadedmetadata',back);
@@ -12147,6 +12161,7 @@ function ytRoomDirectReadClipboard(cb){
         var t=lv.currentTime||0, url=current.url, was=ytRemoteApplying;
         ytRemoteApplying=true;
         try{ console.warn('direct video kick:',why,'t=',t,'rs=',lv.readyState,'ns=',lv.networkState,'err=',lv.error&&lv.error.code); }catch(e){}
+        try{ if(current&&current.ref) ytRoomRefEnable(url,current.ref); }catch(e){}
         ytRoomAttachSource(lv,url);
         var back=function(){
           lv.removeEventListener('loadedmetadata',back);
@@ -18695,7 +18710,8 @@ html body #prRoom.pk-yt-full #partyYoutubeStage .yt-room-card{max-height:none!im
     var vl=$('pkYtFsVol'); if(vl&&br&&br.vol&&document.activeElement!==vl&&!drag&&Date.now()-vTouch>6000&&window.__ytLocalVol==null){var v=br.vol();if(v!==null&&v!==undefined&&Math.abs(Number(vl.value)-v)>2){vl.value=v;paintVol();}}
     var vc=$('prFloatingViewerCount')||$('cinemaViewerCount'),vt=$('pkYtFsVCnt'); if(vc&&vt&&vt.textContent!==vc.textContent)vt.textContent=vc.textContent;
     /* आवाज़ घटाते-बढ़ाते समय ऐप लेआउट पल भर बदले तो बाहर न निकले: लगातार 2.5 सेकंड गायब रहे तभी */
-    var r=room(),gone=!r||!r.isConnected||!r.classList.contains('party-youtube-layout'); if(gone){ if(++miss>=5) exit(); } else miss=0;
+    var r=room(),away=!r||!r.isConnected||r.getClientRects().length===0; if(away){ miss=0; exit(); return; }   /* रूम से बाहर/छुपा: फुल-स्क्रीन (आवाज़ स्लाइडर समेत) तुरंत बंद */
+    var gone=!r.classList.contains('party-youtube-layout'); if(gone){ if(++miss>=5) exit(); } else miss=0;
   }
   function enter(){ var r=room(); if(!r||on)return; build(); on=true; r.classList.add('pk-yt-full'); document.body.classList.add('pk-yt-fs-on'); watchSeats(); fit(); tryFs(); sync(); show();
     /* ऐप बीच-बीच में अपना लाल क्रॉस दोबारा दिखा देता है: हर 0.25 सेकंड में फिर छिपाओ */
@@ -19684,15 +19700,16 @@ html body #prRoom #pkRoomViewerBtn.pr-room-sync-hidden{
   animation:pkCornerFade 5s ease-in-out infinite;
 }
 html body #prRoom #pkRoomShareBtn{
-  position:absolute!important;display:flex!important;pointer-events:auto!important;
-  left:auto!important;top:auto!important;right:14px!important;
-  bottom:calc(env(safe-area-inset-bottom,0px) + 72px)!important;
-  z-index:70!important;width:40px!important;height:40px!important;
-  background:rgba(124,58,237,.28)!important;border:1px solid rgba(255,255,255,.28)!important;box-shadow:none!important;
+  position:absolute!important;display:flex!important;visibility:visible!important;pointer-events:auto!important;
+  left:auto!important;bottom:auto!important;right:74px!important;
+  top:calc(var(--pk-sat,env(safe-area-inset-top,0px)) + 4px)!important;
+  z-index:71!important;width:30px!important;height:30px!important;min-width:30px!important;
+  align-items:center;justify-content:center;padding:0!important;border-radius:50%!important;
+  background:rgba(49,46,129,.34)!important;border:1px solid rgba(255,255,255,.26)!important;box-shadow:none!important;
   -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
   animation:pkCornerFade 5s ease-in-out infinite;
 }
-html body #prRoom #pkRoomShareBtn svg{width:20px!important;height:20px!important;}
+html body #prRoom #pkRoomShareBtn svg{width:16px!important;height:16px!important;}
 html body #prRoom #pkRoomViewerBtn:active,html body #prRoom #pkRoomShareBtn:active{opacity:1!important;animation:none!important;}
 @keyframes pkCornerFade{0%,100%{opacity:.9}50%{opacity:.3}}
 /* YouTube फ़ुल-स्क्रीन और Viewers पेज खुला होने पर छुपे रहें */
