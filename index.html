@@ -11990,12 +11990,23 @@ function playUploadedVideo__orig(url,title,opts){
   destroyPlayer();
   var lv=$('ytRoomLocalVideo'); if(!lv)return;
   current={id:'',upload:true,url:url,ref:String(opts.ref||''),title:title||'Video',addedBy:opts.addedBy||'You',byKey:String(opts.byKey||ytRoomMyKey()||''),ts:Date.now()};
-  ytRoomAttachSource(lv,url); lv.style.display='block'; lv.controls=false;
+  lv.style.display='block'; lv.controls=false;
   try{var spv=document.getElementById('ytRoomSpeakerRange');var svv=spv?Math.max(0,Math.min(100,Number(spv.value)||80)):80;lv.volume=spv?svv/100:.8;lv.muted=svv===0;}catch(e){}
   var emp=$('ytRoomEmpty'); if(emp)emp.style.display='none';
-  var start=Math.max(0,Number(opts.start)||0);
-  var applyStart=function(){ try{ if(start)lv.currentTime=start; }catch(e){} if(opts.playing!==false){ var pr=lv.play(); if(pr&&pr.catch)pr.catch(function(){}); } lv.removeEventListener('loadedmetadata',applyStart); };
+  var start=Math.max(0,Number(opts.start)||0), startApplied=false;
+  var applyStart=function(){
+    if(startApplied)return; startApplied=true;
+    try{ if(start>0)lv.currentTime=start; }catch(e){}
+    if(opts.playing!==false){
+      try{ var pr=lv.play(); if(pr&&pr.catch)pr.catch(function(){
+        if(!lv.__pkPlayRetry){ lv.__pkPlayRetry=true; lv.addEventListener('canplay',function retry(){lv.removeEventListener('canplay',retry);lv.__pkPlayRetry=false;var p2=lv.play();if(p2&&p2.catch)p2.catch(function(){});},{once:true}); }
+      }); }catch(e){}
+    }
+    lv.removeEventListener('loadedmetadata',applyStart);
+  };
   lv.addEventListener('loadedmetadata',applyStart);
+  ytRoomAttachSource(lv,url);
+  if(lv.readyState>=1) applyStart();
   if(ytRoomHost()&&!opts.remote){
     ytRoomWriteState({type:'upload',videoUrl:url,videoRef:String(opts.ref||''),title:current.title,playing:true,currentTime:start,stopped:false});
   }
