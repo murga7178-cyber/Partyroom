@@ -301,7 +301,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT); // फ़ोन घुमाने पर ऐप न घूमे
-        webView = new WebView(this);
+        // स्क्रीन ऑफ / ऐप minimize होने पर भी WebView को "दिखता हुआ" मानो, ताकि चैटिंग मोड का गाना बजता रहे
+        webView = new WebView(this) {
+            @Override
+            protected void onWindowVisibilityChanged(int visibility) {
+                super.onWindowVisibilityChanged(View.VISIBLE);
+            }
+        };
         webView.setBackgroundColor(Color.parseColor("#F7F4FF")); // पेज आने से पहले सफ़ेद की जगह हल्का बैंगनी
         FrameLayout root = new FrameLayout(this);
         root.addView(webView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -335,9 +341,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 try {
-                    String host = request.getUrl().getHost();
-                    if (host != null && "GET".equalsIgnoreCase(request.getMethod())) {
-                        String ref = mediaRefHosts.get(host);
+                    if ("GET".equalsIgnoreCase(request.getMethod())) {
+                        String ref = refererFor(request.getUrl());
                         if (ref != null) {
                             WebResourceResponse r = proxyMedia(request, ref);
                             if (r != null) return r;
@@ -397,7 +402,25 @@ public class MainActivity extends AppCompatActivity {
                     if (mvWeb.canGoBack()) mvWeb.goBack();
                     else closeMoreVideoPage();
                 }
-                else if (webView.canGoBack()) webView.goBack();
+                else if (webView != null) {
+                    // पेज (HTML) से पूछो: ऊपर कोई पेज/पॉपअप खुला है तो वही बंद होगा, ऐप नहीं.
+                    // Home पर हों तभी ऐप बंद होगा.
+                    final OnBackPressedCallback self = this;
+                    webView.evaluateJavascript(
+                            "(function(){try{return (window.pkHandleNativeBack&&window.pkHandleNativeBack())?1:0;}catch(e){return -1;}})()",
+                            v -> {
+                                String r = v == null ? "" : v.trim();
+                                if ("1".equals(r)) return;                     // पेज ने एक कदम पीछे ले लिया
+                                if ("0".equals(r)) {                           // Home पर हैं: ऐप बंद
+                                    self.setEnabled(false);
+                                    getOnBackPressedDispatcher().onBackPressed();
+                                    return;
+                                }
+                                // JS जवाब न दे पाया: पुराना तरीका
+                                if (webView != null && webView.canGoBack()) webView.goBack();
+                                else { self.setEnabled(false); getOnBackPressedDispatcher().onBackPressed(); }
+                            });
+                }
                 else { setEnabled(false); getOnBackPressedDispatcher().onBackPressed(); }
             }
         });
@@ -1685,67 +1708,229 @@ public class MainActivity extends AppCompatActivity {
             String startHost = START_URL.isEmpty() ? "" : Uri.parse(START_URL).getHost();
             if (host == null || host.equals(startHost) || isProtectedHost(host)) return;
             mediaRefHosts.put(host, ref);
+            lastMediaRef = ref;
+            lastMediaRefAt = System.currentTimeMillis();
         } catch (Exception ignored) { }
+    }
+
+    private volatile String lastMediaRef = null;
+    private volatile long lastMediaRefAt = 0;
+
+    private static String baseDomain(String h) {
+        if (h == null) return "";
+        String[] p = h.toLowerCase().split("\\.");
+        int n = p.length;
+        if (n <= 2) return h.toLowerCase();
+        int keep = (p[n - 1].length() == 2 && p[n - 2].length() <= 3) ? 3 : 2;
+        StringBuilder sb = new StringBuilder();
+        for (int i = n - keep; i < n; i++) { if (sb.length() > 0) sb.append('.'); sb.append(p[i]); }
+        return sb.toString();
+    }
+
+    /** इस request को कौन सा Referer देना है: पक्का host; वरना उसी मुख्य domain का; वरना हाल में चुने video की media फ़ाइल (CDN/segment दूसरे host पर हो तब) */
+    private String refererFor(Uri u) {
+        String host = u.getHost();
+        if (host == null) return null;
+        String ref = mediaRefHosts.get(host);
+        if (ref != null) return ref;
+        if (isProtectedHost(host)) return null;
+        String startHost = START_URL.isEmpty() ? "" : Uri.parse(START_URL).getHost();
+        if (host.equals(startHost)) return null;
+        String base = baseDomain(host);
+        for (Map.Entry<String, String> e : mediaRefHosts.entrySet()) {
+            if (baseDomain(e.getKey()).equals(base)) return e.getValue();
+        }
+        String lr = lastMediaRef;
+        if (lr != null && System.currentTimeMillis() - lastMediaRefAt < 30L * 60 * 1000) {
+            String path = String.valueOf(u.getPath()).toLowerCase();
+            if (path.matches(".*\\.(m3u8|ts|m4s|mp4|webm|m4a|aac|mp3|key|mov)$")) return lr;
+        }
+        return null;
+    }
+
+    private static final class MediaConn { HttpURLConnection c; String finalUrl; int code; }
+
+    /** सही Referer/Origin के साथ connection खोलता है (redirect भी निभाता है). rangeOverride हो तो वही Range भेजता है */
+    private MediaConn openMediaConn(String startUrl, Map<String, String> reqH, String referer, String rangeOverride) throws java.io.IOException {
+        String cur = startUrl;
+        for (int hop = 0; hop < 6; hop++) {
+            HttpURLConnection c = (HttpURLConnection) new URL(cur).openConnection();
+            c.setInstanceFollowRedirects(false);
+            c.setConnectTimeout(12000);
+            c.setReadTimeout(30000);
+            if (reqH != null) {
+                for (Map.Entry<String, String> h : reqH.entrySet()) {
+                    String k = h.getKey();
+                    boolean isRange = k.equalsIgnoreCase("Range");
+                    if ((isRange && rangeOverride == null) || k.equalsIgnoreCase("User-Agent") || k.equalsIgnoreCase("Accept") || k.equalsIgnoreCase("Accept-Language"))
+                        c.setRequestProperty(k, h.getValue());
+                }
+            }
+            if (rangeOverride != null) c.setRequestProperty("Range", rangeOverride);
+            c.setRequestProperty("Referer", referer);
+            try {
+                Uri ru = Uri.parse(referer);
+                c.setRequestProperty("Origin", ru.getScheme() + "://" + ru.getHost());
+            } catch (Exception ignored) { }
+            int code = c.getResponseCode();
+            if (code >= 300 && code < 400 && c.getHeaderField("Location") != null) {
+                cur = new URL(new URL(cur), c.getHeaderField("Location")).toString();
+                c.disconnect();
+                continue;
+            }
+            MediaConn m = new MediaConn();
+            m.c = c; m.finalUrl = cur; m.code = code;
+            return m;
+        }
+        throw new java.io.IOException("too many redirects");
+    }
+
+    /**
+     * video का stream: बीच में connection टूटे/थमे (server idle छोड़ दे, नेट अटके) तो वहीं से, जहाँ तक पढ़ा था,
+     * Range माँगकर अपने-आप दोबारा जुड़ जाता है. इसी से "थोड़ी देर चलकर रुक जाना" ठीक होता है.
+     */
+    private final class MediaStream extends InputStream {
+        private final String url;
+        private final Map<String, String> reqH;
+        private final String referer;
+        private HttpURLConnection conn;
+        private InputStream in;
+        private long pos;
+        private final long end;      // आख़िरी byte का index (पता न हो तो -1: तब दोबारा जोड़ना संभव नहीं)
+        private int retries = 0;
+        private volatile boolean closed = false;
+
+        MediaStream(MediaConn first, InputStream firstIn, Map<String, String> reqH, String referer, long pos, long end) {
+            this.conn = first.c; this.in = firstIn; this.url = first.finalUrl;
+            this.reqH = reqH; this.referer = referer; this.pos = pos; this.end = end;
+        }
+
+        private void closeQuiet() {
+            try { if (in != null) in.close(); } catch (Exception ignored) { }
+            try { if (conn != null) conn.disconnect(); } catch (Exception ignored) { }
+            in = null; conn = null;
+        }
+
+        private void reopen() throws java.io.IOException {
+            closeQuiet();
+            String range = "bytes=" + pos + "-" + (end >= 0 ? String.valueOf(end) : "");
+            MediaConn m = openMediaConn(url, reqH, referer, range);
+            if (m.code == 206) {
+                String cr = m.c.getHeaderField("Content-Range");
+                if (cr != null) {
+                    Matcher mm = Pattern.compile("bytes\\s+(\\d+)-").matcher(cr);
+                    if (mm.find() && Long.parseLong(mm.group(1)) != pos) { m.c.disconnect(); throw new java.io.IOException("range mismatch"); }
+                }
+                conn = m.c; in = m.c.getInputStream();
+                return;
+            }
+            if (m.code == 200 && pos <= 40L * 1024 * 1024) {   // server Range नहीं मानता: शुरू से पढ़कर पीछे का हिस्सा छोड़ दो
+                conn = m.c; in = m.c.getInputStream();
+                long skip = pos;
+                while (skip > 0) {
+                    long sk = in.skip(skip);
+                    if (sk <= 0) { if (in.read() < 0) throw new java.io.IOException("eof while skipping"); sk = 1; }
+                    skip -= sk;
+                }
+                return;
+            }
+            try { m.c.disconnect(); } catch (Exception ignored) { }
+            throw new java.io.IOException("resume failed: HTTP " + m.code);
+        }
+
+        @Override public int read() throws java.io.IOException {
+            byte[] one = new byte[1];
+            int n = read(one, 0, 1);
+            return n < 0 ? -1 : (one[0] & 0xff);
+        }
+
+        @Override public int read(byte[] b, int off, int len) throws java.io.IOException {
+            if (len == 0) return 0;
+            while (true) {
+                if (closed) return -1;
+                if (end >= 0 && pos > end) return -1;
+                try {
+                    if (in == null) reopen();
+                    int n = in.read(b, off, len);
+                    if (n > 0) { pos += n; retries = 0; return n; }
+                    if (n < 0) {
+                        if (end >= 0 && pos <= end) throw new java.io.IOException("premature EOF");
+                        return -1;
+                    }
+                } catch (java.io.IOException e) {
+                    if (closed) return -1;
+                    if (end < 0 || retries >= 8) throw e;
+                    retries++;
+                    closeQuiet();
+                    try { Thread.sleep(250L * retries); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); throw e; }
+                }
+            }
+        }
+
+        @Override public int available() {
+            try { return in != null ? in.available() : 0; } catch (Exception e) { return 0; }
+        }
+
+        @Override public void close() {
+            closed = true;
+            closeQuiet();
+        }
     }
 
     /** video की माँग ऐप खुद करके भेजता है, सही Referer/Origin के साथ (और आगे-पीछे करने के लिए Range के साथ) */
     private WebResourceResponse proxyMedia(WebResourceRequest req, String referer) {
-        HttpURLConnection c = null;
+        MediaConn m = null;
         try {
-            String cur = req.getUrl().toString();
             Map<String, String> reqH = req.getRequestHeaders();
-            for (int hop = 0; hop < 6; hop++) {
-                c = (HttpURLConnection) new URL(cur).openConnection();
-                c.setInstanceFollowRedirects(false);
-                c.setConnectTimeout(12000);
-                c.setReadTimeout(25000);
-                for (Map.Entry<String, String> h : reqH.entrySet()) {
-                    String k = h.getKey();
-                    if (k.equalsIgnoreCase("Range") || k.equalsIgnoreCase("User-Agent") || k.equalsIgnoreCase("Accept") || k.equalsIgnoreCase("Accept-Language"))
-                        c.setRequestProperty(k, h.getValue());
-                }
-                c.setRequestProperty("Referer", referer);
+            m = openMediaConn(req.getUrl().toString(), reqH, referer, null);
+            final HttpURLConnection c = m.c;
+            int code = m.code;
+            String cur = m.finalUrl;
+            String mime = c.getContentType();
+            if (mime != null && mime.contains(";")) mime = mime.substring(0, mime.indexOf(';')).trim();
+            String l = cur.toLowerCase();
+            if (mime == null || mime.isEmpty() || mime.equals("application/octet-stream") || mime.equals("text/plain")) {
+                if (l.contains(".mp4")) mime = "video/mp4";
+                else if (l.contains(".webm")) mime = "video/webm";
+                else if (l.contains(".m3u8")) mime = "application/vnd.apple.mpegurl";
+                else if (l.contains(".ts")) mime = "video/mp2t";
+                else if (mime == null || mime.isEmpty()) mime = "application/octet-stream";
+            }
+            Map<String, String> out = new HashMap<>();
+            for (String name : new String[]{"Content-Range", "Accept-Ranges", "Content-Length"}) {
+                String v = c.getHeaderField(name);
+                if (v != null) out.put(name, v);
+            }
+            out.put("Access-Control-Allow-Origin", "*");
+            out.put("Access-Control-Expose-Headers", "Content-Length,Content-Range,Accept-Ranges");
+            InputStream raw = code >= 400 ? c.getErrorStream() : c.getInputStream();
+            if (raw == null) raw = new ByteArrayInputStream(new byte[0]);
+            InputStream in;
+            if (code == 200 || code == 206) {
+                long pos = 0, end = -1;
                 try {
-                    Uri ru = Uri.parse(referer);
-                    c.setRequestProperty("Origin", ru.getScheme() + "://" + ru.getHost());
+                    String cr = c.getHeaderField("Content-Range");
+                    String cl = c.getHeaderField("Content-Length");
+                    if (code == 206 && cr != null) {
+                        Matcher mm = Pattern.compile("bytes\\s+(\\d+)-(\\d+)").matcher(cr);
+                        if (mm.find()) { pos = Long.parseLong(mm.group(1)); end = Long.parseLong(mm.group(2)); }
+                    } else if (code == 200 && cl != null) {
+                        long len = Long.parseLong(cl.trim());
+                        if (len > 0) end = len - 1;
+                    }
                 } catch (Exception ignored) { }
-                int code = c.getResponseCode();
-                if (code >= 300 && code < 400 && c.getHeaderField("Location") != null) {
-                    cur = new URL(new URL(cur), c.getHeaderField("Location")).toString();
-                    c.disconnect();
-                    c = null;
-                    continue;
-                }
-                String mime = c.getContentType();
-                if (mime != null && mime.contains(";")) mime = mime.substring(0, mime.indexOf(';')).trim();
-                String l = cur.toLowerCase();
-                if (mime == null || mime.isEmpty() || mime.equals("application/octet-stream") || mime.equals("text/plain")) {
-                    if (l.contains(".mp4")) mime = "video/mp4";
-                    else if (l.contains(".webm")) mime = "video/webm";
-                    else if (l.contains(".m3u8")) mime = "application/vnd.apple.mpegurl";
-                    else if (l.contains(".ts")) mime = "video/mp2t";
-                    else if (mime == null || mime.isEmpty()) mime = "application/octet-stream";
-                }
-                Map<String, String> out = new HashMap<>();
-                for (String name : new String[]{"Content-Range", "Accept-Ranges", "Content-Length"}) {
-                    String v = c.getHeaderField(name);
-                    if (v != null) out.put(name, v);
-                }
-                out.put("Access-Control-Allow-Origin", "*");
-                out.put("Access-Control-Expose-Headers", "Content-Length,Content-Range,Accept-Ranges");
-                InputStream raw = code >= 400 ? c.getErrorStream() : c.getInputStream();
-                if (raw == null) raw = new ByteArrayInputStream(new byte[0]);
-                final HttpURLConnection conn = c;
-                InputStream in = new FilterInputStream(raw) {
+                in = new MediaStream(m, raw, reqH, referer, pos, end);
+            } else {
+                in = new FilterInputStream(raw) {
                     @Override public void close() throws java.io.IOException {
-                        try { super.close(); } finally { conn.disconnect(); }
+                        try { super.close(); } finally { c.disconnect(); }
                     }
                 };
-                String reason = c.getResponseMessage();
-                return new WebResourceResponse(mime, null, code, (reason == null || reason.isEmpty()) ? "OK" : reason, out, in);
             }
+            String reason = c.getResponseMessage();
+            return new WebResourceResponse(mime, null, code, (reason == null || reason.isEmpty()) ? "OK" : reason, out, in);
         } catch (Exception e) {
-            if (c != null) c.disconnect();
+            if (m != null && m.c != null) m.c.disconnect();
         }
         return null;
     }
@@ -1816,6 +2001,19 @@ public class MainActivity extends AppCompatActivity {
         w.setStatusBarColor(color);
         double lum = (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255.0;
         WindowCompat.getInsetsController(w, w.getDecorView()).setAppearanceLightStatusBars(lum > 0.55);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // गाना (audio) बैकग्राउंड में भी चले: WebView के timers/media रुकने न दो
+        try { if (webView != null) { webView.onResume(); webView.resumeTimers(); } } catch (Exception ignored) { }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        try { if (webView != null) { webView.onResume(); webView.resumeTimers(); } } catch (Exception ignored) { }
     }
 
     @Override
